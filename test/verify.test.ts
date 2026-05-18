@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { verifyIndex, repairIndex, VerificationResult } from '../src/verify.js';
-import { suppressConsole } from './test-utils.js';
+import { safeRmSync, suppressConsole } from './test-utils.js';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
@@ -30,7 +30,7 @@ describe('verifyIndex', () => {
 
   afterEach(() => {
     // Clean up test directory
-    fs.rmSync(testDir, { recursive: true, force: true });
+    safeRmSync(testDir);
     delete process.env.TEST_PROJECTS_DIR;
     delete process.env.TEST_ARCHIVE_DIR;
     delete process.env.TEST_DB_PATH;
@@ -192,7 +192,7 @@ describe('repairIndex', () => {
 
   afterEach(() => {
     // Clean up test directory
-    fs.rmSync(testDir, { recursive: true, force: true });
+    safeRmSync(testDir);
     delete process.env.TEST_PROJECTS_DIR;
     delete process.env.TEST_ARCHIVE_DIR;
     delete process.env.TEST_DB_PATH;

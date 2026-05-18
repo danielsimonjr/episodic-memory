@@ -7,7 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- Hardened the `read` MCP tool against arbitrary local file reads. Previously the tool accepted any absolute path with only an `existsSync` check, so a prompt-injection attack could trick an LLM into reading any file the Node process had access to (e.g., `~/.ssh/id_rsa`). The tool now requires the resolved path to lie inside the configured archive directory and end in `.jsonl`. All legitimate paths flow from `search()` results, whose `archive_path` values are always constructed as `path.join(projectArchive, file)` rooted in `getArchiveDir()`, so this is non-breaking for normal use.
+
 ### Fixed
+- On Windows, conversation parsing now extracts the correct project name. Previously `parseConversationFile` split the path on `/` only, so `C:\Users\...\test\fixtures\short.jsonl` produced `project = 'unknown'` instead of `'fixtures'`. All conversations indexed on a Windows machine had `project = 'unknown'` in the database. The fix uses `path.basename(path.dirname(filePath))` which handles both separators.
+- Schema-migration log lines no longer corrupt the MCP stdio protocol. The five `console.log` calls in `migrateSchema` and `migrateToolCallsCascade` fire to stdout when migrations run during MCP server startup, and stdout on a stdio MCP server is reserved for JSON-RPC. Switched them to `console.error` (stderr). Users upgrading to a schema-changing version no longer get a `× failed` server with no obvious symptom.
+- Test cleanup is more resilient on Windows. `fs.rmSync` on a directory containing recently-closed SQLite WAL files (`*.db-wal`, `*.db-shm`) intermittently throws `EPERM` until the OS releases the handle. Added a shared `safeRmSync` helper in `test/test-utils.ts` with bounded retries and exponential backoff (20-320ms), and wired it into `db.test.ts`, `verify.test.ts`, and `integration.test.ts`.
+
+### Earlier in this Unreleased cycle
 - The plugin now loads on a freshly-installed Windows machine without a manual `npm install` recovery step. Two failure modes are addressed: (1) the launcher's "is `node_modules` healthy" check used to look only at the folder's existence, so a partial extract that left `better-sqlite3` missing its native binding slipped through silently — it now verifies a list of sentinel dep files and re-runs install if any are missing; (2) `@huggingface/transformers@4.2.0` directly imports `onnxruntime-common` in its ESM bundle without declaring it as a direct dependency, and npm doesn't hoist it to top-level because `onnxruntime-node` and `onnxruntime-web` pull conflicting versions — `onnxruntime-common` is now a direct top-level dep so Node's ESM resolver can find the bare import. Symptom in both cases was `× failed` in `/mcp` with `ERR_MODULE_NOT_FOUND` on import.
 
 ## [1.4.1] - 2026-05-17

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { initDatabase } from '../src/db.js';
 import { searchConversations } from '../src/search.js';
 import { parseConversationFile } from '../src/parser.js';
-import { createTestDb, getFixturePath } from './test-utils.js';
+import { createTestDb, getFixturePath, safeRmSync } from './test-utils.js';
 import { indexTestFiles } from './test-indexer.js';
 import type Database from 'better-sqlite3';
 import fs from 'fs';
@@ -19,11 +19,7 @@ describe('Integration Tests', () => {
     testDbPath = path.join(tmpDir, 'test.db');
 
     cleanup = () => {
-      try {
-        fs.rmSync(tmpDir, { recursive: true, force: true });
-      } catch (e) {
-        // Ignore cleanup errors
-      }
+      safeRmSync(tmpDir);
     };
 
     // Override DB path for tests

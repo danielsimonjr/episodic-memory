@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { initDatabase, migrateSchema, insertExchange } from '../src/db.js';
 import { ConversationExchange } from '../src/types.js';
-import { suppressConsole } from './test-utils.js';
+import { safeRmSync, suppressConsole } from './test-utils.js';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
@@ -21,7 +21,7 @@ describe('database migration', () => {
 
   afterEach(() => {
     delete process.env.TEST_DB_PATH;
-    fs.rmSync(testDir, { recursive: true, force: true });
+    safeRmSync(testDir);
   });
 
   it('adds last_indexed column to existing database', () => {
@@ -81,7 +81,7 @@ describe('insertExchange with last_indexed', () => {
 
   afterEach(() => {
     delete process.env.TEST_DB_PATH;
-    fs.rmSync(testDir, { recursive: true, force: true });
+    safeRmSync(testDir);
   });
 
   it('sets last_indexed timestamp when inserting exchange', () => {

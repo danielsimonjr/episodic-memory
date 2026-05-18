@@ -536,14 +536,11 @@ export async function parseConversationFile(filePath: string): Promise<{
   project: string;
   exchanges: ConversationExchange[];
 }> {
-  // Extract project name from path (directory name before the .jsonl file)
-  const pathParts = filePath.split('/');
-  let project = 'unknown';
-
-  // Find the parent directory name (second to last part)
-  if (pathParts.length >= 2) {
-    project = pathParts[pathParts.length - 2];
-  }
+  // Extract project name from path (directory name before the .jsonl file).
+  // path.dirname/basename handle both POSIX (/) and Windows (\) separators —
+  // the older filePath.split('/') broke on Windows and always returned 'unknown'.
+  const parentDir = path.basename(path.dirname(filePath));
+  const project = parentDir || 'unknown';
 
   const exchanges = await parseConversation(filePath, project, filePath);
 

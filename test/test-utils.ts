@@ -44,6 +44,40 @@ export function createTestDb(): { db: Database.Database; cleanup: () => void } {
 }
 
 /**
+ * Recursively remove a directory, tolerating transient Windows file-locking.
+ *
+ * On Windows, fs.rmSync({recursive:true, force:true}) can throw EPERM/EBUSY
+ * when SQLite WAL files (.db-wal, .db-shm) or just-closed handles are still
+ * being released by the OS. Short retries with backoff hide the race without
+ * leaking handles or test temp dirs. Use this in afterEach in place of a
+ * bare fs.rmSync when the test touches a real on-disk SQLite database.
+ */
+export function safeRmSync(dirPath: string, maxRetries = 5): void {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      fs.rmSync(dirPath, { recursive: true, force: true });
+      return;
+    } catch (err) {
+      lastErr = err;
+      // Brief synchronous backoff: 20ms, 40ms, 80ms, 160ms, 320ms.
+      const start = Date.now();
+      const delayMs = 20 * 2 ** attempt;
+      while (Date.now() - start < delayMs) {
+        // spin — Vitest's afterEach is sync, so we can't await here
+      }
+    }
+  }
+  // Final attempt: swallow the error rather than failing the whole suite
+  // over a temp-dir lock. The OS will reclaim it.
+  try {
+    fs.rmSync(dirPath, { recursive: true, force: true });
+  } catch {
+    console.error(`safeRmSync: gave up on ${dirPath} after ${maxRetries} retries:`, lastErr);
+  }
+}
+
+/**
  * Get path to test fixture file
  */
 export function getFixturePath(filename: string): string {

@@ -27,13 +27,13 @@ export function migrateSchema(db) {
     let migrated = false;
     for (const migration of migrations) {
         if (!columnNames.has(migration.name)) {
-            console.log(`Migrating schema: adding ${migration.name} column...`);
+            console.error(`Migrating schema: adding ${migration.name} column...`);
             db.prepare(migration.sql).run();
             migrated = true;
         }
     }
     if (migrated) {
-        console.log('Migration complete.');
+        console.error('Migration complete.');
     }
     migrateToolCallsCascade(db);
 }
@@ -54,11 +54,11 @@ export function migrateToolCallsCascade(db) {
         return; // table doesn't exist yet (caller will create it)
     if (row.sql.toUpperCase().includes('ON DELETE CASCADE'))
         return; // already migrated
-    console.log('Migrating tool_calls to ON DELETE CASCADE schema...');
+    console.error('Migrating tool_calls to ON DELETE CASCADE schema...');
     const orphanCount = db.prepare(`SELECT COUNT(*) AS c FROM tool_calls
      WHERE exchange_id NOT IN (SELECT id FROM exchanges)`).get().c;
     if (orphanCount > 0) {
-        console.log(`  Removing ${orphanCount} orphaned tool_calls row(s)`);
+        console.error(`  Removing ${orphanCount} orphaned tool_calls row(s)`);
     }
     // FK is enforced by default in better-sqlite3, but ALTER ... RENAME of a
     // table that other objects reference can trip checks during the rebuild.
@@ -88,7 +88,7 @@ export function migrateToolCallsCascade(db) {
     });
     tx();
     db.pragma('foreign_keys = ON');
-    console.log('  tool_calls migration complete.');
+    console.error('  tool_calls migration complete.');
 }
 export function initDatabase() {
     const dbPath = getDbPath();

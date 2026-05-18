@@ -22,7 +22,9 @@ import {
 } from './search.js';
 import { formatConversationAsMarkdown } from './show.js';
 import { VERSION } from './version.js';
+import { getArchiveDir } from './paths.js';
 import fs from 'fs';
+import path from 'path';
 
 // Zod Schemas for Input Validation
 
@@ -276,13 +278,35 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     if (name === 'read') {
       const params = ShowConversationInputSchema.parse(args);
 
+      // Confine reads to the archive directory. The schema accepts any string,
+      // but all legitimate paths come from search() results which return DB
+      // archive_path values, and those are always inside getArchiveDir() (see
+      // indexer.ts where archivePath = path.join(projectArchive, file)).
+      // Without this check, a prompt-injection attack could trick the LLM
+      // into reading arbitrary local files via this tool.
+      const resolvedPath = path.resolve(params.path);
+      const archiveRoot = path.resolve(getArchiveDir());
+      const isInsideArchive =
+        resolvedPath === archiveRoot ||
+        resolvedPath.startsWith(archiveRoot + path.sep);
+      if (!isInsideArchive) {
+        throw new Error(
+          `Path is outside the conversation archive: ${params.path}`
+        );
+      }
+      if (!resolvedPath.endsWith('.jsonl')) {
+        throw new Error(
+          `Path must point to a .jsonl conversation file: ${params.path}`
+        );
+      }
+
       // Verify file exists
-      if (!fs.existsSync(params.path)) {
+      if (!fs.existsSync(resolvedPath)) {
         throw new Error(`File not found: ${params.path}`);
       }
 
       // Read and format conversation with optional line range
-      const jsonlContent = fs.readFileSync(params.path, 'utf-8');
+      const jsonlContent = fs.readFileSync(resolvedPath, 'utf-8');
       const markdownContent = formatConversationAsMarkdown(
         jsonlContent,
         params.startLine,

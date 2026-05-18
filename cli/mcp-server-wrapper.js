@@ -58,11 +58,29 @@ function runNpmInstall() {
   });
 }
 
+// Sentinel files that MUST exist when node_modules is healthy.
+// Plain existsSync(node_modules) is insufficient — partial extracts (e.g. an
+// interrupted plugin install, or npm install --ignore-scripts skipping the
+// better-sqlite3 native rebuild) leave the directory present but unusable.
+// Each sentinel is a file inside an external dep that the bundled
+// dist/mcp-server.js imports at runtime.
+const DEP_SENTINELS = [
+  'better-sqlite3/lib/index.js',
+  '@huggingface/transformers/package.json',
+  'onnxruntime-common/package.json', // bare import inside @huggingface/transformers
+];
+
+function nodeModulesIsHealthy(nodeModulesPath) {
+  if (!existsSync(nodeModulesPath)) return false;
+  return DEP_SENTINELS.every((rel) => existsSync(join(nodeModulesPath, rel)));
+}
+
 async function main() {
   try {
-    // Check if node_modules exists
+    // Check if node_modules exists AND is fully populated. Bare directory
+    // existence isn't enough — see DEP_SENTINELS above.
     const nodeModulesPath = join(PLUGIN_ROOT, 'node_modules');
-    if (!existsSync(nodeModulesPath)) {
+    if (!nodeModulesIsHealthy(nodeModulesPath)) {
       await runNpmInstall();
     }
 

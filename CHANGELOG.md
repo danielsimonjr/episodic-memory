@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- The plugin now loads on a freshly-installed Windows machine without a manual `npm install` recovery step. Two failure modes are addressed: (1) the launcher's "is `node_modules` healthy" check used to look only at the folder's existence, so a partial extract that left `better-sqlite3` missing its native binding slipped through silently — it now verifies a list of sentinel dep files and re-runs install if any are missing; (2) `@huggingface/transformers@4.2.0` directly imports `onnxruntime-common` in its ESM bundle without declaring it as a direct dependency, and npm doesn't hoist it to top-level because `onnxruntime-node` and `onnxruntime-web` pull conflicting versions — `onnxruntime-common` is now a direct top-level dep so Node's ESM resolver can find the bare import. Symptom in both cases was `× failed` in `/mcp` with `ERR_MODULE_NOT_FOUND` on import.
+
 ## [1.4.1] - 2026-05-17
 
 ### Fixed

@@ -13,6 +13,7 @@ items move between sections as state changes.
 
 ## Latest shipped (this fork)
 
+- **Memory archive cloned to fork-local path** (2026-05-18) — full byte-identical copy of `~/.config/superpowers/` (926 MB / 2,458 files) to `~/.claude/episodic-memory-data/`. `EPISODIC_MEMORY_CONFIG_DIR` user env var points fork install at the new location; SQLite integrity check `ok`; row counts match (2,739 exchanges / 1,429 conversations / 10 projects). Original at `~/.config/superpowers/` preserved as fallback if we ever revert to upstream install. NOT a commit — operational state on this machine only.
 - **Fork housekeeping audit — 4 fixes** (2026-05-18, commit `6cadc20`) — security: `read` MCP path traversal closed; Windows: parser path-split fixed; stdio: 5 `console.log` → `console.error` in db.ts migrations; tests: safeRmSync helper for Windows EPERM race. Net +6 tests passing, 0 regressions.
 - **Plugin install hardening** (2026-05-18, commit `443db0e`) — wrapper sentinel check for partial node_modules + onnxruntime-common top-level dep. Resolves clean-Windows-machine `× failed` in `/mcp`.
 - **Initial fork from `obra/episodic-memory@1.4.1`** (2026-05-18) — forked to `danielsimonjr/episodic-memory`; cloned to `~/Dropbox/Github/episodic-memory`; `upstream` remote added.
@@ -24,8 +25,8 @@ items move between sections as state changes.
 
 ### Immediate (next session-or-two)
 
-- [ ] **Swap install source from upstream → fork** — first-time activation. Daniel runs `/plugin uninstall episodic-memory@superpowers-marketplace` then `/plugin install episodic-memory@local-marketplace` then `/reload-plugins`. Memory continuity already verified: DB at `~/.config/superpowers/conversation-index/db.sqlite` (2,739 exchanges) and archive at `~/.config/superpowers/conversation-archive/` (758 MB) are user-scoped and survive the swap.
-- [ ] **Verify fork install works end-to-end** — after the swap, run a real search query through the MCP `search` tool and a real `read` against a returned archive_path. Confirm no `× failed` symptoms; confirm the new path-confinement rejects out-of-archive paths.
+- [ ] **Swap install source from upstream → fork** — first-time activation. Daniel runs `/plugin uninstall episodic-memory@superpowers-marketplace` then `/plugin install episodic-memory@local-marketplace` then `/reload-plugins`. Memory is already in place at `~/.claude/episodic-memory-data/` (cloned from `~/.config/superpowers/` on 2026-05-18); `EPISODIC_MEMORY_CONFIG_DIR` user env var points the fork at it. Original at `~/.config/superpowers/` preserved as fallback.
+- [ ] **Verify fork install works end-to-end** — after the swap, run a real search query through the MCP `search` tool (should return results from the 2,739 indexed exchanges) and a real `read` against a returned archive_path (should resolve to the new `~/.claude/episodic-memory-data/conversation-archive/...` path). Confirm no `× failed` symptoms; confirm the new path-confinement rejects out-of-archive paths.
 - [ ] **Monitor obra/episodic-memory#95 for merges** — when obra responds, decide whether to split into 4 PRs or wait for review feedback.
 
 ### Short-term (1-3 months, mirrors `docs/roadmap/now.md`)

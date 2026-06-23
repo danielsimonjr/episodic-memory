@@ -46,13 +46,52 @@ export function formatConversationText(exchanges) {
         return `User: ${ex.userMessage}\n\nAgent: ${ex.assistantMessage}`;
     }).join('\n\n---\n\n');
 }
-function extractSummary(text) {
+export function extractSummary(text) {
+    // Guard against a non-string input. callClaude can return undefined when the
+    // SDK signals an error (e.g. resuming a session that no longer exists). Without
+    // this guard the line below crashed with the cryptic "Cannot read properties of
+    // undefined (reading 'match')", which masked the real failure and let the sync
+    // backlog retry forever.
+    if (typeof text !== 'string') {
+        throw new Error(`Summarizer returned no text (received ${text === undefined ? 'undefined' : typeof text}); the underlying SDK call failed.`);
+    }
     const match = text.match(/<summary>(.*?)<\/summary>/s);
     if (match) {
         return match[1].trim();
     }
     // Fallback if no tags found
     return text.trim();
+}
+/**
+ * Build the prompt for summarizing a short conversation. When resuming the
+ * original session, `conversationText` is empty (the transcript is already in
+ * the resumed context); on the transcript-text fallback it carries the formatted
+ * exchanges. Shared so both code paths emit an identical prompt.
+ */
+function buildShortSummaryPrompt(conversationText) {
+    return `${SUMMARIZER_CONTEXT_MARKER}.
+
+Please write a concise, factual summary of this conversation. Output ONLY the summary - no preamble. Claude will see this summary when searching previous conversations for useful memories and information.
+
+Summarize what happened in 2-4 sentences. Be factual and specific. Output in <summary></summary> tags.
+
+Include:
+- What was built/changed/discussed (be specific)
+- Key technical decisions or approaches
+- Problems solved or current state
+
+Exclude:
+- Apologies, meta-commentary, or your questions
+- Raw logs or debug output
+- Generic descriptions - focus on what makes THIS conversation unique
+
+Good:
+<summary>Built JWT authentication for React app with refresh tokens and protected routes. Fixed token expiration bug by implementing refresh-during-request logic.</summary>
+
+Bad:
+<summary>I apologize. The conversation discussed authentication and various approaches were considered...</summary>
+
+${conversationText}`;
 }
 /**
  * Build the options object passed to the Claude Agent SDK's query() for a
@@ -121,7 +160,8 @@ async function callClaude(prompt, sessionId, useFallback = false) {
         options: buildSummarizerQueryOptions({ model, sessionId }),
     })) {
         if (message && typeof message === 'object' && 'type' in message && message.type === 'result') {
-            const result = message.result;
+            const m = message;
+            const result = m.result;
             // Check if result is an API error (SDK returns errors as result strings)
             if (typeof result === 'string' && result.includes('API Error') && result.includes('thinking.budget_tokens')) {
                 if (!useFallback) {
@@ -130,6 +170,14 @@ async function callClaude(prompt, sessionId, useFallback = false) {
                 }
                 // If fallback also fails, return error message
                 return result;
+            }
+            // The SDK signalled an error rather than producing text. Resuming a session
+            // that no longer exists yields subtype 'error_during_execution', is_error
+            // true, and no `result` field. Throw a clear, actionable error instead of
+            // returning undefined — the caller's resume path catches this and retries
+            // with the transcript text.
+            if (m.is_error === true || typeof result !== 'string') {
+                throw new Error(`Summarizer SDK call failed (subtype=${m.subtype ?? 'unknown'}${sessionId ? `, resume=${sessionId}` : ''}).`);
             }
             return result;
         }
@@ -374,33 +422,23 @@ export async function summarizeConversation(exchanges, sessionId) {
     // For short conversations (≤15 exchanges), summarize directly
     if (exchanges.length <= 15) {
         const claudeSessionId = codexSessionId ? undefined : sessionId;
-        const conversationText = claudeSessionId
-            ? '' // When resuming, no need to include conversation text - it's already in context
-            : formatConversationText(exchanges);
-        const prompt = `${SUMMARIZER_CONTEXT_MARKER}.
-
-Please write a concise, factual summary of this conversation. Output ONLY the summary - no preamble. Claude will see this summary when searching previous conversations for useful memories and information.
-
-Summarize what happened in 2-4 sentences. Be factual and specific. Output in <summary></summary> tags.
-
-Include:
-- What was built/changed/discussed (be specific)
-- Key technical decisions or approaches
-- Problems solved or current state
-
-Exclude:
-- Apologies, meta-commentary, or your questions
-- Raw logs or debug output
-- Generic descriptions - focus on what makes THIS conversation unique
-
-Good:
-<summary>Built JWT authentication for React app with refresh tokens and protected routes. Fixed token expiration bug by implementing refresh-during-request logic.</summary>
-
-Bad:
-<summary>I apologize. The conversation discussed authentication and various approaches were considered...</summary>
-
-${conversationText}`;
-        const result = await callClaude(prompt, claudeSessionId);
+        // Prefer resume-based summarization: the resumed session already holds the
+        // transcript, so we send an empty body (cheaper). But resume fails for
+        // archived/old conversations whose session is no longer in ~/.claude/projects/
+        // ("No conversation found with session ID"). On any resume failure, fall back
+        // to summarizing the transcript text we already have — so the summary still
+        // succeeds and the sync backlog drains instead of retrying (and spawning a
+        // doomed subprocess) on every run.
+        if (claudeSessionId) {
+            try {
+                const result = await callClaude(buildShortSummaryPrompt(''), claudeSessionId);
+                return extractSummary(result);
+            }
+            catch (error) {
+                console.log(`  Resume of session ${claudeSessionId} failed (${error instanceof Error ? error.message : String(error)}); falling back to transcript text`);
+            }
+        }
+        const result = await callClaude(buildShortSummaryPrompt(formatConversationText(exchanges)));
         return extractSummary(result);
     }
     // For long conversations, use hierarchical summarization

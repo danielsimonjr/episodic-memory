@@ -28,6 +28,7 @@ export declare function getApiEnv(): Record<string, string | undefined> | undefi
  */
 export declare function shouldSkipReentrantSync(): boolean;
 export declare function formatConversationText(exchanges: ConversationExchange[]): string;
+export declare function extractSummary(text: string): string;
 /**
  * Build the options object passed to the Claude Agent SDK's query() for a
  * summarization call.

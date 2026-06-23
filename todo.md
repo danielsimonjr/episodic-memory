@@ -13,6 +13,7 @@ items move between sections as state changes.
 
 ## Latest shipped (this fork)
 
+- **Summarizer resume-failure fallback — fixes the sync orphan/CPU storm** (2026-06-23) — archived conversations whose session no longer exists in `~/.claude/projects/` made the resume-based summarizer return `undefined`, crashing `extractSummary` with `Cannot read properties of undefined (reading 'match')`. Summaries never succeeded → backlog never drained → every SessionStart sync re-attempted 10 of them, each spawning a doomed Claude subprocess (one observed pegging a CPU core at 66%). Fix: `callClaude` now throws a clear error on SDK-error results, `extractSummary` guards non-string input, and `summarizeConversation` falls back to transcript-text summarization when resume fails. +5 tests (`test/summarizer-resume-fallback.test.ts`), 0 regressions (20 summarizer + 12 sync green). Same backlog-never-drains class as the 1.4.1 empty-conversation fix, different root cause.
 - **Memory archive cloned to fork-local path** (2026-05-18) — full byte-identical copy of `~/.config/superpowers/` (926 MB / 2,458 files) to `~/.claude/episodic-memory-data/`. `EPISODIC_MEMORY_CONFIG_DIR` user env var points fork install at the new location; SQLite integrity check `ok`; row counts match (2,739 exchanges / 1,429 conversations / 10 projects). Original at `~/.config/superpowers/` preserved as fallback if we ever revert to upstream install. NOT a commit — operational state on this machine only.
 - **Fork housekeeping audit — 4 fixes** (2026-05-18, commit `6cadc20`) — security: `read` MCP path traversal closed; Windows: parser path-split fixed; stdio: 5 `console.log` → `console.error` in db.ts migrations; tests: safeRmSync helper for Windows EPERM race. Net +6 tests passing, 0 regressions.
 - **Plugin install hardening** (2026-05-18, commit `443db0e`) — wrapper sentinel check for partial node_modules + onnxruntime-common top-level dep. Resolves clean-Windows-machine `× failed` in `/mcp`.
@@ -36,6 +37,7 @@ items move between sections as state changes.
 - [ ] **`doctor` Windows diagnostics** — extend `doctor` with plugin install state + node_modules sentinel check + DB stats + recent errors + EMBEDDING_VERSION drift detection.
 - [ ] **Search-result summary visibility** (upstream #74) — include summary in search response when available, default on, feature-flagged. PR upstream.
 - [ ] **Upstream sync after first obra merges** — drop redundant fork patches per the "When upstream merges a fork patch" recipe in `docs/roadmap/upstream-sync.md`.
+- [ ] **Skip resume attempt for known-archived sessions** (optimization, follow-up to the 2026-06-23 resume-fallback fix) — un-resumable sessions currently cost 2 SDK calls (resume-fail + transcript-success) the one time they drain. Could check whether the session JSONL still exists in `~/.claude/projects/` before attempting resume, and go straight to transcript text when it doesn't. Low priority: the double cost is one-time per conversation (the backlog drains permanently after), so this only matters during a large initial drain.
 
 ### Medium-term (3-6 months, mirrors `docs/roadmap/next.md`)
 

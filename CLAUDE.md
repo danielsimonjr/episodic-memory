@@ -45,7 +45,7 @@ When upstream merges these (or equivalents), rebase/merge `upstream/main` and dr
 - **TypeScript source** in `src/`, compiled to `dist/` by `tsc && esbuild`. **Both are committed.**
 - **CLI entry points** in `cli/` (Node.js wrappers — no bash).
 - **MCP server** is `dist/mcp-server.js`, launched by `cli/mcp-server-wrapper.js` from the plugin manifest.
-- **Tests** in `test/` via vitest (32 files, ~158 tests).
+- **Tests** in `test/` via vitest (32 files, 173 tests).
 - **Generated files** in `dist/` AND `src/version.ts`. The latter is gitignored; never edit it.
 - **No `package-lock.json` in git** (`.gitignore`'d) — npm install is reproducible enough for this plugin's needs.
 
@@ -101,10 +101,10 @@ source changes that touch the MCP server or any imported module, run
 `npm run build` so `dist/` reflects source. **Commit `dist/` alongside `src/`** —
 CI doesn't rebuild for you.
 
-### Current test state (as of 2026-05-18)
+### Current test state
 
-- **Cold suite: 152/158 pass on Windows.** 3-6 failures cluster on hook-timeout flakes in `integration.test.ts` (embedding-model warm-up exceeds 10s `beforeEach` hook timeout) and one occasional verify.test.ts timeout (>30s on long re-index test). NONE are caused by the fork's patches; clean main has 4-11 failures depending on luck.
-- Run on Windows: expect ~2 min wall-clock for the full suite.
+- **Full suite: 173/173 pass on Windows**, reliably (two consecutive cold runs green). The former `integration.test.ts` / `verify.test.ts` cold-embedding timeout flakes were fixed 2026-06-23: the embedder is pre-warmed once per worker in `beforeAll`, `vitest.config.ts` sets `hookTimeout: 30000`, and the repair re-index test gets 60s. If you see a fresh timeout flake, suspect a new embedding-heavy hook without warm-up rather than the old cold-start cause.
+- Run on Windows: expect ~75s wall-clock for the full suite.
 - Run a single test: `npx vitest run test/<file>.test.ts`. Much faster, cleaner output.
 
 ## Critical gotchas (read before editing)

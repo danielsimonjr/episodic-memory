@@ -45,7 +45,7 @@ When upstream merges these (or equivalents), rebase/merge `upstream/main` and dr
 - **TypeScript source** in `src/`, compiled to `dist/` by `tsc && esbuild`. **Both are committed.**
 - **CLI entry points** in `cli/` (Node.js wrappers — no bash).
 - **MCP server** is `dist/mcp-server.js`, launched by `cli/mcp-server-wrapper.js` from the plugin manifest.
-- **Tests** in `test/` via vitest (32 files, 173 tests).
+- **Tests** in `test/` via vitest (35 files, 187 tests).
 - **Generated files** in `dist/` AND `src/version.ts`. The latter is gitignored; never edit it.
 - **No `package-lock.json` in git** (`.gitignore`'d) — npm install is reproducible enough for this plugin's needs.
 
@@ -75,7 +75,7 @@ scripts/
 
 test/
   test-utils.ts          # createTestDb, safeRmSync (fork-added), suppressConsole, fixtures
-  *.test.ts              # 32 test files
+  *.test.ts              # 35 test files
   fixtures/              # JSONL conversation fixtures
 
 docs/
@@ -103,7 +103,7 @@ CI doesn't rebuild for you.
 
 ### Current test state
 
-- **Full suite: 173/173 pass on Windows**, reliably (two consecutive cold runs green). The former `integration.test.ts` / `verify.test.ts` cold-embedding timeout flakes were fixed 2026-06-23: the embedder is pre-warmed once per worker in `beforeAll`, `vitest.config.ts` sets `hookTimeout: 30000`, and the repair re-index test gets 60s. If you see a fresh timeout flake, suspect a new embedding-heavy hook without warm-up rather than the old cold-start cause.
+- **Full suite: 187/187 pass on Windows**, reliably. The former `integration.test.ts` / `verify.test.ts` cold-embedding timeout flakes were fixed 2026-06-23: the embedder is pre-warmed once per worker in `beforeAll`, `vitest.config.ts` sets `hookTimeout: 30000`, and the repair re-index test gets 60s. If you see a fresh timeout flake, suspect a new embedding-heavy hook without warm-up rather than the old cold-start cause.
 - Run on Windows: expect ~75s wall-clock for the full suite.
 - Run a single test: `npx vitest run test/<file>.test.ts`. Much faster, cleaner output.
 

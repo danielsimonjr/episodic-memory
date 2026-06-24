@@ -1,12 +1,9 @@
 import { query } from '@anthropic-ai/claude-agent-sdk';
 import { SUMMARIZER_CONTEXT_MARKER } from './constants.js';
 import { VERSION } from './version.js';
-import { getClaudeDir } from './paths.js';
 import { SUMMARIZER_GUARD_ENV, shouldSkipReentrantSync } from './reentrancy.js';
 import { spawn } from 'child_process';
 import { createInterface } from 'readline';
-import fs from 'fs';
-import path from 'path';
 import { codexVersionRequirementMessage, parseCodexCliVersion, versionMeetsMinimum, } from './codex-support.js';
 /**
  * Get API environment overrides for summarization calls.
@@ -62,48 +59,14 @@ export function extractSummary(text) {
     return text.trim();
 }
 /**
- * Whether the Claude Agent SDK can resume `sessionId` — i.e. its transcript still
- * exists under ~/.claude/projects/. The summarizer prefers resuming the original
- * session (cheaper: it already holds the transcript), but resume is guaranteed to
- * fail for archived/old conversations whose source transcript Claude Code has
- * since removed, and a failed resume still spawns a doomed subprocess. Checking
- * first lets us skip straight to transcript-text summarization.
+ * Build the prompt for summarizing a short conversation from its transcript text.
  *
- * Claude Code names each session file `<sessionId>.jsonl` and stores it in the
- * project subdir whose name the archive mirrors, so we probe that exact path
- * first and fall back to a one-level scan of the project subdirs. This is a
- * best-effort predictor; the resume call site keeps a try/catch net for the rare
- * case where the file exists but resume still fails (e.g. cwd mismatch).
- */
-export function isSessionResumable(sessionId, project) {
-    if (!sessionId) {
-        return false;
-    }
-    const projectsDir = path.join(getClaudeDir(), 'projects');
-    const fileName = `${sessionId}.jsonl`;
-    // Fast path: the project subdir mirrored from the archive.
-    if (project && fs.existsSync(path.join(projectsDir, project, fileName))) {
-        return true;
-    }
-    // Fallback: the live project subdir name may differ from the archive's; scan
-    // one level of project subdirs for the session file.
-    try {
-        for (const entry of fs.readdirSync(projectsDir, { withFileTypes: true })) {
-            if (entry.isDirectory() && fs.existsSync(path.join(projectsDir, entry.name, fileName))) {
-                return true;
-            }
-        }
-    }
-    catch {
-        // projects dir missing or unreadable → treat as not resumable
-    }
-    return false;
-}
-/**
- * Build the prompt for summarizing a short conversation. When resuming the
- * original session, `conversationText` is empty (the transcript is already in
- * the resumed context); on the transcript-text fallback it carries the formatted
- * exchanges. Shared so both code paths emit an identical prompt.
+ * The summarizer used to prefer resuming the original session (sending an empty
+ * body, letting the resumed context supply the transcript). That path was removed:
+ * resume always fails from the background-sync context because the SDK resolves a
+ * session by the subprocess's CWD-derived project dir (the plugin dir), not the
+ * user's project — so every resume spawned a doomed subprocess and fell back here
+ * anyway. We now always summarize the transcript text we already hold.
  */
 function buildShortSummaryPrompt(conversationText) {
     return `${SUMMARIZER_CONTEXT_MARKER}.
@@ -140,17 +103,21 @@ ${conversationText}`;
  * by claude-agent-sdk >= 0.2.0.
  */
 export function buildSummarizerQueryOptions(args) {
-    const { model, sessionId } = args;
+    const { model } = args;
     return {
         model,
         max_tokens: 4096,
         env: getApiEnv(),
-        resume: sessionId,
         persistSession: false,
-        // Don't override systemPrompt when resuming — the resumed session's prompt stays in effect.
-        ...(sessionId ? {} : {
-            systemPrompt: 'Write concise, factual summaries. Output ONLY the summary - no preamble, no "Here is", no "I will". Your output will be indexed directly.'
-        }),
+        // Run the summarizer subprocess in full isolation. Without `settingSources: []`
+        // the SDK loads the user's filesystem settings, which boots every configured
+        // MCP server AND fires SessionStart hooks inside each summary subprocess — the
+        // process cascade behind the wedged-orphan storm (each hung subprocess spawned
+        // a tree of ~14 children). `[]` also means no tools are available, so the model
+        // simply answers. `mcpServers: {}` is belt-and-suspenders on top of that.
+        settingSources: [],
+        mcpServers: {},
+        systemPrompt: 'Write concise, factual summaries. Output ONLY the summary - no preamble, no "Here is", no "I will". Your output will be indexed directly.',
     };
 }
 export function buildCodexSummaryPrompt() {
@@ -188,38 +155,64 @@ export function buildCodexSummarizerCommand(args) {
         model: args.model,
     };
 }
-async function callClaude(prompt, sessionId, useFallback = false) {
+/**
+ * Timeout (ms) for a single summarizer SDK call. Configurable via
+ * EPISODIC_MEMORY_API_TIMEOUT_MS (also forwarded to the SDK env as API_TIMEOUT_MS).
+ * Default 120s.
+ */
+function summarizerTimeoutMs() {
+    const configured = Number(process.env.EPISODIC_MEMORY_API_TIMEOUT_MS);
+    return Number.isFinite(configured) && configured > 0 ? configured : 120000;
+}
+async function callClaude(prompt, useFallback = false) {
     const primaryModel = process.env.EPISODIC_MEMORY_API_MODEL || 'haiku';
     const fallbackModel = process.env.EPISODIC_MEMORY_API_MODEL_FALLBACK || 'sonnet';
     const model = useFallback ? fallbackModel : primaryModel;
-    for await (const message of query({
-        prompt,
-        options: buildSummarizerQueryOptions({ model, sessionId }),
-    })) {
-        if (message && typeof message === 'object' && 'type' in message && message.type === 'result') {
-            const m = message;
-            const result = m.result;
-            // Check if result is an API error (SDK returns errors as result strings)
-            if (typeof result === 'string' && result.includes('API Error') && result.includes('thinking.budget_tokens')) {
-                if (!useFallback) {
-                    console.log(`    ${primaryModel} hit thinking budget error, retrying with ${fallbackModel}`);
-                    return await callClaude(prompt, sessionId, true);
+    // Bound the call: a stalled SDK subprocess must not wedge the sync forever (the
+    // root cause of the orphaned-process storm). Abort via an AbortController after
+    // the timeout and surface a clear error the caller can record.
+    const controller = new AbortController();
+    const timeoutMs = summarizerTimeoutMs();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        for await (const message of query({
+            prompt,
+            options: { ...buildSummarizerQueryOptions({ model }), abortController: controller },
+        })) {
+            if (message && typeof message === 'object' && 'type' in message && message.type === 'result') {
+                const m = message;
+                const result = m.result;
+                // Check if result is an API error (SDK returns errors as result strings)
+                if (typeof result === 'string' && result.includes('API Error') && result.includes('thinking.budget_tokens')) {
+                    if (!useFallback) {
+                        console.log(`    ${primaryModel} hit thinking budget error, retrying with ${fallbackModel}`);
+                        clearTimeout(timer);
+                        return await callClaude(prompt, true);
+                    }
+                    // If fallback also fails, return error message
+                    return result;
                 }
-                // If fallback also fails, return error message
+                // The SDK signalled an error rather than producing text (e.g. subtype
+                // 'error_during_execution', is_error true, no `result` field). Throw a
+                // clear, actionable error instead of returning undefined — the caller
+                // records it so the conversation can be retried or sentinel-skipped.
+                if (m.is_error === true || typeof result !== 'string') {
+                    throw new Error(`Summarizer SDK call failed (subtype=${m.subtype ?? 'unknown'}).`);
+                }
                 return result;
             }
-            // The SDK signalled an error rather than producing text. Resuming a session
-            // that no longer exists yields subtype 'error_during_execution', is_error
-            // true, and no `result` field. Throw a clear, actionable error instead of
-            // returning undefined — the caller's resume path catches this and retries
-            // with the transcript text.
-            if (m.is_error === true || typeof result !== 'string') {
-                throw new Error(`Summarizer SDK call failed (subtype=${m.subtype ?? 'unknown'}${sessionId ? `, resume=${sessionId}` : ''}).`);
-            }
-            return result;
         }
+        return '';
     }
-    return '';
+    catch (err) {
+        if (controller.signal.aborted) {
+            throw new Error(`Summarizer SDK call timed out after ${timeoutMs}ms.`);
+        }
+        throw err;
+    }
+    finally {
+        clearTimeout(timer);
+    }
 }
 function appServerTimeoutMs() {
     const configured = Number(process.env.EPISODIC_MEMORY_CODEX_SUMMARY_TIMEOUT_MS);
@@ -232,21 +225,42 @@ function readCommandOutput(command, args) {
             stdio: ['ignore', 'pipe', 'pipe']
         });
         let output = '';
+        let settled = false;
+        // Bound the probe (e.g. `codex --version`): a wedged binary must not hang the
+        // whole summary loop (F7). Mirror the app-server turn timeout.
+        const timeoutMs = appServerTimeoutMs();
+        const timer = setTimeout(() => {
+            if (settled)
+                return;
+            settled = true;
+            try {
+                child.kill('SIGTERM');
+            }
+            catch { }
+            reject(new Error(`${command} ${args.join(' ')} timed out after ${timeoutMs}ms: ${output.trim()}`));
+        }, timeoutMs);
+        const settle = (fn) => {
+            if (settled)
+                return;
+            settled = true;
+            clearTimeout(timer);
+            fn();
+        };
         child.stdout.on('data', chunk => {
             output += chunk.toString();
         });
         child.stderr.on('data', chunk => {
             output += chunk.toString();
         });
-        child.on('error', reject);
-        child.on('exit', code => {
+        child.on('error', err => settle(() => reject(err)));
+        child.on('exit', code => settle(() => {
             if (code === 0) {
                 resolve(output);
             }
             else {
                 reject(new Error(`${command} ${args.join(' ')} failed with exit code ${code}: ${output.trim()}`));
             }
-        });
+        }));
     });
 }
 async function assertSupportedCodexVersion(command) {
@@ -296,8 +310,25 @@ export async function runCodexCommand(command) {
                 clearTimeout(timeout);
             }
             lines.close();
+            // Reject any in-flight requests so their awaiters (the initialize/fork/turn
+            // chain in the IIFE below) don't dangle forever when the child dies or times
+            // out (F8). The IIFE's catch re-routes to finish(), which is idempotent.
+            for (const [, request] of pending) {
+                request.reject(new Error('Codex app-server stream closed before response'));
+            }
+            pending.clear();
             if (!child.killed) {
                 child.kill('SIGTERM');
+            }
+        };
+        // Guard stdin writes: writing to a dead child throws EPIPE synchronously on
+        // some platforms, which would otherwise be an uncaught exception (F8).
+        const safeWrite = (payload) => {
+            try {
+                child.stdin.write(payload);
+            }
+            catch (error) {
+                finish(error instanceof Error ? error : new Error(String(error)));
             }
         };
         const finish = (error, result = '') => {
@@ -317,14 +348,15 @@ export async function runCodexCommand(command) {
         }, appServerTimeoutMs());
         const send = (method, params) => {
             const id = nextRequestId++;
-            child.stdin.write(JSON.stringify({ method, id, params }) + '\n');
-            return new Promise((resolveRequest, rejectRequest) => {
+            const promise = new Promise((resolveRequest, rejectRequest) => {
                 pending.set(id, { method, resolve: resolveRequest, reject: rejectRequest });
             });
+            safeWrite(JSON.stringify({ method, id, params }) + '\n');
+            return promise;
         };
         const notify = (method, params) => {
             const message = params === undefined ? { method } : { method, params };
-            child.stdin.write(JSON.stringify(message) + '\n');
+            safeWrite(JSON.stringify(message) + '\n');
         };
         lines.on('line', line => {
             if (!line.trim())
@@ -456,26 +488,11 @@ export async function summarizeConversation(exchanges, sessionId) {
             console.log(`  Codex summarizer unavailable, falling back to transcript text: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
-    // For short conversations (≤15 exchanges), summarize directly
+    // For short conversations (≤15 exchanges), summarize the transcript text
+    // directly. (We no longer attempt to resume the original session — see
+    // buildShortSummaryPrompt: resume always failed from the background-sync
+    // context and only spawned a doomed subprocess.)
     if (exchanges.length <= 15) {
-        const claudeSessionId = codexSessionId ? undefined : sessionId;
-        // Prefer resume-based summarization: the resumed session already holds the
-        // transcript, so we send an empty body (cheaper). But resume fails for
-        // archived/old conversations whose session is no longer in ~/.claude/projects/
-        // ("No conversation found with session ID"). Skip the attempt entirely when the
-        // session isn't resumable — a failed resume would still spawn a doomed
-        // subprocess — and keep a try/catch net for the rare case where the file exists
-        // but resume fails anyway. Either way we fall back to summarizing the transcript
-        // text we already have, so the summary succeeds and the sync backlog drains.
-        if (claudeSessionId && isSessionResumable(claudeSessionId, exchanges[0]?.project)) {
-            try {
-                const result = await callClaude(buildShortSummaryPrompt(''), claudeSessionId);
-                return extractSummary(result);
-            }
-            catch (error) {
-                console.log(`  Resume of session ${claudeSessionId} failed (${error instanceof Error ? error.message : String(error)}); falling back to transcript text`);
-            }
-        }
         const result = await callClaude(buildShortSummaryPrompt(formatConversationText(exchanges)));
         return extractSummary(result);
     }
@@ -483,9 +500,13 @@ export async function summarizeConversation(exchanges, sessionId) {
     console.log(`  Long conversation (${exchanges.length} exchanges) - using hierarchical summarization`);
     // Note: Hierarchical summarization doesn't support resume mode (needs fresh session for each chunk)
     // This is fine since we only use resume for the main session-end hook
-    // Chunk into groups of 8 exchanges
-    const chunks = chunkExchanges(exchanges, 8);
-    console.log(`  Split into ${chunks.length} chunks`);
+    // Chunk into groups of ~8 exchanges, but cap the chunk COUNT so a very long
+    // conversation can't fan out an unbounded number of sequential SDK calls (F14).
+    // Above the cap we grow the chunk size instead of adding chunks.
+    const MAX_HIERARCHICAL_CHUNKS = 20;
+    const chunkSize = Math.max(8, Math.ceil(exchanges.length / MAX_HIERARCHICAL_CHUNKS));
+    const chunks = chunkExchanges(exchanges, chunkSize);
+    console.log(`  Split into ${chunks.length} chunks (chunk size ${chunkSize})`);
     // Summarize each chunk
     const chunkSummaries = [];
     for (let i = 0; i < chunks.length; i++) {

@@ -102,6 +102,12 @@ export function initDatabase() {
     sqliteVec.load(db);
     // Enable WAL mode for better concurrency
     db.pragma('journal_mode = WAL');
+    // Wait (up to 5s) for a competing writer's lock instead of failing immediately
+    // with SQLITE_BUSY. Overlapping syncs / the MCP server reading while a sync
+    // writes would otherwise abort a batch on contention (F13). Configurable via
+    // EPISODIC_MEMORY_DB_BUSY_TIMEOUT_MS.
+    const busyTimeout = parseInt(process.env.EPISODIC_MEMORY_DB_BUSY_TIMEOUT_MS || '5000', 10);
+    db.pragma(`busy_timeout = ${Number.isFinite(busyTimeout) && busyTimeout >= 0 ? busyTimeout : 5000}`);
     // Create exchanges table
     db.exec(`
     CREATE TABLE IF NOT EXISTS exchanges (

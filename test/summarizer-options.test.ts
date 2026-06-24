@@ -20,15 +20,19 @@ describe('buildSummarizerQueryOptions', () => {
     expect(opts.max_tokens).toBe(4096);
   });
 
-  it('includes a systemPrompt on fresh sessions', () => {
+  it('includes a systemPrompt', () => {
     const opts = buildSummarizerQueryOptions({ model: 'haiku' });
     expect(opts.systemPrompt).toBeDefined();
   });
 
-  it('omits systemPrompt when resuming so the original session prompt stays in effect', () => {
-    const opts = buildSummarizerQueryOptions({ model: 'haiku', sessionId: 'abc-123' });
-    expect(opts.resume).toBe('abc-123');
-    expect(opts.systemPrompt).toBeUndefined();
+  it('runs in isolation: settingSources [] so the SDK subprocess does not load the user settings that boot every MCP server and fire SessionStart hooks (the process cascade)', () => {
+    const opts = buildSummarizerQueryOptions({ model: 'haiku' });
+    expect(opts.settingSources).toEqual([]);
+  });
+
+  it('exposes no MCP servers to the summarizer subprocess', () => {
+    const opts = buildSummarizerQueryOptions({ model: 'haiku' });
+    expect(opts.mcpServers).toEqual({});
   });
 });
 
@@ -99,6 +103,46 @@ describe('runCodexCommand', () => {
       sessionId: 'session-123',
       prompt: 'Summarize this conversation.',
     })).rejects.toThrow(/requires codex-cli >= 0\.130\.0; found 0\.129\.9/);
+  });
+
+  it('times out the codex --version probe instead of hanging when the binary stalls (F7)', async () => {
+    // readCommandOutput previously had no timeout: a wedged `codex --version`
+    // hung the whole summary loop. The probe must abort and reject.
+    process.env.EPISODIC_MEMORY_CODEX_SUMMARY_TIMEOUT_MS = '150';
+    try {
+      await expect(runCodexCommand({
+        command: process.execPath,
+        versionArgs: ['-e', 'setTimeout(() => {}, 100000)'], // never prints, never exits
+        args: ['-e', 'setTimeout(() => {}, 100000)'],
+        sessionId: 'session-123',
+        prompt: 'Summarize this conversation.',
+      })).rejects.toThrow(/timed out/i);
+    } finally {
+      delete process.env.EPISODIC_MEMORY_CODEX_SUMMARY_TIMEOUT_MS;
+    }
+  });
+
+  it('rejects cleanly (no hang) when the app-server exits right after initialize (F8)', async () => {
+    // A premature child exit must settle the call via a clear error rather than
+    // leaving in-flight send() promises dangling forever.
+    const fakeAppServer = `
+      const readline = require('readline');
+      const rl = readline.createInterface({ input: process.stdin });
+      rl.on('line', line => {
+        const message = JSON.parse(line);
+        if (message.method === 'initialize') {
+          console.log(JSON.stringify({ id: message.id, result: { userAgent: 'fake' } }));
+          process.exit(0); // die before answering thread/fork
+        }
+      });
+    `;
+    await expect(runCodexCommand({
+      command: process.execPath,
+      args: ['-e', fakeAppServer],
+      sessionId: 'session-123',
+      prompt: 'Summarize this conversation.',
+      skipVersionCheck: true,
+    })).rejects.toThrow(/exited before|exit code|stream closed/i);
   });
 
   it('reports malformed app-server fork responses clearly', async () => {

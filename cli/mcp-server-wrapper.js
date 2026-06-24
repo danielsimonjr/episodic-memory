@@ -111,7 +111,29 @@ async function main() {
       process.exit(0);
     });
 
+    // Backstop parent-liveness poll (F11). With `stdio: 'inherit'` the child owns
+    // stdin, so the wrapper's stdin 'end' may never fire — and on Windows there's
+    // no SIGHUP. Without this, an abnormal Claude exit can orphan the MCP server,
+    // which keeps the SQLite DB (and its WAL) open → "database is locked" on the
+    // next start. Poll the original parent PID and shut down if it disappears.
+    const parentPid = process.ppid;
+    const parentWatch = setInterval(() => {
+      let alive = true;
+      try {
+        process.kill(parentPid, 0);
+      } catch (err) {
+        alive = err.code === 'EPERM'; // exists but not signalable → alive
+      }
+      if (!alive) {
+        clearInterval(parentWatch);
+        child.kill();
+        process.exit(0);
+      }
+    }, 5000);
+    if (typeof parentWatch.unref === 'function') parentWatch.unref();
+
     child.on('exit', (code, signal) => {
+      clearInterval(parentWatch);
       if (signal) {
         process.kill(process.pid, signal);
       } else {

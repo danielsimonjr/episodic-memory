@@ -24803,6 +24803,9 @@ function getDbPath() {
   return path.join(getIndexDir(), "db.sqlite");
 }
 
+// src/lockfile.ts
+var DEFAULT_STALE_MS = 60 * 60 * 1e3;
+
 // src/db.ts
 function migrateSchema(db) {
   const columns = db.prepare(`SELECT name FROM pragma_table_info('exchanges')`).all();
@@ -24887,6 +24890,8 @@ function initDatabase() {
   const db = new Database(dbPath);
   sqliteVec.load(db);
   db.pragma("journal_mode = WAL");
+  const busyTimeout = parseInt(process.env.EPISODIC_MEMORY_DB_BUSY_TIMEOUT_MS || "5000", 10);
+  db.pragma(`busy_timeout = ${Number.isFinite(busyTimeout) && busyTimeout >= 0 ? busyTimeout : 5e3}`);
   db.exec(`
     CREATE TABLE IF NOT EXISTS exchanges (
       id TEXT PRIMARY KEY,

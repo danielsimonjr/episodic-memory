@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { getSuperpowersDir } from './paths.js';
+import { getSuperpowersDir, getIndexDir } from './paths.js';
 
 export type LogLevel = 'info' | 'warn' | 'error';
 
@@ -14,6 +14,28 @@ export function getLogDir(): string {
 
 export function getSyncLogPath(): string {
   return path.join(getLogDir(), 'episodic-memory.log');
+}
+
+/** Lock file serializing background syncs; lives beside the embedding-migration lock. */
+export function getSyncLockPath(): string {
+  return path.join(getIndexDir(), '.sync.lock');
+}
+
+/**
+ * Rotate the sync log when it exceeds `maxBytes` so it can't grow without bound
+ * (F4 — it had reached megabytes with thousands of appended sync-start lines).
+ * Keeps a single `.1` backup. Best-effort: any failure leaves the log as-is.
+ */
+export function rotateSyncLogIfNeeded(maxBytes = 5 * 1024 * 1024): void {
+  const logPath = getSyncLogPath();
+  try {
+    if (fs.statSync(logPath).size <= maxBytes) return;
+    const rotated = logPath + '.1';
+    try { fs.rmSync(rotated, { force: true }); } catch {}
+    fs.renameSync(logPath, rotated);
+  } catch {
+    // No log yet, or stat/rename failed — nothing to rotate.
+  }
 }
 
 export function formatLogLine(level: LogLevel, message: string): string {

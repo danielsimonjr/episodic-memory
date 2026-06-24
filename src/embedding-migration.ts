@@ -12,76 +12,23 @@
  *   recordReembedded     — atomic update of vec_exchanges + version bump
  */
 
-import fs from 'fs';
 import path from 'path';
 import Database from 'better-sqlite3';
+import { acquireLock, releaseLock, LockHandle } from './lockfile.js';
 
 /** Bump when anything in the embedding pipeline changes (model, dtype, prefix). */
 export const EMBEDDING_VERSION = 1;
 
-export interface MigrationLockHandle {
-  path: string;
-  fd: number;
-}
+// The migration lock is just a named instance of the generic file lock (with its
+// atomic stale-steal + PID-reuse age cap). Kept as thin wrappers for back-compat.
+export type MigrationLockHandle = LockHandle;
 
-/**
- * Acquire an exclusive migration lock by writing our PID to the lock file.
- * Returns null if another live process holds the lock.
- *
- * Stale-lock recovery: if the lock file's PID is no longer alive, we steal it.
- * This avoids needing manual cleanup after crashes or kills.
- */
 export function acquireMigrationLock(lockPath: string): MigrationLockHandle | null {
-  fs.mkdirSync(path.dirname(lockPath), { recursive: true });
-
-  // Try exclusive create first.
-  try {
-    const fd = fs.openSync(lockPath, 'wx');
-    fs.writeSync(fd, String(process.pid));
-    return { path: lockPath, fd };
-  } catch (err: any) {
-    if (err.code !== 'EEXIST') throw err;
-  }
-
-  // Lock exists. Check whether the holder is still alive.
-  let holderPid: number;
-  try {
-    holderPid = parseInt(fs.readFileSync(lockPath, 'utf-8').trim(), 10);
-  } catch {
-    holderPid = NaN;
-  }
-
-  if (Number.isFinite(holderPid) && holderPid > 0 && isProcessAlive(holderPid)) {
-    // The holder is alive (possibly us — concurrent acquires from the same
-    // process must serialize via release/acquire pairs).
-    return null;
-  }
-
-  // Stale lock. Replace it.
-  try {
-    fs.unlinkSync(lockPath);
-  } catch {}
-  try {
-    const fd = fs.openSync(lockPath, 'wx');
-    fs.writeSync(fd, String(process.pid));
-    return { path: lockPath, fd };
-  } catch {
-    return null;
-  }
+  return acquireLock(lockPath);
 }
 
 export function releaseMigrationLock(handle: MigrationLockHandle): void {
-  try { fs.closeSync(handle.fd); } catch {}
-  try { fs.unlinkSync(handle.path); } catch {}
-}
-
-function isProcessAlive(pid: number): boolean {
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch (err: any) {
-    return err.code === 'EPERM';
-  }
+  releaseLock(handle);
 }
 
 export interface StaleRow {

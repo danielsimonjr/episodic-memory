@@ -5,9 +5,10 @@
 // invocation — exits without paying the multi-second module load. (#87)
 import { getArchiveDir, getConversationSourceDirs, getIndexDir } from './paths.js';
 import { shouldSkipReentrantSync } from './reentrancy.js';
+import { acquireLock, releaseLock } from './lockfile.js';
 import { spawn } from 'child_process';
 import fs from 'fs';
-import { formatLogLine, getSyncLogPath } from './logging.js';
+import { formatLogLine, getSyncLogPath, getSyncLockPath, rotateSyncLogIfNeeded } from './logging.js';
 
 const args = process.argv.slice(2);
 
@@ -60,23 +61,42 @@ const isBackground = args.includes('--background');
 // If background mode, fork the process and exit immediately
 if (isBackground) {
   const filteredArgs = args.filter(arg => arg !== '--background');
+  rotateSyncLogIfNeeded(); // keep the shared log from growing without bound (F4)
   const logPath = getSyncLogPath();
   const logFd = fs.openSync(logPath, 'a');
-  fs.writeSync(logFd, formatLogLine('info', `Starting background sync from pid ${process.pid}`));
+  try {
+    fs.writeSync(logFd, formatLogLine('info', `Starting background sync from pid ${process.pid}`));
 
-  // Spawn a detached process
-  const child = spawn(process.execPath, [
-    process.argv[1], // This script
-    ...filteredArgs
-  ], {
-    detached: true,
-    stdio: ['ignore', logFd, logFd]
-  });
+    // Spawn a detached process. The child dup's the fd via stdio, so the parent
+    // closes its own copy below rather than leaking it (F3).
+    const child = spawn(process.execPath, [
+      process.argv[1], // This script
+      ...filteredArgs
+    ], {
+      detached: true,
+      stdio: ['ignore', logFd, logFd]
+    });
 
-  child.unref(); // Allow parent to exit
+    child.unref(); // Allow parent to exit
+  } finally {
+    fs.closeSync(logFd);
+  }
   console.log(`Sync started in background. Log: ${logPath}`);
   process.exit(0);
 }
+
+// Worker path. Serialize syncs: only one worker runs the heavy embedding +
+// summarization at a time. Independent SessionStart hooks (multiple Claude
+// sessions, compactions) otherwise stack overlapping syncs that each boot the
+// transformer and fan out summarizer subprocesses, pegging the CPU — the storm
+// behind the wedged orphans. Checked here, before the heavy imports below, so a
+// locked-out worker bails instantly.
+const syncLock = acquireLock(getSyncLockPath());
+if (!syncLock) {
+  console.error('episodic-memory: another sync is already running; skipping');
+  process.exit(0);
+}
+process.on('exit', () => releaseLock(syncLock));
 
 // Past the early-exit checks: now load the heavy native-dep modules. Doing this
 // lazily (rather than as top-level static imports) keeps the guard/help/background
@@ -105,13 +125,23 @@ console.log(`Destination: ${destDir}\n`);
 async function syncAll() {
   const totals = { copied: 0, skipped: 0, indexed: 0, summarized: 0, errors: [] as Array<{file: string; error: string}>, sourcesWithSummaryWork: 0, totalNeedingSummaries: 0 };
 
+  // Global per-sync summary budget shared across ALL source dirs (F2). Previously
+  // the 10-summary cap applied per source dir, so the real cap was 10 × dirs and
+  // was not configurable. Now it's one configurable budget decremented as each
+  // dir consumes attempts.
+  const configuredLimit = parseInt(process.env.EPISODIC_MEMORY_SUMMARY_LIMIT || '10', 10);
+  // Guard against a garbage env value (NaN would slice(0, NaN) → silently summarize
+  // nothing forever, with no error).
+  let summaryBudget = Number.isFinite(configuredLimit) && configuredLimit > 0 ? configuredLimit : 10;
+
   for (const sourceDir of sourceDirs) {
-    const result = await syncConversations(sourceDir, destDir);
+    const result = await syncConversations(sourceDir, destDir, { summaryLimit: Math.max(0, summaryBudget) });
     totals.copied += result.copied;
     totals.skipped += result.skipped;
     totals.indexed += result.indexed;
     totals.summarized += result.summarized;
     totals.errors.push(...result.errors);
+    summaryBudget -= result.summaryAttempts;
   }
 
   console.log(`\n✅ Sync complete!`);

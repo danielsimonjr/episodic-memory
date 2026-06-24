@@ -59,6 +59,13 @@ describe('database migration', () => {
     migratedDb.close();
   });
 
+  it('sets a busy_timeout so concurrent writers wait instead of failing with SQLITE_BUSY (F13)', () => {
+    const db = initDatabase();
+    const timeout = db.pragma('busy_timeout', { simple: true });
+    expect(Number(timeout)).toBeGreaterThan(0);
+    db.close();
+  });
+
   it('handles existing last_indexed column gracefully', () => {
     // Create database with migration already applied
     const db = initDatabase();

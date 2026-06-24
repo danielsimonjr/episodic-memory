@@ -17,6 +17,30 @@ function shouldSkipConversation(filePath) {
         return false;
     }
 }
+/**
+ * Max times a single conversation may fail to summarize before we give up and
+ * write an empty sentinel. Without this cap a conversation that deterministically
+ * fails (corrupt transcript, persistent API error) is re-queued on EVERY sync
+ * forever — the "backlog never drains" bug (F1). Read dynamically so it's
+ * configurable at runtime (and per-test).
+ */
+function maxSummaryAttempts() {
+    const configured = parseInt(process.env.EPISODIC_MEMORY_MAX_SUMMARY_ATTEMPTS || '3', 10);
+    return Number.isFinite(configured) && configured > 0 ? configured : 3;
+}
+/** Sidecar recording failed summary attempts for a conversation. */
+function summaryFailPath(filePath) {
+    return filePath.replace('.jsonl', '-summary.failed');
+}
+function readSummaryAttempts(filePath) {
+    try {
+        const data = JSON.parse(fs.readFileSync(summaryFailPath(filePath), 'utf-8'));
+        return typeof data.attempts === 'number' ? data.attempts : 0;
+    }
+    catch {
+        return 0;
+    }
+}
 function copyIfNewer(src, dest) {
     // Ensure destination directory exists
     const destDir = path.dirname(dest);
@@ -31,10 +55,21 @@ function copyIfNewer(src, dest) {
             return false; // Dest is current, skip
         }
     }
-    // Atomic copy: temp file + rename
-    const tempDest = dest + '.tmp.' + process.pid;
-    fs.copyFileSync(src, tempDest);
-    fs.renameSync(tempDest, dest); // Atomic on same filesystem
+    // Atomic copy: temp file + rename. Use a unique suffix and clean the temp up if
+    // the rename fails (e.g. Windows EPERM when an AV scanner briefly locks dest),
+    // so the archive doesn't accumulate orphaned *.tmp.* files (F10).
+    const tempDest = `${dest}.tmp.${process.pid}.${Math.random().toString(36).slice(2)}`;
+    try {
+        fs.copyFileSync(src, tempDest);
+        fs.renameSync(tempDest, dest); // Atomic on same filesystem
+    }
+    catch (err) {
+        try {
+            fs.unlinkSync(tempDest);
+        }
+        catch { }
+        throw err;
+    }
     return true;
 }
 export function extractSessionIdFromPath(filePath) {
@@ -53,6 +88,7 @@ export async function syncConversations(sourceDir, destDir, options = {}) {
         skipped: 0,
         indexed: 0,
         summarized: 0,
+        summaryAttempts: 0,
         errors: []
     };
     // Ensure source directory exists
@@ -92,7 +128,10 @@ export async function syncConversations(sourceDir, destDir, options = {}) {
                 if (!options.skipSummaries) {
                     const summaryPath = destFile.replace('.jsonl', '-summary.txt');
                     if (!fs.existsSync(summaryPath) && !shouldSkipConversation(destFile)) {
-                        const sessionId = extractSessionIdFromPath(destFile);
+                        // Fall back to the filename (sans .jsonl) when there's no embedded UUID,
+                        // so transcripts named without a session UUID are still summarized rather
+                        // than silently dropped (F9). The id only matters for Codex resume.
+                        const sessionId = extractSessionIdFromPath(destFile) ?? path.basename(destFile, '.jsonl');
                         if (sessionId) {
                             filesToSummarize.push({ path: destFile, sessionId });
                         }
@@ -113,30 +152,37 @@ export async function syncConversations(sourceDir, destDir, options = {}) {
         const { initEmbeddings, generateExchangeEmbedding } = await import('./embeddings.js');
         const { parseConversation } = await import('./parser.js');
         const db = initDatabase();
-        await initEmbeddings();
-        for (const file of filesToIndex) {
-            try {
-                // Check for DO NOT INDEX marker
-                if (shouldSkipConversation(file)) {
-                    continue; // Skip indexing but file is already copied
+        // try/finally so a throw from initEmbeddings or anything outside the per-file
+        // catch can't leak the DB handle (and its WAL), which would surface as a
+        // "database is locked" / stale .db-wal on the next run (F6).
+        try {
+            await initEmbeddings();
+            for (const file of filesToIndex) {
+                try {
+                    // Check for DO NOT INDEX marker
+                    if (shouldSkipConversation(file)) {
+                        continue; // Skip indexing but file is already copied
+                    }
+                    const project = path.basename(path.dirname(file));
+                    const exchanges = await parseConversation(file, project, file);
+                    for (const exchange of exchanges) {
+                        const toolNames = exchange.toolCalls?.map(tc => tc.toolName);
+                        const embedding = await generateExchangeEmbedding(exchange.userMessage, exchange.assistantMessage, toolNames);
+                        insertExchange(db, exchange, embedding, toolNames);
+                    }
+                    result.indexed++;
                 }
-                const project = path.basename(path.dirname(file));
-                const exchanges = await parseConversation(file, project, file);
-                for (const exchange of exchanges) {
-                    const toolNames = exchange.toolCalls?.map(tc => tc.toolName);
-                    const embedding = await generateExchangeEmbedding(exchange.userMessage, exchange.assistantMessage, toolNames);
-                    insertExchange(db, exchange, embedding, toolNames);
+                catch (error) {
+                    result.errors.push({
+                        file,
+                        error: error instanceof Error ? error.message : String(error)
+                    });
                 }
-                result.indexed++;
-            }
-            catch (error) {
-                result.errors.push({
-                    file,
-                    error: error instanceof Error ? error.message : String(error)
-                });
             }
         }
-        db.close();
+        finally {
+            db.close();
+        }
     }
     // Generate summaries for files that need them
     if (!options.skipSummaries && filesToSummarize.length > 0) {
@@ -160,15 +206,42 @@ export async function syncConversations(sourceDir, destDir, options = {}) {
                     continue;
                 }
                 console.log(`  Summarizing ${path.basename(filePath)} (${exchanges.length} exchanges)...`);
+                result.summaryAttempts++;
                 const summary = await summarizeConversation(exchanges, sessionId);
                 const summaryPath = filePath.replace('.jsonl', '-summary.txt');
                 fs.writeFileSync(summaryPath, summary, 'utf-8');
+                try {
+                    fs.unlinkSync(summaryFailPath(filePath));
+                }
+                catch { } // clear any prior failure record
                 result.summarized++;
             }
             catch (error) {
+                const errMsg = error instanceof Error ? error.message : String(error);
+                const attempts = readSummaryAttempts(filePath) + 1;
+                if (attempts >= maxSummaryAttempts()) {
+                    // Give up: write an empty sentinel (same marker zero-exchange files use)
+                    // so this conversation stops re-queuing every sync forever (F1).
+                    const summaryPath = filePath.replace('.jsonl', '-summary.txt');
+                    try {
+                        fs.writeFileSync(summaryPath, '', 'utf-8');
+                    }
+                    catch { }
+                    try {
+                        fs.unlinkSync(summaryFailPath(filePath));
+                    }
+                    catch { }
+                    console.log(`  Giving up on ${path.basename(filePath)} after ${attempts} failed attempts: ${errMsg}`);
+                }
+                else {
+                    try {
+                        fs.writeFileSync(summaryFailPath(filePath), JSON.stringify({ attempts, lastError: errMsg }), 'utf-8');
+                    }
+                    catch { }
+                }
                 result.errors.push({
                     file: filePath,
-                    error: `Summary generation failed: ${error instanceof Error ? error.message : String(error)}`
+                    error: `Summary generation failed (attempt ${attempts}/${maxSummaryAttempts()}): ${errMsg}`
                 });
             }
         }

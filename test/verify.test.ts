@@ -1,14 +1,22 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, beforeAll, afterEach } from 'vitest';
 import { verifyIndex, repairIndex, VerificationResult } from '../src/verify.js';
 import { safeRmSync, suppressConsole } from './test-utils.js';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { initDatabase, insertExchange } from '../src/db.js';
+import { initEmbeddings } from '../src/embeddings.js';
 import { ConversationExchange } from '../src/types.js';
 
 // Suppress console output for clean test runs
 const restoreConsole = suppressConsole();
+
+// Load the transformer embedding model once before any timed test. repairIndex
+// re-embeds during re-index; paying the cold model load inside a test budget is
+// what made "re-indexes outdated files during repair" flaky.
+beforeAll(async () => {
+  await initEmbeddings();
+}, 120000);
 
 describe('verifyIndex', () => {
   const testDir = path.join(os.tmpdir(), 'conversation-search-test-' + Date.now());
@@ -235,7 +243,9 @@ describe('repairIndex', () => {
     dbAfter.close();
   });
 
-  it('re-indexes outdated files during repair', { timeout: 30000 }, async () => {
+  // Repair re-embeds every outdated file; under parallel-worker CPU contention
+  // the steady-state embedding throughput needs more than 30s headroom.
+  it('re-indexes outdated files during repair', { timeout: 60000 }, async () => {
     // Create conversation file with summary
     const projectArchive = path.join(archiveDir, 'test-project');
     fs.mkdirSync(projectArchive, { recursive: true });

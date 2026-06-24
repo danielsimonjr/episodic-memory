@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, beforeAll, afterEach } from 'vitest';
 import { initDatabase } from '../src/db.js';
+import { initEmbeddings } from '../src/embeddings.js';
 import { searchConversations } from '../src/search.js';
 import { parseConversationFile } from '../src/parser.js';
 import { createTestDb, getFixturePath, safeRmSync } from './test-utils.js';
@@ -12,6 +13,12 @@ import os from 'os';
 describe('Integration Tests', () => {
   let testDbPath: string;
   let cleanup: () => void;
+
+  // Load the transformer embedding model once, outside the per-test timed hooks,
+  // so a cold model load (seconds) never counts against a beforeEach/test budget.
+  beforeAll(async () => {
+    await initEmbeddings();
+  }, 120000);
 
   beforeEach(() => {
     // Create temp directory for test database

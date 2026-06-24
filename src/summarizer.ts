@@ -2,8 +2,12 @@ import { ConversationExchange } from './types.js';
 import { query } from '@anthropic-ai/claude-agent-sdk';
 import { SUMMARIZER_CONTEXT_MARKER } from './constants.js';
 import { VERSION } from './version.js';
+import { getClaudeDir } from './paths.js';
+import { SUMMARIZER_GUARD_ENV, shouldSkipReentrantSync } from './reentrancy.js';
 import { spawn } from 'child_process';
 import { createInterface } from 'readline';
+import fs from 'fs';
+import path from 'path';
 import {
   codexVersionRequirementMessage,
   parseCodexCliVersion,
@@ -43,22 +47,17 @@ export function getApiEnv(): Record<string, string | undefined> | undefined {
   // reported in #87.
   return {
     ...process.env,
-    EPISODIC_MEMORY_SUMMARIZER_GUARD: '1',
+    [SUMMARIZER_GUARD_ENV]: '1',
     ...(baseUrl && { ANTHROPIC_BASE_URL: baseUrl }),
     ...(token && { ANTHROPIC_AUTH_TOKEN: token }),
     ...(timeoutMs && { API_TIMEOUT_MS: timeoutMs }),
   };
 }
 
-/**
- * Detect whether the current process is running inside the Claude Agent SDK
- * subprocess that the summarizer just spawned. The flag is set by getApiEnv()
- * and inherited by the spawned subprocess. Used by sync entry points to bail
- * out before re-entering the sync→summarizer→spawn cycle (#87).
- */
-export function shouldSkipReentrantSync(): boolean {
-  return process.env.EPISODIC_MEMORY_SUMMARIZER_GUARD === '1';
-}
+// Re-exported from the dependency-free reentrancy module so existing importers
+// (and tests) can keep importing it from here. The guard check itself lives in
+// ./reentrancy.js so sync-cli can use it without loading this module's SDK deps.
+export { shouldSkipReentrantSync };
 
 export function formatConversationText(exchanges: ConversationExchange[]): string {
   return exchanges.map(ex => {
@@ -83,6 +82,44 @@ export function extractSummary(text: string): string {
   }
   // Fallback if no tags found
   return text.trim();
+}
+
+/**
+ * Whether the Claude Agent SDK can resume `sessionId` — i.e. its transcript still
+ * exists under ~/.claude/projects/. The summarizer prefers resuming the original
+ * session (cheaper: it already holds the transcript), but resume is guaranteed to
+ * fail for archived/old conversations whose source transcript Claude Code has
+ * since removed, and a failed resume still spawns a doomed subprocess. Checking
+ * first lets us skip straight to transcript-text summarization.
+ *
+ * Claude Code names each session file `<sessionId>.jsonl` and stores it in the
+ * project subdir whose name the archive mirrors, so we probe that exact path
+ * first and fall back to a one-level scan of the project subdirs. This is a
+ * best-effort predictor; the resume call site keeps a try/catch net for the rare
+ * case where the file exists but resume still fails (e.g. cwd mismatch).
+ */
+export function isSessionResumable(sessionId?: string, project?: string): boolean {
+  if (!sessionId) {
+    return false;
+  }
+  const projectsDir = path.join(getClaudeDir(), 'projects');
+  const fileName = `${sessionId}.jsonl`;
+  // Fast path: the project subdir mirrored from the archive.
+  if (project && fs.existsSync(path.join(projectsDir, project, fileName))) {
+    return true;
+  }
+  // Fallback: the live project subdir name may differ from the archive's; scan
+  // one level of project subdirs for the session file.
+  try {
+    for (const entry of fs.readdirSync(projectsDir, { withFileTypes: true })) {
+      if (entry.isDirectory() && fs.existsSync(path.join(projectsDir, entry.name, fileName))) {
+        return true;
+      }
+    }
+  } catch {
+    // projects dir missing or unreadable → treat as not resumable
+  }
+  return false;
 }
 
 /**
@@ -502,11 +539,12 @@ export async function summarizeConversation(exchanges: ConversationExchange[], s
     // Prefer resume-based summarization: the resumed session already holds the
     // transcript, so we send an empty body (cheaper). But resume fails for
     // archived/old conversations whose session is no longer in ~/.claude/projects/
-    // ("No conversation found with session ID"). On any resume failure, fall back
-    // to summarizing the transcript text we already have — so the summary still
-    // succeeds and the sync backlog drains instead of retrying (and spawning a
-    // doomed subprocess) on every run.
-    if (claudeSessionId) {
+    // ("No conversation found with session ID"). Skip the attempt entirely when the
+    // session isn't resumable — a failed resume would still spawn a doomed
+    // subprocess — and keep a try/catch net for the rare case where the file exists
+    // but resume fails anyway. Either way we fall back to summarizing the transcript
+    // text we already have, so the summary succeeds and the sync backlog drains.
+    if (claudeSessionId && isSessionResumable(claudeSessionId, exchanges[0]?.project)) {
       try {
         const result = await callClaude(buildShortSummaryPrompt(''), claudeSessionId);
         return extractSummary(result);

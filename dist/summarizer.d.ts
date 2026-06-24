@@ -1,4 +1,5 @@
 import { ConversationExchange } from './types.js';
+import { shouldSkipReentrantSync } from './reentrancy.js';
 export interface CodexSummarizerCommand {
     command: string;
     args: string[];
@@ -20,15 +21,24 @@ export interface CodexSummarizerCommand {
  * - EPISODIC_MEMORY_API_TIMEOUT_MS: Timeout for API calls (default: SDK default)
  */
 export declare function getApiEnv(): Record<string, string | undefined> | undefined;
-/**
- * Detect whether the current process is running inside the Claude Agent SDK
- * subprocess that the summarizer just spawned. The flag is set by getApiEnv()
- * and inherited by the spawned subprocess. Used by sync entry points to bail
- * out before re-entering the sync→summarizer→spawn cycle (#87).
- */
-export declare function shouldSkipReentrantSync(): boolean;
+export { shouldSkipReentrantSync };
 export declare function formatConversationText(exchanges: ConversationExchange[]): string;
 export declare function extractSummary(text: string): string;
+/**
+ * Whether the Claude Agent SDK can resume `sessionId` — i.e. its transcript still
+ * exists under ~/.claude/projects/. The summarizer prefers resuming the original
+ * session (cheaper: it already holds the transcript), but resume is guaranteed to
+ * fail for archived/old conversations whose source transcript Claude Code has
+ * since removed, and a failed resume still spawns a doomed subprocess. Checking
+ * first lets us skip straight to transcript-text summarization.
+ *
+ * Claude Code names each session file `<sessionId>.jsonl` and stores it in the
+ * project subdir whose name the archive mirrors, so we probe that exact path
+ * first and fall back to a one-level scan of the project subdirs. This is a
+ * best-effort predictor; the resume call site keeps a try/catch net for the rare
+ * case where the file exists but resume still fails (e.g. cwd mismatch).
+ */
+export declare function isSessionResumable(sessionId?: string, project?: string): boolean;
 /**
  * Build the options object passed to the Claude Agent SDK's query() for a
  * summarization call.

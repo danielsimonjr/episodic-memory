@@ -141,9 +141,11 @@ When committing dist/, **only stage files with real content changes** — `tsc` 
 
 The fix:
 - `getApiEnv()` always sets `EPISODIC_MEMORY_SUMMARIZER_GUARD=1` in the env it returns to the SDK
-- `sync-cli.ts` checks `shouldSkipReentrantSync()` at startup and exits silently when the guard is set
+- `sync-cli.ts` checks `shouldSkipReentrantSync()` **before importing the heavy native stack** and exits silently when the guard is set
 
-**Anything new that spawns a Claude subprocess via the SDK must inherit this guard.** Nothing should run `sync --background` without checking the guard first. Test with `test/sync-cli-reentrancy.test.ts` style integration if you change the spawn path.
+The guard lives in its own dependency-free module, `src/reentrancy.ts` (`SUMMARIZER_GUARD_ENV` + `shouldSkipReentrantSync`), re-exported from `summarizer.ts` for back-compat. It is checked *first* in `sync-cli.ts`; the heavy modules (`db.js` → better-sqlite3, `embeddings.js`/`embedding-migration.js` → transformers) are imported lazily via `await import()` only when the CLI is actually going to do work. Keep it that way — moving any heavy module back to a top-level static import makes every guarded reentrant subprocess pay a multi-second load just to bail.
+
+**Anything new that spawns a Claude subprocess via the SDK must inherit this guard.** Nothing should run `sync --background` without checking the guard first. Test with `test/sync-cli-reentrancy.test.ts` / `test/reentrancy.test.ts` if you change the spawn path.
 
 ### 5. Embedding migration
 

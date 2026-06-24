@@ -1,9 +1,10 @@
-import { syncConversations } from './sync.js';
+// Only light, dependency-free imports at the top. The heavy native stack
+// (better-sqlite3 via ./db.js, transformers via ./embeddings.js and
+// ./embedding-migration.js) is imported lazily AFTER the early-exit checks
+// below, so a guarded reentrant subprocess — or a `--help`/`--background`
+// invocation — exits without paying the multi-second module load. (#87)
 import { getArchiveDir, getConversationSourceDirs, getIndexDir } from './paths.js';
-import { shouldSkipReentrantSync } from './summarizer.js';
-import { initDatabase } from './db.js';
-import { generateExchangeEmbedding, initEmbeddings } from './embeddings.js';
-import { runMigrationBatch, countStale } from './embedding-migration.js';
+import { shouldSkipReentrantSync } from './reentrancy.js';
 import { spawn } from 'child_process';
 import fs from 'fs';
 import { formatLogLine, getSyncLogPath } from './logging.js';
@@ -76,6 +77,14 @@ if (isBackground) {
   console.log(`Sync started in background. Log: ${logPath}`);
   process.exit(0);
 }
+
+// Past the early-exit checks: now load the heavy native-dep modules. Doing this
+// lazily (rather than as top-level static imports) keeps the guard/help/background
+// paths above fast — they never load transformers or better-sqlite3.
+const { syncConversations } = await import('./sync.js');
+const { initDatabase } = await import('./db.js');
+const { generateExchangeEmbedding, initEmbeddings } = await import('./embeddings.js');
+const { runMigrationBatch, countStale } = await import('./embedding-migration.js');
 
 const sourceDirs = getConversationSourceDirs();
 const destDir = getArchiveDir();

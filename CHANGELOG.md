@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Security
+- **Enforced patched-version floors for vulnerable dependencies.** `npm audit` reported a CRITICAL in `vitest` (`<3.2.6`, GHSA-5xrq-8626-4rwp) plus HIGH advisories in transitive `hono` (≤4.12.24 — `serve-static` path traversal, CORS reflection, cookie injection, etc.) and `protobufjs` (≤7.6.2). Because this repo intentionally gitignores `package-lock.json`, the fix is encoded in `package.json`: the `vitest` devDependency floor is raised `^3.2.4 → ^3.2.6` (the old range still permitted the vulnerable 3.2.4/3.2.5), and `overrides` pin `hono ^4.12.27` (via `@modelcontextprotocol/sdk`) and `protobufjs ^7.6.4` (via `@huggingface/transformers`). `npm audit` is now 0; the full 188-test suite still passes.
 - Hardened the `read` MCP tool against arbitrary local file reads. Previously the tool accepted any absolute path with only an `existsSync` check, so a prompt-injection attack could trick an LLM into reading any file the Node process had access to (e.g., `~/.ssh/id_rsa`). The tool now requires the resolved path to lie inside the configured archive directory and end in `.jsonl`. All legitimate paths flow from `search()` results, whose `archive_path` values are always constructed as `path.join(projectArchive, file)` rooted in `getArchiveDir()`, so this is non-breaking for normal use.
 
 ### Fixed

@@ -72,7 +72,11 @@ export async function verifyIndex(): Promise<VerificationResult> {
       const lastIndexed = getFileLastIndexed(db, conversationPath);
       if (lastIndexed !== null) {
         const fileStat = fs.statSync(conversationPath);
-        if (fileStat.mtimeMs > lastIndexed) {
+        // last_indexed is stored as integer ms (Date.now()); mtimeMs is a float with
+        // sub-millisecond precision. Floor to the storage granularity so a re-index that
+        // lands in the same ms as the file's mtime is NOT falsely reported as outdated
+        // (sub-ms changes are undetectable at integer-ms resolution anyway).
+        if (Math.floor(fileStat.mtimeMs) > lastIndexed) {
           result.outdated.push({
             path: conversationPath,
             fileTime: fileStat.mtimeMs,

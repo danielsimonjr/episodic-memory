@@ -303,10 +303,13 @@ describe('repairIndex', () => {
     // Run repair
     await repairIndex(issues);
 
-    // Verify it was re-indexed with new timestamp
+    // Verify it was re-indexed with a not-older timestamp. last_indexed is a
+    // millisecond epoch, so on a fast runner the re-index can land in the same ms
+    // as the original index — use >= (not >) to avoid a same-millisecond race.
+    // The real proof that repair re-indexed the file is the outdated===0 check below.
     const dbAfter = initDatabase();
     const afterRow = dbAfter.prepare(`SELECT MAX(last_indexed) as last_indexed FROM exchanges WHERE archive_path = ?`).get(conversationPath) as any;
-    expect(afterRow.last_indexed).toBeGreaterThan(beforeIndexed);
+    expect(afterRow.last_indexed).toBeGreaterThanOrEqual(beforeIndexed);
 
     // Verify no longer outdated
     const verifyAfter = await verifyIndex();

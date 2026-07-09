@@ -72,7 +72,11 @@ export async function verifyIndex(): Promise<VerificationResult> {
       const lastIndexed = getFileLastIndexed(db, conversationPath);
       if (lastIndexed !== null) {
         const fileStat = fs.statSync(conversationPath);
-        if (fileStat.mtimeMs > lastIndexed) {
+        // last_indexed is stored as integer ms (Date.now()); mtimeMs is a float with
+        // sub-millisecond precision. Floor to the storage granularity so a re-index that
+        // lands in the same ms as the file's mtime is NOT falsely reported as outdated
+        // (sub-ms changes are undetectable at integer-ms resolution anyway).
+        if (Math.floor(fileStat.mtimeMs) > lastIndexed) {
           result.outdated.push({
             path: conversationPath,
             fileTime: fileStat.mtimeMs,
@@ -151,11 +155,21 @@ export async function repairIndex(issues: VerificationResult): Promise<void> {
         continue;
       }
 
-      // Generate/update summary
-      const summaryPath = conversationPath.replace('.jsonl', '-summary.txt');
-      const summary = await summarizeConversation(exchanges);
-      fs.writeFileSync(summaryPath, summary, 'utf-8');
-      console.log(`  Created summary: ${summary.split(/\s+/).length} words`);
+      // Generate/update summary — best-effort. A summarizer failure (e.g. the Claude
+      // Agent SDK is unauthenticated or times out) must NOT abort re-indexing: the
+      // exchanges + embeddings below are the core of the repair, the summary is auxiliary.
+      // Previously a throw here fell through to the outer catch, so the file was never
+      // re-indexed and stayed permanently "outdated" (re-attempted every run).
+      try {
+        const summaryPath = conversationPath.replace('.jsonl', '-summary.txt');
+        const summary = await summarizeConversation(exchanges);
+        fs.writeFileSync(summaryPath, summary, 'utf-8');
+        console.log(`  Created summary: ${summary.split(/\s+/).length} words`);
+      } catch (summaryError) {
+        console.error(
+          `  Summary generation failed (indexing continues): ${summaryError instanceof Error ? summaryError.message : summaryError}`
+        );
+      }
 
       // Index exchanges
       for (const exchange of exchanges) {

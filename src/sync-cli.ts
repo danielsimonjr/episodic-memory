@@ -6,6 +6,7 @@
 import { getArchiveDir, getConversationSourceDirs, getIndexDir } from './paths.js';
 import { shouldSkipReentrantSync } from './reentrancy.js';
 import { acquireLock, releaseLock } from './lockfile.js';
+import { BACKGROUND_WORKER_ENV, lowerPriorityIfBackgroundWorker } from './priority.js';
 import { spawn } from 'child_process';
 import fs from 'fs';
 import { formatLogLine, getSyncLogPath, getSyncLockPath, rotateSyncLogIfNeeded } from './logging.js';
@@ -69,12 +70,18 @@ if (isBackground) {
 
     // Spawn a detached process. The child dup's the fd via stdio, so the parent
     // closes its own copy below rather than leaking it (F3).
+    //
+    // Tag the child as the background worker so it drops itself to below-normal
+    // priority before booting transformers. Without this the detached worker
+    // embeds at NORMAL priority and starves the interactive session that spawned
+    // it — including MCP servers, which then blow their 30s handshake budget.
     const child = spawn(process.execPath, [
       process.argv[1], // This script
       ...filteredArgs
     ], {
       detached: true,
-      stdio: ['ignore', logFd, logFd]
+      stdio: ['ignore', logFd, logFd],
+      env: { ...process.env, [BACKGROUND_WORKER_ENV]: '1' }
     });
 
     child.unref(); // Allow parent to exit
@@ -97,6 +104,12 @@ if (!syncLock) {
   process.exit(0);
 }
 process.on('exit', () => releaseLock(syncLock));
+
+// Detached background worker: get out of the foreground's way BEFORE loading the
+// transformer stack below, so the embedding work never runs at normal priority.
+if (lowerPriorityIfBackgroundWorker()) {
+  console.error('episodic-memory: background worker running at below-normal priority');
+}
 
 // Past the early-exit checks: now load the heavy native-dep modules. Doing this
 // lazily (rather than as top-level static imports) keeps the guard/help/background

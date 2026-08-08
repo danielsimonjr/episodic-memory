@@ -45,7 +45,7 @@ When upstream merges these (or equivalents), rebase/merge `upstream/main` and dr
 - **TypeScript source** in `src/`, compiled to `dist/` by `tsc && esbuild`. **Both are committed.**
 - **CLI entry points** in `cli/` (Node.js wrappers — no bash).
 - **MCP server** is `dist/mcp-server.js`, launched by `cli/mcp-server-wrapper.js` from the plugin manifest.
-- **Tests** in `test/` via vitest (35 files, 187 tests).
+- **Tests** in `test/` via vitest (38 files, 210 tests — counts verified 2026-08-08).
 - **Generated files** in `dist/` AND `src/version.ts`. The latter is gitignored; never edit it.
 - **No `package-lock.json` in git** (`.gitignore`'d) — npm install is reproducible enough for this plugin's needs.
 

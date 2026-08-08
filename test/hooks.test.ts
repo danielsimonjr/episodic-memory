@@ -12,6 +12,23 @@ describe('plugin hook configuration', () => {
     expect(command).toBe('node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/cli/episodic-memory.js" sync --background');
   });
 
+  it('also syncs on compaction, because a long-lived session otherwise never archives', () => {
+    // Without `compact`, archiving happens only at session boundaries. On a machine where
+    // sessions run for days, that means the searchable history silently lags reality by
+    // however long the session has been up — measured at 65 hours on 2026-08-08, with the
+    // archived copy of the live session 4 MB behind the file on disk. Compactions are
+    // frequent in exactly the long sessions that suffer, so they are the natural trigger.
+    const hooks = JSON.parse(
+      readFileSync(new URL('../hooks/hooks.json', import.meta.url), 'utf-8')
+    );
+
+    const events = hooks.hooks.SessionStart[0].matcher.split('|');
+
+    expect(events).toEqual(
+      expect.arrayContaining(['startup', 'resume', 'clear', 'compact'])
+    );
+  });
+
   it('does not mark the hook async because Codex plugin hooks do not support async handlers yet', () => {
     const hooks = JSON.parse(
       readFileSync(new URL('../hooks/hooks.json', import.meta.url), 'utf-8')

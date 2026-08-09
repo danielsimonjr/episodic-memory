@@ -29,7 +29,7 @@
 - **Summary-aware ranking** (upstream #74) — when a conversation has a summary, include it in the search result body. Could also weight scores using summary-level embeddings.
 - **Multi-concept aggregation tuning** — `searchMultipleConcepts` exists but the dedup + score-merge logic is heuristic. Try BM25-style reciprocal rank fusion; A/B against current behavior on a held-out query set.
 - **LEANN experiment** (upstream #46) — alternative to sqlite-vec for the vector path. Trade-offs: better recall, lower disk footprint, but adds a non-trivial dep. Feasibility study before commitment.
-- **Eval harness** — `tests/search.test.ts` covers correctness; we need a quality harness measuring recall@k and MRR against a labeled query set. The labeled set comes from Daniel's own "find that conversation where I..." queries.
+- **Eval harness** — `tests/search.test.ts` covers correctness; we need a quality harness measuring recall@k and MRR against a labeled query set. The labeled set comes from the user's own "find that conversation where I..." queries.
 
 **Definition of "done":**
 - Eval harness lands with ≥50 labeled queries
@@ -45,18 +45,18 @@
 **Why now:** Current embedder is `Xenova/all-MiniLM-L6-v2` — fast, small (~80 MB), but the search-quality ceiling is low. Better embedders exist (bge, e5, mxbai) at modest size cost.
 
 **Shape:**
-- **Model comparison** — benchmark MiniLM-L6 vs bge-small-en, gte-small, mxbai-embed-large on Daniel's eval set. Disk + latency + recall trade-offs documented.
+- **Model comparison** — benchmark MiniLM-L6 vs bge-small-en, gte-small, mxbai-embed-large on the user's eval set. Disk + latency + recall trade-offs documented.
 - **Reversible upgrade** — if a new model wins, the upgrade path needs:
   - Bump `EMBEDDING_VERSION`
   - Re-embed migration runs incrementally per existing pattern in `embedding-migration.ts`
   - Migration progress visible (sync log or doctor command)
   - Per-row stamp tells the search code which embedder produced each vector during the transition window
-- **Optional GPU acceleration** — `onnxruntime-node` supports CUDA/Metal/DirectML; explore for users with hardware (Daniel's machine has a discrete GPU). Default stays CPU.
+- **Optional GPU acceleration** — `onnxruntime-node` supports CUDA/Metal/DirectML; explore for users with hardware (this machine has a discrete GPU). Default stays CPU.
 - **Late-interaction option** — ColBERT-style late interaction is a different shape than dense retrieval. Adjacent to LEANN exploration above.
 
 **Definition of "done":**
 - Comparison report exists with measured numbers (not vibes)
-- If model upgrade ships, migration completes on Daniel's 2,739-exchange corpus without manual intervention
+- If model upgrade ships, migration completes on the user's 2,739-exchange corpus without manual intervention
 - New model passes `test/cosine-similarity.test.ts`-style invariants
 
 **Adjacent:** see [focus-areas/embeddings.md](focus-areas/embeddings.md).
@@ -92,7 +92,7 @@
 - **Cross-harness search ranking** — does a Claude conversation about React + a Codex conversation about React rank correctly? Add an eval case.
 - **Summarization fallback chain** — when Claude SDK summary fails, today we silently skip. Better: try Codex, then a text-only extractive fallback, then mark as "needs-summary" for retry.
 
-**Definition of "done":** Daniel's Codex transcripts indexed cleanly, ranked competitively with Claude conversations, with no manual intervention.
+**Definition of "done":** the user's Codex transcripts indexed cleanly, ranked competitively with Claude conversations, with no manual intervention.
 
 **Adjacent track upstream where possible** — this theme aligns with obra's signaled direction.
 
@@ -140,7 +140,7 @@ These have come up but aren't ready for promotion:
 - **Browser extension surface** — could episodic-memory's index be queried from a browser context? Adjacent to the cross-harness story but a much bigger lift.
 - **Long-form summary regeneration** — current summaries are LLM-quality but a year-old summary may not reflect updated convention. Periodic refresh logic?
 - **Diff-based incremental embedding** — embeddings are computed per-exchange today; large conversations re-embed often. A diff-aware approach could save compute.
-- **Export to Markdown/Obsidian/Logseq** — Daniel's note-taking workflow uses Obsidian. A "yesterday's notable conversations" digest could land in a vault.
+- **Export to Markdown/Obsidian/Logseq** — the user's note-taking workflow uses Obsidian. A "yesterday's notable conversations" digest could land in a vault.
 
 ## See also
 

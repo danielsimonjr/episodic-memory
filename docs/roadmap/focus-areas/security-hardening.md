@@ -6,7 +6,7 @@
 ## The data this plugin touches
 
 Episodic-memory indexes **every Claude Code and Codex conversation** on
-the user's machine. Conversations regularly contain:
+The user's machine. Conversations regularly contain:
 
 - API keys, tokens, OAuth secrets pasted for debugging
 - Internal company details, customer names, financial data
@@ -107,9 +107,9 @@ mitigation; offer SQLCipher as an opt-in for high-security users.
 
 The MCP protocol today has no per-tool authorization. Any client that
 connects to the server can call `search` and `read`. This is fine in
-Daniel's single-user setup but a real concern for:
+The user's single-user setup but a real concern for:
 
-- Multi-tenant deployments (not Daniel's case)
+- Multi-tenant deployments (not the user's case)
 - Shared machines (still a concern)
 - Compromised agents that get redirected to call dangerous tools
 

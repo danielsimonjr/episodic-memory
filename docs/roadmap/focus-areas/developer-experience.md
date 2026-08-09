@@ -173,7 +173,7 @@ have a year of history).
 
 **Fix:** `doctor install` (queued in `now.md`) covers this. Also
 include in MCP server's `instructions` field:
-`Episodic Memory v1.4.0 (Daniel's fork — see ~/Dropbox/Github/episodic-memory)`.
+`Episodic Memory v1.4.0 (a fork — see ~/Dropbox/Github/episodic-memory)`.
 
 ## User DX — proposed improvements
 

@@ -75,7 +75,7 @@ Themes (not individual tasks; promote into tasks here as plans firm up):
 ### Repo state
 
 - **Repo:** `~/Dropbox/Github/episodic-memory` (local working dir)
-- **Origin:** `danielsimonjr/episodic-memory` (Daniel's fork)
+- **Origin:** `danielsimonjr/episodic-memory` (a fork)
 - **Upstream:** `obra/episodic-memory`
 - **Default branch:** `main` (direct push, no PR flow for fork-only commits)
 - **package-lock.json:** `.gitignore`'d — npm install on each fresh checkout

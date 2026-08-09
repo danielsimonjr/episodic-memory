@@ -33,7 +33,7 @@ which is already 100+ chars before the project + filename. Long
 project names + long conversation filenames could hit the limit and
 throw `ENAMETOOLONG`.
 
-**To investigate:** find a long-named project in Daniel's archive,
+**To investigate:** find a long-named project in the user's archive,
 verify whether indexing/search/read of it works.
 
 **Likely fix:** prefix paths with `\\?\` (Windows long-path namespace)
@@ -55,7 +55,7 @@ look for unguarded reads.
 
 ### 3. CRLF line endings
 
-Daniel's git config converts LF↔CRLF on checkout. After `npm run build`,
+The user's git config converts LF↔CRLF on checkout. After `npm run build`,
 ~40 dist files show as "modified" with line-ending-only diffs. That
 pollutes `git status` and risks polluting commits.
 
@@ -95,7 +95,7 @@ stdio for 3 of them, see if they all exit cleanly.
 
 ## Test strategy
 
-Today's tests run on the developer's machine — so on Daniel's setup,
+Today's tests run on the developer's machine — so on the user's setup,
 on Windows. That catches some bugs (the parser path-split bug DID show
 up in `parser.test.ts` until we fixed it). But:
 

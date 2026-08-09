@@ -1,4 +1,4 @@
-# CLAUDE.md — episodic-memory (Daniel's fork)
+# CLAUDE.md — episodic-memory (a fork)
 
 > Project instructions for AI coding assistants operating on **this fork** of
 > `obra/episodic-memory`. Auto-loaded by Claude Code on every session. Keep terse
@@ -194,7 +194,7 @@ Output: markdown-formatted conversation.
 
 **Fork security model:** the `path` parameter is intended to be filled with `archive_path` values returned by `search()`. Direct calls with arbitrary paths now error. If you need to read a JSONL outside the archive, copy it in first (or use `fs.readFileSync` from a CLI/script context).
 
-## Development workflow — Daniel's 12 steps
+## Development workflow — the user's 12 steps
 
 Use `dev-workflow` skill for any task that produces a commit. Pipeline:
 

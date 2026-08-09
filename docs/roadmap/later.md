@@ -12,11 +12,11 @@ than spec. Things move from `later` → `next` when concrete shape emerges.
 
 ## Theme A — Multi-machine continuous sync
 
-**The aspiration:** Search Daniel's conversations from any of his machines
+**The aspiration:** Search past conversations from any of his machines
 and get a unified result set. New conversations on machine X are searchable
 from machine Y within minutes.
 
-**Why it matters:** Daniel's machines specialize — desktop for heavy
+**Why it matters:** the machines specialize — desktop for heavy
 compute, laptop for travel, Mac for design. Conversations naturally
 fragment. The memory's value drops with each fragmentation.
 
@@ -79,7 +79,7 @@ scenario that's a problem. May need MCP-level scoping.
 ## Theme C — Beyond-conversation memory
 
 **The aspiration:** Episodic memory today indexes **conversations**.
-Daniel's workflow generates more — research notes, paper drafts, code
+the workflow generates more — research notes, paper drafts, code
 review threads, voice memos. A unified memory could span them.
 
 **Why it matters:** Daniel often asks "where did I work through this
@@ -105,7 +105,7 @@ could be reused for paper-source indexing.
 
 ## Theme D — Personalized retrieval
 
-**The aspiration:** The search ranker learns from Daniel's behavior. When
+**The aspiration:** The search ranker learns from the user's behavior. When
 he clicks through to one result and ignores another, the next query
 weights things accordingly.
 
@@ -149,7 +149,7 @@ nothing automated tracks the SOTA.
 
 ## Theme F — TensorJS adjacency
 
-**The aspiration:** Daniel's TensorJS / universal-physics-tensor project
+**The aspiration:** the user's TensorJS / universal-physics-tensor project
 benefits from episodic-memory's recall. The reverse may be true too —
 TensorJS's visual layers could render episodic-memory's search graph
 interactively (which conversation talks to which, weighted by similarity).

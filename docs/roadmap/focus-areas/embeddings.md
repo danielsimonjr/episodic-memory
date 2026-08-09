@@ -12,7 +12,7 @@
 - **Pooling:** mean
 - **Normalization:** L2 (writer-side), so distance can be converted to cosine similarity via the identity in `search.ts:l2DistanceToCosineSimilarity`
 - **EMBEDDING_VERSION:** 1
-- **Indexed exchanges:** 2,739 (as of 2026-05-18, on Daniel's main machine)
+- **Indexed exchanges:** 2,739 (as of 2026-05-18, on the main machine)
 
 ## Why upgrade
 
@@ -28,7 +28,7 @@ semantic search. Modern small embedders measurably outperform it:
 | mxbai-embed-large-v1 | 670 MB | 1024 | ~64 |
 | nomic-embed-text-v1.5 | 540 MB | 768 (variable) | ~63 |
 
-(MTEB numbers are illustrative; the goal is to measure on Daniel's
+(MTEB numbers are illustrative; the goal is to measure on the user's
 actual conversation corpus, not on internet benchmarks.)
 
 A 5-8 point MTEB lift is substantial — the difference between "search
@@ -94,7 +94,7 @@ The `EMBEDDING_VERSION` + batch-migration scaffold is already in place
    - Progress visible via sync log / doctor
 4. Once all rows are at version 2, drop the old encoder pipeline
 
-For Daniel's 2,739 exchanges:
+For the user's 2,739 exchanges:
 - At ~50 ms/embed on CPU (MiniLM was ~30 ms, larger model ~50-80 ms)
 - Total time: ~3 min for the full reindex
 - One-time cost; afterwards normal incremental indexing
@@ -102,7 +102,7 @@ For Daniel's 2,739 exchanges:
 ### Phase 4: Optional GPU acceleration
 
 `onnxruntime-node` supports CUDA (Linux/Windows discrete NVIDIA),
-DirectML (Windows AMD/Intel), and CoreML (Mac). Daniel's main machine
+DirectML (Windows AMD/Intel), and CoreML (Mac). the main machine
 has a discrete GPU. For ad-hoc reindexes, GPU could be 10-50x faster.
 
 Not in critical path; nice-to-have. Implementation:
@@ -187,7 +187,7 @@ on their own.
 ## Open questions
 
 1. **Cloud embedders?** OpenAI's `text-embedding-3-small` is 1536-dim
-   at ~$0.02/M tokens. Could be a faster path to quality if Daniel's
+   at ~$0.02/M tokens. Could be a faster path to quality if the user's
    OK with cloud cost. But conflicts with episodic-memory's
    "everything local" identity. Decision deferred.
 
@@ -195,7 +195,7 @@ on their own.
    cache. We don't have one today. Worth ~5 ms per query at the cost
    of ~100 KB of LRU storage in memory.
 
-3. **Multilingual?** MiniLM is English-only. Daniel's conversations
+3. **Multilingual?** MiniLM is English-only. past conversations
    are 99%+ English so this is academic, but worth noting.
 
 ## See also

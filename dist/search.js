@@ -1,7 +1,7 @@
-import { initDatabase } from './db.js';
+import { initDatabase, getSharedReaderDatabase } from './db.js';
 import { initEmbeddings, generateQueryEmbedding } from './embeddings.js';
+import { maybeRedactSecrets } from './redact.js';
 import fs from 'fs';
-import readline from 'readline';
 /**
  * Build the AND-clause and bound-parameter list that constrains a search
  * by the optional time and metadata filters. Bound parameters keep us
@@ -65,8 +65,8 @@ function exchangeFromRow(row) {
         id: row.id,
         project: row.project,
         timestamp: row.timestamp,
-        userMessage: row.user_message,
-        assistantMessage: row.assistant_message,
+        userMessage: maybeRedactSecrets(row.user_message),
+        assistantMessage: maybeRedactSecrets(row.assistant_message),
         archivePath: row.archive_path,
         lineStart: row.line_start,
         lineEnd: row.line_end,
@@ -110,6 +110,25 @@ function validateISODate(dateStr, paramName) {
         throw new Error(`Invalid ${paramName} date: "${dateStr}". Not a valid calendar date.`);
     }
 }
+/**
+ * Prepare an FTS5 MATCH query from user input.
+ * Quote the whole string so punctuation / AND/OR tokens in the user query
+ * don't become FTS operators; fall back to LIKE if FTS is unavailable.
+ */
+export function buildFtsMatchQuery(query) {
+    // Escape embedded double-quotes for FTS5 phrase syntax
+    const escaped = query.replace(/"/g, '""');
+    return `"${escaped}"`;
+}
+function resolveSearchDb(options) {
+    if (options.db) {
+        return { db: options.db, ownsConnection: false };
+    }
+    if (options.useSharedReader) {
+        return { db: getSharedReaderDatabase(), ownsConnection: false };
+    }
+    return { db: initDatabase(), ownsConnection: true };
+}
 export async function searchConversations(query, options = {}) {
     const { limit = 10, mode = 'both', after, before } = options;
     // Validate date parameters
@@ -117,68 +136,93 @@ export async function searchConversations(query, options = {}) {
         validateISODate(after, '--after');
     if (before)
         validateISODate(before, '--before');
-    const db = initDatabase();
+    const { db, ownsConnection } = resolveSearchDb(options);
     let results = [];
-    const { sql: filterClause, params: filterParams } = buildSearchFilters(options);
-    if (mode === 'vector' || mode === 'both') {
-        // Vector similarity search.
-        // vec0 applies KNN before WHERE, so when extra metadata filters are
-        // active we ask for more candidates than `limit` and trim afterwards.
-        await initEmbeddings();
-        const queryEmbedding = await generateQueryEmbedding(query);
-        const k = hasMetadataFilters(options) ? limit * 3 : limit;
-        const stmt = db.prepare(`
-      SELECT
-        ${EXCHANGE_SELECT_COLUMNS},
-        vec.distance
-      FROM vec_exchanges AS vec
-      JOIN exchanges AS e ON vec.id = e.id
-      WHERE vec.embedding MATCH ?
-        AND k = ?
-        AND e.is_sidechain = 0
-        ${filterClause}
-      ORDER BY vec.distance ASC
-    `);
-        results = stmt.all(Buffer.from(new Float32Array(queryEmbedding).buffer), k, ...filterParams);
-        if (results.length > limit) {
-            results = results.slice(0, limit);
-        }
-    }
-    if (mode === 'text' || mode === 'both') {
-        // Text search
-        const textStmt = db.prepare(`
-      SELECT
-        ${EXCHANGE_SELECT_COLUMNS},
-        0 as distance
-      FROM exchanges AS e
-      WHERE (e.user_message LIKE ? OR e.assistant_message LIKE ?)
-        AND e.is_sidechain = 0
-        ${filterClause}
-      ORDER BY e.timestamp DESC
-      LIMIT ?
-    `);
-        const textResults = textStmt.all(`%${query}%`, `%${query}%`, ...filterParams, limit);
-        if (mode === 'both') {
-            // Merge and deduplicate by ID
-            const seenIds = new Set(results.map(r => r.id));
-            for (const textResult of textResults) {
-                if (!seenIds.has(textResult.id)) {
-                    results.push(textResult);
-                }
+    try {
+        const { sql: filterClause, params: filterParams } = buildSearchFilters(options);
+        if (mode === 'vector' || mode === 'both') {
+            // Vector similarity search.
+            // vec0 applies KNN before WHERE, so when extra metadata filters are
+            // active we ask for more candidates than `limit` and trim afterwards.
+            await initEmbeddings();
+            const queryEmbedding = await generateQueryEmbedding(query);
+            const k = hasMetadataFilters(options) ? limit * 3 : limit;
+            const stmt = db.prepare(`
+        SELECT
+          ${EXCHANGE_SELECT_COLUMNS},
+          vec.distance
+        FROM vec_exchanges AS vec
+        JOIN exchanges AS e ON vec.id = e.id
+        WHERE vec.embedding MATCH ?
+          AND k = ?
+          AND e.is_sidechain = 0
+          ${filterClause}
+        ORDER BY vec.distance ASC
+      `);
+            results = stmt.all(Buffer.from(new Float32Array(queryEmbedding).buffer), k, ...filterParams);
+            if (results.length > limit) {
+                results = results.slice(0, limit);
             }
         }
-        else {
-            results = textResults;
+        if (mode === 'text' || mode === 'both') {
+            let textResults = [];
+            try {
+                // Prefer FTS5 for text mode (scales past LIKE '%…%' full scans).
+                const ftsStmt = db.prepare(`
+          SELECT
+            ${EXCHANGE_SELECT_COLUMNS},
+            0 as distance
+          FROM exchanges_fts
+          JOIN exchanges AS e ON e.id = exchanges_fts.id
+          WHERE exchanges_fts MATCH ?
+            AND e.is_sidechain = 0
+            ${filterClause}
+          ORDER BY e.timestamp DESC
+          LIMIT ?
+        `);
+                textResults = ftsStmt.all(buildFtsMatchQuery(query), ...filterParams, limit);
+            }
+            catch {
+                // FTS missing or MATCH syntax edge-case: fall back to LIKE.
+                const textStmt = db.prepare(`
+          SELECT
+            ${EXCHANGE_SELECT_COLUMNS},
+            0 as distance
+          FROM exchanges AS e
+          WHERE (e.user_message LIKE ? OR e.assistant_message LIKE ?)
+            AND e.is_sidechain = 0
+            ${filterClause}
+          ORDER BY e.timestamp DESC
+          LIMIT ?
+        `);
+                textResults = textStmt.all(`%${query}%`, `%${query}%`, ...filterParams, limit);
+            }
+            if (mode === 'both') {
+                // Merge and deduplicate by ID
+                const seenIds = new Set(results.map(r => r.id));
+                for (const textResult of textResults) {
+                    if (!seenIds.has(textResult.id)) {
+                        results.push(textResult);
+                    }
+                }
+            }
+            else {
+                results = textResults;
+            }
         }
     }
-    db.close();
+    finally {
+        if (ownsConnection) {
+            db.close();
+        }
+    }
     return results.map((row) => {
         const exchange = exchangeFromRow(row);
         // Try to load summary if available
         const summaryPath = row.archive_path.replace('.jsonl', '-summary.txt');
         let summary;
         if (fs.existsSync(summaryPath)) {
-            summary = fs.readFileSync(summaryPath, 'utf-8').trim();
+            summary = maybeRedactSecrets(fs.readFileSync(summaryPath, 'utf-8').trim());
         }
         // Create snippet (first 200 chars, collapse newlines)
         const snippetText = exchange.userMessage.substring(0, 200).replace(/\s+/g, ' ').trim();
@@ -190,25 +234,6 @@ export async function searchConversations(query, options = {}) {
             summary
         };
     });
-}
-// Helper function to count lines in a file efficiently
-async function countLines(filePath) {
-    try {
-        const fileStream = fs.createReadStream(filePath);
-        const rl = readline.createInterface({
-            input: fileStream,
-            crlfDelay: Infinity
-        });
-        let count = 0;
-        for await (const line of rl) {
-            if (line.trim())
-                count++;
-        }
-        return count;
-    }
-    catch (error) {
-        return 0; // Return 0 if file can't be read
-    }
 }
 // Helper function to get file size in KB
 function getFileSizeInKB(filePath) {
@@ -225,7 +250,6 @@ export async function formatResults(results) {
         return 'No results found.';
     }
     let output = `Found ${results.length} relevant conversation${results.length > 1 ? 's' : ''}:\n\n`;
-    // Process results sequentially to get file metadata
     for (let index = 0; index < results.length; index++) {
         const result = results[index];
         const date = new Date(result.exchange.timestamp).toISOString().split('T')[0];
@@ -253,12 +277,11 @@ export async function formatResults(results) {
                 .join(', ');
             output += `   Tools: ${toolSummary}\n`;
         }
-        // Get file metadata
+        // File metadata: use line_end as a lower bound on length (avoids full-file scans)
         const fileSizeKB = getFileSizeInKB(result.exchange.archivePath);
-        const totalLines = await countLines(result.exchange.archivePath);
         const lineRange = `${result.exchange.lineStart}-${result.exchange.lineEnd}`;
-        // File information with metadata (clean format for smart tool selection)
-        output += `   Lines ${lineRange} in ${result.exchange.archivePath} (${fileSizeKB}KB, ${totalLines} lines)\n\n`;
+        const minLines = result.exchange.lineEnd;
+        output += `   Lines ${lineRange} in ${result.exchange.archivePath} (${fileSizeKB}KB, ≥${minLines} lines)\n\n`;
     }
     return output;
 }
@@ -267,7 +290,7 @@ export async function searchMultipleConcepts(concepts, options = {}) {
     if (concepts.length === 0) {
         return [];
     }
-    // Search for each concept independently
+    // Search for each concept independently (share DB when provided)
     const conceptResults = await Promise.all(concepts.map(concept => searchConversations(concept, { ...options, limit: limit * 5, mode: 'vector' })));
     // Build map of conversation path -> array of results (one per concept)
     const conversationMap = new Map();
@@ -312,7 +335,6 @@ export async function formatMultiConceptResults(results, concepts) {
         return `No conversations found matching all concepts: ${concepts.join(', ')}`;
     }
     let output = `Found ${results.length} conversation${results.length > 1 ? 's' : ''} matching all concepts [${concepts.join(' + ')}]:\n\n`;
-    // Process results sequentially to get file metadata
     for (let index = 0; index < results.length; index++) {
         const result = results[index];
         const date = new Date(result.exchange.timestamp).toISOString().split('T')[0];
@@ -337,12 +359,10 @@ export async function formatMultiConceptResults(results, concepts) {
                 .join(', ');
             output += `   Tools: ${toolSummary}\n`;
         }
-        // Get file metadata
         const fileSizeKB = getFileSizeInKB(result.exchange.archivePath);
-        const totalLines = await countLines(result.exchange.archivePath);
         const lineRange = `${result.exchange.lineStart}-${result.exchange.lineEnd}`;
-        // File information with metadata (clean format for smart tool selection)
-        output += `   Lines ${lineRange} in ${result.exchange.archivePath} (${fileSizeKB}KB, ${totalLines} lines)\n\n`;
+        const minLines = result.exchange.lineEnd;
+        output += `   Lines ${lineRange} in ${result.exchange.archivePath} (${fileSizeKB}KB, ≥${minLines} lines)\n\n`;
     }
     return output;
 }

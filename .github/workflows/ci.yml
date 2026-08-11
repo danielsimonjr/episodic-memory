@@ -21,10 +21,11 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
-      # This repo deliberately does not commit package-lock.json, so use
-      # `npm install` (not `npm ci`) and skip the lockfile-based cache.
-      - run: npm install
-      # --if-present: run each stage only if the repo defines it (universal template).
+          cache: npm
+      - run: npm ci
+      # Transitive highs in onnxruntime-node/sharp currently have no upstream fix;
+      # fail the job on criticals so new critical CVEs still gate merges.
+      - run: npm audit --audit-level=critical
       - run: npm run typecheck --if-present
       - run: npm run lint --if-present
       - run: npm test --if-present

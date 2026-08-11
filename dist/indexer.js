@@ -1,8 +1,8 @@
 import fs from 'fs';
 import path from 'path';
-import { initDatabase, insertExchange } from './db.js';
+import { initDatabase, insertExchange, getMaxIndexedLine } from './db.js';
 import { parseConversation } from './parser.js';
-import { initEmbeddings, generateExchangeEmbedding } from './embeddings.js';
+import { initEmbeddings, generateExchangeEmbedding, generateExchangeEmbeddings } from './embeddings.js';
 import { summarizeConversation } from './summarizer.js';
 import { getArchiveDir, getExcludedProjects, getConversationSourceDirs, findJsonlFiles } from './paths.js';
 // Set max output tokens for Claude SDK (used by summarizer)
@@ -109,13 +109,23 @@ export async function indexConversations(limitToProject, maxConversations, concu
             else {
                 console.log(`  Skipping ${toProcess.length} summaries (--no-summaries mode)`);
             }
-            // Now process embeddings and DB inserts (fast, sequential is fine)
+            // Now process embeddings and DB inserts (batched per conversation)
             for (const conv of toProcess) {
-                for (const exchange of conv.exchanges) {
-                    const toolNames = exchange.toolCalls?.map(tc => tc.toolName);
-                    const embedding = await generateExchangeEmbedding(exchange.userMessage, exchange.assistantMessage, toolNames);
-                    insertExchange(db, exchange, embedding, toolNames);
-                }
+                if (conv.exchanges.length === 0)
+                    continue;
+                const embeddings = await generateExchangeEmbeddings(conv.exchanges.map((exchange) => ({
+                    userMessage: exchange.userMessage,
+                    assistantMessage: exchange.assistantMessage,
+                    toolNames: exchange.toolCalls?.map((tc) => tc.toolName),
+                })));
+                const insertTx = db.transaction(() => {
+                    for (let i = 0; i < conv.exchanges.length; i++) {
+                        const exchange = conv.exchanges[i];
+                        const toolNames = exchange.toolCalls?.map((tc) => tc.toolName);
+                        insertExchange(db, exchange, embeddings[i], toolNames);
+                    }
+                });
+                insertTx();
                 totalExchanges += conv.exchanges.length;
                 conversationsProcessed++;
                 // Check if we hit the limit
@@ -222,8 +232,7 @@ export async function indexUnprocessed(concurrency = 1, noSummaries = false) {
                 const summaryPath = archivePath.replace('.jsonl', '-summary.txt');
                 // High-water mark: index exchanges past the last line we've already covered.
                 // Transcript JSONLs are append-only, so MAX(line_end) tells us where to resume.
-                const hw = db.prepare('SELECT COALESCE(MAX(line_end), 0) as maxLine FROM exchanges WHERE archive_path = ?').get(archivePath);
-                const maxIndexedLine = hw.maxLine;
+                const maxIndexedLine = getMaxIndexedLine(db, archivePath);
                 // Ensure parent dirs exist for subagent files
                 fs.mkdirSync(path.dirname(archivePath), { recursive: true });
                 // Refresh the archive when the source may have grown beyond what we've seen.
@@ -270,14 +279,24 @@ export async function indexUnprocessed(concurrency = 1, noSummaries = false) {
     else {
         console.log(`Skipping summaries for ${unprocessed.length} conversations (--no-summaries mode)\n`);
     }
-    // Now index embeddings
+    // Now index embeddings (batched per conversation)
     console.log(`\nIndexing embeddings...`);
     for (const conv of unprocessed) {
-        for (const exchange of conv.exchanges) {
-            const toolNames = exchange.toolCalls?.map(tc => tc.toolName);
-            const embedding = await generateExchangeEmbedding(exchange.userMessage, exchange.assistantMessage, toolNames);
-            insertExchange(db, exchange, embedding, toolNames);
-        }
+        if (conv.exchanges.length === 0)
+            continue;
+        const embeddings = await generateExchangeEmbeddings(conv.exchanges.map((exchange) => ({
+            userMessage: exchange.userMessage,
+            assistantMessage: exchange.assistantMessage,
+            toolNames: exchange.toolCalls?.map((tc) => tc.toolName),
+        })));
+        const insertTx = db.transaction(() => {
+            for (let i = 0; i < conv.exchanges.length; i++) {
+                const exchange = conv.exchanges[i];
+                const toolNames = exchange.toolCalls?.map((tc) => tc.toolName);
+                insertExchange(db, exchange, embeddings[i], toolNames);
+            }
+        });
+        insertTx();
     }
     db.close();
     console.log(`\n✅ Processed ${unprocessed.length} conversations`);

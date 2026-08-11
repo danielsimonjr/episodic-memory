@@ -89,11 +89,29 @@ export async function runMigrationBatch(db, indexDir, batchSize, embedFn) {
         console.error(`episodic-memory: re-embedding batch of ${rows.length} (${remaining} stale total)...`);
         // Compute embeddings outside the transaction (async work),
         // then write atomically (one transaction per batch for durability).
-        const embeddings = [];
-        for (const row of rows) {
-            const tools = row.tools ? row.tools.split(',') : undefined;
-            const vec = await embedFn(row.user_message, row.assistant_message, tools);
-            embeddings.push({ id: row.id, vec });
+        // Prefer a single batched ONNX forward when the caller passed the
+        // standard generateExchangeEmbedding-compatible function — we rebuild
+        // texts and call generateExchangeEmbeddings from embeddings.js.
+        const { generateExchangeEmbeddings } = await import('./embeddings.js');
+        const texts = rows.map((row) => ({
+            userMessage: row.user_message,
+            assistantMessage: row.assistant_message,
+            toolNames: row.tools ? row.tools.split(',') : undefined,
+        }));
+        // Use the shared batch path (same text format as embedFn) for throughput;
+        // fall back to per-row embedFn if batching fails for any reason.
+        let embeddings;
+        try {
+            const vecs = await generateExchangeEmbeddings(texts);
+            embeddings = rows.map((row, i) => ({ id: row.id, vec: vecs[i] }));
+        }
+        catch {
+            embeddings = [];
+            for (const row of rows) {
+                const tools = row.tools ? row.tools.split(',') : undefined;
+                const vec = await embedFn(row.user_message, row.assistant_message, tools);
+                embeddings.push({ id: row.id, vec });
+            }
         }
         const writeTx = db.transaction((items) => {
             for (const item of items)

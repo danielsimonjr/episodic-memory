@@ -10,6 +10,7 @@ import {
   parseCodexCliVersion,
   versionMeetsMinimum,
 } from './codex-support.js';
+import { validateApiBaseUrl } from './api-endpoint.js';
 
 export interface CodexSummarizerCommand {
   command: string;
@@ -33,9 +34,23 @@ export interface CodexSummarizerCommand {
  * - EPISODIC_MEMORY_API_TIMEOUT_MS: Timeout for API calls (default: SDK default)
  */
 export function getApiEnv(): Record<string, string | undefined> | undefined {
-  const baseUrl = process.env.EPISODIC_MEMORY_API_BASE_URL;
+  const baseUrlRaw = process.env.EPISODIC_MEMORY_API_BASE_URL;
   const token = process.env.EPISODIC_MEMORY_API_TOKEN;
   const timeoutMs = process.env.EPISODIC_MEMORY_API_TIMEOUT_MS;
+
+  let safeBaseUrl: string | undefined;
+  if (baseUrlRaw) {
+    const check = validateApiBaseUrl(baseUrlRaw);
+    if (check.ok) {
+      safeBaseUrl = check.url;
+    } else {
+      // Refuse to point the summarizer at an unsafe endpoint — fall back to
+      // the default Anthropic API rather than exfiltrating transcripts.
+      console.error(
+        `episodic-memory: ignoring EPISODIC_MEMORY_API_BASE_URL: ${check.reason}`
+      );
+    }
+  }
 
   // Always include the reentrancy guard so the SDK-spawned Claude subprocess
   // (which inherits this env) marks itself as a reentrant context. The
@@ -45,7 +60,7 @@ export function getApiEnv(): Record<string, string | undefined> | undefined {
   return {
     ...process.env,
     [SUMMARIZER_GUARD_ENV]: '1',
-    ...(baseUrl && { ANTHROPIC_BASE_URL: baseUrl }),
+    ...(safeBaseUrl && { ANTHROPIC_BASE_URL: safeBaseUrl }),
     ...(token && { ANTHROPIC_AUTH_TOKEN: token }),
     ...(timeoutMs && { API_TIMEOUT_MS: timeoutMs }),
   };

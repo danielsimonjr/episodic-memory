@@ -80,6 +80,7 @@ export function pruneProjects(
   // initDatabase() does that. A client without it (e.g. Python's stock sqlite3) silently
   // skips the vec table and leaves orphaned vectors behind.
   const delVec = db.prepare('DELETE FROM vec_exchanges WHERE id = ?');
+  const delFts = db.prepare('DELETE FROM exchanges_fts WHERE id = ?');
   const delExchanges = db.prepare(
     `DELETE FROM exchanges WHERE project IN (${placeholders})`
   );
@@ -87,7 +88,14 @@ export function pruneProjects(
   // tool_calls first: it carries an FK to exchanges (see #81).
   const run = db.transaction(() => {
     delTools.run(...projects);
-    for (const id of ids) delVec.run(id);
+    for (const id of ids) {
+      delVec.run(id);
+      try {
+        delFts.run(id);
+      } catch {
+        // FTS table may not exist on very old DBs opened without migrate
+      }
+    }
     delExchanges.run(...projects);
   });
   run();

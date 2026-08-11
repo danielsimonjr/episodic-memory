@@ -51,7 +51,7 @@ Themes (not individual tasks; promote into tasks here as plans firm up):
 - [ ] **Theme 4: Observability & debugging UX** — structured sync log, `doctor` expansion, DEBUG=episodic:* flag, local metrics counters
 - [ ] **Theme 5: Cross-harness integration polish** — harness detection metadata, summarization fallback chain
 - [ ] **Theme 6: Multi-machine foundation (import/export)** — per-machine identity tagging, bundle export/import; full sync deferred to `later.md`
-- [ ] **Theme 7: Security hardening sweep** — written threat-model doc, secret-aware indexing option, optional DB encryption at rest, MCP tool authz pattern
+- [ ] **Theme 7: Security hardening sweep** — threat-model doc updated; secret redaction opt-in + MCP realpath/`read` caps + dir modes shipped; remaining: optional DB encryption at rest, MCP tool authz (upstream)
 
 ---
 
@@ -78,7 +78,7 @@ Themes (not individual tasks; promote into tasks here as plans firm up):
 - **Origin:** `danielsimonjr/episodic-memory` (a fork)
 - **Upstream:** `obra/episodic-memory`
 - **Default branch:** `main` (direct push, no PR flow for fork-only commits)
-- **package-lock.json:** `.gitignore`'d — npm install on each fresh checkout
+- **package-lock.json:** committed — prefer `npm ci` on fresh checkouts; CI audits at critical level
 - **dist/ committed:** edit `src/`, then `npm run build`, then commit both. Only stage dist files with real content diffs (skip line-ending-only churn)
 
 ### Workflow

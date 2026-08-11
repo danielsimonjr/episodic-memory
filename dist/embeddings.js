@@ -1,4 +1,5 @@
 import { pipeline, env } from '@huggingface/transformers';
+import { maybeRedactSecrets } from './redact.js';
 // Disable progress callbacks to prevent stdout pollution in MCP context
 // In MCP, stdout is reserved for JSON-RPC communication.
 env.allowLocalModels = true;
@@ -26,19 +27,45 @@ export async function initEmbeddings() {
         console.error('Embedding model loaded');
     }
 }
-export async function generateEmbedding(text) {
-    if (!embeddingPipeline) {
-        await initEmbeddings();
-    }
+/** Truncate one passage the same way single and batch paths do. */
+function truncateForEmbed(text) {
     // Truncate text to avoid token limits (512 tokens max for bge-small).
     // Empirically, retrieval quality is best at the 2000-char truncation limit;
     // longer inputs degrade mean-pooled embeddings.
-    const truncated = text.substring(0, 2000);
+    return text.substring(0, 2000);
+}
+const EMBED_DIM = 384;
+/**
+ * Embed one or more texts in a single pipeline call.
+ * Semantics match repeated `generateEmbedding` calls (same truncate / pool /
+ * normalize), so batching does not require an EMBEDDING_VERSION bump.
+ */
+export async function generateEmbeddings(texts) {
+    if (texts.length === 0)
+        return [];
+    if (!embeddingPipeline) {
+        await initEmbeddings();
+    }
+    const truncated = texts.map(truncateForEmbed);
     const output = await embeddingPipeline(truncated, {
         pooling: 'mean',
         normalize: true,
     });
-    return Array.from(output.data);
+    const data = output.data;
+    if (truncated.length === 1) {
+        return [Array.from(data)];
+    }
+    // Batch output is a flat [N * dim] Float32Array (dims typically [N, dim]).
+    const vectors = [];
+    for (let i = 0; i < truncated.length; i++) {
+        const offset = i * EMBED_DIM;
+        vectors.push(Array.from(data.subarray(offset, offset + EMBED_DIM)));
+    }
+    return vectors;
+}
+export async function generateEmbedding(text) {
+    const [vec] = await generateEmbeddings([text]);
+    return vec;
 }
 /**
  * Prepend the BGE retrieval prefix to a query string. Idempotent: returns
@@ -58,11 +85,19 @@ export function withQueryPrefix(query) {
 export async function generateQueryEmbedding(query) {
     return generateEmbedding(withQueryPrefix(query));
 }
-export async function generateExchangeEmbedding(userMessage, assistantMessage, toolNames) {
-    // Combine user question, assistant answer, and tools used for better searchability
-    let combined = `User: ${userMessage}\n\nAssistant: ${assistantMessage}`;
+/** Build the passage text that both single and batch exchange embedders use. */
+export function formatExchangeEmbeddingText(userMessage, assistantMessage, toolNames) {
+    // Redact before embed when opted in so vectors aren't derived from raw secrets.
+    let combined = `User: ${maybeRedactSecrets(userMessage)}\n\nAssistant: ${maybeRedactSecrets(assistantMessage)}`;
     if (toolNames && toolNames.length > 0) {
         combined += `\n\nTools: ${toolNames.join(', ')}`;
     }
-    return generateEmbedding(combined);
+    return combined;
+}
+export async function generateExchangeEmbedding(userMessage, assistantMessage, toolNames) {
+    return generateEmbedding(formatExchangeEmbeddingText(userMessage, assistantMessage, toolNames));
+}
+/** Batch variant of `generateExchangeEmbedding` — one ONNX forward pass. */
+export async function generateExchangeEmbeddings(items) {
+    return generateEmbeddings(items.map((item) => formatExchangeEmbeddingText(item.userMessage, item.assistantMessage, item.toolNames)));
 }

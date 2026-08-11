@@ -1,3 +1,4 @@
+import Database from 'better-sqlite3';
 import { SearchResult, MultiConceptResult } from './types.js';
 export interface SearchOptions {
     limit?: number;
@@ -7,6 +8,13 @@ export interface SearchOptions {
     project?: string;
     session_id?: string;
     git_branch?: string;
+    /**
+     * Reuse an open DB handle (MCP hot path). When omitted, opens and closes
+     * a one-shot connection (CLI behavior).
+     */
+    db?: Database.Database;
+    /** When true with no `db`, use the process-wide shared reader. */
+    useSharedReader?: boolean;
 }
 /**
  * Convert an L2 (Euclidean) distance between two unit-normalized vectors
@@ -19,6 +27,12 @@ export interface SearchOptions {
  * the L2 distance returned by sqlite-vec satisfies the unit-vector identity.
  */
 export declare function l2DistanceToCosineSimilarity(distance: number): number;
+/**
+ * Prepare an FTS5 MATCH query from user input.
+ * Quote the whole string so punctuation / AND/OR tokens in the user query
+ * don't become FTS operators; fall back to LIKE if FTS is unavailable.
+ */
+export declare function buildFtsMatchQuery(query: string): string;
 export declare function searchConversations(query: string, options?: SearchOptions): Promise<SearchResult[]>;
 export declare function formatResults(results: Array<SearchResult & {
     summary?: string;

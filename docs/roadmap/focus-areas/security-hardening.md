@@ -28,13 +28,14 @@ data more useful — both to the user AND a potential attacker.
 
 | Threat | Severity | Mitigation today | Status |
 |---|---|---|---|
-| **Prompt injection → MCP `read` reads arbitrary files** | HIGH | Fork hardened: `read` confined to archive dir + `.jsonl` extension | ✅ Closed (`6cadc20`) |
+| **Prompt injection → MCP `read` reads arbitrary files** | HIGH | Fork hardened: `read` confined to archive dir + `.jsonl` + realpath (symlink-safe) + size/stream caps | ✅ Closed (`6cadc20` + P0/P1 follow-up) |
 | **Malicious conversation JSONL → RCE during parse/index** | MEDIUM | Parser uses `JSON.parse` (safe); no eval; no shell construction | ✅ Not exploitable as audited 2026-05-18 |
 | **Malicious conversation JSONL → embeddings inject** | LOW | Embedder is text-only; no model-side code injection vector | ✅ Not exploitable |
-| **DB at rest readable by other local users** | MEDIUM | Filesystem perms (Windows ACL / Unix umask) | ⚠️ User-dependent; no plugin-level enforcement |
+| **DB at rest readable by other local users** | MEDIUM | Dirs `0700`, DB `0600` (best-effort); document FileVault/BitLocker | ✅ Plugin-enforced modes + docs |
 | **DB exfiltration via backup** | MEDIUM | None — backups (Dropbox, Time Machine) inherit plaintext | ⚠️ Documented; user awareness |
 | **Hook script env-var hijack (`PLUGIN_ROOT`)** | LOW | Falls back to `CLAUDE_PLUGIN_ROOT`; both injected by Claude Code | ⚠️ Trust boundary is Claude Code |
-| **Secrets accidentally indexed → embedded into model** | MEDIUM | None today; embedder is local but data still embeds | ⚠️ Open work |
+| **Secrets accidentally indexed → embedded into model** | MEDIUM | Opt-in `EPISODIC_MEMORY_REDACT_SECRETS=1` | ✅ Opt-in shipped |
+| **Unsafe custom summarizer API base URL** | HIGH | `https:` (or localhost `http:`) validation; reject embedded creds | ✅ Closed |
 | **Hook script silently fails, leaving index stale** | LOW | None today | 🔧 In `now.md` |
 | **MCP tool can be called by ANY agent that connects** | MEDIUM | MCP framework has no per-tool authz | ⚠️ Architectural; needs upstream MCP support |
 

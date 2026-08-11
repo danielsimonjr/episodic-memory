@@ -4,6 +4,9 @@
  *
  * This server provides tools to search and explore indexed Claude Code and Codex conversations
  * using semantic search, text search, and conversation display capabilities.
+ *
+ * Heavy modules (search / embeddings / show) are loaded lazily inside tool handlers so
+ * ListTools / handshake stay cheap.
  */
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -13,18 +16,12 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
-import {
-  searchConversations,
-  searchMultipleConcepts,
-  formatResults,
-  formatMultiConceptResults,
-  SearchOptions,
-} from './search.js';
-import { formatConversationAsMarkdown } from './show.js';
 import { VERSION } from './version.js';
-import { getArchiveDir } from './paths.js';
-import fs from 'fs';
-import path from 'path';
+import {
+  resolveArchiveJsonlPath,
+  readJsonlLines,
+} from './archive-path.js';
+import { closeSharedReaderDatabase } from './db.js';
 
 // Zod Schemas for Input Validation
 
@@ -129,7 +126,7 @@ const server = new Server(
   {
     capabilities: {
       tools: {},
-    },
+    }
   }
 );
 
@@ -203,6 +200,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
     if (name === 'search') {
       const params = SearchInputSchema.parse(args);
+      // Lazy-load search stack (embeddings / sqlite) only on first search call
+      const {
+        searchConversations,
+        searchMultipleConcepts,
+        formatResults,
+        formatMultiConceptResults,
+      } = await import('./search.js');
+      type SearchOptions = import('./search.js').SearchOptions;
+
       let resultText: string;
 
       // Check if query is array (multi-concept) or string (single-concept)
@@ -215,6 +221,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           project: params.project,
           session_id: params.session_id,
           git_branch: params.git_branch,
+          useSharedReader: true,
         };
 
         const results = await searchMultipleConcepts(params.query, options);
@@ -242,6 +249,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           project: params.project,
           session_id: params.session_id,
           git_branch: params.git_branch,
+          useSharedReader: true,
         };
 
         const results = await searchConversations(params.query, options);
@@ -278,40 +286,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     if (name === 'read') {
       const params = ShowConversationInputSchema.parse(args);
 
-      // Confine reads to the archive directory. The schema accepts any string,
-      // but all legitimate paths come from search() results which return DB
-      // archive_path values, and those are always inside getArchiveDir() (see
-      // indexer.ts where archivePath = path.join(projectArchive, file)).
-      // Without this check, a prompt-injection attack could trick the LLM
-      // into reading arbitrary local files via this tool.
-      const resolvedPath = path.resolve(params.path);
-      const archiveRoot = path.resolve(getArchiveDir());
-      const isInsideArchive =
-        resolvedPath === archiveRoot ||
-        resolvedPath.startsWith(archiveRoot + path.sep);
-      if (!isInsideArchive) {
-        throw new Error(
-          `Path is outside the conversation archive: ${params.path}`
-        );
-      }
-      if (!resolvedPath.endsWith('.jsonl')) {
-        throw new Error(
-          `Path must point to a .jsonl conversation file: ${params.path}`
-        );
-      }
+      // Confine reads to the archive directory with realpath (defeats symlink
+      // escapes past a naive path.resolve prefix check). Legitimate paths come
+      // from search() archive_path values rooted in getArchiveDir().
+      const safePath = resolveArchiveJsonlPath(params.path);
 
-      // Verify file exists
-      if (!fs.existsSync(resolvedPath)) {
-        throw new Error(`File not found: ${params.path}`);
-      }
-
-      // Read and format conversation with optional line range
-      const jsonlContent = fs.readFileSync(resolvedPath, 'utf-8');
-      const markdownContent = formatConversationAsMarkdown(
-        jsonlContent,
+      // Stream line range — never load multi-100MB JSONL into one string.
+      const jsonlContent = await readJsonlLines(
+        safePath,
         params.startLine,
         params.endLine
       );
+
+      const { formatConversationAsMarkdown } = await import('./show.js');
+      // Content is already sliced to the requested range; don't re-slice.
+      const markdownContent = formatConversationAsMarkdown(jsonlContent);
 
       return {
         content: [
@@ -345,6 +334,19 @@ async function main() {
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
+
+  const cleanup = () => {
+    closeSharedReaderDatabase();
+  };
+  process.on('exit', cleanup);
+  process.on('SIGINT', () => {
+    cleanup();
+    process.exit(0);
+  });
+  process.on('SIGTERM', () => {
+    cleanup();
+    process.exit(0);
+  });
 }
 
 // Run the Server

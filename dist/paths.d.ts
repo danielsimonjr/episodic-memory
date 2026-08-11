@@ -1,3 +1,5 @@
+/** Best-effort chmod; no-op on platforms / FS that reject it. */
+export declare function tryChmod(targetPath: string, mode: number): void;
 /**
  * Get the Claude Code configuration directory.
  * Supports CLAUDE_CONFIG_DIR for multiple profiles.

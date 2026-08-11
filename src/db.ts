@@ -3,9 +3,19 @@ import { ConversationExchange } from './types.js';
 import path from 'path';
 import fs from 'fs';
 import * as sqliteVec from 'sqlite-vec';
-import { getDbPath } from './paths.js';
+import { getDbPath, tryChmod } from './paths.js';
 import { EMBEDDING_VERSION } from './embedding-migration.js';
 import { truncateForIndex } from './constants.js';
+import { maybeRedactSecrets } from './redact.js';
+
+export interface OpenDatabaseOptions {
+  /**
+   * Run CREATE TABLE / migrations / CREATE INDEX.
+   * Default true. Pass false for hot-path readers that know the schema is current
+   * (e.g. a long-lived MCP search connection after the first migrated open).
+   */
+  migrate?: boolean;
+}
 
 export function migrateSchema(db: Database.Database): void {
   const columns = db.prepare(`SELECT name FROM pragma_table_info('exchanges')`).all() as Array<{ name: string }>;
@@ -43,6 +53,7 @@ export function migrateSchema(db: Database.Database): void {
   }
 
   migrateToolCallsCascade(db);
+  ensureFts(db);
 }
 
 /**
@@ -105,16 +116,76 @@ export function migrateToolCallsCascade(db: Database.Database): void {
   console.error('  tool_calls migration complete.');
 }
 
-export function initDatabase(): Database.Database {
+/**
+ * Create (and backfill if empty) the FTS5 index used by text-mode search.
+ * External-content style: we keep id + message copies and update them from
+ * insertExchange / deleteExchange / prune.
+ */
+export function ensureFts(db: Database.Database): void {
+  db.exec(`
+    CREATE VIRTUAL TABLE IF NOT EXISTS exchanges_fts USING fts5(
+      id UNINDEXED,
+      user_message,
+      assistant_message,
+      tokenize = 'porter unicode61'
+    )
+  `);
+
+  const ftsCount = (db.prepare('SELECT COUNT(*) AS c FROM exchanges_fts').get() as { c: number }).c;
+  const exchCount = (db.prepare('SELECT COUNT(*) AS c FROM exchanges').get() as { c: number }).c;
+  if (exchCount > 0 && ftsCount === 0) {
+    console.error(`Backfilling FTS index for ${exchCount} exchange(s)...`);
+    db.exec(`
+      INSERT INTO exchanges_fts (id, user_message, assistant_message)
+      SELECT id, user_message, assistant_message FROM exchanges
+    `);
+    console.error('  FTS backfill complete.');
+  }
+}
+
+export function upsertExchangeFts(
+  db: Database.Database,
+  id: string,
+  userMessage: string,
+  assistantMessage: string
+): void {
+  db.prepare('DELETE FROM exchanges_fts WHERE id = ?').run(id);
+  db.prepare(
+    `INSERT INTO exchanges_fts (id, user_message, assistant_message) VALUES (?, ?, ?)`
+  ).run(id, userMessage, assistantMessage);
+}
+
+export function deleteExchangeFts(db: Database.Database, id: string): void {
+  db.prepare('DELETE FROM exchanges_fts WHERE id = ?').run(id);
+}
+
+function applySecureDbFileMode(dbPath: string): void {
+  tryChmod(dbPath, 0o600);
+  // WAL/SHM siblings if present
+  tryChmod(`${dbPath}-wal`, 0o600);
+  tryChmod(`${dbPath}-shm`, 0o600);
+}
+
+export function openDatabase(options: OpenDatabaseOptions = {}): Database.Database {
+  const migrate = options.migrate !== false;
   const dbPath = getDbPath();
 
-  // Ensure directory exists
+  // Ensure directory exists with restrictive mode
   const dbDir = path.dirname(dbPath);
   if (!fs.existsSync(dbDir)) {
-    fs.mkdirSync(dbDir, { recursive: true });
+    fs.mkdirSync(dbDir, { recursive: true, mode: 0o700 });
+  } else {
+    tryChmod(dbDir, 0o700);
   }
 
+  const existed = fs.existsSync(dbPath);
   const db = new Database(dbPath);
+  if (!existed) {
+    applySecureDbFileMode(dbPath);
+  } else {
+    // Best-effort tighten on every open (no-op if already correct / unsupported)
+    applySecureDbFileMode(dbPath);
+  }
 
   // Load sqlite-vec extension
   sqliteVec.load(db);
@@ -128,6 +199,10 @@ export function initDatabase(): Database.Database {
   // EPISODIC_MEMORY_DB_BUSY_TIMEOUT_MS.
   const busyTimeout = parseInt(process.env.EPISODIC_MEMORY_DB_BUSY_TIMEOUT_MS || '5000', 10);
   db.pragma(`busy_timeout = ${Number.isFinite(busyTimeout) && busyTimeout >= 0 ? busyTimeout : 5000}`);
+
+  if (!migrate) {
+    return db;
+  }
 
   // Create exchanges table
   db.exec(`
@@ -207,6 +282,12 @@ export function initDatabase(): Database.Database {
     CREATE INDEX IF NOT EXISTS idx_git_branch ON exchanges(git_branch)
   `);
   db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_archive_path ON exchanges(archive_path)
+  `);
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_embedding_version ON exchanges(embedding_version)
+  `);
+  db.exec(`
     CREATE INDEX IF NOT EXISTS idx_tool_name ON tool_calls(tool_name)
   `);
   db.exec(`
@@ -216,6 +297,42 @@ export function initDatabase(): Database.Database {
   return db;
 }
 
+/** Open (and migrate) a database — the default writer / one-shot path. */
+export function initDatabase(): Database.Database {
+  return openDatabase({ migrate: true });
+}
+
+/**
+ * Process-wide reader connection for MCP search hot path.
+ * First call migrates; later calls reuse without re-running CREATE INDEX.
+ */
+let sharedReader: Database.Database | null = null;
+
+export function getSharedReaderDatabase(): Database.Database {
+  if (sharedReader) {
+    try {
+      // Touch the connection; recreate if it was closed.
+      sharedReader.pragma('busy_timeout');
+      return sharedReader;
+    } catch {
+      sharedReader = null;
+    }
+  }
+  sharedReader = openDatabase({ migrate: true });
+  return sharedReader;
+}
+
+export function closeSharedReaderDatabase(): void {
+  if (sharedReader) {
+    try {
+      sharedReader.close();
+    } catch {
+      // ignore
+    }
+    sharedReader = null;
+  }
+}
+
 export function insertExchange(
   db: Database.Database,
   exchange: ConversationExchange,
@@ -223,6 +340,9 @@ export function insertExchange(
   toolNames?: string[]
 ): void {
   const now = Date.now();
+
+  const userMessage = truncateForIndex(maybeRedactSecrets(exchange.userMessage));
+  const assistantMessage = truncateForIndex(maybeRedactSecrets(exchange.assistantMessage));
 
   const stmt = db.prepare(`
     INSERT OR REPLACE INTO exchanges
@@ -238,8 +358,8 @@ export function insertExchange(
     exchange.timestamp,
     // Cap machine-generated prompt payload. This is the single choke point every
     // indexer path goes through, so the DB-size invariant holds regardless of caller.
-    truncateForIndex(exchange.userMessage),
-    truncateForIndex(exchange.assistantMessage),
+    userMessage,
+    assistantMessage,
     exchange.archivePath,
     exchange.lineStart,
     exchange.lineEnd,
@@ -270,6 +390,8 @@ export function insertExchange(
   `);
 
   vecStmt.run(exchange.id, Buffer.from(new Float32Array(embedding).buffer));
+
+  upsertExchangeFts(db, exchange.id, userMessage, assistantMessage);
 
   // Insert tool calls if present
   if (exchange.toolCalls && exchange.toolCalls.length > 0) {
@@ -308,9 +430,18 @@ export function getFileLastIndexed(db: Database.Database, archivePath: string): 
   return row.lastIndexed;
 }
 
+/** High-water mark for append-only incremental indexing of a transcript. */
+export function getMaxIndexedLine(db: Database.Database, archivePath: string): number {
+  const row = db.prepare(
+    'SELECT COALESCE(MAX(line_end), 0) as maxLine FROM exchanges WHERE archive_path = ?'
+  ).get(archivePath) as { maxLine: number };
+  return row.maxLine;
+}
+
 export function deleteExchange(db: Database.Database, id: string): void {
   // Delete from vector table
   db.prepare(`DELETE FROM vec_exchanges WHERE id = ?`).run(id);
+  deleteExchangeFts(db, id);
 
   // Delete from main table
   db.prepare(`DELETE FROM exchanges WHERE id = ?`).run(id);

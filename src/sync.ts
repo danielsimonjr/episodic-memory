@@ -9,11 +9,26 @@ const EXCLUSION_MARKERS = [
   SUMMARIZER_CONTEXT_MARKER,
 ];
 
-function shouldSkipConversation(filePath: string): boolean {
+/** How many leading bytes to scan for exclusion markers (avoids full-file reads). */
+const SKIP_MARKER_SCAN_BYTES = 256 * 1024;
+
+/**
+ * True when the conversation should be excluded from indexing / summarization.
+ * Only scans the first SKIP_MARKER_SCAN_BYTES — markers are emitted early in
+ * agent prompts, so a head scan is sufficient and vastly cheaper on huge JSONL.
+ */
+export function shouldSkipConversation(filePath: string): boolean {
   try {
-    const content = fs.readFileSync(filePath, 'utf-8');
-    return EXCLUSION_MARKERS.some(marker => content.includes(marker));
-  } catch (error) {
+    const fd = fs.openSync(filePath, 'r');
+    try {
+      const buf = Buffer.alloc(SKIP_MARKER_SCAN_BYTES);
+      const bytesRead = fs.readSync(fd, buf, 0, SKIP_MARKER_SCAN_BYTES, 0);
+      const content = buf.subarray(0, bytesRead).toString('utf-8');
+      return EXCLUSION_MARKERS.some(marker => content.includes(marker));
+    } finally {
+      fs.closeSync(fd);
+    }
+  } catch {
     // If we can't read the file, don't skip it
     return false;
   }
@@ -179,8 +194,8 @@ export async function syncConversations(
 
   // Index copied files (unless skipIndex is set)
   if (!options.skipIndex && filesToIndex.length > 0) {
-    const { initDatabase, insertExchange } = await import('./db.js');
-    const { initEmbeddings, generateExchangeEmbedding } = await import('./embeddings.js');
+    const { initDatabase, insertExchange, getMaxIndexedLine } = await import('./db.js');
+    const { initEmbeddings, generateExchangeEmbeddings } = await import('./embeddings.js');
     const { parseConversation } = await import('./parser.js');
 
     const db = initDatabase();
@@ -200,15 +215,35 @@ export async function syncConversations(
           const project = path.basename(path.dirname(file));
           const exchanges = await parseConversation(file, project, file);
 
-          for (const exchange of exchanges) {
-            const toolNames = exchange.toolCalls?.map(tc => tc.toolName);
-            const embedding = await generateExchangeEmbedding(
-              exchange.userMessage,
-              exchange.assistantMessage,
-              toolNames
-            );
-            insertExchange(db, exchange, embedding, toolNames);
+          // High-water mark: transcript JSONLs are append-only, so only embed
+          // exchanges past MAX(line_end). Matches indexUnprocessed (#84).
+          const maxIndexedLine = getMaxIndexedLine(db, file);
+          const newExchanges =
+            maxIndexedLine > 0
+              ? exchanges.filter((e) => e.lineStart > maxIndexedLine)
+              : exchanges;
+
+          if (newExchanges.length === 0) {
+            result.indexed++;
+            continue;
           }
+
+          const embeddings = await generateExchangeEmbeddings(
+            newExchanges.map((exchange) => ({
+              userMessage: exchange.userMessage,
+              assistantMessage: exchange.assistantMessage,
+              toolNames: exchange.toolCalls?.map((tc) => tc.toolName),
+            }))
+          );
+
+          const insertTx = db.transaction(() => {
+            for (let i = 0; i < newExchanges.length; i++) {
+              const exchange = newExchanges[i];
+              const toolNames = exchange.toolCalls?.map((tc) => tc.toolName);
+              insertExchange(db, exchange, embeddings[i], toolNames);
+            }
+          });
+          insertTx();
 
           result.indexed++;
         } catch (error) {

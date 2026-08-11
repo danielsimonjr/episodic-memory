@@ -2,13 +2,25 @@ import os from 'os';
 import path from 'path';
 import fs from 'fs';
 /**
- * Ensure a directory exists, creating it if necessary
+ * Ensure a directory exists, creating it if necessary.
+ * New directories are mode 0o700 so conversation archives/indexes are not
+ * world-readable on multi-user Unix hosts (umask alone is not enough).
+ * Existing dirs are left alone (chmod can fail on some platforms / ACLs).
  */
 function ensureDir(dir) {
     if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
+        fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
     }
     return dir;
+}
+/** Best-effort chmod; no-op on platforms / FS that reject it. */
+export function tryChmod(targetPath, mode) {
+    try {
+        fs.chmodSync(targetPath, mode);
+    }
+    catch {
+        // Windows / exotic FS: ignore
+    }
 }
 /**
  * Get the Claude Code configuration directory.

@@ -14,7 +14,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Custom summarizer API base URLs** must be `https:` (or `http:` on localhost only) and must not embed credentials; unsafe values are ignored with a stderr warning.
 - **New config/index dirs are `0700` and the SQLite DB is chmod'd `0600`** (best-effort) so conversation history is not world-readable under a permissive umask.
 - **Committed `package-lock.json`**; CI runs `npm ci` + `npm audit --audit-level=critical`.
+- **Two high-severity transitive vulnerabilities cleared: `sharp` and `adm-zip`.** Both arrive
+  through `@huggingface/transformers@4.2.0` — `sharp` directly, `adm-zip` via
+  `onnxruntime-node@1.24.3` — and neither can be moved by upgrading the parent: 4.2.0 **is**
+  latest, and it caps `sharp: ^0.34.5` and pins `onnxruntime-node` to an exact version. So a
+  plain `npm install` resolves the vulnerable versions no matter how current the tree is.
 
+  This supersedes the note added just above with the `npm ci` switch — "transitive highs in
+  onnxruntime-node/sharp currently have no upstream fix". That is true of the *dependency
+  tree*: no released parent resolves them. It is not true of this package, because an
+  override does. The `npm audit --audit-level=critical` gate stays as it is; it is the right
+  ceiling for advisories genuinely outside our control, and these two no longer are.
+
+  Fixed with range-based `overrides` (`sharp: ^0.35.0`, `adm-zip: ^0.6.0`), matching the
+  existing `hono`/`protobufjs` entries. Ranges, not exact pins — an override pinned to a
+  single version becomes the blocker the moment *that* version is flagged. Resolved to
+  sharp 0.35.3 and adm-zip 0.6.0; full suite green (38 files, 210 tests).
+
+  Blast radius is small here: neither package is used directly anywhere in `src/`. This
+  codebase drives transformers for text embeddings only, so `sharp` (its image path) and
+  `adm-zip` (onnxruntime's model extraction) are reachable but not on any hot path this
+  project exercises.
 ### Changed
 - **SessionStart sync uses high-water incremental indexing** — only exchanges past `MAX(line_end)` are re-embedded when a transcript's mtime advances (same append-only contract as `indexUnprocessed`).
 - **Search markdown formatting** reports `≥line_end` from the DB instead of full-scanning every archive to count lines.

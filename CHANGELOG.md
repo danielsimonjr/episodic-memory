@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-08-13
+
 ### Security
 - **MCP `read` now defeats symlink escapes** via `fs.realpathSync` on both the candidate path and the archive root (plus Windows case-normalization). A planted `*.jsonl` symlink under the archive that pointed outside previously passed the lexical prefix check; it is rejected. Covered by `test/archive-path.test.ts`.
 - **MCP `read` enforces a byte cap** (`EPISODIC_MEMORY_MAX_READ_BYTES`, default 32 MB) and streams line ranges instead of loading entire JSONL files into memory.

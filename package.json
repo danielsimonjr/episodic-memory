@@ -15,13 +15,13 @@
     "prebuild": "npm run generate-version",
     "build": "tsc && npm run bundle",
     "bundle": "esbuild src/mcp-server.ts --bundle --platform=node --format=esm --outfile=dist/mcp-server.js --external:fsevents --external:@anthropic-ai/claude-agent-sdk --external:sharp --external:onnxruntime-node --external:better-sqlite3 --external:@huggingface/transformers --external:sqlite-vec",
-    "postinstall": "node scripts/rebuild-native.js",
-    "rebuild:native": "node scripts/rebuild-native.js",
     "pretest": "npm run generate-version",
     "test": "vitest run",
     "test:claude-e2e": "node scripts/claude-e2e.js",
     "test:codex-e2e": "node scripts/codex-e2e.js",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "postinstall": "node scripts/rebuild-native.mjs",
+    "rebuild:native": "node scripts/rebuild-native.mjs"
   },
   "keywords": [
     "claude-code",

@@ -28,7 +28,7 @@ jobs:
       - run: bun install --frozen-lockfile
       # Transitive highs in onnxruntime-node/sharp currently have no upstream fix;
       # fail the job on criticals so new critical CVEs still gate merges.
-      - run: npm audit --audit-level=critical
+      - run: bun audit --audit-level=critical
       - run: bun run --if-present typecheck
       - run: bun run --if-present lint
       - run: bun run --if-present test

@@ -123,7 +123,7 @@ console.log('Syncing conversations...');
 console.log(`Sources: ${sourceDirs.join(', ')}`);
 console.log(`Destination: ${destDir}\n`);
 async function syncAll() {
-    const totals = { copied: 0, skipped: 0, indexed: 0, summarized: 0, errors: [], sourcesWithSummaryWork: 0, totalNeedingSummaries: 0 };
+    const totals = { copied: 0, skipped: 0, indexed: 0, summarized: 0, errors: [], pendingSummaries: 0 };
     // Global per-sync summary budget shared across ALL source dirs (F2). Previously
     // the 10-summary cap applied per source dir, so the real cap was 10 × dirs and
     // was not configurable. Now it's one configurable budget decremented as each
@@ -138,14 +138,26 @@ async function syncAll() {
         totals.skipped += result.skipped;
         totals.indexed += result.indexed;
         totals.summarized += result.summarized;
+        totals.pendingSummaries += result.pendingSummaries;
         totals.errors.push(...result.errors);
         summaryBudget -= result.summaryAttempts;
     }
-    console.log(`\n✅ Sync complete!`);
+    // HONEST BANNER (2026-08-29). This printed the success line UNCONDITIONALLY - including on the
+    // 87-of-140 runs that summarised nothing while a backlog waited. A success banner over a stalled
+    // queue is the exact failure this tool exists to prevent: it reads as health from outside, so the
+    // real alarm (archive lag) only arrives days later and downstream of the cause.
+    const summaryStalled = totals.pendingSummaries > 0 && totals.summarized === 0;
+    if (summaryStalled) {
+        console.log(`\n⚠️  Sync finished WITHOUT SUMMARISING ANYTHING - ${totals.pendingSummaries} conversation(s) still need summaries.`);
+        console.log(`  This is NOT a healthy run; copy and index results below are still valid.`);
+    }
+    else {
+        console.log(`\n✅ Sync complete!`);
+    }
     console.log(`  Copied: ${totals.copied}`);
     console.log(`  Skipped: ${totals.skipped}`);
     console.log(`  Indexed: ${totals.indexed}`);
-    console.log(`  Summarized: ${totals.summarized}`);
+    console.log(`  Summarized: ${totals.summarized}${totals.pendingSummaries > 0 ? ` (${totals.pendingSummaries} still pending)` : ''}`);
     if (totals.errors.length > 0) {
         console.log(`\n⚠️  Errors: ${totals.errors.length}`);
         totals.errors.forEach(err => console.log(`  ${err.file}: ${err.error}`));

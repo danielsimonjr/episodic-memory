@@ -1,3 +1,25 @@
+## [Unreleased]
+
+### Fixed
+
+- **Sync no longer reports success over a stalled summary queue.** `Sync complete!` printed
+  unconditionally, including on runs that summarised nothing while a backlog waited (measured:
+  87 of 140 sync blocks reported `Summarized: 0` under a green banner). A stalled run now says so
+  explicitly, and the count reads `Summarized: N (M still pending)` so "nothing needed doing" and
+  "the queue is stuck" are no longer the same output.
+- **`SyncResult.pendingSummaries` added and actually populated.** The CLI carried a
+  `totalNeedingSummaries` field that nothing ever set, so it read 0 forever; any health check
+  built on it would have been decorative.
+- **Oversized transcripts are skipped instead of retried to no purpose.** A 45.8 MB transcript was
+  handed whole to a 120 s summariser call it could only ever time out on, then burned its three
+  attempts across three syncs while its archive fell a day behind. Conversations above
+  `EPISODIC_MEMORY_MAX_SUMMARY_BYTES` (default 10 MB) are now recorded as deliberately skipped,
+  with the reason written to the failure sidecar.
+- **Previously-failed conversations can no longer starve fresh ones.** Files were enqueued in
+  directory order and the per-run budget took the first N, so doomed conversations held the front
+  of the queue and consumed the whole budget every run. Retries are now sorted last, using
+  leftover budget rather than all of it.
+
 # Changelog
 
 All notable changes to this project will be documented in this file.

@@ -40,6 +40,11 @@ export interface SyncResult {
   indexed: number;
   summarized: number;
   summaryAttempts: number; // how many summaries were attempted (success + failure) this run
+  // How many conversations still LACK a summary after this run. Added 2026-08-29: the CLI had a
+  // totalNeedingSummaries field that nothing ever populated, so it read 0 forever and any banner
+  // built on it would have been decorative. Without this number "Summarized: 0" is ambiguous
+  // between "nothing needed doing" and "the queue is stalled" - the two states that matter most.
+  pendingSummaries: number;
   errors: Array<{ file: string; error: string }>;
 }
 
@@ -56,6 +61,12 @@ export interface SyncOptions {
  * forever — the "backlog never drains" bug (F1). Read dynamically so it's
  * configurable at runtime (and per-test).
  */
+/** Byte ceiling above which a transcript is skipped rather than handed to a timed call. */
+function maxSummaryBytes(): number {
+  const configured = parseInt(process.env.EPISODIC_MEMORY_MAX_SUMMARY_BYTES || '10485760', 10);
+  return Number.isFinite(configured) && configured >= 0 ? configured : 10485760;
+}
+
 function maxSummaryAttempts(): number {
   const configured = parseInt(process.env.EPISODIC_MEMORY_MAX_SUMMARY_ATTEMPTS || '3', 10);
   return Number.isFinite(configured) && configured > 0 ? configured : 3;
@@ -127,6 +138,7 @@ export async function syncConversations(
     indexed: 0,
     summarized: 0,
     summaryAttempts: 0,
+    pendingSummaries: 0,
     errors: []
   };
 
@@ -264,9 +276,25 @@ export async function syncConversations(
     const { summarizeConversation } = await import('./summarizer.js');
 
     const summaryLimit = options.summaryLimit ?? 10;
-    const toSummarize = filesToSummarize.slice(0, summaryLimit);
+
+    // STARVATION FIX (2026-08-29). Files are enqueued in directory order and the budget takes
+    // the FIRST N. A conversation that times out keeps its place at the front, so the same
+    // doomed files consumed the whole budget every sync - attempts 1/3 then 2/3 - while fresh
+    // conversations behind them were never reached. Measured on the ZBOOK: 87 of 140 sync
+    // blocks reported "Summarized: 0" while the backlog oscillated instead of draining.
+    // Retries still happen; they just go LAST, so they use leftover budget rather than all of it.
+    const withFailureState = filesToSummarize.map(f => ({ ...f, priorFailures: readSummaryAttempts(f.path) }));
+    withFailureState.sort((a, b) => a.priorFailures - b.priorFailures);
+    const toSummarize = withFailureState.slice(0, summaryLimit);
+    const deferredFailures = withFailureState.length - toSummarize.length;
+    const retriedHere = toSummarize.filter(f => f.priorFailures > 0).length;
+    if (retriedHere > 0) {
+      console.log(`  (${retriedHere} of these are retries of previously failed conversations)`);
+    }
+    void deferredFailures;
     const remaining = filesToSummarize.length - toSummarize.length;
 
+    result.pendingSummaries = filesToSummarize.length;
     console.log(`Generating summaries for ${toSummarize.length} conversation(s)...`);
     if (remaining > 0) {
       console.log(`  (${remaining} more need summaries - will process on next sync)`);
@@ -274,6 +302,28 @@ export async function syncConversations(
 
     for (const { path: filePath, sessionId } of toSummarize) {
       try {
+        // SIZE GUARD (2026-08-29). A 45.8 MB transcript was handed whole to a 120 s summariser
+        // call, which could only ever time out - it then burned its three attempts across three
+        // syncs while its archive fell a day behind. Oversized conversations are now recorded as
+        // deliberately skipped rather than retried to no purpose. Raise the ceiling with
+        // EPISODIC_MEMORY_MAX_SUMMARY_BYTES once summarisation can stream them.
+        const sizeCeiling = maxSummaryBytes();
+        let fileBytes = 0;
+        try { fileBytes = fs.statSync(filePath).size; } catch { fileBytes = 0; }
+        if (sizeCeiling > 0 && fileBytes > sizeCeiling) {
+          const summaryPath = filePath.replace('.jsonl', '-summary.txt');
+          fs.writeFileSync(summaryPath, '', 'utf-8');
+          try {
+            fs.writeFileSync(summaryFailPath(filePath), JSON.stringify({
+              attempts: maxSummaryAttempts(),
+              lastError: `skipped: ${fileBytes} bytes exceeds EPISODIC_MEMORY_MAX_SUMMARY_BYTES (${sizeCeiling})`
+            }), 'utf-8');
+          } catch {}
+          console.log(`  Skipping ${path.basename(filePath)}: ${(fileBytes / 1048576).toFixed(1)} MB exceeds the ${(sizeCeiling / 1048576).toFixed(0)} MB summary ceiling`);
+          result.errors.push({ file: filePath, error: `oversized transcript skipped (${fileBytes} bytes)` });
+          continue;
+        }
+
         const project = path.basename(path.dirname(filePath));
         const exchanges = await parseConversation(filePath, project, filePath);
 

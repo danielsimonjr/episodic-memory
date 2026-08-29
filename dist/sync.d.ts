@@ -10,6 +10,7 @@ export interface SyncResult {
     indexed: number;
     summarized: number;
     summaryAttempts: number;
+    pendingSummaries: number;
     errors: Array<{
         file: string;
         error: string;

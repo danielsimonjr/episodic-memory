@@ -78,6 +78,51 @@ export function resolveArchiveJsonlPath(candidatePath) {
     return realPath;
 }
 /**
+ * Resolve a summary sidecar path only when the candidate JSONL path is
+ * lexically inside the archive and the summary file exists without symlink escape.
+ * Returns null when the path is outside the archive or the summary is missing.
+ */
+export function safeArchiveSummaryPath(candidateJsonlPath) {
+    if (!candidateJsonlPath || typeof candidateJsonlPath !== 'string') {
+        return null;
+    }
+    let archiveReal;
+    try {
+        archiveReal = fs.realpathSync(getArchiveDir());
+    }
+    catch {
+        return null;
+    }
+    const lexical = path.resolve(candidateJsonlPath);
+    const archiveNorm = normalizeForCompare(archiveReal);
+    const lexicalNorm = normalizeForCompare(lexical);
+    const inside = lexicalNorm === archiveNorm ||
+        lexicalNorm.startsWith(archiveNorm + path.sep);
+    if (!inside)
+        return null;
+    if (!lexical.toLowerCase().endsWith('.jsonl'))
+        return null;
+    const summaryLexical = lexical.replace(/\.jsonl$/i, '-summary.txt');
+    const summaryNorm = normalizeForCompare(summaryLexical);
+    const summaryInside = summaryNorm === archiveNorm ||
+        summaryNorm.startsWith(archiveNorm + path.sep);
+    if (!summaryInside)
+        return null;
+    if (!fs.existsSync(summaryLexical))
+        return null;
+    try {
+        const realSummary = fs.realpathSync(summaryLexical);
+        const realNorm = normalizeForCompare(realSummary);
+        if (!(realNorm === archiveNorm || realNorm.startsWith(archiveNorm + path.sep))) {
+            return null;
+        }
+        return realSummary;
+    }
+    catch {
+        return null;
+    }
+}
+/**
  * Stream a JSONL file, optionally restricted to a 1-indexed inclusive line range.
  * Enforces a byte-size cap when reading without an end bound on huge files.
  */

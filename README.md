@@ -230,13 +230,15 @@ episodic-memory stats
 
 ### `episodic-memory doctor`
 
-Diagnose local integration issues.
+Diagnose local plugin, archive, index, and hook health. Add `codex` for Codex-specific checks.
 
 ```bash
+episodic-memory doctor
+episodic-memory doctor --json
 episodic-memory doctor codex
 ```
 
-The Codex doctor checks the Codex version, plugin hook feature state, MCP server registration, transcript directory, database path, and background sync log path.
+The default report covers the config/archive/index paths, database size and row counts, embedding-version drift, recent SessionStart hook errors (`sync-errors.log`), and plugin `node_modules` sentinels. The Codex doctor additionally checks the Codex version, plugin hook feature state, MCP server registration, and hook trust.
 
 ### Codex E2E Verification
 

@@ -9,7 +9,7 @@ describe('plugin hook configuration', () => {
 
     const command = hooks.hooks.SessionStart[0].hooks[0].command;
 
-    expect(command).toBe('node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/cli/episodic-memory.js" sync --background');
+    expect(command).toBe('node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/cli/sync-hook.js"');
   });
 
   it('also syncs on compaction, because a long-lived session otherwise never archives', () => {

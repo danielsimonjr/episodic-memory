@@ -1,5 +1,9 @@
 import Database from 'better-sqlite3';
 import { SearchResult, MultiConceptResult } from './types.js';
+/** Default on. Set EPISODIC_MEMORY_INCLUDE_SUMMARY=0 to hide summaries. */
+export declare function includeSearchSummaries(): boolean;
+export declare function maxSummaryDisplayChars(): number;
+export declare function formatSummaryForDisplay(summary: string): string;
 export interface SearchOptions {
     limit?: number;
     mode?: 'vector' | 'text' | 'both';

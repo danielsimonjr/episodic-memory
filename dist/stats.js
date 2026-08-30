@@ -54,6 +54,14 @@ export async function getIndexStats(dbPath) {
       ORDER BY count DESC
       LIMIT 10
     `).all();
+        let databaseSize;
+        try {
+            const bytes = fs.statSync(resolvedDbPath).size;
+            databaseSize = `${(bytes / 1024).toFixed(1)} KB`;
+        }
+        catch {
+            databaseSize = undefined;
+        }
         return {
             totalConversations: totalConversations.count,
             conversationsWithSummaries: withSummariesCount,
@@ -65,6 +73,7 @@ export async function getIndexStats(dbPath) {
             } : undefined,
             projectCount: projectCount.count,
             topProjects,
+            databaseSize,
         };
     }
     finally {

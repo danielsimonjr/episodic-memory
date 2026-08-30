@@ -1,7 +1,32 @@
 import { initDatabase, getSharedReaderDatabase } from './db.js';
 import { initEmbeddings, generateQueryEmbedding } from './embeddings.js';
 import { maybeRedactSecrets } from './redact.js';
+import { safeArchiveSummaryPath } from './archive-path.js';
 import fs from 'fs';
+const FALSY = new Set(['0', 'false', 'no', 'off']);
+/** Default on. Set EPISODIC_MEMORY_INCLUDE_SUMMARY=0 to hide summaries. */
+export function includeSearchSummaries() {
+    const raw = process.env.EPISODIC_MEMORY_INCLUDE_SUMMARY;
+    if (raw === undefined)
+        return true;
+    const normalized = raw.trim().toLowerCase();
+    if (FALSY.has(normalized))
+        return false;
+    return true;
+}
+export function maxSummaryDisplayChars() {
+    const raw = process.env.EPISODIC_MEMORY_MAX_SUMMARY_DISPLAY_CHARS;
+    if (raw === undefined)
+        return 2000;
+    const parsed = Number.parseInt(raw, 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 2000;
+}
+export function formatSummaryForDisplay(summary) {
+    const cap = maxSummaryDisplayChars();
+    if (summary.length <= cap)
+        return summary;
+    return summary.slice(0, cap) + '…';
+}
 /**
  * Build the AND-clause and bound-parameter list that constrains a search
  * by the optional time and metadata filters. Bound parameters keep us
@@ -218,10 +243,10 @@ export async function searchConversations(query, options = {}) {
     }
     return results.map((row) => {
         const exchange = exchangeFromRow(row);
-        // Try to load summary if available
-        const summaryPath = row.archive_path.replace('.jsonl', '-summary.txt');
+        // Try to load summary if available (confined to archive like MCP read)
         let summary;
-        if (fs.existsSync(summaryPath)) {
+        const summaryPath = safeArchiveSummaryPath(row.archive_path);
+        if (summaryPath) {
             summary = maybeRedactSecrets(fs.readFileSync(summaryPath, 'utf-8').trim());
         }
         // Create snippet (first 200 chars, collapse newlines)
@@ -260,9 +285,8 @@ export async function formatResults(results) {
             output += ` - ${simPct}% match`;
         }
         output += '\n';
-        // Show summary only if it's concise (< 300 chars)
-        if (result.summary && result.summary.length < 300) {
-            output += `   ${result.summary}\n`;
+        if (includeSearchSummaries() && result.summary) {
+            output += `   ${formatSummaryForDisplay(result.summary)}\n`;
         }
         // Show snippet
         output += `   "${result.snippet}"\n`;
@@ -321,7 +345,8 @@ export async function searchMultipleConcepts(concepts, options = {}) {
                 exchange: firstResult.exchange,
                 snippet: firstResult.snippet,
                 conceptSimilarities,
-                averageSimilarity
+                averageSimilarity,
+                summary: firstResult.summary
             });
         }
     }
@@ -346,6 +371,9 @@ export async function formatMultiConceptResults(results, concepts) {
             .map((sim, i) => `${concepts[i]}: ${Math.round(sim * 100)}%`)
             .join(', ');
         output += `   Concepts: ${scores}\n`;
+        if (includeSearchSummaries() && result.summary) {
+            output += `   ${formatSummaryForDisplay(result.summary)}\n`;
+        }
         // Show snippet
         output += `   "${result.snippet}"\n`;
         // Show tool usage if available

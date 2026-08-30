@@ -1,9 +1,21 @@
+import fs from 'fs';
+import path from 'path';
 import {
   MIN_CODEX_VERSION,
   parseCodexCliVersion,
   versionMeetsMinimum,
 } from './codex-support.js';
 import type { CodexHookTrustState } from './codex-hook-trust.js';
+import { EMBEDDING_VERSION, countStale } from './embedding-migration.js';
+import { initDatabase } from './db.js';
+import {
+  getArchiveDir,
+  getDbPath,
+  getIndexDir,
+  getSuperpowersDir,
+} from './paths.js';
+import { getSyncErrorsLogPath, getSyncLogPath } from './logging.js';
+import { nodeModulesIsHealthy } from './deps-health.js';
 
 export interface CodexDoctorInputs {
   codexVersionOutput: string;
@@ -118,5 +130,207 @@ export function buildCodexDoctorReport(inputs: CodexDoctorInputs): DoctorReport 
   return {
     ok: issues.length === 0,
     text: `${lines.join('\n')}\n`,
+  };
+}
+
+export interface DoctorInputs {
+  configDir: string;
+  archiveDir: string;
+  archiveExists: boolean;
+  indexDir: string;
+  dbPath: string;
+  dbExists: boolean;
+  dbSizeBytes?: number;
+  exchangeCount?: number;
+  conversationCount?: number;
+  currentEmbeddingVersion: number;
+  staleEmbeddingCount?: number;
+  syncLogPath: string;
+  syncErrorsLogPath: string;
+  recentSyncErrors: string[];
+  nodeModulesHealthy?: boolean | 'unknown';
+  pluginRoot?: string;
+}
+
+export interface StructuredDoctorReport extends DoctorReport {
+  json: Record<string, unknown>;
+}
+
+export function readRecentLogErrors(logPath: string, limit = 5): string[] {
+  if (!fs.existsSync(logPath)) return [];
+  try {
+    const text = fs.readFileSync(logPath, 'utf-8');
+    return text
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.includes('[error]'))
+      .slice(-limit);
+  } catch {
+    return [];
+  }
+}
+
+export function collectDoctorSnapshot(): DoctorInputs {
+  const configDir = getSuperpowersDir();
+  const archiveDir = getArchiveDir();
+  const indexDir = getIndexDir();
+  const dbPath = getDbPath();
+  const dbExists = fs.existsSync(dbPath);
+
+  let dbSizeBytes: number | undefined;
+  let exchangeCount: number | undefined;
+  let conversationCount: number | undefined;
+  let staleEmbeddingCount: number | undefined;
+
+  if (dbExists) {
+    try {
+      dbSizeBytes = fs.statSync(dbPath).size;
+      const db = initDatabase();
+      try {
+        exchangeCount = (db.prepare('SELECT COUNT(*) as c FROM exchanges').get() as { c: number }).c;
+        conversationCount = (
+          db.prepare('SELECT COUNT(DISTINCT archive_path) as c FROM exchanges').get() as { c: number }
+        ).c;
+        staleEmbeddingCount = countStale(db);
+      } finally {
+        db.close();
+      }
+    } catch {
+      // Best-effort: leave counts undefined if the DB can't be opened.
+    }
+  }
+
+  const pluginRoot = process.env.CLAUDE_PLUGIN_ROOT || process.env.PLUGIN_ROOT;
+  let nodeModulesHealthy: boolean | 'unknown' = 'unknown';
+  if (pluginRoot) {
+    nodeModulesHealthy = nodeModulesIsHealthy(path.join(pluginRoot, 'node_modules'));
+  }
+
+  const syncErrorsLogPath = getSyncErrorsLogPath();
+
+  return {
+    configDir,
+    archiveDir,
+    archiveExists: fs.existsSync(archiveDir),
+    indexDir,
+    dbPath,
+    dbExists,
+    dbSizeBytes,
+    exchangeCount,
+    conversationCount,
+    currentEmbeddingVersion: EMBEDDING_VERSION,
+    staleEmbeddingCount,
+    syncLogPath: getSyncLogPath(),
+    syncErrorsLogPath,
+    recentSyncErrors: readRecentLogErrors(syncErrorsLogPath, 5),
+    nodeModulesHealthy,
+    pluginRoot,
+  };
+}
+
+export function buildDoctorReport(inputs: DoctorInputs): StructuredDoctorReport {
+  const issues: string[] = [];
+  const warnings: string[] = [];
+
+  if (!inputs.archiveExists) {
+    issues.push('Conversation archive directory is missing; run episodic-memory sync.');
+  }
+  if (!inputs.dbExists) {
+    issues.push('Index database not found; run episodic-memory sync.');
+  }
+  if (inputs.staleEmbeddingCount !== undefined && inputs.staleEmbeddingCount > 0) {
+    warnings.push(
+      `${inputs.staleEmbeddingCount} exchange(s) still on an old embedding version (current ${inputs.currentEmbeddingVersion}); next sync will migrate a batch.`
+    );
+  }
+  if (inputs.recentSyncErrors.length > 0) {
+    issues.push(
+      `${inputs.recentSyncErrors.length} recent SessionStart hook error(s) in ${inputs.syncErrorsLogPath}.`
+    );
+  }
+  if (inputs.nodeModulesHealthy === false) {
+    issues.push(
+      `Plugin node_modules is incomplete at ${inputs.pluginRoot}; run npm install in the plugin root.`
+    );
+  }
+
+  const dbSize =
+    inputs.dbSizeBytes !== undefined
+      ? `${(inputs.dbSizeBytes / 1024).toFixed(1)} KB`
+      : 'n/a';
+
+  const lines = [
+    'Episodic Memory Doctor',
+    '======================',
+    '',
+    `Config dir: ${inputs.configDir}`,
+    `Archive: ${inputs.archiveDir} (${inputs.archiveExists ? 'found' : 'missing'})`,
+    `Index dir: ${inputs.indexDir}`,
+    `Database: ${inputs.dbPath} (${inputs.dbExists ? 'found' : 'missing'}; ${dbSize})`,
+    `Exchanges: ${inputs.exchangeCount ?? 'n/a'}`,
+    `Conversations: ${inputs.conversationCount ?? 'n/a'}`,
+    `Embedding version: ${inputs.currentEmbeddingVersion}` +
+      (inputs.staleEmbeddingCount !== undefined
+        ? ` (${inputs.staleEmbeddingCount} stale)`
+        : ''),
+    `Sync log: ${inputs.syncLogPath}`,
+    `Hook errors log: ${inputs.syncErrorsLogPath}`,
+    `Plugin root: ${inputs.pluginRoot || '(unknown)'}`,
+    `node_modules: ${
+      inputs.nodeModulesHealthy === true
+        ? 'healthy'
+        : inputs.nodeModulesHealthy === false
+          ? 'unhealthy'
+          : 'unknown'
+    }`,
+  ];
+
+  if (inputs.recentSyncErrors.length > 0) {
+    lines.push('', 'Recent hook errors:');
+    for (const err of inputs.recentSyncErrors) {
+      lines.push(`- ${err}`);
+    }
+  }
+
+  if (warnings.length > 0) {
+    lines.push('', 'Warnings:');
+    for (const warning of warnings) {
+      lines.push(`- ${warning}`);
+    }
+  }
+
+  if (issues.length > 0) {
+    lines.push('', 'Issues:');
+    for (const issue of issues) {
+      lines.push(`- ${issue}`);
+    }
+  }
+
+  const json: Record<string, unknown> = {
+    ok: issues.length === 0,
+    configDir: inputs.configDir,
+    archiveDir: inputs.archiveDir,
+    archiveExists: inputs.archiveExists,
+    indexDir: inputs.indexDir,
+    dbPath: inputs.dbPath,
+    dbExists: inputs.dbExists,
+    dbSizeBytes: inputs.dbSizeBytes,
+    exchangeCount: inputs.exchangeCount,
+    conversationCount: inputs.conversationCount,
+    currentEmbeddingVersion: inputs.currentEmbeddingVersion,
+    staleEmbeddingCount: inputs.staleEmbeddingCount,
+    syncLogPath: inputs.syncLogPath,
+    syncErrorsLogPath: inputs.syncErrorsLogPath,
+    recentSyncErrors: inputs.recentSyncErrors,
+    nodeModulesHealthy: inputs.nodeModulesHealthy,
+    pluginRoot: inputs.pluginRoot,
+    warnings,
+    issues,
+  };
+
+  return {
+    ok: issues.length === 0,
+    text: `${lines.join('\n')}\n`,
+    json,
   };
 }

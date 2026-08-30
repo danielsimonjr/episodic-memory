@@ -47,6 +47,7 @@ export interface SearchResult {
   exchange: ConversationExchange;
   similarity: number;
   snippet: string;
+  summary?: string;
 }
 
 export interface MultiConceptResult {
@@ -54,4 +55,5 @@ export interface MultiConceptResult {
   snippet: string;
   conceptSimilarities: number[];
   averageSimilarity: number;
+  summary?: string;
 }

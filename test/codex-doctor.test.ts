@@ -105,4 +105,50 @@ describe('Codex doctor report', () => {
       }],
     })).toBe('modified');
   });
+
+  it('flags missing hook, unknown trust, disabled plugins, and disabled MCP', () => {
+    const report = buildCodexDoctorReport({
+      codexVersionOutput: 'codex-cli 0.130.0',
+      featuresOutput: 'plugins stable false\nplugin_hooks under development false\n',
+      mcpListOutput: 'other-server  node  ./x.js  enabled',
+      codexHome: '/tmp/codex-home',
+      sessionsDirExists: true,
+      logPath: '/tmp/log',
+      dbPath: '/tmp/db',
+      hookTrustState: 'not_found',
+    });
+    expect(report.ok).toBe(false);
+    expect(report.text).toContain('plugins are disabled');
+    expect(report.text).toContain('plugin hooks are not enabled');
+    expect(report.text).toContain('MCP server is not enabled');
+    expect(report.text).toContain('hook was not found');
+  });
+
+  it('flags modified and unknown hook trust', () => {
+    const modified = buildCodexDoctorReport({
+      codexVersionOutput: 'codex-cli 0.130.0',
+      featuresOutput: 'hooks stable true\nplugin_hooks under development true\nplugins stable true\n',
+      mcpListOutput: 'episodic-memory  node  ./cli/mcp-server-wrapper.js  enabled',
+      codexHome: '/tmp/codex-home',
+      sessionsDirExists: true,
+      logPath: '/tmp/log',
+      dbPath: '/tmp/db',
+      hookTrustState: 'modified',
+    });
+    expect(modified.ok).toBe(false);
+    expect(modified.text).toContain('modified since it was trusted');
+
+    const unknownReport = buildCodexDoctorReport({
+      codexVersionOutput: 'codex-cli 0.130.0',
+      featuresOutput: 'hooks stable true\nplugin_hooks under development true\nplugins stable true\n',
+      mcpListOutput: 'episodic-memory  node  ./cli/mcp-server-wrapper.js  disabled',
+      codexHome: '/tmp/codex-home',
+      sessionsDirExists: true,
+      logPath: '/tmp/log',
+      dbPath: '/tmp/db',
+      hookTrustState: 'unknown',
+    });
+    expect(unknownReport.ok).toBe(false);
+    expect(unknownReport.text).toContain('could not be verified');
+  });
 });

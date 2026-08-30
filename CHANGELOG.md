@@ -29,6 +29,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **MCP `read` now respects `EPISODIC_MEMORY_REDACT_SECRETS`.** Search results were redacted at return time, but `read` still returned raw archive JSONL — a gap when redaction is enabled. Read output now passes through the same opt-in redaction.
+- **Search summary sidecars are archive-confined.** Summary files were loaded via a naive `.replace('.jsonl', '-summary.txt')` on DB `archive_path` values, so a poisoned path outside the archive could still read an arbitrary `*-summary.txt`. Summaries now use the same archive prefix and realpath checks as MCP `read`.
+- **Optional MCP tool authorization.** When `EPISODIC_MEMORY_MCP_TOKEN` is set, `search` and `read` require a matching `auth_token` (constant-time compare). Default remains open for single-user stdio.
+- **Threat-model document.** `docs/security.md` records remaining residual risk (plaintext at rest, filesystem encryption recommendation, hook trust boundary).
+
+### Added
+- **`episodic-memory doctor` (no subcommand)** reports config/archive/index health, DB stats, embedding-version drift, last hook errors, and `node_modules` sentinels. `--json` is supported; `doctor codex` is unchanged.
+- **Search results include conversation summaries** by default (upstream #74), including MCP JSON and multi-concept paths. Disable with `EPISODIC_MEMORY_INCLUDE_SUMMARY=0`; truncate with `EPISODIC_MEMORY_MAX_SUMMARY_DISPLAY_CHARS`.
+
+### Changed
+- **Embeddings truncate before concatenate.** `formatExchangeEmbeddingText` applies `truncateForIndex` so multi-MB prompt payload is not allocated into the combined embed string.
+- **Claude parser links `tool_result` to `tool_use`** via `tool_use_id`, matching the Codex path.
+
+### Fixed
+- **SessionStart hook failures are logged to `sync-errors.log`.** Hook stderr was easy to miss; a dedicated wrapper runs `sync --background`, records non-zero exits, and always returns success so hooks stay non-blocking (upstream #94).
+- **Plugin manifest version drift.** `.codex-plugin/plugin.json` and `.claude-plugin/marketplace.json` now match `package.json` at 1.5.1.
+
 ## [1.5.0] - 2026-08-13
 
 ### Security

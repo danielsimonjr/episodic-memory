@@ -16,6 +16,11 @@ export function getSyncLogPath(): string {
   return path.join(getLogDir(), 'episodic-memory.log');
 }
 
+/** Dedicated log for SessionStart hook failures (upstream #94). */
+export function getSyncErrorsLogPath(): string {
+  return path.join(getSuperpowersDir(), 'sync-errors.log');
+}
+
 /** Lock file serializing background syncs; lives beside the embedding-migration lock. */
 export function getSyncLockPath(): string {
   return path.join(getIndexDir(), '.sync.lock');

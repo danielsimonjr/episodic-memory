@@ -6,6 +6,6 @@
  * using semantic search, text search, and conversation display capabilities.
  *
  * Heavy modules (search / embeddings / show) are loaded lazily inside tool handlers so
- * ListTools / handshake stay cheap.
+ * ListTools / handshake stay cheap. Tool dispatch lives in mcp-tools.ts.
  */
 export {};

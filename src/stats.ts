@@ -80,6 +80,14 @@ export async function getIndexStats(dbPath?: string): Promise<IndexStats> {
       LIMIT 10
     `).all() as Array<{ project: string; count: number }>;
 
+    let databaseSize: string | undefined;
+    try {
+      const bytes = fs.statSync(resolvedDbPath).size;
+      databaseSize = `${(bytes / 1024).toFixed(1)} KB`;
+    } catch {
+      databaseSize = undefined;
+    }
+
     return {
       totalConversations: totalConversations.count,
       conversationsWithSummaries: withSummariesCount,
@@ -91,6 +99,7 @@ export async function getIndexStats(dbPath?: string): Promise<IndexStats> {
       } : undefined,
       projectCount: projectCount.count,
       topProjects,
+      databaseSize,
     };
   } finally {
     db.close();

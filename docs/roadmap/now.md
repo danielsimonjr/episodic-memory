@@ -118,9 +118,9 @@ would dramatically improve LLM recall behavior.
 | Housekeeping audit (4 fixes) | 📦 shipped | `6cadc20`, upstream PR pending |
 | Upstream sync (post-merges) | 📋 queued | Depends on obra |
 | integration.test.ts hook timeouts | 📋 queued | Started next session |
-| SessionStart silent-fail (#94) | 📋 queued | ~2 weeks |
-| doctor Windows diagnostics | 📋 queued | ~3 weeks |
-| Search summary visibility (#74) | 📋 queued | Flexible |
+| SessionStart silent-fail (#94) | 📦 shipped | `cli/sync-hook.js` + `sync-errors.log` + doctor |
+| doctor Windows diagnostics | 📦 shipped | default `doctor` + `--json` |
+| Search summary visibility (#74) | 📦 shipped | default on; env flag |
 
 ## What's NOT in `now`
 

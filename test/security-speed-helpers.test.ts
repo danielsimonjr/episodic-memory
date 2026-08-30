@@ -53,6 +53,12 @@ describe('API base URL validation', () => {
     expect(validateApiBaseUrl('https://user:pass@api.example.com').ok).toBe(false);
     expect(validateApiBaseUrl('ftp://api.example.com').ok).toBe(false);
   });
+
+  it('rejects empty and unparseable URLs', () => {
+    expect(validateApiBaseUrl('').ok).toBe(false);
+    expect(validateApiBaseUrl('   ').ok).toBe(false);
+    expect(validateApiBaseUrl('not a url').ok).toBe(false);
+  });
 });
 
 describe('FTS query builder', () => {

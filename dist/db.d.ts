@@ -42,4 +42,9 @@ export declare function getAllExchanges(db: Database.Database): Array<{
 export declare function getFileLastIndexed(db: Database.Database, archivePath: string): number | null;
 /** High-water mark for append-only incremental indexing of a transcript. */
 export declare function getMaxIndexedLine(db: Database.Database, archivePath: string): number;
+export declare function getFreelistInfo(db: Database.Database): {
+    freePages: number;
+    pageSize: number;
+};
+export declare function vacuumDatabase(db: Database.Database): void;
 export declare function deleteExchange(db: Database.Database, id: string): void;

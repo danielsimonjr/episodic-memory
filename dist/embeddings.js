@@ -1,5 +1,6 @@
 import { pipeline, env } from '@huggingface/transformers';
 import { maybeRedactSecrets } from './redact.js';
+import { truncateForIndex } from './constants.js';
 // Disable progress callbacks to prevent stdout pollution in MCP context
 // In MCP, stdout is reserved for JSON-RPC communication.
 env.allowLocalModels = true;
@@ -87,8 +88,11 @@ export async function generateQueryEmbedding(query) {
 }
 /** Build the passage text that both single and batch exchange embedders use. */
 export function formatExchangeEmbeddingText(userMessage, assistantMessage, toolNames) {
-    // Redact before embed when opted in so vectors aren't derived from raw secrets.
-    let combined = `User: ${maybeRedactSecrets(userMessage)}\n\nAssistant: ${maybeRedactSecrets(assistantMessage)}`;
+    // Redact then cap before concatenate so multi-MB prompt payload is never
+    // allocated into the combined string (insertExchange already caps at store).
+    const user = truncateForIndex(maybeRedactSecrets(userMessage));
+    const assistant = truncateForIndex(maybeRedactSecrets(assistantMessage));
+    let combined = `User: ${user}\n\nAssistant: ${assistant}`;
     if (toolNames && toolNames.length > 0) {
         combined += `\n\nTools: ${toolNames.join(', ')}`;
     }

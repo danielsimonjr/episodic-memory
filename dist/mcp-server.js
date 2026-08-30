@@ -7239,151 +7239,6 @@ var init_paths = __esm({
   }
 });
 
-// src/archive-path.ts
-import fs2 from "fs";
-import path2 from "path";
-import readline from "readline";
-function maxReadBytes() {
-  const raw = process.env.EPISODIC_MEMORY_MAX_READ_BYTES;
-  if (raw === void 0) return DEFAULT_MAX_READ_BYTES;
-  const parsed = Number.parseInt(raw, 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_MAX_READ_BYTES;
-}
-function normalizeForCompare(p) {
-  const resolved = path2.resolve(p);
-  return process.platform === "win32" ? resolved.toLowerCase() : resolved;
-}
-function resolveArchiveJsonlPath(candidatePath) {
-  if (!candidatePath || typeof candidatePath !== "string") {
-    throw new Error("Path is required");
-  }
-  const archiveRoot = getArchiveDir();
-  let archiveReal;
-  try {
-    archiveReal = fs2.realpathSync(archiveRoot);
-  } catch {
-    throw new Error(`Archive directory is not accessible: ${archiveRoot}`);
-  }
-  const lexical = path2.resolve(candidatePath);
-  const archiveNorm = normalizeForCompare(archiveReal);
-  const lexicalNorm = normalizeForCompare(lexical);
-  const lexicalInside = lexicalNorm === archiveNorm || lexicalNorm.startsWith(archiveNorm + path2.sep);
-  if (!lexicalInside) {
-    throw new Error(`Path is outside the conversation archive: ${candidatePath}`);
-  }
-  if (!lexical.toLowerCase().endsWith(".jsonl")) {
-    throw new Error(
-      `Path must point to a .jsonl conversation file: ${candidatePath}`
-    );
-  }
-  if (!fs2.existsSync(lexical)) {
-    throw new Error(`File not found: ${candidatePath}`);
-  }
-  let realPath;
-  try {
-    realPath = fs2.realpathSync(lexical);
-  } catch (err) {
-    throw new Error(
-      `Unable to resolve path: ${candidatePath} (${err instanceof Error ? err.message : String(err)})`
-    );
-  }
-  const realNorm = normalizeForCompare(realPath);
-  const realInside = realNorm === archiveNorm || realNorm.startsWith(archiveNorm + path2.sep);
-  if (!realInside) {
-    throw new Error(
-      `Path resolves outside the conversation archive (symlink escape rejected): ${candidatePath}`
-    );
-  }
-  if (!realPath.toLowerCase().endsWith(".jsonl")) {
-    throw new Error(
-      `Path must point to a .jsonl conversation file: ${candidatePath}`
-    );
-  }
-  const stat = fs2.lstatSync(lexical);
-  if (!stat.isFile() && !stat.isSymbolicLink()) {
-    throw new Error(`Path is not a file: ${candidatePath}`);
-  }
-  return realPath;
-}
-function safeArchiveSummaryPath(candidateJsonlPath) {
-  if (!candidateJsonlPath || typeof candidateJsonlPath !== "string") {
-    return null;
-  }
-  let archiveReal;
-  try {
-    archiveReal = fs2.realpathSync(getArchiveDir());
-  } catch {
-    return null;
-  }
-  const lexical = path2.resolve(candidateJsonlPath);
-  const archiveNorm = normalizeForCompare(archiveReal);
-  const lexicalNorm = normalizeForCompare(lexical);
-  const inside = lexicalNorm === archiveNorm || lexicalNorm.startsWith(archiveNorm + path2.sep);
-  if (!inside) return null;
-  if (!lexical.toLowerCase().endsWith(".jsonl")) return null;
-  const summaryLexical = lexical.replace(/\.jsonl$/i, "-summary.txt");
-  const summaryNorm = normalizeForCompare(summaryLexical);
-  const summaryInside = summaryNorm === archiveNorm || summaryNorm.startsWith(archiveNorm + path2.sep);
-  if (!summaryInside) return null;
-  if (!fs2.existsSync(summaryLexical)) return null;
-  try {
-    const realSummary = fs2.realpathSync(summaryLexical);
-    const realNorm = normalizeForCompare(realSummary);
-    if (!(realNorm === archiveNorm || realNorm.startsWith(archiveNorm + path2.sep))) {
-      return null;
-    }
-    return realSummary;
-  } catch {
-    return null;
-  }
-}
-async function readJsonlLines(filePath, startLine, endLine) {
-  const stat = fs2.statSync(filePath);
-  const hasRange = startLine !== void 0 || endLine !== void 0;
-  const cap = maxReadBytes();
-  if (!hasRange && stat.size > cap) {
-    throw new Error(
-      `File is ${stat.size} bytes, which exceeds the ${cap}-byte MCP read cap. Pass startLine/endLine to read a slice, or raise EPISODIC_MEMORY_MAX_READ_BYTES.`
-    );
-  }
-  const from = startLine !== void 0 ? Math.max(1, startLine) : 1;
-  const to = endLine !== void 0 ? endLine : Number.POSITIVE_INFINITY;
-  if (to < from) {
-    throw new Error(`endLine (${endLine}) must be >= startLine (${startLine ?? 1})`);
-  }
-  const stream = fs2.createReadStream(filePath, { encoding: "utf-8" });
-  const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
-  const selected = [];
-  let lineNo = 0;
-  let bytesAccumulated = 0;
-  try {
-    for await (const line of rl) {
-      lineNo++;
-      if (lineNo < from) continue;
-      if (lineNo > to) break;
-      bytesAccumulated += Buffer.byteLength(line, "utf-8") + 1;
-      if (bytesAccumulated > cap) {
-        throw new Error(
-          `Selected line range exceeds the ${cap}-byte MCP read cap. Narrow startLine/endLine or raise EPISODIC_MEMORY_MAX_READ_BYTES.`
-        );
-      }
-      selected.push(line);
-    }
-  } finally {
-    rl.close();
-    stream.destroy();
-  }
-  return selected.join("\n");
-}
-var DEFAULT_MAX_READ_BYTES;
-var init_archive_path = __esm({
-  "src/archive-path.ts"() {
-    "use strict";
-    init_paths();
-    DEFAULT_MAX_READ_BYTES = 32 * 1024 * 1024;
-  }
-});
-
 // src/lockfile.ts
 var DEFAULT_STALE_MS;
 var init_lockfile = __esm({
@@ -7474,8 +7329,8 @@ var init_redact = __esm({
 
 // src/db.ts
 import Database from "better-sqlite3";
-import path3 from "path";
-import fs3 from "fs";
+import path2 from "path";
+import fs2 from "fs";
 import * as sqliteVec from "sqlite-vec";
 function migrateSchema(db) {
   const columns = db.prepare(`SELECT name FROM pragma_table_info('exchanges')`).all();
@@ -7580,13 +7435,13 @@ function applySecureDbFileMode(dbPath) {
 function openDatabase(options = {}) {
   const migrate = options.migrate !== false;
   const dbPath = getDbPath();
-  const dbDir = path3.dirname(dbPath);
-  if (!fs3.existsSync(dbDir)) {
-    fs3.mkdirSync(dbDir, { recursive: true, mode: 448 });
+  const dbDir = path2.dirname(dbPath);
+  if (!fs2.existsSync(dbDir)) {
+    fs2.mkdirSync(dbDir, { recursive: true, mode: 448 });
   } else {
     tryChmod(dbDir, 448);
   }
-  const existed = fs3.existsSync(dbPath);
+  const existed = fs2.existsSync(dbPath);
   const db = new Database(dbPath);
   if (!existed) {
     applySecureDbFileMode(dbPath);
@@ -7715,6 +7570,151 @@ var init_db = __esm({
   }
 });
 
+// src/archive-path.ts
+import fs3 from "fs";
+import path3 from "path";
+import readline from "readline";
+function maxReadBytes() {
+  const raw = process.env.EPISODIC_MEMORY_MAX_READ_BYTES;
+  if (raw === void 0) return DEFAULT_MAX_READ_BYTES;
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_MAX_READ_BYTES;
+}
+function normalizeForCompare(p) {
+  const resolved = path3.resolve(p);
+  return process.platform === "win32" ? resolved.toLowerCase() : resolved;
+}
+function resolveArchiveJsonlPath(candidatePath) {
+  if (!candidatePath || typeof candidatePath !== "string") {
+    throw new Error("Path is required");
+  }
+  const archiveRoot = getArchiveDir();
+  let archiveReal;
+  try {
+    archiveReal = fs3.realpathSync(archiveRoot);
+  } catch {
+    throw new Error(`Archive directory is not accessible: ${archiveRoot}`);
+  }
+  const lexical = path3.resolve(candidatePath);
+  const archiveNorm = normalizeForCompare(archiveReal);
+  const lexicalNorm = normalizeForCompare(lexical);
+  const lexicalInside = lexicalNorm === archiveNorm || lexicalNorm.startsWith(archiveNorm + path3.sep);
+  if (!lexicalInside) {
+    throw new Error(`Path is outside the conversation archive: ${candidatePath}`);
+  }
+  if (!lexical.toLowerCase().endsWith(".jsonl")) {
+    throw new Error(
+      `Path must point to a .jsonl conversation file: ${candidatePath}`
+    );
+  }
+  if (!fs3.existsSync(lexical)) {
+    throw new Error(`File not found: ${candidatePath}`);
+  }
+  let realPath;
+  try {
+    realPath = fs3.realpathSync(lexical);
+  } catch (err) {
+    throw new Error(
+      `Unable to resolve path: ${candidatePath} (${err instanceof Error ? err.message : String(err)})`
+    );
+  }
+  const realNorm = normalizeForCompare(realPath);
+  const realInside = realNorm === archiveNorm || realNorm.startsWith(archiveNorm + path3.sep);
+  if (!realInside) {
+    throw new Error(
+      `Path resolves outside the conversation archive (symlink escape rejected): ${candidatePath}`
+    );
+  }
+  if (!realPath.toLowerCase().endsWith(".jsonl")) {
+    throw new Error(
+      `Path must point to a .jsonl conversation file: ${candidatePath}`
+    );
+  }
+  const stat = fs3.lstatSync(lexical);
+  if (!stat.isFile() && !stat.isSymbolicLink()) {
+    throw new Error(`Path is not a file: ${candidatePath}`);
+  }
+  return realPath;
+}
+function safeArchiveSummaryPath(candidateJsonlPath) {
+  if (!candidateJsonlPath || typeof candidateJsonlPath !== "string") {
+    return null;
+  }
+  let archiveReal;
+  try {
+    archiveReal = fs3.realpathSync(getArchiveDir());
+  } catch {
+    return null;
+  }
+  const lexical = path3.resolve(candidateJsonlPath);
+  const archiveNorm = normalizeForCompare(archiveReal);
+  const lexicalNorm = normalizeForCompare(lexical);
+  const inside = lexicalNorm === archiveNorm || lexicalNorm.startsWith(archiveNorm + path3.sep);
+  if (!inside) return null;
+  if (!lexical.toLowerCase().endsWith(".jsonl")) return null;
+  const summaryLexical = lexical.replace(/\.jsonl$/i, "-summary.txt");
+  const summaryNorm = normalizeForCompare(summaryLexical);
+  const summaryInside = summaryNorm === archiveNorm || summaryNorm.startsWith(archiveNorm + path3.sep);
+  if (!summaryInside) return null;
+  if (!fs3.existsSync(summaryLexical)) return null;
+  try {
+    const realSummary = fs3.realpathSync(summaryLexical);
+    const realNorm = normalizeForCompare(realSummary);
+    if (!(realNorm === archiveNorm || realNorm.startsWith(archiveNorm + path3.sep))) {
+      return null;
+    }
+    return realSummary;
+  } catch {
+    return null;
+  }
+}
+async function readJsonlLines(filePath, startLine, endLine) {
+  const stat = fs3.statSync(filePath);
+  const hasRange = startLine !== void 0 || endLine !== void 0;
+  const cap = maxReadBytes();
+  if (!hasRange && stat.size > cap) {
+    throw new Error(
+      `File is ${stat.size} bytes, which exceeds the ${cap}-byte MCP read cap. Pass startLine/endLine to read a slice, or raise EPISODIC_MEMORY_MAX_READ_BYTES.`
+    );
+  }
+  const from = startLine !== void 0 ? Math.max(1, startLine) : 1;
+  const to = endLine !== void 0 ? endLine : Number.POSITIVE_INFINITY;
+  if (to < from) {
+    throw new Error(`endLine (${endLine}) must be >= startLine (${startLine ?? 1})`);
+  }
+  const stream = fs3.createReadStream(filePath, { encoding: "utf-8" });
+  const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
+  const selected = [];
+  let lineNo = 0;
+  let bytesAccumulated = 0;
+  try {
+    for await (const line of rl) {
+      lineNo++;
+      if (lineNo < from) continue;
+      if (lineNo > to) break;
+      bytesAccumulated += Buffer.byteLength(line, "utf-8") + 1;
+      if (bytesAccumulated > cap) {
+        throw new Error(
+          `Selected line range exceeds the ${cap}-byte MCP read cap. Narrow startLine/endLine or raise EPISODIC_MEMORY_MAX_READ_BYTES.`
+        );
+      }
+      selected.push(line);
+    }
+  } finally {
+    rl.close();
+    stream.destroy();
+  }
+  return selected.join("\n");
+}
+var DEFAULT_MAX_READ_BYTES;
+var init_archive_path = __esm({
+  "src/archive-path.ts"() {
+    "use strict";
+    init_paths();
+    DEFAULT_MAX_READ_BYTES = 32 * 1024 * 1024;
+  }
+});
+
 // src/embeddings.ts
 import { pipeline, env } from "@huggingface/transformers";
 async function initEmbeddings() {
@@ -7769,6 +7769,7 @@ var init_embeddings = __esm({
   "src/embeddings.ts"() {
     "use strict";
     init_redact();
+    init_constants();
     env.allowLocalModels = true;
     env.useBrowserCache = false;
     MODEL_ID = "Xenova/bge-small-en-v1.5";
@@ -7785,11 +7786,32 @@ __export(search_exports, {
   buildFtsMatchQuery: () => buildFtsMatchQuery,
   formatMultiConceptResults: () => formatMultiConceptResults,
   formatResults: () => formatResults,
+  formatSummaryForDisplay: () => formatSummaryForDisplay,
+  includeSearchSummaries: () => includeSearchSummaries,
   l2DistanceToCosineSimilarity: () => l2DistanceToCosineSimilarity,
+  maxSummaryDisplayChars: () => maxSummaryDisplayChars,
   searchConversations: () => searchConversations,
   searchMultipleConcepts: () => searchMultipleConcepts
 });
 import fs4 from "fs";
+function includeSearchSummaries() {
+  const raw = process.env.EPISODIC_MEMORY_INCLUDE_SUMMARY;
+  if (raw === void 0) return true;
+  const normalized = raw.trim().toLowerCase();
+  if (FALSY.has(normalized)) return false;
+  return true;
+}
+function maxSummaryDisplayChars() {
+  const raw = process.env.EPISODIC_MEMORY_MAX_SUMMARY_DISPLAY_CHARS;
+  if (raw === void 0) return 2e3;
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 2e3;
+}
+function formatSummaryForDisplay(summary) {
+  const cap = maxSummaryDisplayChars();
+  if (summary.length <= cap) return summary;
+  return summary.slice(0, cap) + "\u2026";
+}
 function buildSearchFilters(options) {
   const parts = [];
   const params = [];
@@ -7993,8 +8015,8 @@ async function formatResults(results) {
       output2 += ` - ${simPct}% match`;
     }
     output2 += "\n";
-    if (result.summary && result.summary.length < 300) {
-      output2 += `   ${result.summary}
+    if (includeSearchSummaries() && result.summary) {
+      output2 += `   ${formatSummaryForDisplay(result.summary)}
 `;
     }
     output2 += `   "${result.snippet}"
@@ -8051,7 +8073,8 @@ async function searchMultipleConcepts(concepts, options = {}) {
         exchange: firstResult.exchange,
         snippet: firstResult.snippet,
         conceptSimilarities,
-        averageSimilarity
+        averageSimilarity,
+        summary: firstResult.summary
       });
     }
   }
@@ -8074,6 +8097,10 @@ async function formatMultiConceptResults(results, concepts) {
     const scores = result.conceptSimilarities.map((sim, i) => `${concepts[i]}: ${Math.round(sim * 100)}%`).join(", ");
     output2 += `   Concepts: ${scores}
 `;
+    if (includeSearchSummaries() && result.summary) {
+      output2 += `   ${formatSummaryForDisplay(result.summary)}
+`;
+    }
     output2 += `   "${result.snippet}"
 `;
     if (result.exchange.toolCalls && result.exchange.toolCalls.length > 0) {
@@ -8094,7 +8121,7 @@ async function formatMultiConceptResults(results, concepts) {
   }
   return output2;
 }
-var EXCHANGE_SELECT_COLUMNS;
+var FALSY, EXCHANGE_SELECT_COLUMNS;
 var init_search = __esm({
   "src/search.ts"() {
     "use strict";
@@ -8102,6 +8129,7 @@ var init_search = __esm({
     init_embeddings();
     init_redact();
     init_archive_path();
+    FALSY = /* @__PURE__ */ new Set(["0", "false", "no", "off"]);
     EXCHANGE_SELECT_COLUMNS = `
         e.id,
         e.project,
@@ -32491,9 +32519,36 @@ var StdioServerTransport = class {
 var VERSION = "1.5.1";
 
 // src/mcp-server.ts
-init_archive_path();
 init_db();
+
+// src/mcp-tools.ts
+init_archive_path();
 init_redact();
+
+// src/mcp-auth.ts
+import { timingSafeEqual } from "crypto";
+function getRequiredMcpToken() {
+  const raw = process.env.EPISODIC_MEMORY_MCP_TOKEN;
+  if (!raw) return void 0;
+  const trimmed = raw.trim();
+  return trimmed.length > 0 ? trimmed : void 0;
+}
+function tokensEqual(provided, expected) {
+  const a = Buffer.from(provided);
+  const b2 = Buffer.from(expected);
+  if (a.length !== b2.length) return false;
+  return timingSafeEqual(a, b2);
+}
+function assertMcpAuthorized(args) {
+  const required2 = getRequiredMcpToken();
+  if (!required2) return;
+  const token = args && typeof args === "object" && args !== null && "auth_token" in args ? args.auth_token : void 0;
+  if (typeof token !== "string" || !tokensEqual(token, required2)) {
+    throw new Error("Unauthorized: valid auth_token required");
+  }
+}
+
+// src/mcp-schemas.ts
 var SearchModeEnum = external_exports.enum(["vector", "text", "both"]);
 var ResponseFormatEnum = external_exports.enum(["markdown", "json"]);
 var SearchInputSchema = external_exports.object({
@@ -32514,99 +32569,34 @@ var SearchInputSchema = external_exports.object({
   git_branch: external_exports.string().min(1).optional().describe("Filter by git branch name (exact match)"),
   response_format: ResponseFormatEnum.default("markdown").describe(
     'Output format: "markdown" for human-readable or "json" for machine-readable (default: "markdown")'
-  )
+  ),
+  auth_token: external_exports.string().min(1).optional().describe("Required when EPISODIC_MEMORY_MCP_TOKEN is set")
 }).strict();
 var ShowConversationInputSchema = external_exports.object({
   path: external_exports.string().min(1, "Path is required").describe("Absolute path to the JSONL conversation file to display"),
   startLine: external_exports.number().int().min(1).optional().describe("Starting line number (1-indexed, inclusive). Omit to start from beginning."),
-  endLine: external_exports.number().int().min(1).optional().describe("Ending line number (1-indexed, inclusive). Omit to read to end.")
+  endLine: external_exports.number().int().min(1).optional().describe("Ending line number (1-indexed, inclusive). Omit to read to end."),
+  auth_token: external_exports.string().min(1).optional().describe("Required when EPISODIC_MEMORY_MCP_TOKEN is set")
 }).strict();
-function handleError(error61) {
+function handleMcpError(error61) {
   if (error61 instanceof Error) {
     return `Error: ${error61.message}`;
   }
   return `Error: ${String(error61)}`;
 }
-var server = new Server(
-  {
-    name: "episodic-memory",
-    version: VERSION
-  },
-  {
-    capabilities: {
-      tools: {}
-    }
-  }
-);
-server.setRequestHandler(ListToolsRequestSchema, async () => {
-  return {
-    tools: [
-      {
-        name: "search",
-        description: `Gives you memory across sessions. You don't automatically remember past Claude Code and Codex conversations - this tool restores context by searching them. Use BEFORE every task to recover decisions, solutions, and avoid reinventing work. Single string for semantic search or array of 2-5 concepts for precise AND matching. Returns ranked results with project, date, snippets, and file paths.`,
-        inputSchema: {
-          type: "object",
-          properties: {
-            query: {
-              oneOf: [
-                { type: "string", minLength: 2 },
-                { type: "array", items: { type: "string", minLength: 2 }, minItems: 2, maxItems: 5 }
-              ]
-            },
-            mode: { type: "string", enum: ["vector", "text", "both"], default: "both" },
-            limit: { type: "number", minimum: 1, maximum: 50, default: 10 },
-            after: { type: "string", pattern: "^\\d{4}-\\d{2}-\\d{2}$" },
-            before: { type: "string", pattern: "^\\d{4}-\\d{2}-\\d{2}$" },
-            project: { type: "string", minLength: 1, description: "Filter by project name (exact match)" },
-            session_id: { type: "string", minLength: 1, description: "Filter by session ID (exact match)" },
-            git_branch: { type: "string", minLength: 1, description: "Filter by git branch name (exact match)" },
-            response_format: { type: "string", enum: ["markdown", "json"], default: "markdown" }
-          },
-          required: ["query"],
-          additionalProperties: false
-        },
-        annotations: {
-          title: "Search Episodic Memory",
-          readOnlyHint: true,
-          destructiveHint: false,
-          idempotentHint: true,
-          openWorldHint: false
-        }
-      },
-      {
-        name: "read",
-        description: `Read full conversations to extract detailed context after finding relevant results with search. Essential for understanding the complete rationale, evolution, and gotchas behind past decisions. Use startLine/endLine pagination for large conversations to avoid context bloat (line numbers are 1-indexed).`,
-        inputSchema: {
-          type: "object",
-          properties: {
-            path: { type: "string", minLength: 1 },
-            startLine: { type: "number", minimum: 1 },
-            endLine: { type: "number", minimum: 1 }
-          },
-          required: ["path"],
-          additionalProperties: false
-        },
-        annotations: {
-          title: "Read Full Conversation",
-          readOnlyHint: true,
-          destructiveHint: false,
-          idempotentHint: true,
-          openWorldHint: false
-        }
-      }
-    ]
-  };
-});
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
+
+// src/mcp-tools.ts
+async function handleToolCall(name, args) {
   try {
-    const { name, arguments: args } = request.params;
+    assertMcpAuthorized(args);
     if (name === "search") {
       const params = SearchInputSchema.parse(args);
       const {
         searchConversations: searchConversations2,
         searchMultipleConcepts: searchMultipleConcepts2,
         formatResults: formatResults2,
-        formatMultiConceptResults: formatMultiConceptResults2
+        formatMultiConceptResults: formatMultiConceptResults2,
+        includeSearchSummaries: includeSearchSummaries2
       } = await Promise.resolve().then(() => (init_search(), search_exports));
       let resultText;
       if (Array.isArray(params.query)) {
@@ -32645,13 +32635,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           useSharedReader: true
         };
         const results = await searchConversations2(params.query, options);
+        const showSummary = includeSearchSummaries2();
         if (params.response_format === "json") {
           resultText = JSON.stringify(
             {
               results: results.map((r) => ({
                 exchange: r.exchange,
                 similarity: r.similarity,
-                snippet: r.snippet
+                snippet: r.snippet,
+                ...showSummary && r.summary ? { summary: r.summary } : {}
               })),
               count: results.length,
               mode: params.mode
@@ -32664,12 +32656,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
       }
       return {
-        content: [
-          {
-            type: "text",
-            text: resultText
-          }
-        ]
+        content: [{ type: "text", text: resultText }]
       };
     }
     if (name === "read") {
@@ -32685,26 +32672,98 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         formatConversationAsMarkdown2(jsonlContent)
       );
       return {
-        content: [
-          {
-            type: "text",
-            text: markdownContent
-          }
-        ]
+        content: [{ type: "text", text: markdownContent }]
       };
     }
     throw new Error(`Unknown tool: ${name}`);
   } catch (error61) {
     return {
-      content: [
-        {
-          type: "text",
-          text: handleError(error61)
-        }
-      ],
+      content: [{ type: "text", text: handleMcpError(error61) }],
       isError: true
     };
   }
+}
+
+// src/mcp-server.ts
+var server = new Server(
+  {
+    name: "episodic-memory",
+    version: VERSION
+  },
+  {
+    capabilities: {
+      tools: {}
+    }
+  }
+);
+server.setRequestHandler(ListToolsRequestSchema, async () => {
+  return {
+    tools: [
+      {
+        name: "search",
+        description: `Gives you memory across sessions. You don't automatically remember past Claude Code and Codex conversations - this tool restores context by searching them. Use BEFORE every task to recover decisions, solutions, and avoid reinventing work. Single string for semantic search or array of 2-5 concepts for precise AND matching. Returns ranked results with project, date, snippets, summaries, and file paths.`,
+        inputSchema: {
+          type: "object",
+          properties: {
+            query: {
+              oneOf: [
+                { type: "string", minLength: 2 },
+                { type: "array", items: { type: "string", minLength: 2 }, minItems: 2, maxItems: 5 }
+              ]
+            },
+            mode: { type: "string", enum: ["vector", "text", "both"], default: "both" },
+            limit: { type: "number", minimum: 1, maximum: 50, default: 10 },
+            after: { type: "string", pattern: "^\\d{4}-\\d{2}-\\d{2}$" },
+            before: { type: "string", pattern: "^\\d{4}-\\d{2}-\\d{2}$" },
+            project: { type: "string", minLength: 1, description: "Filter by project name (exact match)" },
+            session_id: { type: "string", minLength: 1, description: "Filter by session ID (exact match)" },
+            git_branch: { type: "string", minLength: 1, description: "Filter by git branch name (exact match)" },
+            response_format: { type: "string", enum: ["markdown", "json"], default: "markdown" },
+            auth_token: { type: "string", minLength: 1, description: "Required when EPISODIC_MEMORY_MCP_TOKEN is set" }
+          },
+          required: ["query"],
+          additionalProperties: false
+        },
+        annotations: {
+          title: "Search Episodic Memory",
+          readOnlyHint: true,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false
+        }
+      },
+      {
+        name: "read",
+        description: `Read full conversations to extract detailed context after finding relevant results with search. Essential for understanding the complete rationale, evolution, and gotchas behind past decisions. Use startLine/endLine pagination for large conversations to avoid context bloat (line numbers are 1-indexed).`,
+        inputSchema: {
+          type: "object",
+          properties: {
+            path: { type: "string", minLength: 1 },
+            startLine: { type: "number", minimum: 1 },
+            endLine: { type: "number", minimum: 1 },
+            auth_token: { type: "string", minLength: 1, description: "Required when EPISODIC_MEMORY_MCP_TOKEN is set" }
+          },
+          required: ["path"],
+          additionalProperties: false
+        },
+        annotations: {
+          title: "Read Full Conversation",
+          readOnlyHint: true,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false
+        }
+      }
+    ]
+  };
+});
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  const { name, arguments: args } = request.params;
+  const result = await handleToolCall(name, args);
+  return {
+    content: result.content,
+    ...result.isError ? { isError: true } : {}
+  };
 });
 async function main() {
   console.error("Episodic Memory MCP server running via stdio");

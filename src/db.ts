@@ -438,6 +438,17 @@ export function getMaxIndexedLine(db: Database.Database, archivePath: string): n
   return row.maxLine;
 }
 
+export function getFreelistInfo(db: Database.Database): { freePages: number; pageSize: number } {
+  const freePages = (db.prepare('PRAGMA freelist_count').get() as { freelist_count: number })
+    .freelist_count;
+  const pageSize = (db.prepare('PRAGMA page_size').get() as { page_size: number }).page_size;
+  return { freePages, pageSize };
+}
+
+export function vacuumDatabase(db: Database.Database): void {
+  db.exec('VACUUM');
+}
+
 export function deleteExchange(db: Database.Database, id: string): void {
   // Delete from vector table
   db.prepare(`DELETE FROM vec_exchanges WHERE id = ?`).run(id);

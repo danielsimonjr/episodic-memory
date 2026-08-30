@@ -339,6 +339,15 @@ export function getMaxIndexedLine(db, archivePath) {
     const row = db.prepare('SELECT COALESCE(MAX(line_end), 0) as maxLine FROM exchanges WHERE archive_path = ?').get(archivePath);
     return row.maxLine;
 }
+export function getFreelistInfo(db) {
+    const freePages = db.prepare('PRAGMA freelist_count').get()
+        .freelist_count;
+    const pageSize = db.prepare('PRAGMA page_size').get().page_size;
+    return { freePages, pageSize };
+}
+export function vacuumDatabase(db) {
+    db.exec('VACUUM');
+}
 export function deleteExchange(db, id) {
     // Delete from vector table
     db.prepare(`DELETE FROM vec_exchanges WHERE id = ?`).run(id);

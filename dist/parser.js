@@ -45,6 +45,7 @@ async function parseClaudeConversation(filePath, projectName, archivePath) {
     });
     let lineNumber = 0;
     let currentExchange = null;
+    const toolCallsByUseId = new Map();
     const finalizeExchange = () => {
         if (currentExchange && currentExchange.assistantMessages.length > 0) {
             const exchangeId = crypto
@@ -110,25 +111,37 @@ async function parseClaudeConversation(filePath, projectName, archivePath) {
                 if (parsed.message.role === 'assistant') {
                     for (const block of parsed.message.content) {
                         if (block.type === 'tool_use') {
-                            const toolCallId = crypto.randomUUID();
-                            toolCalls.push({
-                                id: toolCallId,
+                            const useId = typeof block.id === 'string' && block.id
+                                ? block.id
+                                : crypto.randomUUID();
+                            const toolCall = {
+                                id: useId,
                                 exchangeId: '', // Will be set when we know the exchange ID
                                 toolName: block.name || 'unknown',
                                 toolInput: block.input,
                                 isError: false,
                                 timestamp: parsed.timestamp || new Date().toISOString()
-                            });
+                            };
+                            toolCalls.push(toolCall);
+                            toolCallsByUseId.set(useId, toolCall);
                         }
                     }
                 }
-                // Extract tool results
+                // Match tool_result blocks to earlier tool_use via tool_use_id
                 if (parsed.message.role === 'user') {
                     for (const block of parsed.message.content) {
                         if (block.type === 'tool_result') {
-                            // Store for later association with tool_use
-                            // For now, we'll just track results exist
-                            // TODO: Match tool_use_id to previous tool_use
+                            const useId = block.tool_use_id;
+                            if (typeof useId !== 'string' || !useId)
+                                continue;
+                            const existing = toolCallsByUseId.get(useId);
+                            if (!existing)
+                                continue;
+                            const output = stringifyToolOutput(block.content);
+                            if (output !== undefined) {
+                                existing.toolResult = output;
+                            }
+                            existing.isError = Boolean(block.is_error);
                         }
                     }
                 }

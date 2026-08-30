@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { verifyIndex, repairIndex } from './verify.js';
 import { indexSession, indexUnprocessed, indexConversations } from './indexer.js';
-import { initDatabase } from './db.js';
+import { initDatabase, getFreelistInfo, vacuumDatabase } from './db.js';
 import { getDbPath, getArchiveDir, getExcludedProjects } from './paths.js';
 import { pruneProjects } from './prune.js';
 import fs from 'fs';
@@ -156,9 +156,7 @@ async function main() {
         // before that reports 0 on a fresh DB and a negative "reclaimed" figure.
         const db = initDatabase();
         const before = fs.existsSync(dbPath) ? fs.statSync(dbPath).size : 0;
-        const freePages = (db.prepare('PRAGMA freelist_count').get() as { freelist_count: number })
-          .freelist_count;
-        const pageSize = (db.prepare('PRAGMA page_size').get() as { page_size: number }).page_size;
+        const { freePages, pageSize } = getFreelistInfo(db);
 
         console.log(`Database: ${dbPath}`);
         console.log(`  size before : ${(before / 1024 ** 2).toFixed(1)} MB`);
@@ -166,7 +164,7 @@ async function main() {
         console.log('Running VACUUM (needs temporary free space ~= database size)...');
 
         const started = Date.now();
-        db.exec('VACUUM');
+        vacuumDatabase(db);
         db.close();
 
         const after = fs.statSync(dbPath).size;

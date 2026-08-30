@@ -35,9 +35,9 @@ items move between sections as state changes.
 
 ### Short-term (1-3 months, mirrors `docs/roadmap/now.md`)
 
-- [ ] **SessionStart sync failures should not be silent** (upstream #94) — redirect hook stderr to `~/.config/superpowers/sync-errors.log` with `|| true` to preserve non-blocking. PR upstream.
-- [ ] **`doctor` Windows diagnostics** — extend `doctor` with plugin install state + node_modules sentinel check + DB stats + recent errors + EMBEDDING_VERSION drift detection.
-- [ ] **Search-result summary visibility** (upstream #74) — include summary in search response when available, default on, feature-flagged. PR upstream.
+- [x] **SessionStart sync failures should not be silent** (upstream #94) — `cli/sync-hook.js` logs to `sync-errors.log` and always exits 0; `doctor` surfaces last 5 errors.
+- [x] **`doctor` Windows diagnostics** — default `episodic-memory doctor` reports plugin/node_modules sentinels, DB stats, hook errors, EMBEDDING_VERSION drift; `--json` supported.
+- [x] **Search-result summary visibility** (upstream #74) — summaries in markdown + MCP JSON + multi-concept; `EPISODIC_MEMORY_INCLUDE_SUMMARY` flag.
 - [ ] **Upstream sync after first obra merges** — drop redundant fork patches per the "When upstream merges a fork patch" recipe in `docs/roadmap/upstream-sync.md`.
 - [ ] **(Considered, deliberately NOT done 2026-06-24) `.gitattributes` eol normalization for `dist/`** — the committed `dist/` churns LF↔CRLF on every Windows `tsc` build (gotcha #3 documents the "stage real-content files only" workaround). A `* text=auto eol=lf` + `git add --renormalize` would stop the churn but (a) produces a one-time ~40-file noisy diff and (b) risks eol merge friction against `upstream/main` (this is a fork that merges from obra). Left as-is on purpose; revisit if/when the fork stops tracking upstream.
 
@@ -51,7 +51,7 @@ Themes (not individual tasks; promote into tasks here as plans firm up):
 - [ ] **Theme 4: Observability & debugging UX** — structured sync log, `doctor` expansion, DEBUG=episodic:* flag, local metrics counters
 - [ ] **Theme 5: Cross-harness integration polish** — harness detection metadata, summarization fallback chain
 - [ ] **Theme 6: Multi-machine foundation (import/export)** — per-machine identity tagging, bundle export/import; full sync deferred to `later.md`
-- [ ] **Theme 7: Security hardening sweep** — threat-model doc updated; secret redaction opt-in + MCP realpath/`read` caps + dir modes shipped; remaining: optional DB encryption at rest, MCP tool authz (upstream)
+- [x] **Theme 7: Security hardening sweep** — `docs/security.md` written; secret redaction + MCP realpath/`read` caps + dir modes + optional `EPISODIC_MEMORY_MCP_TOKEN` shipped. Residual: SQLCipher opt-in (documented as filesystem encryption).
 
 ---
 
@@ -61,7 +61,7 @@ Themes (not individual tasks; promote into tasks here as plans firm up):
 
 - [ ] **`: any` type tightening** — 16 sites in `src/` use `any` at DB-row + JSONL-payload trust boundaries. Tightening to `unknown` + type guards is a real refactor. Defer until a quality reason exists; don't churn for cosmetics.
 - [ ] **Major dep bumps** — typescript 5→6, vitest 3→4, marked 16→18, @types/node 24→25. All cross-major; each needs its own evaluation. Defer until needed (e.g., a vitest 4 fix we want).
-- [ ] **Parser TODO** at `src/parser.ts:207` — "Match tool_use_id to previous tool_use" — documented edge case in tool-call matching. Not a defect; address only if it causes a real bug.
+- [x] **Parser TODO** at `src/parser.ts:207` — Claude `tool_result` now matches `tool_use_id` the same way Codex matches `call_id`.
 
 ### Upstream behavior we're tracking but not contributing to
 

@@ -5,6 +5,7 @@ import os from 'os';
 import {
   resolveArchiveJsonlPath,
   readJsonlLines,
+  safeArchiveSummaryPath,
   DEFAULT_MAX_READ_BYTES,
 } from '../src/archive-path.js';
 import { safeRmSync } from './test-utils.js';
@@ -82,5 +83,50 @@ describe('archive-path confinement', () => {
     fs.writeFileSync(file, 'x'.repeat(200) + '\n', 'utf-8');
     await expect(readJsonlLines(file)).rejects.toThrow(/MCP read cap/);
     expect(DEFAULT_MAX_READ_BYTES).toBeGreaterThan(0);
+  });
+
+  it('rejects path traversal with .. segments outside the archive', () => {
+    const file = path.join(archiveDir, 'proj', 'session.jsonl');
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, '{"type":"user"}\n', 'utf-8');
+
+    const traversal = path.join(archiveDir, 'proj', '..', '..', 'outside', 'secret.jsonl');
+    expect(() => resolveArchiveJsonlPath(traversal)).toThrow(/outside the conversation archive/);
+  });
+
+  describe('safeArchiveSummaryPath', () => {
+    it('returns summary path when sidecar exists inside the archive', () => {
+      const file = path.join(archiveDir, 'proj', 'session.jsonl');
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, '{"type":"user"}\n', 'utf-8');
+      fs.writeFileSync(file.replace('.jsonl', '-summary.txt'), 'A short summary', 'utf-8');
+
+      const summaryPath = safeArchiveSummaryPath(file);
+      expect(summaryPath).not.toBeNull();
+      expect(summaryPath).toContain('-summary.txt');
+    });
+
+    it('returns null for archive paths outside the archive (blocks summary escape)', () => {
+      const outsideJsonl = path.join(outsideDir, 'poison.jsonl');
+      const outsideSummary = path.join(outsideDir, 'poison-summary.txt');
+      fs.writeFileSync(outsideSummary, 'leaked secret summary', 'utf-8');
+
+      expect(safeArchiveSummaryPath(outsideJsonl)).toBeNull();
+    });
+
+    it('returns null when summary symlink escapes the archive', () => {
+      const secret = path.join(outsideDir, 'secret-summary.txt');
+      fs.writeFileSync(secret, 'outside summary', 'utf-8');
+      const linkJsonl = path.join(archiveDir, 'link.jsonl');
+      const linkSummary = linkJsonl.replace('.jsonl', '-summary.txt');
+      fs.writeFileSync(linkJsonl, '{"type":"user"}\n', 'utf-8');
+      try {
+        fs.symlinkSync(secret, linkSummary);
+      } catch (err: any) {
+        if (err?.code === 'EPERM' || err?.code === 'EACCES') return;
+        throw err;
+      }
+      expect(safeArchiveSummaryPath(linkJsonl)).toBeNull();
+    });
   });
 });

@@ -15,6 +15,12 @@ export declare function maxReadBytes(): number;
  */
 export declare function resolveArchiveJsonlPath(candidatePath: string): string;
 /**
+ * Resolve a summary sidecar path only when the candidate JSONL path is
+ * lexically inside the archive and the summary file exists without symlink escape.
+ * Returns null when the path is outside the archive or the summary is missing.
+ */
+export declare function safeArchiveSummaryPath(candidateJsonlPath: string): string | null;
+/**
  * Stream a JSONL file, optionally restricted to a 1-indexed inclusive line range.
  * Enforces a byte-size cap when reading without an end bound on huge files.
  */

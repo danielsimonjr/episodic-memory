@@ -1,6 +1,8 @@
 export type LogLevel = 'info' | 'warn' | 'error';
 export declare function getLogDir(): string;
 export declare function getSyncLogPath(): string;
+/** Dedicated log for SessionStart hook failures (upstream #94). */
+export declare function getSyncErrorsLogPath(): string;
 /** Lock file serializing background syncs; lives beside the embedding-migration lock. */
 export declare function getSyncLockPath(): string;
 /**

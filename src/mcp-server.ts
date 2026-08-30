@@ -22,6 +22,7 @@ import {
   readJsonlLines,
 } from './archive-path.js';
 import { closeSharedReaderDatabase } from './db.js';
+import { maybeRedactSecrets } from './redact.js';
 
 // Zod Schemas for Input Validation
 
@@ -300,7 +301,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       const { formatConversationAsMarkdown } = await import('./show.js');
       // Content is already sliced to the requested range; don't re-slice.
-      const markdownContent = formatConversationAsMarkdown(jsonlContent);
+      const markdownContent = maybeRedactSecrets(
+        formatConversationAsMarkdown(jsonlContent)
+      );
 
       return {
         content: [

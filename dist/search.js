@@ -1,6 +1,7 @@
 import { initDatabase, getSharedReaderDatabase } from './db.js';
 import { initEmbeddings, generateQueryEmbedding } from './embeddings.js';
 import { maybeRedactSecrets } from './redact.js';
+import { safeArchiveSummaryPath } from './archive-path.js';
 import fs from 'fs';
 /**
  * Build the AND-clause and bound-parameter list that constrains a search
@@ -218,10 +219,10 @@ export async function searchConversations(query, options = {}) {
     }
     return results.map((row) => {
         const exchange = exchangeFromRow(row);
-        // Try to load summary if available
-        const summaryPath = row.archive_path.replace('.jsonl', '-summary.txt');
+        // Try to load summary if available (confined to archive like MCP read)
         let summary;
-        if (fs.existsSync(summaryPath)) {
+        const summaryPath = safeArchiveSummaryPath(row.archive_path);
+        if (summaryPath) {
             summary = maybeRedactSecrets(fs.readFileSync(summaryPath, 'utf-8').trim());
         }
         // Create snippet (first 200 chars, collapse newlines)

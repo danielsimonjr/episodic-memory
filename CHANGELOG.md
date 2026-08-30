@@ -29,6 +29,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **MCP `read` now respects `EPISODIC_MEMORY_REDACT_SECRETS`.** Search results were redacted at return time, but `read` still returned raw archive JSONL — a gap when redaction is enabled. Read output now passes through the same opt-in redaction.
+- **Search summary sidecars are archive-confined.** Summary files were loaded via a naive `.replace('.jsonl', '-summary.txt')` on DB `archive_path` values, so a poisoned path outside the archive could still read an arbitrary `*-summary.txt`. Summaries now use the same archive prefix and realpath checks as MCP `read`.
+
+### Fixed
+- **SessionStart hook failures are logged to `sync-errors.log`.** Hook stderr was easy to miss; a dedicated wrapper runs `sync --background`, records non-zero exits, and always returns success so hooks stay non-blocking (upstream #94).
+- **Plugin manifest version drift.** `.codex-plugin/plugin.json` and `.claude-plugin/marketplace.json` now match `package.json` at 1.5.1.
+
 ## [1.5.0] - 2026-08-13
 
 ### Security

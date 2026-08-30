@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Search results include conversation summaries** by default (upstream #74), including MCP JSON and multi-concept paths. Disable with `EPISODIC_MEMORY_INCLUDE_SUMMARY=0`; truncate with `EPISODIC_MEMORY_MAX_SUMMARY_DISPLAY_CHARS`.
 
 ### Changed
+- **MCP server upgraded to `@modelcontextprotocol/server` v2 (protocol `2026-07-28`).** Uses `serveStdio` for stateless modern clients (`server/discover`) while still serving legacy `initialize` clients through `2025-11-25`. Adds `test/mcp-protocol.test.ts` to lock both eras.
 - **Embeddings truncate before concatenate.** `formatExchangeEmbeddingText` applies `truncateForIndex` so multi-MB prompt payload is not allocated into the combined embed string.
 - **Claude parser links `tool_result` to `tool_use`** via `tool_use_id`, matching the Codex path.
 

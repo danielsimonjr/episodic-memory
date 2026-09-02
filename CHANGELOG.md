@@ -1,3 +1,32 @@
+## [1.5.2] - 2026-09-02
+
+### Fixed
+- **An empty `-summary.txt` no longer erases the reason it is empty.** The give-up path wrote the
+  empty sentinel and then DELETED the failure record (`fs.unlinkSync(summaryFailPath(...))`), so a
+  permanently-failed summary became byte-identical to a legitimately-empty one. Measured on one
+  machine: **2,919 zero-byte summaries out of 6,762 (43%), and ZERO failure markers**. The sentinel
+  is what stops the re-queue loop that F1 fixed; erasing the evidence was never the mechanism, only
+  collateral. The marker now survives, flagged `gaveUp: true` with a timestamp.
+- **Zero-exchange conversations record their reason too** (`reason: "no-exchanges"`), so an empty
+  summary carrying no marker at all now means exactly one thing: nobody knows why.
+- **Version sources of truth were split across the 1.5.1 release** — `package.json` and
+  `.claude-plugin/plugin.json` said 1.5.1 while `.claude-plugin/marketplace.json` and
+  `.codex-plugin/plugin.json` said 1.5.0, and a fifth source, `src/version.ts`, was missed again
+  here until the test caught it. The marketplace serves by ITS manifest, so the release was
+  inconsistent at the one surface that governs deployment. The two consistency tests had been
+  failing on `main` and nobody read them.
+
+### Added
+- `SyncResult.emptySummaries` and `SyncResult.unexplainedEmptySummaries`, counted during the walk
+  that already stats each file, and reported by the CLI. **`pendingSummaries` counts only
+  conversations with NO summary file**, so an empty one satisfies the needs-summary gate forever
+  and a failed summariser left no trace in any number printed. The 1.5.1 honest banner was keyed
+  on `pendingSummaries` — the very value this defect corrupts — so it could never fire for this
+  mode. These counts are the only place the condition shows.
+- Deliberately NOT re-queuing empty summaries. Re-queuing 2,919 conversations at once would storm
+  the summariser that is already the thing failing. Visibility first; re-summarising is a separate,
+  throttled decision.
+
 ## [1.5.1] - 2026-08-29
 
 ### Fixed

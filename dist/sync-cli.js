@@ -123,7 +123,7 @@ console.log('Syncing conversations...');
 console.log(`Sources: ${sourceDirs.join(', ')}`);
 console.log(`Destination: ${destDir}\n`);
 async function syncAll() {
-    const totals = { copied: 0, skipped: 0, indexed: 0, summarized: 0, errors: [], pendingSummaries: 0 };
+    const totals = { copied: 0, skipped: 0, indexed: 0, summarized: 0, errors: [], pendingSummaries: 0, emptySummaries: 0, unexplainedEmptySummaries: 0 };
     // Global per-sync summary budget shared across ALL source dirs (F2). Previously
     // the 10-summary cap applied per source dir, so the real cap was 10 × dirs and
     // was not configurable. Now it's one configurable budget decremented as each
@@ -139,6 +139,8 @@ async function syncAll() {
         totals.indexed += result.indexed;
         totals.summarized += result.summarized;
         totals.pendingSummaries += result.pendingSummaries;
+        totals.emptySummaries += result.emptySummaries;
+        totals.unexplainedEmptySummaries += result.unexplainedEmptySummaries;
         totals.errors.push(...result.errors);
         summaryBudget -= result.summaryAttempts;
     }
@@ -158,6 +160,20 @@ async function syncAll() {
     console.log(`  Skipped: ${totals.skipped}`);
     console.log(`  Indexed: ${totals.indexed}`);
     console.log(`  Summarized: ${totals.summarized}${totals.pendingSummaries > 0 ? ` (${totals.pendingSummaries} still pending)` : ''}`);
+    // EMPTY SUMMARIES ARE NOT PENDING AND NOT DONE, and until 1.5.2 nothing said either.
+    // pendingSummaries counts conversations with NO summary file; an empty one satisfies the
+    // needs-summary gate forever, so a failed summariser leaves no trace in any number printed
+    // above. One machine reached 2,919 empty summaries of 6,762 (43%) with ZERO failure markers,
+    // and every sync said "Sync complete!". These two lines are the only place that shows.
+    if (totals.emptySummaries > 0) {
+        console.log(`  Empty summaries: ${totals.emptySummaries}` +
+            (totals.unexplainedEmptySummaries > 0
+                ? ` - ${totals.unexplainedEmptySummaries} with NO recorded reason`
+                : ` (all carry a recorded reason)`));
+    }
+    if (totals.unexplainedEmptySummaries > 0) {
+        console.log(`  An empty summary with no reason is a SILENT FAILURE, not a healthy skip.`);
+    }
     if (totals.errors.length > 0) {
         console.log(`\n⚠️  Errors: ${totals.errors.length}`);
         totals.errors.forEach(err => console.log(`  ${err.file}: ${err.error}`));

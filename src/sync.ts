@@ -45,6 +45,22 @@ export interface SyncResult {
   // built on it would have been decorative. Without this number "Summarized: 0" is ambiguous
   // between "nothing needed doing" and "the queue is stalled" - the two states that matter most.
   pendingSummaries: number;
+  /**
+   * Zero-byte -summary.txt files seen this run, and how many of those carry NO recorded reason.
+   *
+   * WHY THIS EXISTS. An empty summary is written on three legitimate paths (oversized skip,
+   * zero-exchange conversation, give-up after N attempts) and the needs-summary gate is a bare
+   * existsSync - so an empty file reads as DONE forever. Until 1.5.2 the give-up path also
+   * DELETED its failure record, making a permanently-failed summary byte-identical to a
+   * legitimately-empty one. Measured on one machine 2026-09-02: 2,919 zero-byte summaries of
+   * 6,762 (43%) and ZERO failure markers. pendingSummaries counts only files with no summary at
+   * all, so it read 0 and the 1.5.1 honest banner - shipped precisely to catch a silent
+   * summariser - could never fire for this mode.
+   *
+   * unexplainedEmptySummaries is therefore the honest number: empty, and nothing says why.
+   */
+  emptySummaries: number;
+  unexplainedEmptySummaries: number;
   errors: Array<{ file: string; error: string }>;
 }
 
@@ -139,6 +155,8 @@ export async function syncConversations(
     summarized: 0,
     summaryAttempts: 0,
     pendingSummaries: 0,
+    emptySummaries: 0,
+    unexplainedEmptySummaries: 0,
     errors: []
   };
 
@@ -185,6 +203,18 @@ export async function syncConversations(
         // Check if this file needs a summary (whether newly copied or existing)
         if (!options.skipSummaries) {
           const summaryPath = destFile.replace('.jsonl', '-summary.txt');
+          // An empty summary reads as DONE to the gate below, forever. Count them so the
+          // condition is at least VISIBLE, and separate the ones nothing explains. Deliberately
+          // does NOT re-queue them: 43% of one real archive is empty, and re-queuing thousands
+          // at once would storm the very summariser that is failing. Visibility first.
+          if (fs.existsSync(summaryPath)) {
+            try {
+              if (fs.statSync(summaryPath).size === 0) {
+                result.emptySummaries++;
+                if (!fs.existsSync(summaryFailPath(destFile))) result.unexplainedEmptySummaries++;
+              }
+            } catch { /* unreadable summary is not evidence either way */ }
+          }
           if (!fs.existsSync(summaryPath) && !shouldSkipConversation(destFile)) {
             // Fall back to the filename (sans .jsonl) when there's no embedded UUID,
             // so transcripts named without a session UUID are still summarized rather
@@ -328,9 +358,16 @@ export async function syncConversations(
         const exchanges = await parseConversation(filePath, project, filePath);
 
         if (exchanges.length === 0) {
-          // Skip empty conversations — write an empty -summary.txt sentinel so they aren't re-queued forever
+          // Skip empty conversations — write an empty -summary.txt sentinel so they aren't re-queued
+          // forever, AND record why. Every empty summary must carry a reason; an empty file with no
+          // marker now means "nobody knows", which is a reportable condition rather than a silence.
           const summaryPath = filePath.replace('.jsonl', '-summary.txt');
           fs.writeFileSync(summaryPath, '', 'utf-8');
+          try {
+            fs.writeFileSync(summaryFailPath(filePath), JSON.stringify({
+              reason: 'no-exchanges', recordedAt: new Date().toISOString()
+            }), 'utf-8');
+          } catch {}
           continue;
         }
 
@@ -350,7 +387,16 @@ export async function syncConversations(
           // so this conversation stops re-queuing every sync forever (F1).
           const summaryPath = filePath.replace('.jsonl', '-summary.txt');
           try { fs.writeFileSync(summaryPath, '', 'utf-8'); } catch {}
-          try { fs.unlinkSync(summaryFailPath(filePath)); } catch {}
+          // KEEP the record. Deleting it (as this did until 1.5.2) made a permanently-failed
+          // summary indistinguishable from a legitimately-empty one, which is how a machine
+          // accumulated 2,919 empty summaries and 0 failure markers. The sentinel above is what
+          // stops the re-queue loop; the marker is only evidence, and erasing evidence to stop a
+          // loop was never the mechanism - it was collateral.
+          try {
+            fs.writeFileSync(summaryFailPath(filePath), JSON.stringify({
+              attempts, lastError: errMsg, gaveUp: true, gaveUpAt: new Date().toISOString()
+            }), 'utf-8');
+          } catch {}
           console.log(`  Giving up on ${path.basename(filePath)} after ${attempts} failed attempts: ${errMsg}`);
         } else {
           try {

@@ -14,7 +14,7 @@
 
 ### Safety
 - Reaping requires BOTH that a process was absent from the pre-launch baseline AND that it
-  matches one of three SDK-plumbing signatures (`daemon run --origin transient`, `--bg-bg-pty-host`,
+  matches one of three SDK-plumbing signatures (`daemon run --origin transient`, `--bg-pty-host`,
   `--fork-session`). An interactive session matches none of them. The baseline is what makes a
   mis-tuned signature survivable.
 - **Fails open**: if the process list cannot be enumerated, nothing is reaped, ever.

@@ -9,12 +9,14 @@
   collateral. The marker now survives, flagged `gaveUp: true` with a timestamp.
 - **Zero-exchange conversations record their reason too** (`reason: "no-exchanges"`), so an empty
   summary carrying no marker at all now means exactly one thing: nobody knows why.
-- **Version sources of truth were split across the 1.5.1 release** — `package.json` and
-  `.claude-plugin/plugin.json` said 1.5.1 while `.claude-plugin/marketplace.json` and
-  `.codex-plugin/plugin.json` said 1.5.0, and a fifth source, `src/version.ts`, was missed again
-  here until the test caught it. The marketplace serves by ITS manifest, so the release was
-  inconsistent at the one surface that governs deployment. The two consistency tests had been
-  failing on `main` and nobody read them.
+- **Version sources of truth are now unified at one value across all five places**:
+  `package.json`, `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`,
+  `.codex-plugin/plugin.json`, and the generated `src/version.ts`. As shipped, 1.5.1 left the
+  marketplace and codex manifests behind on 1.5.0 while package.json said 1.5.1, and both
+  consistency tests were failing on that tree unread. (Correction to this entry's first draft:
+  PRs #6/#7 had already moved the marketplace manifest to 1.5.1 upstream of this work — the
+  1.5.0 reading came from a stale local base, and only the codex manifest was still behind by
+  the time this landed. Recorded because the original claim was wider than the evidence.)
 
 ### Added
 - `SyncResult.emptySummaries` and `SyncResult.unexplainedEmptySummaries`, counted during the walk

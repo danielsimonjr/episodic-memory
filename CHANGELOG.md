@@ -1,3 +1,29 @@
+## [1.5.3] - 2026-09-02
+
+### Fixed
+- **Orphaned summariser processes are now reaped.** `callClaude` bounds its SDK call with a 120 s
+  AbortController, but aborting stops the PARENT iterating — it does not terminate the
+  `claude.exe --fork-session` child the SDK spawned, nor the transient daemon supervising it.
+  Measured on a live machine: two workers lived **3 h 45 m against that 120 s bound**, accruing
+  CPU at ~1.2% with perfectly flat working sets (an idle poll loop), together accounting for
+  ~47 processes and ~5 GB. The bound was real and could not reach the thing it bounded.
+- `cli/sync-hook.js` now snapshots `claude.exe` **before** launching the background sync and
+  sweeps afterwards. **Order is load-bearing**: killing the workers alone is not enough — the
+  transient daemon respawns its pty-hosts within seconds (verified live), so the daemon dies
+  first, then pty-hosts, then forks.
+
+### Safety
+- Reaping requires BOTH that a process was absent from the pre-launch baseline AND that it
+  matches one of three SDK-plumbing signatures (`daemon run --origin transient`, `--bg-bg-pty-host`,
+  `--fork-session`). An interactive session matches none of them. The baseline is what makes a
+  mis-tuned signature survivable.
+- **Fails open**: if the process list cannot be enumerated, nothing is reaped, ever.
+- Verified against the real live process table with an EMPTY baseline — the worst case, where
+  every process looks new — selecting **zero** of 11 live `claude.exe`, with all three real
+  sessions surviving. Six unit tests include two controls: a human session is never selected, and
+  nothing predating the sync is ever selected. Without those controls, "it reaps the orphans"
+  cannot be distinguished from "it reaps everything".
+
 ## [1.5.2] - 2026-09-02
 
 ### Fixed

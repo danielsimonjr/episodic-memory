@@ -1,3 +1,25 @@
+## [1.5.4] - 2026-09-03
+
+### Fixed
+- **The orphan reaper now logs EVERY invocation, including the quiet one.** It previously
+  `return`ed silently on three separate paths - enumeration failure, an empty victim list, and
+  all-kills-failing - so "ran and found nothing" was **indistinguishable from "never ran"**. On
+  2026-09-02 five orphaned processes survived a run and the log held zero entries; that fact
+  carried no information. A reaper that speaks only when it kills is unfalsifiable.
+
+### Why this shipped before the reaper's other known defect
+- The reaper also has a targeting defect, and it could not be diagnosed until this one was fixed.
+  The very first line the new logging produced was:
+  `orphan-reaper: ran, 11 claude process(es) seen, 11 in baseline, 0 to reap`
+  which overturned the hypothesis on file. The baseline does not "miss" session-spawned orphans -
+  **every process was in it**, because `sync --background` returns almost immediately, the child
+  closes within ~1 second, and the reaper therefore fires BEFORE any fork it targets exists. Its
+  window is one second wide, at the wrong moment.
+- The implied fix is different from the one previously filed: run the reaper at the START of the
+  next sync, reaping the previous run's leftovers by signature and age, where a baseline is
+  meaningful. That is NOT in this release - it is a design change to destructive automation and it
+  is filed with its evidence.
+
 ## [1.5.3] - 2026-09-02
 
 ### Fixed

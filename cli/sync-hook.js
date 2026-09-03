@@ -41,23 +41,40 @@ function listClaudeProcs() {
 }
 
 function reapOrphans(baselinePids, logPath, formatLogLine) {
+  // EVERY PATH LOGS, INCLUDING THE QUIET ONE. This function used to `return` silently on three
+  // separate paths - enumeration failure, an empty victim list, and all-kills-failing - so
+  // "ran and found nothing" was INDISTINGUISHABLE from "never ran". On 2026-09-02 five orphans
+  // survived a run and the log held zero Reaped lines; that fact carried NO information and I
+  // could not tell which had happened. A reaper that speaks only when it kills is unfalsifiable.
+  const note = (level, msg) => {
+    try { fs.appendFileSync(logPath, formatLogLine(level, `orphan-reaper: ${msg}`), 'utf-8'); } catch {}
+  };
+
   const procs = listClaudeProcs();
-  if (!procs) return;
+  if (!procs) {
+    note('warn', 'could not enumerate processes - reaped NOTHING (failing open, by design)');
+    return;
+  }
   const victims = selectOrphans(procs, baselinePids);
-  if (!victims.length) return;
+  if (!victims.length) {
+    note('info', `ran, ${procs.length} claude process(es) seen, ${baselinePids.size} in baseline, 0 to reap`);
+    return;
+  }
   const killed = [];
+  const failed = [];
   for (const v of victims) {
     try {
       process.kill(v.pid, 'SIGKILL');
       killed.push(v.pid);
-    } catch { /* already gone, or not ours to signal */ }
+    } catch (e) {
+      failed.push(`${v.pid} (${e && e.code ? e.code : 'unknown'})`);
+    }
   }
-  if (killed.length) {
-    try {
-      fs.appendFileSync(logPath, formatLogLine('warn',
-        `Reaped ${killed.length} orphaned summariser process(es) the SDK abort left running: ${killed.join(', ')}`), 'utf-8');
-    } catch {}
-  }
+  // Report BOTH outcomes. A kill list that silently all-failed previously logged nothing at all,
+  // which reads exactly like a clean run.
+  note(killed.length ? 'warn' : 'error',
+    `ran, ${victims.length} orphan(s) selected, ${killed.length} killed${killed.length ? ' [' + killed.join(', ') + ']' : ''}` +
+    (failed.length ? `, ${failed.length} FAILED [${failed.join(', ')}]` : ''));
 }
 
 async function main() {

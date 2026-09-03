@@ -84,6 +84,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2026-09-03 - CI now exercises the NODE runtime, not just Bun
+
+- Every CI step ran through `bun run` while `setup-node` was installed and never invoked,
+  so the production runtime was never exercised. Measured across the workspace: 13 of 14
+  sampled repos had this shape.
+- Added a Node smoke step that imports the shipped entry (`./dist/index.js`) under Node and fails on a
+  throw, a syntax error, or an unresolvable import. A server that self-starts on import
+  passes after 5s, because starting without crashing is the signal.
+- **Proven failure-capable before adoption**, on librarian-mcp: corrupt artifact -> exit 1;
+  missing dependency -> exit 1; good artifact -> exit 0. The missing-dependency case is the
+  class that forced six repos to revert during the Bun migration.
+- Smoke verified locally against this repo's built artifact before the step was added.
+
 ## [Unreleased]
 
 ### Security

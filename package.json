@@ -1,6 +1,6 @@
 {
   "name": "episodic-memory",
-  "version": "1.5.4",
+  "version": "1.5.5",
   "description": "Semantic search for Claude Code and Codex conversations",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -66,5 +66,8 @@
     "type": "git",
     "url": "https://github.com/obra/episodic-memory"
   },
-  "homepage": "https://github.com/obra/episodic-memory"
+  "homepage": "https://github.com/obra/episodic-memory",
+  "allowScripts": {
+    "better-sqlite3@12.11.1": true
+  }
 }

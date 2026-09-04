@@ -1,3 +1,25 @@
+## [1.5.5] - 2026-09-03
+
+### Fixed
+- **The native addon is now built when the plugin is installed.** `better-sqlite3` is a native
+  module; without its postinstall, `better_sqlite3.node` is never produced and every sync dies
+  with "Could not locate the bindings file". npm 11 skips install scripts unless package.json
+  declares `allowScripts`, and `claude plugin update` clones this repo into a fresh version
+  directory and runs `npm install` there - so the declaration has to live in the REPO, not on any
+  one machine.
+- **This shipped broken three times before the cause was fixed** - 1.5.2, 1.5.3 and 1.5.4 all
+  deployed with the addon unbuilt. It was patched by hand twice, which is why it recurred: the
+  scheduled sync fails with rc=1 and a scheduled task has nowhere to print, so it is invisible
+  until a patrol reads the task result.
+
+### Added
+- `test/allow-scripts-pin.test.ts`. npm writes the approval VERSION-PINNED
+  (`better-sqlite3@12.11.1`), so bumping the dependency silently lapses it and the identical
+  silent failure returns. The test compares the pin against the **lockfile's resolved version** -
+  not against the dependency RANGE, which legitimately differs (`^12.4.1` vs `12.11.1`) and made
+  the first draft of this test fail on a healthy repo. Proved non-vacuous: staling the pin turns
+  the suite red with the remediation in the failure message.
+
 ## [1.5.4] - 2026-09-03
 
 ### Fixed

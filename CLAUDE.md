@@ -47,7 +47,7 @@ When upstream merges these (or equivalents), rebase/merge `upstream/main` and dr
 - **MCP server** is `dist/mcp-server.js`, launched by `cli/mcp-server-wrapper.js` from the plugin manifest.
 - **Tests** in `test/` via vitest (38 files, 210 tests — counts verified 2026-08-08).
 - **Generated files** in `dist/` AND `src/version.ts`. The latter is gitignored; never edit it.
-- **`package-lock.json` is committed** — CI uses `npm ci` + `npm audit --audit-level=critical`.
+- **`bun.lock` is committed** — CI uses `bun install --frozen-lockfile` + `bun audit --audit-level=critical`. Do not commit `package-lock.json` (gitignored).
 
 ```
 src/
@@ -91,21 +91,28 @@ prompts/                 # prompts/search-agent.md
 ## Build, test, release commands
 
 ```bash
-npm test          # full suite; runs prebuild step that generates src/version.ts
-npm run build     # tsc + esbuild bundle into dist/mcp-server.js
-npm run generate-version   # writes src/version.ts from package.json
+bun install        # package manager is Bun (Node stays the production runtime)
+bun test           # alias: bun run test — full suite; pretest generates src/version.ts
+bun run typecheck  # tsc --noEmit
+bun run build      # tsc + esbuild bundle into dist/mcp-server.js
+bun run generate-version   # writes src/version.ts from package.json
 ```
 
 The `prebuild` and `pretest` hooks both regenerate `src/version.ts`. After
 source changes that touch the MCP server or any imported module, run
-`npm run build` so `dist/` reflects source. **Commit `dist/` alongside `src/`** —
+`bun run build` so `dist/` reflects source. **Commit `dist/` alongside `src/`** —
 CI doesn't rebuild for you.
+
+**Toolchain vs runtime:** Bun is the package manager and script driver (CI + local
+dev). Shipped code still runs under **Node** (CLI shebangs, `.mcp.json`, hooks).
+Plugin first-run dependency install in `cli/mcp-server-wrapper.js` still uses
+`npm install` because end-user Claude Code / Codex hosts have npm, not Bun.
 
 ### Current test state
 
 - **Full suite: 187/187 pass on Windows**, reliably. The former `integration.test.ts` / `verify.test.ts` cold-embedding timeout flakes were fixed 2026-06-23: the embedder is pre-warmed once per worker in `beforeAll`, `vitest.config.ts` sets `hookTimeout: 30000`, and the repair re-index test gets 60s. If you see a fresh timeout flake, suspect a new embedding-heavy hook without warm-up rather than the old cold-start cause.
 - Run on Windows: expect ~75s wall-clock for the full suite.
-- Run a single test: `npx vitest run test/<file>.test.ts`. Much faster, cleaner output.
+- Run a single test: `bun run test test/<file>.test.ts`. Much faster, cleaner output.
 
 ## Critical gotchas (read before editing)
 
@@ -131,7 +138,7 @@ expect(path.normalize(actual)).toBe(path.normalize(expected));
 
 ### 3. `dist/` is committed — edit src/, build, commit both
 
-Hand-edits to `dist/` get clobbered by `npm run build`. Always edit `src/`, then `npm run build`, then commit both together.
+Hand-edits to `dist/` get clobbered by `bun run build`. Always edit `src/`, then `bun run build`, then commit both together.
 
 When committing dist/, **only stage files with real content changes** — `tsc` regenerates with native line endings on each platform, producing many "modified" files that are line-ending-only diffs. On Windows, expect 40+ dist files to show as modified after a build but only ~5 have real content. Stage explicitly by name, not by `git add dist/`.
 
@@ -237,6 +244,8 @@ npm install --no-audit --no-fund
 npm install --no-save onnxruntime-common@1.24.3
 ```
 
+(Plugin cache installs use **npm**, not Bun — matching the MCP wrapper.)
+
 Then `/reload-plugins`. If still failing, you're hitting Claude Code's per-session failure cache — see gotcha #7.
 
 ### Probing the server in isolation
@@ -295,9 +304,9 @@ git push origin main
 ```
 
 After each upstream sync:
-1. `npm install` (deps may have changed)
-2. `npm run build` (regenerate dist/)
-3. `npm test` (verify nothing regressed)
+1. `bun install` (deps may have changed)
+2. `bun run build` (regenerate dist/)
+3. `bun run test` (verify nothing regressed)
 4. Update `CHANGELOG.md` and `todo.md` with the upstream merge note
 
 **If obra merges any of the fork patches** (track at https://github.com/obra/episodic-memory/issues/95), drop the locally-redundant patch from this fork by reverting that specific change and rebuilding.
@@ -306,8 +315,8 @@ After each upstream sync:
 
 This fork is **not** currently published to npm — installs flow through Claude Code's plugin marketplace, which clones the GitHub repo. If you ever want to publish:
 
-1. `npm test` (full suite must pass)
-2. `npm run build` (commits `dist/` need to be fresh)
+1. `bun run test` (full suite must pass)
+2. `bun run build` (commits `dist/` need to be fresh)
 3. `./scripts/bump-version.sh X.Y.Z-fork.N` (versioned to avoid colliding with upstream)
 4. CHANGELOG entry under the new version header
 5. `git commit -m "Release vX.Y.Z-fork.N: <one-line>"`

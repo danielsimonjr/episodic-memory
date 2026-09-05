@@ -13,6 +13,7 @@ items move between sections as state changes.
 
 ## Latest shipped (this fork)
 
+- **TypeScript-on-BunJS toolchain completed** (this PR) — single `bun.lock`, `package-lock.json` gitignored, `bun run` scripts + real `typecheck`, exact `better-sqlite3` pin + Bun `trustedDependencies`. Node remains production runtime; plugin wrapper still `npm install`s for end users.
 - **Sync fires on compaction too — long-lived sessions stopped archiving** (2026-08-08) — `hooks/hooks.json` matched only `startup|resume|clear`, so archiving happened at session boundaries and nowhere else. Measured on the ZBOOK: **65 hours with zero archive writes** while every process stayed healthy, the last sync had completed cleanly, and MCP `search` answered correctly — from stale data. 64 of 67 transcripts written since the cutoff were missing entirely. The trap worth remembering: *"the archiver is broken"* and *"the archiver was never invoked"* produce identical evidence if you only measure the output; reading `hooks.json` settled it in a minute after a longer wrong-headed hunt through logs and process state. One-word matcher change, TDD'd (RED confirmed on the missing `compact`), full suite 210/210. Does not widen the #87 recursion surface — SDK subprocesses fire `startup`, already matched, and the guard is env-based not matcher-based.
 - **Orphan-storm root cause + full hardening pass** (2026-06-24) — the SessionStart background sync was leaving orphaned `sync-cli` processes pegging CPU for hours. Root causes: (1) each summarizer SDK subprocess loaded user settings → booted the whole MCP-server fleet + fired SessionStart hooks (a wedged one spawned a tree of ~14 children) — fixed with `settingSources: []` / `mcpServers: {}` isolation; (2) `callClaude` had no timeout → a stalled subprocess wedged the sync forever — fixed with an `AbortController` timeout; (3) no concurrency lock → overlapping syncs stacked — fixed with a generic `src/lockfile.ts` (PID-liveness + mtime-age stale recovery, atomic steal, ownership-checked release) and a `.sync.lock` acquired in the worker path. Removed the doomed resume path entirely (it always failed from the background context). Plus an audit-driven sweep: poison-pill summary retry cap (sentinel after N failures), global configurable summary budget, Codex `--version`/app-server timeouts + pending-promise rejection + stdin EPIPE guard, hierarchical chunk cap, sync-log rotation, DB `busy_timeout`, `db.close()` in `finally`, `copyIfNewer` temp cleanup, non-UUID session fallback, logFd close, and an MCP-wrapper parent-liveness poll. +15 tests; full suite 188/188. Code-review agent caught a release-after-steal lock bug, fixed.
 - **Resume-skip + early reentrancy guard + test-stability** (2026-06-23, follow-up) — three issues closed in one pass. (1) `summarizeConversation` now checks `isSessionResumable()` and skips the doomed resume SDK call for archived sessions (was 2 SDK calls per archived conversation during drain → 1). (2) The reentrancy guard (#87) moved to a dependency-free `src/reentrancy.ts` and is checked BEFORE `sync-cli` imports the heavy native stack (transformers, better-sqlite3) — a guarded reentrant subprocess now exits in ~0.5s instead of ~3.5s warm / >5s cold (which was timing out the integration test). (3) Pre-warm the embedder in `beforeAll` + `hookTimeout: 30000` + bumped the verify re-index test to 60s — fixes the documented `integration.test.ts`/`verify.test.ts` cold-embedding timeout flakes. +6 tests (`test/reentrancy.test.ts`, expanded `summarizer-resume-fallback.test.ts`); full suite green.
@@ -78,8 +79,9 @@ Themes (not individual tasks; promote into tasks here as plans firm up):
 - **Origin:** `danielsimonjr/episodic-memory` (a fork)
 - **Upstream:** `obra/episodic-memory`
 - **Default branch:** `main` (direct push, no PR flow for fork-only commits)
-- **package-lock.json:** committed — prefer `npm ci` on fresh checkouts; CI audits at critical level
-- **dist/ committed:** edit `src/`, then `npm run build`, then commit both. Only stage dist files with real content diffs (skip line-ending-only churn)
+- **bun.lock:** committed — prefer `bun install --frozen-lockfile` on fresh checkouts; CI audits at critical level via `bun audit`. Do not commit `package-lock.json`.
+- **dist/ committed:** edit `src/`, then `bun run build`, then commit both. Only stage dist files with real content diffs (skip line-ending-only churn)
+- **Toolchain vs runtime:** Bun for install/scripts/CI; Node for shipped CLI/MCP/hooks. Plugin first-run wrapper still runs `npm install`.
 
 ### Workflow
 
@@ -104,11 +106,11 @@ For non-trivial work (multi-task spans, schema changes, architectural shifts):
 
 Re-runnable when a sweep is due (per `docs/roadmap/focus-areas/security-hardening.md` § Audit tooling):
 
-- `npm audit` (clean as of 2026-05-18)
+- `bun audit` (clean as of 2026-05-18; gate is `--audit-level=critical`)
 - `gitleaks scan` (not run yet; add to next audit cycle)
 - Manual RLM pass with honest-claude verification — pattern documented in `docs/roadmap/focus-areas/security-hardening.md` § "Audit tooling"
-- `npx vitest run` (full test gate)
-- `npm run build` + smoke probe (CLAUDE.md § "Probing the server in isolation")
+- `bun run test` (full test gate)
+- `bun run build` + smoke probe (CLAUDE.md § "Probing the server in isolation")
 
 ### Documentation
 

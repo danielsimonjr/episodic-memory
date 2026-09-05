@@ -16,7 +16,7 @@
     "build": "tsc && bun run bundle",
     "bundle": "esbuild src/mcp-server.ts --bundle --platform=node --format=esm --outfile=dist/mcp-server.js --external:fsevents --external:@anthropic-ai/claude-agent-sdk --external:@modelcontextprotocol/server --external:@modelcontextprotocol/core --external:sharp --external:onnxruntime-node --external:better-sqlite3 --external:@huggingface/transformers --external:sqlite-vec",
     "pretest": "bun run generate-version",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "bun run generate-version && tsc --noEmit",
     "test": "vitest run",
     "test:claude-e2e": "node scripts/claude-e2e.js",
     "test:codex-e2e": "node scripts/codex-e2e.js",

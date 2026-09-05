@@ -13,3 +13,8 @@ src/version.ts
 
 # Vitest coverage output
 coverage/
+
+# Bun is the package manager (bun.lock). Do not re-commit an npm lockfile —
+# dual lockfiles drift and CI only freezes bun.lock.
+package-lock.json
+npm-shrinkwrap.json

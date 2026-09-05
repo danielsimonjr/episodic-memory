@@ -34,9 +34,10 @@ jobs:
       - run: bun run --if-present test
       - run: bun run --if-present build
 
-      # Production runtime is NODE; Bun is the dev toolchain. Every step above runs under
-      # Bun, so without this the shipped artifact is never executed by the runtime that
-      # actually runs it. The six repos reverted during the Bun migration all failed there:
+      # Production runtime is NODE; Bun is the package manager + script driver.
+      # Every install/test/build step above runs under Bun, so without this the
+      # shipped artifact is never executed by the runtime that actually runs it.
+      # The six repos reverted during the Bun migration all failed there:
       # on deps Bun's non-hoisted node_modules resolved and Node did not.
       #
       # Fails on a throw, a syntax error, or an unresolvable import. A server that

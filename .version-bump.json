@@ -15,6 +15,7 @@
       "version.ts",
       "dist",
       "package-lock.json",
+      "bun.lock",
       "tmp",
       "fixtures"
     ]

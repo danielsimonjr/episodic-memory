@@ -66,7 +66,7 @@ For local testing, build the plugin, add this repo as a local marketplace, then
 install/enable it from `/plugins`:
 
 ```bash
-npm run build
+bun run build
 codex features enable plugin_hooks
 codex plugin marketplace add /path/to/episodic-memory
 ```
@@ -245,8 +245,8 @@ The default report covers the config/archive/index paths, database size and row 
 The repository includes an opt-in live Codex E2E test. It creates an isolated temporary `CODEX_HOME`, installs a copied plugin bundle, trusts the hook, runs Codex sessions in `tmux`, and verifies archive -> summary -> index -> MCP recall.
 
 ```bash
-npm run build
-EPISODIC_MEMORY_RUN_CODEX_E2E=1 npm run test:codex-e2e
+bun run build
+EPISODIC_MEMORY_RUN_CODEX_E2E=1 bun run test:codex-e2e
 ```
 
 ### Claude E2E Verification
@@ -254,8 +254,8 @@ EPISODIC_MEMORY_RUN_CODEX_E2E=1 npm run test:codex-e2e
 The repository also includes an opt-in live Claude Code E2E test. It loads this repo as a session plugin with `--plugin-dir`, constrains the hook to a temporary transcript source, and verifies archive -> summary -> index -> MCP recall.
 
 ```bash
-npm run build
-EPISODIC_MEMORY_RUN_CLAUDE_E2E=1 npm run test:claude-e2e
+bun run build
+EPISODIC_MEMORY_RUN_CLAUDE_E2E=1 bun run test:claude-e2e
 ```
 
 This test uses your normal Claude Code auth and writes small test transcripts to your normal Claude transcript directory. The archive and index are isolated in a temporary `EPISODIC_MEMORY_CONFIG_DIR`.
@@ -386,15 +386,21 @@ episodic-memory-mcp-server
 
 ## Development
 
+Bun is the package manager and script driver. Node remains the production runtime
+(CLI / MCP / hooks). Requires [Bun](https://bun.sh) 1.4+ and Node 20+.
+
 ```bash
 # Install dependencies
-npm install
+bun install
+
+# Typecheck
+bun run typecheck
 
 # Run tests
-npm test
+bun run test
 
-# Build
-npm run build
+# Build (tsc + esbuild → dist/, including the MCP bundle)
+bun run build
 ```
 
 ## License

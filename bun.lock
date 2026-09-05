@@ -8,7 +8,7 @@
         "@anthropic-ai/claude-agent-sdk": "^0.2.126",
         "@huggingface/transformers": "^4.2.0",
         "@modelcontextprotocol/server": "^2.0.0",
-        "better-sqlite3": "^12.4.1",
+        "better-sqlite3": "12.11.1",
         "marked": "^16.4.0",
         "onnxruntime-common": "1.24.3",
         "sqlite-vec": "^0.1.7-alpha.2",
@@ -25,6 +25,9 @@
       },
     },
   },
+  "trustedDependencies": [
+    "better-sqlite3",
+  ],
   "overrides": {
     "adm-zip": "^0.6.0",
     "hono": "^4.12.27",

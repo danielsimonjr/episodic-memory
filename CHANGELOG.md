@@ -1,3 +1,21 @@
+## [1.5.7] - 2026-09-17
+
+### Fixed
+- **A missing better-sqlite3 native binding is now detected and built, on BOTH entry points.** The
+  plugin installer skips install scripts, so 1.5.2, 1.5.3, 1.5.4 and 1.5.6 all deployed with
+  `better-sqlite3/lib/index.js` present and `build/Release/better_sqlite3.node` absent. The health
+  sentinel checked only the JS file, so it passed, and `npm install` on that tree does nothing anyway.
+  The binding is now a sentinel; a tree missing only the binding gets `npm rebuild better-sqlite3`,
+  and the result is re-checked rather than trusted.
+- **The SessionStart sync hook repairs dependencies too.** It never passed through the MCP wrapper,
+  so a broken tree failed every background sync. It now runs the same repair and logs what it did.
+- npm is spawned with one command string on Windows, removing the DEP0190 unescaped-args warning.
+
+### Added
+- `cli/ensure-deps.js` (shared repair) and `repairPlan()` in `src/deps-health.ts`, with 4 tests
+  written first and confirmed RED. Suite 335/335. End-to-end: a copy of the deployed plugin with its
+  binding deleted was rebuilt in ~2 s, the second call was a no-op, and the database opened.
+
 ## [1.5.6] - 2026-09-17
 
 ### Fixed

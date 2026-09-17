@@ -6,6 +6,7 @@
  */
 import { spawn, execFileSync } from 'child_process';
 import { selectOrphans } from '../dist/orphan-reaper.js';
+import { ensureDeps } from './ensure-deps.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -80,6 +81,17 @@ function reapOrphans(baselinePids, logPath, formatLogLine) {
 async function main() {
   const { getSyncErrorsLogPath, formatLogLine } = await import('../dist/logging.js');
   const logPath = getSyncErrorsLogPath();
+
+  // Repair node_modules BEFORE syncing. This hook never passes through the MCP wrapper, so a tree
+  // missing better-sqlite3's compiled binding failed every background sync with nothing to fix it.
+  try {
+    const action = ensureDeps(path.join(__dirname, '..'));
+    if (action !== 'none') {
+      fs.appendFileSync(logPath, formatLogLine('info', `SessionStart deps repaired: ${action}`), 'utf-8');
+    }
+  } catch (err) {
+    fs.appendFileSync(logPath, formatLogLine('error', `SessionStart deps repair failed: ${err.message}`), 'utf-8');
+  }
 
   // Baseline BEFORE launch - the rule that makes reaping safe. Anything already running is
   // never ours, however much it looks like plumbing.

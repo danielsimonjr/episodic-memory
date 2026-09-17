@@ -1,3 +1,31 @@
+## [1.6.0] - 2026-09-17
+
+### Added
+- **`episodic-memory backfill`** summarizes ARCHIVED conversations that sync can never reach. Sync
+  walks only transcripts whose source file still exists, so a pruned conversation kept no summary
+  forever. Candidates are exactly what sync would retry: no summary file, or an empty summary with no
+  marker or a retrying marker. `--dry-run`, `--limit`, `--batch` (sync lock held per batch and
+  released between batches). Stops when every attempt in a batch fails. Measured on one machine:
+  551 real candidates (of ~4,400 archived conversations lacking a summary, the rest are deliberately
+  excluded: 2,393 in an excluded project, 1,109 agent transcripts, 336 marker-excluded).
+- **Ollama summarizer backend** (`EPISODIC_MEMORY_SUMMARIZER_BACKEND=ollama`). Required explicit
+  model (a default would evict a shared host's resident model); http only on loopback, same rule as
+  the API base URL, so transcripts never cross a network unencrypted - tunnel remote hosts over ssh;
+  non-streaming, `think:false`, temperature 0, prompt character budget, strips `<think>` blocks,
+  throws on HTTP errors and empty responses so failures are recorded.
+
+### Fixed
+- An EMPTY summary (e.g. a model replying `<summary></summary>`) is now recorded as a failure, not
+  written as success. Written as success it became an unexplained empty file that sync and backfill
+  both re-queue, so backfill would have re-summarized it forever. Found in review; test written first.
+  Backfill also stops when a batch makes no progress.
+
+### Changed
+- The per-file summarize step is extracted from sync into `summarizeOneFile()`, shared by sync and
+  backfill so both leave identical evidence (summary, no-exchanges sentinel, oversized skip, retry
+  record, give-up). `isTerminalFailRecord` is exported. Behaviour of sync is unchanged: suite 348/348
+  (13 new tests, written first and confirmed RED).
+
 ## [1.5.7] - 2026-09-17
 
 ### Fixed

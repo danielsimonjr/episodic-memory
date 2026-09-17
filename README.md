@@ -191,6 +191,31 @@ These settings only affect episodic-memory's summarization calls, not your inter
 
 Codex summarization requires `codex-cli 0.130.0` or newer. If Codex app-server summarization is unavailable, sync logs the reason and falls back to transcript-text summarization.
 
+### Local-model summarization (Ollama)
+
+Set the backend to `ollama` to summarize with a local model instead of billed API calls:
+
+```bash
+export EPISODIC_MEMORY_SUMMARIZER_BACKEND=ollama
+export EPISODIC_MEMORY_OLLAMA_MODEL=qwen3.8:27b        # required; no default
+export EPISODIC_MEMORY_OLLAMA_URL=http://localhost:11434 # default
+```
+
+- The model is required. A shared Ollama host holds one model, so a default would evict another client's model.
+- Plain `http` is accepted only for localhost. To use a model on another machine, tunnel it: `ssh -N -L 11434:localhost:11434 <host>`.
+- Prompts are cut to `EPISODIC_MEMORY_OLLAMA_MAX_PROMPT_CHARS` (default 24000).
+
+### Backfilling the archive
+
+Sync reads only transcripts whose source file still exists. A pruned conversation keeps no summary. `backfill` summarizes those archived conversations:
+
+```bash
+episodic-memory backfill --dry-run          # count candidates
+episodic-memory backfill --batch 25         # run; the sync lock is released between batches
+```
+
+Backfill selects conversations with no summary, or with an empty summary that no marker explains. It stops when every attempt in a batch fails.
+
 ### What's Affected
 
 | Component | Uses custom config? |

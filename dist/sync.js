@@ -66,7 +66,7 @@ function readSummaryAttempts(filePath) {
  * (e.g. no-exchanges), a give-up, or an oversize skip. A bare {attempts, lastError} is a retry in
  * progress. Unreadable records count as terminal, so corruption never causes a retry storm.
  */
-function isTerminalFailRecord(filePath) {
+export function isTerminalFailRecord(filePath) {
     try {
         const data = JSON.parse(fs.readFileSync(summaryFailPath(filePath), 'utf-8'));
         if (data.reason || data.gaveUp)
@@ -277,7 +277,6 @@ export async function syncConversations(sourceDir, destDir, options = {}) {
     }
     // Generate summaries for files that need them
     if (!options.skipSummaries && filesToSummarize.length > 0) {
-        const { parseConversation } = await import('./parser.js');
         const { summarizeConversation } = await import('./summarizer.js');
         const summaryLimit = options.summaryLimit ?? 10;
         // STARVATION FIX (2026-08-29). Files are enqueued in directory order and the budget takes
@@ -304,96 +303,7 @@ export async function syncConversations(sourceDir, destDir, options = {}) {
             console.log(`  (${remaining} more need summaries - will process on next sync)`);
         }
         for (const { path: filePath, sessionId } of toSummarize) {
-            try {
-                // SIZE GUARD (2026-08-29). A 45.8 MB transcript was handed whole to a 120 s summariser
-                // call, which could only ever time out - it then burned its three attempts across three
-                // syncs while its archive fell a day behind. Oversized conversations are now recorded as
-                // deliberately skipped rather than retried to no purpose. Raise the ceiling with
-                // EPISODIC_MEMORY_MAX_SUMMARY_BYTES once summarisation can stream them.
-                const sizeCeiling = maxSummaryBytes();
-                let fileBytes = 0;
-                try {
-                    fileBytes = fs.statSync(filePath).size;
-                }
-                catch {
-                    fileBytes = 0;
-                }
-                if (sizeCeiling > 0 && fileBytes > sizeCeiling) {
-                    const summaryPath = filePath.replace('.jsonl', '-summary.txt');
-                    fs.writeFileSync(summaryPath, '', 'utf-8');
-                    try {
-                        fs.writeFileSync(summaryFailPath(filePath), JSON.stringify({
-                            attempts: maxSummaryAttempts(),
-                            lastError: `skipped: ${fileBytes} bytes exceeds EPISODIC_MEMORY_MAX_SUMMARY_BYTES (${sizeCeiling})`
-                        }), 'utf-8');
-                    }
-                    catch { }
-                    console.log(`  Skipping ${path.basename(filePath)}: ${(fileBytes / 1048576).toFixed(1)} MB exceeds the ${(sizeCeiling / 1048576).toFixed(0)} MB summary ceiling`);
-                    result.errors.push({ file: filePath, error: `oversized transcript skipped (${fileBytes} bytes)` });
-                    continue;
-                }
-                const project = path.basename(path.dirname(filePath));
-                const exchanges = await parseConversation(filePath, project, filePath);
-                if (exchanges.length === 0) {
-                    // Skip empty conversations — write an empty -summary.txt sentinel so they aren't re-queued
-                    // forever, AND record why. Every empty summary must carry a reason; an empty file with no
-                    // marker now means "nobody knows", which is a reportable condition rather than a silence.
-                    const summaryPath = filePath.replace('.jsonl', '-summary.txt');
-                    fs.writeFileSync(summaryPath, '', 'utf-8');
-                    try {
-                        fs.writeFileSync(summaryFailPath(filePath), JSON.stringify({
-                            reason: 'no-exchanges', recordedAt: new Date().toISOString()
-                        }), 'utf-8');
-                    }
-                    catch { }
-                    continue;
-                }
-                console.log(`  Summarizing ${path.basename(filePath)} (${exchanges.length} exchanges)...`);
-                result.summaryAttempts++;
-                const summary = await summarizeConversation(exchanges, sessionId);
-                const summaryPath = filePath.replace('.jsonl', '-summary.txt');
-                fs.writeFileSync(summaryPath, summary, 'utf-8');
-                try {
-                    fs.unlinkSync(summaryFailPath(filePath));
-                }
-                catch { } // clear any prior failure record
-                result.summarized++;
-            }
-            catch (error) {
-                const errMsg = error instanceof Error ? error.message : String(error);
-                const attempts = readSummaryAttempts(filePath) + 1;
-                if (attempts >= maxSummaryAttempts()) {
-                    // Give up: write an empty sentinel (same marker zero-exchange files use)
-                    // so this conversation stops re-queuing every sync forever (F1).
-                    const summaryPath = filePath.replace('.jsonl', '-summary.txt');
-                    try {
-                        fs.writeFileSync(summaryPath, '', 'utf-8');
-                    }
-                    catch { }
-                    // KEEP the record. Deleting it (as this did until 1.5.2) made a permanently-failed
-                    // summary indistinguishable from a legitimately-empty one, which is how a machine
-                    // accumulated 2,919 empty summaries and 0 failure markers. The sentinel above is what
-                    // stops the re-queue loop; the marker is only evidence, and erasing evidence to stop a
-                    // loop was never the mechanism - it was collateral.
-                    try {
-                        fs.writeFileSync(summaryFailPath(filePath), JSON.stringify({
-                            attempts, lastError: errMsg, gaveUp: true, gaveUpAt: new Date().toISOString()
-                        }), 'utf-8');
-                    }
-                    catch { }
-                    console.log(`  Giving up on ${path.basename(filePath)} after ${attempts} failed attempts: ${errMsg}`);
-                }
-                else {
-                    try {
-                        fs.writeFileSync(summaryFailPath(filePath), JSON.stringify({ attempts, lastError: errMsg }), 'utf-8');
-                    }
-                    catch { }
-                }
-                result.errors.push({
-                    file: filePath,
-                    error: `Summary generation failed (attempt ${attempts}/${maxSummaryAttempts()}): ${errMsg}`
-                });
-            }
+            await summarizeOneFile(filePath, sessionId, result, summarizeConversation);
         }
         // PENDING IS MEASURED AFTER THE WORK (2026-09-17). It was assigned before the loop, so every
         // conversation queued this run counted as 'still pending' even after it got a summary or a
@@ -405,4 +315,107 @@ export async function syncConversations(sourceDir, destDir, options = {}) {
         result.pendingSummaries = filesToSummarize.filter(f => !fs.existsSync(f.path.replace('.jsonl', '-summary.txt'))).length;
     }
     return result;
+}
+/**
+ * Summarize ONE archived conversation and record the outcome on disk: a summary, a no-exchanges
+ * sentinel, an oversized skip, a retry record, or a give-up. Shared by sync and the archive backfill
+ * so both leave identical evidence. Never throws; failures are recorded in result.errors.
+ */
+export async function summarizeOneFile(filePath, sessionId, result, summarize) {
+    const { parseConversation } = await import('./parser.js');
+    try {
+        // SIZE GUARD (2026-08-29). A 45.8 MB transcript was handed whole to a 120 s summariser
+        // call, which could only ever time out - it then burned its three attempts across three
+        // syncs while its archive fell a day behind. Oversized conversations are now recorded as
+        // deliberately skipped rather than retried to no purpose. Raise the ceiling with
+        // EPISODIC_MEMORY_MAX_SUMMARY_BYTES once summarisation can stream them.
+        const sizeCeiling = maxSummaryBytes();
+        let fileBytes = 0;
+        try {
+            fileBytes = fs.statSync(filePath).size;
+        }
+        catch {
+            fileBytes = 0;
+        }
+        if (sizeCeiling > 0 && fileBytes > sizeCeiling) {
+            const summaryPath = filePath.replace('.jsonl', '-summary.txt');
+            fs.writeFileSync(summaryPath, '', 'utf-8');
+            try {
+                fs.writeFileSync(summaryFailPath(filePath), JSON.stringify({
+                    attempts: maxSummaryAttempts(),
+                    lastError: `skipped: ${fileBytes} bytes exceeds EPISODIC_MEMORY_MAX_SUMMARY_BYTES (${sizeCeiling})`
+                }), 'utf-8');
+            }
+            catch { }
+            console.log(`  Skipping ${path.basename(filePath)}: ${(fileBytes / 1048576).toFixed(1)} MB exceeds the ${(sizeCeiling / 1048576).toFixed(0)} MB summary ceiling`);
+            result.errors.push({ file: filePath, error: `oversized transcript skipped (${fileBytes} bytes)` });
+            return;
+        }
+        const project = path.basename(path.dirname(filePath));
+        const exchanges = await parseConversation(filePath, project, filePath);
+        if (exchanges.length === 0) {
+            // Skip empty conversations — write an empty -summary.txt sentinel so they aren't re-queued
+            // forever, AND record why. Every empty summary must carry a reason; an empty file with no
+            // marker now means "nobody knows", which is a reportable condition rather than a silence.
+            const summaryPath = filePath.replace('.jsonl', '-summary.txt');
+            fs.writeFileSync(summaryPath, '', 'utf-8');
+            try {
+                fs.writeFileSync(summaryFailPath(filePath), JSON.stringify({
+                    reason: 'no-exchanges', recordedAt: new Date().toISOString()
+                }), 'utf-8');
+            }
+            catch { }
+            return;
+        }
+        console.log(`  Summarizing ${path.basename(filePath)} (${exchanges.length} exchanges)...`);
+        result.summaryAttempts++;
+        const summary = await summarize(exchanges, sessionId);
+        // An empty summary is a FAILURE. Written as success it would sit as an unexplained empty file,
+        // which both sync and backfill re-queue - backfill would re-summarize it forever.
+        if (!summary || !summary.trim()) {
+            throw new Error('summarizer returned an empty summary');
+        }
+        const summaryPath = filePath.replace('.jsonl', '-summary.txt');
+        fs.writeFileSync(summaryPath, summary, 'utf-8');
+        try {
+            fs.unlinkSync(summaryFailPath(filePath));
+        }
+        catch { } // clear any prior failure record
+        result.summarized++;
+    }
+    catch (error) {
+        const errMsg = error instanceof Error ? error.message : String(error);
+        const attempts = readSummaryAttempts(filePath) + 1;
+        if (attempts >= maxSummaryAttempts()) {
+            // Give up: write an empty sentinel (same marker zero-exchange files use)
+            // so this conversation stops re-queuing every sync forever (F1).
+            const summaryPath = filePath.replace('.jsonl', '-summary.txt');
+            try {
+                fs.writeFileSync(summaryPath, '', 'utf-8');
+            }
+            catch { }
+            // KEEP the record. Deleting it (as this did until 1.5.2) made a permanently-failed
+            // summary indistinguishable from a legitimately-empty one, which is how a machine
+            // accumulated 2,919 empty summaries and 0 failure markers. The sentinel above is what
+            // stops the re-queue loop; the marker is only evidence, and erasing evidence to stop a
+            // loop was never the mechanism - it was collateral.
+            try {
+                fs.writeFileSync(summaryFailPath(filePath), JSON.stringify({
+                    attempts, lastError: errMsg, gaveUp: true, gaveUpAt: new Date().toISOString()
+                }), 'utf-8');
+            }
+            catch { }
+            console.log(`  Giving up on ${path.basename(filePath)} after ${attempts} failed attempts: ${errMsg}`);
+        }
+        else {
+            try {
+                fs.writeFileSync(summaryFailPath(filePath), JSON.stringify({ attempts, lastError: errMsg }), 'utf-8');
+            }
+            catch { }
+        }
+        result.errors.push({
+            file: filePath,
+            error: `Summary generation failed (attempt ${attempts}/${maxSummaryAttempts()}): ${errMsg}`
+        });
+    }
 }

@@ -6,6 +6,7 @@ import { spawn } from 'child_process';
 import { createInterface } from 'readline';
 import { codexVersionRequirementMessage, parseCodexCliVersion, versionMeetsMinimum, } from './codex-support.js';
 import { validateApiBaseUrl } from './api-endpoint.js';
+import { summarizerBackend, callOllama } from './ollama-backend.js';
 /**
  * Get API environment overrides for summarization calls.
  * Returns full env merged with process.env so subprocess inherits PATH, HOME, etc.
@@ -226,6 +227,10 @@ async function callClaude(prompt, useFallback = false) {
     finally {
         clearTimeout(timer);
     }
+}
+/** Route a summarization prompt to the configured backend (see ollama-backend.ts). */
+function callModel(prompt) {
+    return summarizerBackend() === 'ollama' ? callOllama(prompt) : callClaude(prompt);
 }
 function appServerTimeoutMs() {
     const configured = Number(process.env.EPISODIC_MEMORY_CODEX_SUMMARY_TIMEOUT_MS);
@@ -506,7 +511,7 @@ export async function summarizeConversation(exchanges, sessionId) {
     // buildShortSummaryPrompt: resume always failed from the background-sync
     // context and only spawned a doomed subprocess.)
     if (exchanges.length <= 15) {
-        const result = await callClaude(buildShortSummaryPrompt(formatConversationText(exchanges)));
+        const result = await callModel(buildShortSummaryPrompt(formatConversationText(exchanges)));
         return extractSummary(result);
     }
     // For long conversations, use hierarchical summarization
@@ -532,7 +537,7 @@ ${chunkText}
 
 Example: <summary>Implemented HID keyboard functionality for ESP32. Hit Bluetooth controller initialization error, fixed by adjusting memory allocation.</summary>`;
         try {
-            const summary = await callClaude(prompt); // No sessionId for chunks
+            const summary = await callModel(prompt); // No sessionId for chunks
             const extracted = extractSummary(summary);
             chunkSummaries.push(extracted);
             console.log(`  Chunk ${i + 1}/${chunks.length}: ${extracted.split(/\s+/).length} words`);
@@ -561,7 +566,7 @@ Bad:
 Your summary (max 200 words):`;
     console.log(`  Synthesizing final summary...`);
     try {
-        const result = await callClaude(synthesisPrompt); // No sessionId for synthesis
+        const result = await callModel(synthesisPrompt); // No sessionId for synthesis
         return extractSummary(result);
     }
     catch (error) {

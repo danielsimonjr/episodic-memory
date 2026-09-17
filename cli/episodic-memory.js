@@ -38,6 +38,7 @@ USAGE:
 
 COMMANDS:
   sync        Sync conversations from Claude Code and Codex and index them
+  backfill    Summarize archived conversations sync can no longer reach (see backfill --help)
   index       Index conversations for search
   search      Search indexed conversations
   show        Display a conversation in readable format
@@ -87,6 +88,10 @@ async function main() {
 
       case 'sync':
         await runScript(join(distDir, 'sync-cli.js'), args);
+        break;
+
+      case 'backfill':
+        await runScript(join(distDir, 'backfill-cli.js'), args);
         break;
 
       case '--help':

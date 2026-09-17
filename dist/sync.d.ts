@@ -1,3 +1,4 @@
+import type { ConversationExchange } from './types.js';
 /**
  * True when the conversation should be excluded from indexing / summarization.
  * Only scans the first SKIP_MARKER_SCAN_BYTES — markers are emitted early in
@@ -37,5 +38,17 @@ export interface SyncOptions {
     skipSummaries?: boolean;
     summaryLimit?: number;
 }
+/**
+ * A failure record is TERMINAL when it explains an empty summary for good: a recorded reason
+ * (e.g. no-exchanges), a give-up, or an oversize skip. A bare {attempts, lastError} is a retry in
+ * progress. Unreadable records count as terminal, so corruption never causes a retry storm.
+ */
+export declare function isTerminalFailRecord(filePath: string): boolean;
 export declare function extractSessionIdFromPath(filePath: string): string | null;
 export declare function syncConversations(sourceDir: string, destDir: string, options?: SyncOptions): Promise<SyncResult>;
+/**
+ * Summarize ONE archived conversation and record the outcome on disk: a summary, a no-exchanges
+ * sentinel, an oversized skip, a retry record, or a give-up. Shared by sync and the archive backfill
+ * so both leave identical evidence. Never throws; failures are recorded in result.errors.
+ */
+export declare function summarizeOneFile(filePath: string, sessionId: string, result: Pick<SyncResult, 'errors' | 'summaryAttempts' | 'summarized'>, summarize: (exchanges: ConversationExchange[], sessionId: string) => Promise<string>): Promise<void>;

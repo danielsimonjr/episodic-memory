@@ -11,6 +11,7 @@ import {
   versionMeetsMinimum,
 } from './codex-support.js';
 import { validateApiBaseUrl } from './api-endpoint.js';
+import { summarizerBackend, callOllama } from './ollama-backend.js';
 
 export interface CodexSummarizerCommand {
   command: string;
@@ -269,6 +270,11 @@ async function callClaude(prompt: string, useFallback = false): Promise<string> 
   } finally {
     clearTimeout(timer);
   }
+}
+
+/** Route a summarization prompt to the configured backend (see ollama-backend.ts). */
+function callModel(prompt: string): Promise<string> {
+  return summarizerBackend() === 'ollama' ? callOllama(prompt) : callClaude(prompt);
 }
 
 interface PendingAppServerRequest {
@@ -580,7 +586,7 @@ export async function summarizeConversation(exchanges: ConversationExchange[], s
   // buildShortSummaryPrompt: resume always failed from the background-sync
   // context and only spawned a doomed subprocess.)
   if (exchanges.length <= 15) {
-    const result = await callClaude(buildShortSummaryPrompt(formatConversationText(exchanges)));
+    const result = await callModel(buildShortSummaryPrompt(formatConversationText(exchanges)));
     return extractSummary(result);
   }
 
@@ -611,7 +617,7 @@ ${chunkText}
 Example: <summary>Implemented HID keyboard functionality for ESP32. Hit Bluetooth controller initialization error, fixed by adjusting memory allocation.</summary>`;
 
     try {
-      const summary = await callClaude(prompt); // No sessionId for chunks
+      const summary = await callModel(prompt); // No sessionId for chunks
       const extracted = extractSummary(summary);
       chunkSummaries.push(extracted);
       console.log(`  Chunk ${i + 1}/${chunks.length}: ${extracted.split(/\s+/).length} words`);
@@ -642,7 +648,7 @@ Your summary (max 200 words):`;
 
   console.log(`  Synthesizing final summary...`);
   try {
-    const result = await callClaude(synthesisPrompt); // No sessionId for synthesis
+    const result = await callModel(synthesisPrompt); // No sessionId for synthesis
     return extractSummary(result);
   } catch (error) {
     console.log(`  Synthesis failed, using chunk summaries`);

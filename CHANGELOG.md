@@ -1,3 +1,34 @@
+## [1.5.6] - 2026-09-17
+
+### Fixed
+- **`pendingSummaries` is measured AFTER the work, so the stalled-queue banner stops crying wolf.**
+  It was assigned before the summarise loop, although its own doc comment says "still LACK a
+  summary after this run". Every conversation queued in a run therefore counted as still pending
+  even once it had a summary or a legitimate sentinel. Production symptoms on one machine:
+  `Summarized: 4 (4 still pending)`, and a FALSE `Sync finished WITHOUT SUMMARISING ANYTHING - 3
+  conversation(s) still need summaries` on a run where all three were no-exchanges transcripts
+  that had been correctly marked. A conversation is now pending iff it still has no summary file.
+- **Legacy empty summaries with no recorded reason are finally retried, without a storm.** An
+  empty `-summary.txt` with no `-summary.failed` marker is the artefact of a pre-1.5.2 give-up that
+  deleted its marker. A bare `existsSync` gate read them as DONE forever, so 27 on one machine were
+  reported as a silent failure on every run and could never clear. They are now re-queued in the
+  LAST priority tier (fresh work, then retries, then legacy empties) inside the normal per-run
+  budget, so they drain a few per sync and each ends explained: a real summary, a `no-exchanges`
+  marker, or a recorded give-up. A legacy item whose retry fails keeps retrying up to the attempt
+  cap instead of stalling at attempt 1.
+
+### Investigated, not a defect
+- The "summariser fails on this machine" diagnosis was WRONG. 3,010 `Cannot read properties of
+  undefined (reading 'match')` failures in the log are all from June 2026 and long fixed; every one
+  of the 22 current failure markers is a legitimate `no-exchanges`; and runs that queue work do
+  summarise it (2/2, 1/1, 4/4, 1/1). Most `Summarized: 0` runs simply had nothing to do.
+
+### Added
+- `test/sync-pending-and-legacy-retry.test.ts` - 9 tests, written first and confirmed RED: pending
+  after real summaries, after no-exchanges sentinels, and the two controls (failed-and-retrying,
+  deferred past budget); legacy retry, no-exchanges legacy becoming explained without an SDK call,
+  fresh work first, fail-then-retry up to the cap, and a give-up marker left alone. Suite 331/331.
+
 ## [1.5.5] - 2026-09-03
 
 ### Fixed

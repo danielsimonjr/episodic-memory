@@ -102,6 +102,22 @@ function readSummaryAttempts(filePath: string): number {
   }
 }
 
+/**
+ * A failure record is TERMINAL when it explains an empty summary for good: a recorded reason
+ * (e.g. no-exchanges), a give-up, or an oversize skip. A bare {attempts, lastError} is a retry in
+ * progress. Unreadable records count as terminal, so corruption never causes a retry storm.
+ */
+function isTerminalFailRecord(filePath: string): boolean {
+  try {
+    const data = JSON.parse(fs.readFileSync(summaryFailPath(filePath), 'utf-8'));
+    if (data.reason || data.gaveUp) return true;
+    if (typeof data.lastError === 'string' && data.lastError.startsWith('skipped:')) return true;
+    return false;
+  } catch {
+    return true;
+  }
+}
+
 function copyIfNewer(src: string, dest: string): boolean {
   // Ensure destination directory exists
   const destDir = path.dirname(dest);
@@ -167,7 +183,7 @@ export async function syncConversations(
 
   // Collect files to index and summarize
   const filesToIndex: string[] = [];
-  const filesToSummarize: Array<{ path: string; sessionId: string }> = [];
+  const filesToSummarize: Array<{ path: string; sessionId: string; legacyEmpty?: boolean }> = [];
 
   // Walk source directory
   const projects = fs.readdirSync(sourceDir);
@@ -203,25 +219,43 @@ export async function syncConversations(
         // Check if this file needs a summary (whether newly copied or existing)
         if (!options.skipSummaries) {
           const summaryPath = destFile.replace('.jsonl', '-summary.txt');
-          // An empty summary reads as DONE to the gate below, forever. Count them so the
-          // condition is at least VISIBLE, and separate the ones nothing explains. Deliberately
-          // does NOT re-queue them: 43% of one real archive is empty, and re-queuing thousands
-          // at once would storm the very summariser that is failing. Visibility first.
+          // An empty summary reads as DONE to a bare existsSync gate, forever. Count them so the
+          // condition is VISIBLE, and separate the ones nothing explains. Explained empties are
+          // final. Unexplained ones - and those mid-retry - are re-queued below in the LAST tier,
+          // never all at once: re-queuing thousands together would storm the summariser, which is
+          // why this was originally visibility-only (1.5.2). Ordering bounds it instead.
+          let legacyEmpty = false;
           if (fs.existsSync(summaryPath)) {
             try {
               if (fs.statSync(summaryPath).size === 0) {
                 result.emptySummaries++;
-                if (!fs.existsSync(summaryFailPath(destFile))) result.unexplainedEmptySummaries++;
+                if (!fs.existsSync(summaryFailPath(destFile))) {
+                  result.unexplainedEmptySummaries++;
+                  legacyEmpty = true;
+                } else if (!isTerminalFailRecord(destFile)) {
+                  // A legacy empty whose retry FAILED holds a non-terminal {attempts,lastError}
+                  // record next to its still-empty summary. Without this it would stop at attempt
+                  // 1 of N, because the summary file exists. Keep retrying up to the cap.
+                  legacyEmpty = true;
+                }
               }
             } catch { /* unreadable summary is not evidence either way */ }
           }
-          if (!fs.existsSync(summaryPath) && !shouldSkipConversation(destFile)) {
+          // LEGACY EMPTIES ARE RETRIED, LAST (2026-09-17). An empty summary with NO reason marker is
+          // the artefact of a pre-1.5.2 give-up that deleted its marker; nothing else ever produces
+          // that shape now (every current empty-writer records a reason). Left alone they read as
+          // DONE forever and were reported every run as a silent failure that nothing could clear -
+          // 27 on the ZBOOK. They are re-queued in the LAST priority tier inside the normal budget,
+          // so they drain a few per sync after fresh work and retries, which is the storm the old
+          // comment here was right to fear avoided by ordering rather than by never trying. Each
+          // one then ends EXPLAINED: a real summary, a no-exchanges marker, or a recorded give-up.
+          if ((legacyEmpty || !fs.existsSync(summaryPath)) && !shouldSkipConversation(destFile)) {
             // Fall back to the filename (sans .jsonl) when there's no embedded UUID,
             // so transcripts named without a session UUID are still summarized rather
             // than silently dropped (F9). The id only matters for Codex resume.
             const sessionId = extractSessionIdFromPath(destFile) ?? path.basename(destFile, '.jsonl');
             if (sessionId) {
-              filesToSummarize.push({ path: destFile, sessionId });
+              filesToSummarize.push({ path: destFile, sessionId, legacyEmpty });
             }
           }
         }
@@ -314,7 +348,10 @@ export async function syncConversations(
     // blocks reported "Summarized: 0" while the backlog oscillated instead of draining.
     // Retries still happen; they just go LAST, so they use leftover budget rather than all of it.
     const withFailureState = filesToSummarize.map(f => ({ ...f, priorFailures: readSummaryAttempts(f.path) }));
-    withFailureState.sort((a, b) => a.priorFailures - b.priorFailures);
+    // Three tiers: fresh conversations, then retries of recent failures, then legacy unexplained
+    // empties. Within a tier, fewer prior failures first.
+    const tier = (f: { priorFailures: number; legacyEmpty?: boolean }) => (f.legacyEmpty ? 2 : f.priorFailures > 0 ? 1 : 0);
+    withFailureState.sort((a, b) => tier(a) - tier(b) || a.priorFailures - b.priorFailures);
     const toSummarize = withFailureState.slice(0, summaryLimit);
     const deferredFailures = withFailureState.length - toSummarize.length;
     const retriedHere = toSummarize.filter(f => f.priorFailures > 0).length;
@@ -324,7 +361,6 @@ export async function syncConversations(
     void deferredFailures;
     const remaining = filesToSummarize.length - toSummarize.length;
 
-    result.pendingSummaries = filesToSummarize.length;
     console.log(`Generating summaries for ${toSummarize.length} conversation(s)...`);
     if (remaining > 0) {
       console.log(`  (${remaining} more need summaries - will process on next sync)`);
@@ -409,6 +445,17 @@ export async function syncConversations(
         });
       }
     }
+
+    // PENDING IS MEASURED AFTER THE WORK (2026-09-17). It was assigned before the loop, so every
+    // conversation queued this run counted as 'still pending' even after it got a summary or a
+    // legitimate sentinel. Production symptoms: 'Summarized: 4 (4 still pending)', and a FALSE
+    // 'Sync finished WITHOUT SUMMARISING ANYTHING - 3 conversation(s) still need summaries' when
+    // all three were no-exchanges transcripts correctly marked. A conversation is pending iff it
+    // still has NO summary file: failures awaiting retry and anything deferred past the budget.
+    // Legacy empties already have a file and are reported by unexplainedEmptySummaries instead.
+    result.pendingSummaries = filesToSummarize.filter(
+      f => !fs.existsSync(f.path.replace('.jsonl', '-summary.txt'))
+    ).length;
   }
 
   return result;

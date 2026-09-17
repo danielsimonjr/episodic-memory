@@ -93,3 +93,20 @@ export async function backfillArchive(archiveDir: string, opts: BackfillOptions)
   }
   return result;
 }
+
+/**
+ * Decide what the batch loop does next. `prevRemaining` is what the PREVIOUS batch left
+ * (candidates - processed); undefined on the first batch. A batch always STARTS at the previous
+ * remainder, so progress is measured on what THIS batch leaves, never on where it starts.
+ */
+export function batchVerdict(
+  prevRemaining: number | undefined,
+  r: Pick<BackfillResult, 'candidates' | 'processed' | 'summarized' | 'summaryAttempts'>
+): 'continue' | 'done' | 'backend-down' | 'no-progress' {
+  if (r.processed === 0) return 'done';
+  // Three or more real attempts and not one success: the backend is down, not one bad transcript.
+  if (r.summaryAttempts >= 3 && r.summarized === 0) return 'backend-down';
+  const remaining = r.candidates - r.processed;
+  if (prevRemaining !== undefined && remaining >= prevRemaining) return 'no-progress';
+  return 'continue';
+}

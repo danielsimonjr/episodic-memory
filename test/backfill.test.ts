@@ -5,7 +5,7 @@ import { tmpdir } from 'os';
 
 const { summarizeMock } = vi.hoisted(() => ({ summarizeMock: vi.fn() }));
 vi.mock('../src/summarizer.js', () => ({ summarizeConversation: summarizeMock }));
-const { selectBackfillCandidates, backfillArchive } = await import('../src/backfill.js');
+const { selectBackfillCandidates, backfillArchive, batchVerdict } = await import('../src/backfill.js');
 
 const uuid = (n: number) => `${String(n).padStart(8, '0')}-bbbb-4bbb-8bbb-bbbbbbbbbbbb`;
 function conv(dir: string, project: string, n: number, withExchanges = true): string {
@@ -95,5 +95,28 @@ describe('backfillArchive', () => {
     } finally {
       delete process.env.EPISODIC_MEMORY_MAX_SUMMARY_ATTEMPTS;
     }
+  });
+});
+
+describe('batchVerdict', () => {
+  it('continues while the remaining count falls', () => {
+    expect(batchVerdict(undefined, { candidates: 516, processed: 25, summarized: 0, summaryAttempts: 0 })).toBe('continue');
+    // batch 2 starts at 491 = what batch 1 left: that is NORMAL, not a stall (the 1.6.0 bug)
+    expect(batchVerdict(491, { candidates: 491, processed: 25, summarized: 0, summaryAttempts: 0 })).toBe('continue');
+  });
+  it('stops when nothing was processed', () => {
+    expect(batchVerdict(10, { candidates: 0, processed: 0, summarized: 0, summaryAttempts: 0 })).toBe('done');
+  });
+  it('stops when every summarize attempt failed (backend down)', () => {
+    expect(batchVerdict(undefined, { candidates: 50, processed: 25, summarized: 0, summaryAttempts: 25 })).toBe('backend-down');
+  });
+  it('stops when the remaining count did not fall (a candidate survives its own processing)', () => {
+    expect(batchVerdict(40, { candidates: 65, processed: 25, summarized: 3, summaryAttempts: 3 })).toBe('no-progress');
+  });
+});
+
+describe('batchVerdict tolerance', () => {
+  it('one failed attempt among no-exchange sentinels does not stop the run', () => {
+    expect(batchVerdict(undefined, { candidates: 100, processed: 25, summarized: 0, summaryAttempts: 1 })).toBe('continue');
   });
 });

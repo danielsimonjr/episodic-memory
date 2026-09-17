@@ -49,7 +49,7 @@ const batch = numArg('--batch') ?? 25;
 const dryRun = args.includes('--dry-run');
 const archiveDir = getArchiveDir();
 
-const { backfillArchive } = await import('./backfill.js');
+const { backfillArchive, batchVerdict } = await import('./backfill.js');
 
 if (dryRun) {
   const r = await backfillArchive(archiveDir, { dryRun: true });
@@ -59,7 +59,7 @@ if (dryRun) {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 let done = 0, summarized = 0, errors = 0;
-let lastCandidates: number | undefined;
+let lastRemaining: number | undefined;
 console.log(`Backfilling archive ${archiveDir} (batch ${batch}${limit ? `, limit ${limit}` : ''})`);
 
 for (;;) {
@@ -83,19 +83,16 @@ for (;;) {
   console.log(`  batch: ${r.processed} processed, ${r.summarized} summarized, ${r.errors.length} errors; ` +
     `${r.candidates - r.processed} candidates left`);
   for (const e of r.errors.slice(0, 3)) console.log(`    ${e.file}: ${e.error}`);
-  if (r.processed === 0) break;
-  // Guard against a candidate that survives its own processing (no progress): if the candidate
-  // count did not fall, another pass would redo the same files.
-  if (lastCandidates !== undefined && r.candidates >= lastCandidates && r.summarized === 0) {
-    console.error('No progress since the previous batch; stopping.');
+  const verdict = batchVerdict(lastRemaining, r);
+  lastRemaining = r.candidates - r.processed;
+  if (verdict === 'done') break;
+  if (verdict === 'backend-down') {
+    console.error('Every summarize attempt in this batch failed; stopping. Check the backend.');
     process.exitCode = 1;
     break;
   }
-  lastCandidates = r.candidates - r.processed;
-  // A batch where every summarize attempt failed means the backend is down. Stop rather than
-  // spend every candidate's retry attempts against a dead endpoint.
-  if (r.summaryAttempts > 0 && r.summarized === 0) {
-    console.error('Every summarize attempt in this batch failed; stopping. Check the backend.');
+  if (verdict === 'no-progress') {
+    console.error('The candidate count did not fall in this batch; stopping.');
     process.exitCode = 1;
     break;
   }

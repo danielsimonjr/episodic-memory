@@ -33,3 +33,9 @@ export declare function selectBackfillCandidates(archiveDir: string, opts?: {
     excludedProjects?: string[];
 }): BackfillCandidate[];
 export declare function backfillArchive(archiveDir: string, opts: BackfillOptions): Promise<BackfillResult>;
+/**
+ * Decide what the batch loop does next. `prevRemaining` is what the PREVIOUS batch left
+ * (candidates - processed); undefined on the first batch. A batch always STARTS at the previous
+ * remainder, so progress is measured on what THIS batch leaves, never on where it starts.
+ */
+export declare function batchVerdict(prevRemaining: number | undefined, r: Pick<BackfillResult, 'candidates' | 'processed' | 'summarized' | 'summaryAttempts'>): 'continue' | 'done' | 'backend-down' | 'no-progress';

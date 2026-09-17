@@ -1,3 +1,14 @@
+## [1.6.1] - 2026-09-17
+
+### Fixed
+- **Backfill stopped a healthy run after its second batch.** The 1.6.0 no-progress guard compared
+  where a batch STARTS with what the previous batch LEFT - equal by construction - so the first
+  production run ended at 50 of 516 with 'No progress'. The decision is now the pure, tested
+  `batchVerdict()`: progress is measured on what a batch leaves; 'backend down' needs 3+ attempts
+  with no success, so one flaky transcript among no-exchange sentinels does not end the run.
+  5 tests written first (RED on the exact 1.6.0 case). Real 3-batch run: 516 -> 391, completed.
+  Suite 353/353.
+
 ## [1.6.0] - 2026-09-17
 
 ### Added

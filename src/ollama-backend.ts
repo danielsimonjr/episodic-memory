@@ -76,6 +76,12 @@ export async function callOllama(prompt: string, opts: OllamaCallOptions = {}): 
     const body: any = await res.json();
     const text = stripThinking(typeof body?.response === 'string' ? body.response : '');
     if (!text) throw new Error('Ollama returned an empty response');
+    // Every summarizer prompt asks for <summary></summary>. A reply without them is a model that
+    // continued the transcript or emitted junk (measured on qwen2.5vl:3b). The shared extractor would
+    // store it verbatim as a summary, so refuse it here and let the retry/give-up path record it.
+    if (!/<summary>[\s\S]*?<\/summary>/i.test(text)) {
+      throw new Error('Ollama reply has no <summary></summary> block');
+    }
     return text;
   } catch (err) {
     if (controller.signal.aborted) throw new Error(`Ollama call timed out after ${timeoutMs}ms`);

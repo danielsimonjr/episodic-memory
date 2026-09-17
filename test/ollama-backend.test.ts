@@ -47,8 +47,16 @@ describe('callOllama', () => {
     process.env.EPISODIC_MEMORY_OLLAMA_URL = 'http://localhost:11434';
     process.env.EPISODIC_MEMORY_OLLAMA_MODEL = 'm';
     const cap: any[] = [];
-    await callOllama('a'.repeat(50), { fetchImpl: okFetch({ response: 'ok' }, cap), maxPromptChars: 10 });
+    await callOllama('a'.repeat(50), { fetchImpl: okFetch({ response: '<summary>ok</summary>' }, cap), maxPromptChars: 10 });
     expect(cap[0].body.prompt.length).toBe(10);
+  });
+
+  it('rejects a reply with no <summary> tags: a small model that CONTINUES the transcript is not a summary', async () => {
+    process.env.EPISODIC_MEMORY_OLLAMA_URL = 'http://localhost:11434';
+    process.env.EPISODIC_MEMORY_OLLAMA_MODEL = 'm';
+    // Both shapes measured from qwen2.5vl:3b on a real transcript, 2026-09-17.
+    await expect(callOllama('x', { fetchImpl: okFetch({ response: "Sure, I can help with that. Let's update the doc comment." }) })).rejects.toThrow(/summary/);
+    await expect(callOllama('x', { fetchImpl: okFetch({ response: '<|Summary of changes|' }) })).rejects.toThrow(/summary/);
   });
 
   it('throws on an HTTP error or an empty response so the caller records a failure', async () => {

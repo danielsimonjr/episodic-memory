@@ -1,3 +1,14 @@
+## [1.6.2] - 2026-09-17
+
+### Fixed
+- **The Ollama backend refuses a reply with no `<summary></summary>` block.** The shared extractor
+  falls back to storing raw text, so a small model that continues the transcript was saved as a
+  summary. Measured on three real conversations with Claude-written reference summaries:
+  qwen3.8:27b matched all 3; qwen2.5vl:3b answered one as a chat reply ("Sure, I can help with
+  that...") on one machine and emitted `<|Summary of changes|` on another. Such replies now take
+  the retry/give-up path. Use a model of the 27B class for summaries; 3B-class models are not
+  reliable here. Suite 354/354.
+
 ## [1.6.1] - 2026-09-17
 
 ### Fixed

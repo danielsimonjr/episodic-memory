@@ -1,3 +1,16 @@
+## [1.6.4] - 2026-09-20
+
+### Fixed
+- **Version bump so the `deps-health` fix can actually DEPLOY.** 1.6.3 was published to the plugin
+  cache before the `deps-health` prebuilds fix landed, and a plugin is served from a per-version
+  cache directory: the version is IN the path, so `plugin update` has nothing to do while the
+  version is unchanged, and the deployed copy keeps the old code indefinitely. The cache copy of
+  1.6.3 was still running the v12-shaped `build/Release/...` check and was only behaving because a
+  manual `npm install` had happened to leave a legacy binding beside it - working by accident, and a
+  clean deploy would have broken it.
+- No source change beyond the version carriers; this releases 1.6.3's fixes rather than adding to
+  them. Suite 71 files / 354 tests, all passing.
+
 ## [1.6.3] - 2026-09-20
 
 ### Fixed

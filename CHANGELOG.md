@@ -1,3 +1,28 @@
+## [1.6.3] - 2026-09-20
+
+### Fixed
+- **`sync` aborted with SIGABRT (exit 134) on Node 24 - better-sqlite3 raised to `^13.0.3`.**
+  The captured stderr is the whole diagnosis:
+  `node::RemoveEnvironmentCleanupHook ... Assertion failed: (env) != nullptr` at `hooks.cc:142`,
+  with frame 3 being better-sqlite3's `Statement::scalar deleting destructor`. better-sqlite3
+  12.11.1 destroys `Statement` objects AFTER Node tears the environment down; Node 24.19.0
+  (`modules=137`) asserts on that where older Node tolerated it. The addon is NOT corrupt and
+  NOT built against the wrong Node - it loads cleanly on its own, which is exactly what made this
+  look intermittent and sent two earlier fixes at the wrong target: a structural "does the binding
+  load" gate passes, and a retry wrapper treats a deterministic teardown bug as a flake. It is not
+  a flake; one run failed both the attempt and the retry.
+  Verified by running `sync` to completion at exit 0 where it had aborted within seconds.
+- **`allowScripts` is version-keyed and had to move with the bump** (`better-sqlite3@12.11.1` ->
+  `better-sqlite3@13.0.3`). Leaving that key behind blocks the native build for the new version
+  while the manifest still reads as upgraded - a silent half-upgrade.
+
+### Known issue (NOT fixed here, tracked separately)
+- Summary generation still fails on large **subagent** transcripts with
+  `Summarizer SDK call timed out after 120000ms`, and 861 empty summaries remain in the archive
+  (each now carries a recorded reason). That is a distinct defect from the crash above and is
+  unaffected by this change. The run reports itself honestly - "Sync finished WITHOUT SUMMARISING
+  ANYTHING ... This is NOT a healthy run" - rather than printing a bare success banner.
+
 ## [1.6.2] - 2026-09-17
 
 ### Fixed

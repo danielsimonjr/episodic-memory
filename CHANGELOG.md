@@ -16,6 +16,23 @@
   `better-sqlite3@13.0.3`). Leaving that key behind blocks the native build for the new version
   while the manifest still reads as upgraded - a silent half-upgrade.
 
+### Fixed (the regression the v13 bump caused, and its root cause)
+- **`deps-health` reported a healthy better-sqlite3 13 tree as "binding missing", so the MCP server
+  shelled out to `npm rebuild` on EVERY start.** `NATIVE_ADDON` was the single path
+  `better-sqlite3/build/Release/better_sqlite3.node`, which is the v12 layout. v13 ships
+  `prebuilds/<platform>-<arch>.node` and never creates `build/Release/`, so `repairPlan()` answered
+  `'rebuild'` unconditionally, `ensureDeps()` printed "Building the better-sqlite3 native binding..."
+  to stderr, and `test/mcp-protocol.test.ts` failed because it asserts on the server's first stderr
+  line. The symptom was three layers from the cause and nothing in it pointed at a path constant.
+- `nativeAddonPresent()` now accepts EITHER layout. This module is deliberately fs/path-only so it
+  can be imported before `npm install`, so it cannot load the package to test it functionally;
+  accepting both layouts is the honest fix available under that constraint. `NATIVE_ADDON` and
+  `DEP_SENTINELS` keep their meaning and their exports.
+- **The transferable lesson:** a check keyed to a vendor's INTERNAL FILE LAYOUT fails the moment the
+  vendor rearranges it, and it fails CLOSED - indistinguishable from a genuinely broken install. The
+  same assumption appeared in two other places on the same day and cost a wrong diagnosis in each.
+  Suite: 354/354.
+
 ### Release hygiene (same 1.6.3 release, found by CI)
 - **The version lives in FIVE places**: `package.json`, `.claude-plugin/plugin.json`,
   `.claude-plugin/marketplace.json`, `.codex-plugin/plugin.json`, and `src/version.ts`. The 1.6.3 bump

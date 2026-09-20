@@ -16,6 +16,18 @@
   `better-sqlite3@13.0.3`). Leaving that key behind blocks the native build for the new version
   while the manifest still reads as upgraded - a silent half-upgrade.
 
+### Fixed (dependency pin)
+- **`better-sqlite3` is pinned EXACTLY, `13.0.3`, not `^13.0.3`.** `test/allow-scripts-pin.test.ts`
+  requires an exact version because plugin installs go through npm and `allowScripts` is
+  version-keyed: a range lets npm resolve a version the key does not cover, and the native build is
+  then silently skipped. The original pin was exactly `12.11.1`; the v13 bump wrote a caret and
+  broke the invariant.
+- **Why three local runs missed it:** `bun add better-sqlite3@13.0.3` writes an EXACT version into
+  `package.json`, so every local suite ran against an exact pin and passed 354/354, while a later
+  `git checkout -- package.json` restored the committed caret before the push. The tree that was
+  tested was never the tree that was pushed - the same failure shape as running a doc gate before
+  the final edit.
+
 ### Fixed (the regression the v13 bump caused, and its root cause)
 - **`deps-health` reported a healthy better-sqlite3 13 tree as "binding missing", so the MCP server
   shelled out to `npm rebuild` on EVERY start.** `NATIVE_ADDON` was the single path

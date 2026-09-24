@@ -1,3 +1,19 @@
+## [Unreleased]
+
+### Fixed
+- **`scripts/rebuild-native.mjs`'s health check only detected a MISSING better-sqlite3, not one
+  that is present and broken.** `loads(pkg)` called plain `require(pkg)`, which resolves the JS
+  wrapper without ever touching the native binding - better-sqlite3 compiles it lazily, inside the
+  `Database` constructor. An ABI-mismatched addon (Node upgraded since install) or one that fails
+  at lazy load therefore read as "loads" and the postinstall rebuild never ran, exactly the failure
+  this script exists to catch (see the file's own header on why it tests the load rather than a
+  file path). `loads()` now opens a `:memory:` database and runs `SELECT 1` before declaring
+  success, mirroring the fix already shipped in `@danielsimonjr/memoryjs`'s copy of this script.
+  Proven with a `Module._load` stub that returns a `Database` class whose constructor throws until
+  a fake rebuild runs: the OLD `loads()` reported "loads" against that stub and exited 0 having
+  detected nothing; the fixed version reports the failure, rebuilds, and verifies the reload
+  (`test/rebuild-native.test.ts`). Suite: 72 files / 355 tests, all passing.
+
 ## [1.6.4] - 2026-09-20
 
 ### Fixed

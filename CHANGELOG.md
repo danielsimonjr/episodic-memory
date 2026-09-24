@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [1.6.5] - 2026-09-23
+
 ### Fixed
 - **`scripts/rebuild-native.mjs`'s health check only detected a MISSING better-sqlite3, not one
   that is present and broken.** `loads(pkg)` called plain `require(pkg)`, which resolves the JS
@@ -13,6 +15,10 @@
   a fake rebuild runs: the OLD `loads()` reported "loads" against that stub and exited 0 having
   detected nothing; the fixed version reports the failure, rebuilds, and verifies the reload
   (`test/rebuild-native.test.ts`). Suite: 72 files / 355 tests, all passing.
+
+- **The CHANGELOG had two `[Unreleased]` headings.** The second one, below 1.5.1, held the #6
+  security and doctor entries that shipped in 1.5.2 (first tag containing the merge). They now sit in
+  the 1.5.2 section under "Also shipped in 1.5.2".
 
 ## [1.6.4] - 2026-09-20
 
@@ -294,6 +300,31 @@
   the summariser that is already the thing failing. Visibility first; re-summarising is a separate,
   throttled decision.
 
+### Also shipped in 1.5.2
+
+These entries came from #6 (merged 2026-08-30, first tagged in v1.5.2). Until 2026-09-23 they sat
+under a second, stale Unreleased heading below 1.5.1.
+
+### Security
+- **MCP `read` now respects `EPISODIC_MEMORY_REDACT_SECRETS`.** Search results were redacted at return time, but `read` still returned raw archive JSONL — a gap when redaction is enabled. Read output now passes through the same opt-in redaction.
+- **Search summary sidecars are archive-confined.** Summary files were loaded via a naive `.replace('.jsonl', '-summary.txt')` on DB `archive_path` values, so a poisoned path outside the archive could still read an arbitrary `*-summary.txt`. Summaries now use the same archive prefix and realpath checks as MCP `read`.
+- **Optional MCP tool authorization.** When `EPISODIC_MEMORY_MCP_TOKEN` is set, `search` and `read` require a matching `auth_token` (constant-time compare). Default remains open for single-user stdio.
+- **Threat-model document.** `docs/security.md` records remaining residual risk (plaintext at rest, filesystem encryption recommendation, hook trust boundary).
+
+### Added
+- **`episodic-memory doctor` (no subcommand)** reports config/archive/index health, DB stats, embedding-version drift, last hook errors, and `node_modules` sentinels. `--json` is supported; `doctor codex` is unchanged.
+- **Search results include conversation summaries** by default (upstream #74), including MCP JSON and multi-concept paths. Disable with `EPISODIC_MEMORY_INCLUDE_SUMMARY=0`; truncate with `EPISODIC_MEMORY_MAX_SUMMARY_DISPLAY_CHARS`.
+
+### Changed
+- **Completed the TypeScript-on-BunJS toolchain migration.** Dev/CI use Bun exclusively (`bun install --frozen-lockfile`, `bun run …`, `bun audit`). `package-lock.json` is removed again (reintroduced by the MCP 2.0 PR) and gitignored so dual lockfiles cannot drift. `packageManager` is `bun@1.4.0`; scripts chain via `bun run`; a real `typecheck` script (`tsc --noEmit`) replaces the previous CI no-op. **Node remains the production runtime** (CLI shebangs, `.mcp.json`, SessionStart hooks, Node smoke in CI). Plugin first-run install still uses `npm install` in the wrapper. `better-sqlite3` is pinned exact (`12.11.1`) so lockfile-less npm install matches the `allowScripts` key; Bun gets `trustedDependencies` for the same addon. `test/allow-scripts-pin.test.ts` asserts against `bun.lock`.
+- **MCP server upgraded to `@modelcontextprotocol/server` v2 (protocol `2026-07-28`).** Uses `serveStdio` for stateless modern clients (`server/discover`) while still serving legacy `initialize` clients through `2025-11-25`. Adds `test/mcp-protocol.test.ts` to lock both eras.
+- **Embeddings truncate before concatenate.** `formatExchangeEmbeddingText` applies `truncateForIndex` so multi-MB prompt payload is not allocated into the combined embed string.
+- **Claude parser links `tool_result` to `tool_use`** via `tool_use_id`, matching the Codex path.
+
+### Fixed
+- **SessionStart hook failures are logged to `sync-errors.log`.** Hook stderr was easy to miss; a dedicated wrapper runs `sync --background`, records non-zero exits, and always returns success so hooks stay non-blocking (upstream #94).
+- **Plugin manifest version drift.** `.codex-plugin/plugin.json` and `.claude-plugin/marketplace.json` now match `package.json` at 1.5.1.
+
 ## [1.5.1] - 2026-08-29
 
 ### Fixed
@@ -335,28 +366,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   missing dependency -> exit 1; good artifact -> exit 0. The missing-dependency case is the
   class that forced six repos to revert during the Bun migration.
 - Smoke verified locally against this repo's built artifact before the step was added.
-
-## [Unreleased]
-
-### Security
-- **MCP `read` now respects `EPISODIC_MEMORY_REDACT_SECRETS`.** Search results were redacted at return time, but `read` still returned raw archive JSONL — a gap when redaction is enabled. Read output now passes through the same opt-in redaction.
-- **Search summary sidecars are archive-confined.** Summary files were loaded via a naive `.replace('.jsonl', '-summary.txt')` on DB `archive_path` values, so a poisoned path outside the archive could still read an arbitrary `*-summary.txt`. Summaries now use the same archive prefix and realpath checks as MCP `read`.
-- **Optional MCP tool authorization.** When `EPISODIC_MEMORY_MCP_TOKEN` is set, `search` and `read` require a matching `auth_token` (constant-time compare). Default remains open for single-user stdio.
-- **Threat-model document.** `docs/security.md` records remaining residual risk (plaintext at rest, filesystem encryption recommendation, hook trust boundary).
-
-### Added
-- **`episodic-memory doctor` (no subcommand)** reports config/archive/index health, DB stats, embedding-version drift, last hook errors, and `node_modules` sentinels. `--json` is supported; `doctor codex` is unchanged.
-- **Search results include conversation summaries** by default (upstream #74), including MCP JSON and multi-concept paths. Disable with `EPISODIC_MEMORY_INCLUDE_SUMMARY=0`; truncate with `EPISODIC_MEMORY_MAX_SUMMARY_DISPLAY_CHARS`.
-
-### Changed
-- **Completed the TypeScript-on-BunJS toolchain migration.** Dev/CI use Bun exclusively (`bun install --frozen-lockfile`, `bun run …`, `bun audit`). `package-lock.json` is removed again (reintroduced by the MCP 2.0 PR) and gitignored so dual lockfiles cannot drift. `packageManager` is `bun@1.4.0`; scripts chain via `bun run`; a real `typecheck` script (`tsc --noEmit`) replaces the previous CI no-op. **Node remains the production runtime** (CLI shebangs, `.mcp.json`, SessionStart hooks, Node smoke in CI). Plugin first-run install still uses `npm install` in the wrapper. `better-sqlite3` is pinned exact (`12.11.1`) so lockfile-less npm install matches the `allowScripts` key; Bun gets `trustedDependencies` for the same addon. `test/allow-scripts-pin.test.ts` asserts against `bun.lock`.
-- **MCP server upgraded to `@modelcontextprotocol/server` v2 (protocol `2026-07-28`).** Uses `serveStdio` for stateless modern clients (`server/discover`) while still serving legacy `initialize` clients through `2025-11-25`. Adds `test/mcp-protocol.test.ts` to lock both eras.
-- **Embeddings truncate before concatenate.** `formatExchangeEmbeddingText` applies `truncateForIndex` so multi-MB prompt payload is not allocated into the combined embed string.
-- **Claude parser links `tool_result` to `tool_use`** via `tool_use_id`, matching the Codex path.
-
-### Fixed
-- **SessionStart hook failures are logged to `sync-errors.log`.** Hook stderr was easy to miss; a dedicated wrapper runs `sync --background`, records non-zero exits, and always returns success so hooks stay non-blocking (upstream #94).
-- **Plugin manifest version drift.** `.codex-plugin/plugin.json` and `.claude-plugin/marketplace.json` now match `package.json` at 1.5.1.
 
 ## [1.5.0] - 2026-08-13
 

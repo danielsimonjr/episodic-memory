@@ -1,5 +1,13 @@
 ## [Unreleased]
 
+### Security
+- **CI `bun audit --audit-level=critical` failed on three new critical advisories.** `proxy-addr` 2.0.7
+  (reached through `claude-agent-sdk` > MCP sdk > `express`) is raised to a fixed version by
+  `bun audit fix` inside its range. `tinypool` 1.1.1 (reached through `vitest` 3) has no fix inside vitest 3,
+  so `vitest` moves to `^4.1.11`, which also clears the `@vitest/mocker` advisory. Both are dev or transitive
+  dependencies; shipped code is unchanged. Typecheck passes, 72 test files and 355 tests pass, and the audit
+  reports no critical findings. Three moderate advisories remain (`sprintf-js`, with no published fix).
+
 ## [1.6.5] - 2026-09-23
 
 ### Fixed

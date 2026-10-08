@@ -28,6 +28,8 @@ items move between sections as state changes.
 
 ## Active queue
 
+- [ ] **CI RED: `bun audit --audit-level=critical` fails (2026-10-07 22:14)** — 3 new critical advisories: proxy-addr 2.0.7 (via claude-agent-sdk > MCP sdk > express) and tinypool 1.1.1 (via vitest). Found on docs PR #10; main last ran green 2026-09-24, before the advisories. Fix at the parent with `bun audit fix`, verify the resolved lockfile and the full suite, then merge so #10 can go green.
+
 ### Immediate (next session-or-two)
 
 - [ ] **Swap install source from upstream → fork** — first-time activation. Daniel runs `/plugin uninstall episodic-memory@superpowers-marketplace` then `/plugin install episodic-memory@local-marketplace` then `/reload-plugins`. Memory is already in place at `~/.claude/episodic-memory-data/` (cloned from `~/.config/superpowers/` on 2026-05-18); `EPISODIC_MEMORY_CONFIG_DIR` user env var points the fork at it. Original at `~/.config/superpowers/` preserved as fallback.

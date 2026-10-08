@@ -10,7 +10,8 @@ A session starts with no memory loaded. The user re-explains recent work each ti
 This design adds a small digest that loads at session start. Every line of the digest cites the conversations it
 came from. When a line is not enough, Claude searches the index for the full text.
 
-The digest is a new part of the `episodic-memory` plugin. The plugin then has two parts:
+The digest is a new part of the `episodic-memory` plugin. The plugin name, id and install path do not change.
+The plugin then has two parts:
 
 - **Digest**: short, always loaded, lossy, cited.
 - **Index**: complete, searched on demand, exact. (Exists today.)

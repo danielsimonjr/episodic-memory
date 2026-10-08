@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [1.7.0] - 2026-10-08
+
 ### Added
 - **Session digest (off by default).** A cited, size-bounded digest of earlier sessions loads at session start.
   New table `digest_entry` (with an FTS mirror), a `digest` MCP tool (show, search, expand a source, leave a

@@ -19,6 +19,7 @@ import { closeSharedReaderDatabase } from './db.js';
 import { handleToolCall } from './mcp-tools.js';
 import {
   SearchInputSchema,
+  DigestInputSchema,
   ShowConversationInputSchema,
 } from './mcp-schemas.js';
 
@@ -65,6 +66,28 @@ function buildServer(): McpServer {
     },
     async (args) => {
       const result = await handleToolCall('read', args);
+      return {
+        content: result.content,
+        ...(result.isError ? { isError: true } : {}),
+      };
+    }
+  );
+
+  server.registerTool(
+    'digest',
+    {
+      title: 'Session Digest',
+      description: `Short, cited digest of earlier sessions in a project. With no arguments it shows the digest for the current project. Use query to search it, expand with an exchange id from a [#id] mark to get the archive path and line range for the read tool, and handoff to leave a one-line note for the next session.`,
+      inputSchema: DigestInputSchema,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: false,
+      },
+    },
+    async (args) => {
+      const result = await handleToolCall('digest', args);
       return {
         content: result.content,
         ...(result.isError ? { isError: true } : {}),

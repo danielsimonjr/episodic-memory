@@ -118,6 +118,7 @@ const { syncConversations } = await import('./sync.js');
 const { initDatabase } = await import('./db.js');
 const { generateExchangeEmbedding, initEmbeddings } = await import('./embeddings.js');
 const { runMigrationBatch, countStale } = await import('./embedding-migration.js');
+const { runDigestPhase } = await import('./digest-phase.js');
 
 const sourceDirs = getConversationSourceDirs();
 const destDir = getArchiveDir();
@@ -207,6 +208,9 @@ async function syncAll() {
   // still on the old encoder. Lock-protected; if another process is already
   // migrating, this is a no-op.
   await runEmbeddingMigrationPhase();
+
+  // Digest of past sessions (off unless EPISODIC_MEMORY_DIGEST=1). Never throws.
+  await runDigestPhase();
 }
 
 const MIGRATION_BATCH_SIZE = parseInt(process.env.EPISODIC_MEMORY_MIGRATION_BATCH || '500', 10);

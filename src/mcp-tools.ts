@@ -10,6 +10,7 @@ import {
 import { maybeRedactSecrets } from './redact.js';
 import { assertMcpAuthorized } from './mcp-auth.js';
 import {
+  DigestInputSchema,
   SearchInputSchema,
   ShowConversationInputSchema,
   handleMcpError,
@@ -120,6 +121,12 @@ export async function handleToolCall(name: string, args: unknown): Promise<McpTo
       return {
         content: [{ type: 'text', text: markdownContent }],
       };
+    }
+
+    if (name === 'digest') {
+      const params = DigestInputSchema.parse(args);
+      const { digestToolText } = await import('./digest-tool.js');
+      return { content: [{ type: 'text', text: digestToolText(params) }] };
     }
 
     throw new Error(`Unknown tool: ${name}`);

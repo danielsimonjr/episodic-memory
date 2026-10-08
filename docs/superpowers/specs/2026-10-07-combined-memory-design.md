@@ -1,6 +1,6 @@
 # Combined memory: a cited digest beside the search index
 
-Status: draft for review. No code exists for this design.
+Status: approved. Implementation follows the plan beside this file.
 
 ## 1. Purpose
 
@@ -145,8 +145,10 @@ Tests come first. Each rule in section 7 has a failing test before its code.
 4. Injection and the handoff note.
 5. Bundle, install check on both machines, then enable the flag.
 
-## 12. Open questions
+## 12. Decisions on the earlier open questions
 
-1. Should the digest be embedded and searched too, or only injected?
-2. The cap N for session entries per day before compression.
-3. Should the `ollama` backend be offered for the digest in the first release, or added later?
+1. The digest is indexed in an FTS table and searched through the `digest` tool, as well as injected.
+2. The cap for session entries per day before compression is `EPISODIC_MEMORY_DIGEST_DAY_CAP`, default 5. The week rule uses 7 day entries.
+3. The `ollama` backend is supported in the first release through the existing backend switch.
+
+Status: approved for implementation. Task breakdown: `docs/superpowers/plans/2026-10-08-combined-memory.md`.

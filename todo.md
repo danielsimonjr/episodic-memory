@@ -28,7 +28,9 @@ items move between sections as state changes.
 
 ## Active queue
 
-- [ ] **CI RED: `bun audit --audit-level=critical` fails (2026-10-07 22:14)** — 3 new critical advisories: proxy-addr 2.0.7 (via claude-agent-sdk > MCP sdk > express) and tinypool 1.1.1 (via vitest). Found on docs PR #10; main last ran green 2026-09-24, before the advisories. Fix at the parent with `bun audit fix`, verify the resolved lockfile and the full suite, then merge so #10 can go green.
+- [ ] **Combined memory digest** — add a tiered, always-loaded digest (cited, Haiku-summarized, additive, size-capped) beside the search index. Design spec first: `docs/superpowers/specs/2026-10-07-combined-memory-design.md`. Done when the spec is reviewed and approved; implementation is a separate row.
+
+- [x] **CI RED: `bun audit --audit-level=critical` fails (2026-10-07 22:14)** — 3 new critical advisories: proxy-addr 2.0.7 (via claude-agent-sdk > MCP sdk > express) and tinypool 1.1.1 (via vitest). Found on docs PR #10; main last ran green 2026-09-24, before the advisories. Fix at the parent with `bun audit fix`, verify the resolved lockfile and the full suite, then merge so #10 can go green. DONE: merged in #11 (130c5d0); `bun audit --audit-level=critical` reports none; typecheck clean, 72 files / 355 tests pass.
 
 ### Immediate (next session-or-two)
 

@@ -277,6 +277,11 @@ function callModel(prompt: string): Promise<string> {
   return summarizerBackend() === 'ollama' ? callOllama(prompt) : callClaude(prompt);
 }
 
+/** Digest entry point: same backend, model and fallback choice as session summaries. */
+export function callDigestModel(prompt: string): Promise<string> {
+  return callModel(prompt);
+}
+
 interface PendingAppServerRequest {
   method: string;
   resolve: (value: any) => void;

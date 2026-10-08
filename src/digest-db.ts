@@ -114,6 +114,18 @@ export function listActiveEntries(db: Database.Database, project: string): Diges
   return rows.map(fromRow);
 }
 
+/** Active, non-handoff entries of one tier across all projects, oldest first. Input for compression. */
+export function listActiveByTier(db: Database.Database, tier: DigestTier): DigestEntry[] {
+  const rows = db
+    .prepare(
+      `SELECT * FROM digest_entry
+       WHERE tier = ? AND superseded_by IS NULL AND handoff = 0
+       ORDER BY project, period_start, id`
+    )
+    .all(tier) as Row[];
+  return rows.map(fromRow);
+}
+
 /** Mark entries as replaced by another entry. Rows stay in the table. */
 export function supersede(db: Database.Database, ids: number[], byId: number): void {
   const stmt = db.prepare('UPDATE digest_entry SET superseded_by = ? WHERE id = ? AND superseded_by IS NULL');

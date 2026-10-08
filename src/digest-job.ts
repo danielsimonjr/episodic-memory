@@ -5,6 +5,7 @@ import { callDigestModel } from './summarizer.js';
 import { buildSessionPrompt } from './digest-prompts.js';
 import { parseCitedLines, redactEntryText } from './digest-validate.js';
 import { insertDigestEntry } from './digest-db.js';
+import { compressDigest } from './digest-compress.js';
 
 export interface DigestOptions {
   /** Model call. Defaults to the configured summarizer backend; tests pass a fake. */
@@ -16,6 +17,8 @@ export interface DigestResult {
   written: number;
   skipped: number;
   failed: number;
+  /** Day and week entries created by compression (present only when the job ran). */
+  compressed?: number;
 }
 
 /** A session whose last exchange is newer than this is still running; summarize it next time. */
@@ -132,12 +135,15 @@ async function writeSessionEntries(
   }
 }
 
-/** Write session digest entries. Does nothing unless EPISODIC_MEMORY_DIGEST=1 and the summarizer guard is unset. */
+/** Write session digest entries, then compress old days and weeks. Does nothing unless EPISODIC_MEMORY_DIGEST=1 and the summarizer guard is unset. */
 export async function runDigest(db: Database.Database, opts: DigestOptions = {}): Promise<DigestResult> {
   const result: DigestResult = { written: 0, skipped: 0, failed: 0 };
   if (!digestEnabled() || shouldSkipReentrantSync()) return result;
   const model = opts.model ?? callDigestModel;
   const now = opts.now ?? new Date();
   await writeSessionEntries(db, model, now, result);
+  const c = await compressDigest(db, { model, now });
+  result.compressed = c.created;
+  result.failed += c.failed;
   return result;
 }

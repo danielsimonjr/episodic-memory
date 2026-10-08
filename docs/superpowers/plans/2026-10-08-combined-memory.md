@@ -17,13 +17,16 @@
 - Feature flag `EPISODIC_MEMORY_DIGEST` defaults off. Flag off: hook output is byte-identical to today.
 - Size budget `EPISODIC_MEMORY_DIGEST_MAX_CHARS`, default `6000`; the oldest tier drops first.
 - Tiers are exactly `session`, `day`, `week`. No code path deletes a digest entry, an exchange or a file; compression sets `superseded_by`.
-- All text passes `maybeRedactSecrets` (`src/redact.ts`) before the summarizer and again before storage.
+- All text passes `redactSecrets` (`src/redact.ts`) before the summarizer and again before storage.
 - A line without a valid citation is dropped. If no line survives, no entry is written.
 - Summarizer: existing backends only (`claude` default model from `EPISODIC_MEMORY_API_MODEL`, default `haiku`; `ollama` when configured). Child Claude processes inherit `EPISODIC_MEMORY_SUMMARIZER_GUARD` (`src/reentrancy.ts`).
 - The injection hook must not import `@huggingface/transformers` or `sqlite-vec`.
 - Clean-room: no code, prompt text or file layout from the `remember` plugin (Community License).
 - `dist/` is committed; rebuild with `bun run build` and commit only real content changes.
 - Decisions on the spec's open questions: the digest is indexed in FTS and searchable (tool `digest`); the per-day cap before compression is `EPISODIC_MEMORY_DIGEST_DAY_CAP`, default `5`; the Ollama backend is supported in the first release through the existing backend switch.
+- Redaction of digest text always runs (`redactSecrets`), independent of the opt-in used for the exchange index, because the digest is injected into new sessions.
+- Days and weeks are UTC. Only past days and finished weeks compress; the week rule uses `EPISODIC_MEMORY_DIGEST_WEEK_CAP`, default `2`.
+- The digest step runs from `src/sync-cli.ts` through `src/digest-phase.ts`, after the embedding-migration phase, with a lazy import (the CLI keeps heavy modules out of the early-exit path).
 
 ## Review Focus
 
@@ -151,13 +154,14 @@
 ### Task 7: Wire into sync, handoff note, MCP tool
 
 **Files:**
-- Modify: `src/sync.ts` (call `runDigest` after a successful sync, errors caught and logged), `src/mcp-schemas.ts`, `src/mcp-tools.ts`, `src/mcp-server.ts` (register tool)
+- Create: `src/digest-phase.ts`, `src/digest-tool.ts`
+- Modify: `src/sync-cli.ts` (call `runDigestPhase` after sync, errors caught and logged), `src/mcp-schemas.ts`, `src/mcp-tools.ts`, `src/mcp-server.ts` (register tool)
 - Test: `test/digest-mcp.test.ts`, `test/digest-sync.test.ts`
 
 **Interfaces:**
 - Produces:
   - MCP tool `digest`: input `{ query?: string; project?: string; limit?: number; handoff?: string }`. No `query` and no `handoff`: returns `buildDigestText` for the project. With `query`: returns `searchDigest` hits with their `[#id]` marks. With `handoff`: stores a `session` entry with `handoff = 1` (redacted, one line, at most 500 characters, key `tier=session, project, period_start=now`); that entry sorts first in the injection.
-  - `SyncResult` gains `digest?: { written: number; failed: number }`.
+  - `runDigestPhase(opts?): Promise<DigestResult | null>`: null when the flag is off or on error; never throws.
 
 - [ ] **Step 1: Write failing tests** `digest tool returns text for a project`, `digest tool searches`, `handoff is redacted and capped at 500 characters`, `handoff entry appears first in the built text`, `sync with flag off never calls runDigest`, `sync survives a runDigest throw`.
 - [ ] **Step 2: Run** the files. Expected: FAIL.

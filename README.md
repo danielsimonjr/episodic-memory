@@ -225,6 +225,36 @@ Backfill selects conversations with no summary, or with an empty summary that no
 | Search | No (local SQLite) |
 | MCP tools | No |
 
+## Session Digest
+
+An optional digest of earlier sessions loads when a session starts. Every line cites the exchanges it came
+from, so a wrong line can be checked against its source. The full index stays the place for exact text.
+
+It is off by default. Turn it on with `EPISODIC_MEMORY_DIGEST=1`.
+
+How it works:
+
+1. After each sync, the summarizer (the same backend and model as session summaries, `haiku` by default)
+   writes one `session` entry per finished session. A line without a valid citation is dropped, and text
+   is redacted before it is sent and again before it is stored.
+2. A past day with more than 5 session entries merges into one `day` entry. A finished week with more
+   than 2 day entries merges into one `week` entry. Merged entries are marked superseded, never deleted.
+3. At session start, a hook prints the digest for the current project: handoff notes first, then newest
+   entries first, within the size budget.
+
+Settings:
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `EPISODIC_MEMORY_DIGEST` | unset (off) | Set to `1` to write and inject the digest |
+| `EPISODIC_MEMORY_DIGEST_MAX_CHARS` | `6000` | Size budget of the injected text |
+| `EPISODIC_MEMORY_DIGEST_DAY_CAP` | `5` | Session entries in a past day before they merge |
+| `EPISODIC_MEMORY_DIGEST_WEEK_CAP` | `2` | Day entries in a finished week before they merge |
+| `EPISODIC_MEMORY_DIGEST_MAX_SESSIONS` | `5` | Sessions summarized per sync run |
+
+The `digest` MCP tool shows the digest, searches it (`query`), turns a `[#id]` mark into an archive path and
+line range for `read` (`expand`), and stores a one-line note for the next session (`handoff`).
+
 ## Commands
 
 ### `episodic-memory sync`

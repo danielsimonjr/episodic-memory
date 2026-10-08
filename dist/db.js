@@ -6,6 +6,7 @@ import { getDbPath, tryChmod } from './paths.js';
 import { EMBEDDING_VERSION } from './embedding-migration.js';
 import { truncateForIndex } from './constants.js';
 import { maybeRedactSecrets } from './redact.js';
+import { ensureDigestSchema } from './digest-db.js';
 export function migrateSchema(db) {
     const columns = db.prepare(`SELECT name FROM pragma_table_info('exchanges')`).all();
     const columnNames = new Set(columns.map(c => c.name));
@@ -39,6 +40,7 @@ export function migrateSchema(db) {
     }
     migrateToolCallsCascade(db);
     ensureFts(db);
+    ensureDigestSchema(db);
 }
 /**
  * Earlier versions created `tool_calls` with a plain

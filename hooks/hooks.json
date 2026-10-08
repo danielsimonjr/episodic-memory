@@ -7,6 +7,10 @@
           {
             "type": "command",
             "command": "node \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/cli/sync-hook.js\""
+          },
+          {
+            "type": "command",
+            "command": "node \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/cli/digest-hook.js\""
           }
         ]
       }

@@ -70,6 +70,29 @@ export const ShowConversationInputSchema = z
         .describe('Required when EPISODIC_MEMORY_MCP_TOKEN is set'),
 })
     .strict();
+export const DigestInputSchema = z
+    .object({
+    query: z.string().min(1).optional().describe('Search the digest instead of showing it'),
+    project: z
+        .string()
+        .min(1)
+        .optional()
+        .describe('Project key. Defaults to the key for the current working directory.'),
+    limit: z.number().int().min(1).max(50).optional().describe('Max search hits (default 10)'),
+    expand: z
+        .string()
+        .min(1)
+        .optional()
+        .describe('An exchange id from a [#id] mark. Returns the archive path and line range to pass to read.'),
+    handoff: z
+        .string()
+        .min(1)
+        .max(2000)
+        .optional()
+        .describe('Store a one-line note for the next session (capped at 500 characters, redacted)'),
+    auth_token: z.string().min(1).optional().describe('Required when EPISODIC_MEMORY_MCP_TOKEN is set'),
+})
+    .strict();
 export function handleMcpError(error) {
     if (error instanceof Error) {
         return `Error: ${error.message}`;

@@ -150,6 +150,102 @@ var init_redact = __esm({
   }
 });
 
+// src/digest-db.ts
+function fromRow(r) {
+  return {
+    id: r.id,
+    tier: r.tier,
+    project: r.project,
+    periodStart: r.period_start,
+    periodEnd: r.period_end,
+    text: r.text,
+    sources: JSON.parse(r.sources),
+    model: r.model,
+    createdAt: r.created_at,
+    supersededBy: r.superseded_by,
+    handoff: r.handoff === 1
+  };
+}
+function ensureDigestSchema(db) {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS digest_entry (
+      id INTEGER PRIMARY KEY,
+      tier TEXT NOT NULL CHECK (tier IN ('session','day','week')),
+      project TEXT NOT NULL,
+      period_start TEXT NOT NULL,
+      period_end TEXT NOT NULL,
+      text TEXT NOT NULL,
+      sources TEXT NOT NULL,
+      model TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      superseded_by INTEGER,
+      handoff INTEGER NOT NULL DEFAULT 0,
+      UNIQUE (tier, project, period_start)
+    );
+    CREATE INDEX IF NOT EXISTS idx_digest_project ON digest_entry(project, superseded_by);
+    CREATE VIRTUAL TABLE IF NOT EXISTS digest_fts USING fts5(
+      id UNINDEXED,
+      text,
+      tokenize = 'porter unicode61'
+    );
+  `);
+}
+function insertDigestEntry(db, e) {
+  const tx = db.transaction(() => {
+    const res = db.prepare(
+      `INSERT OR IGNORE INTO digest_entry
+           (tier, project, period_start, period_end, text, sources, model, created_at, handoff)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).run(
+      e.tier,
+      e.project,
+      e.periodStart,
+      e.periodEnd,
+      e.text,
+      JSON.stringify(e.sources),
+      e.model,
+      (/* @__PURE__ */ new Date()).toISOString(),
+      e.handoff ? 1 : 0
+    );
+    if (res.changes === 0) return null;
+    const id = Number(res.lastInsertRowid);
+    db.prepare("INSERT INTO digest_fts (id, text) VALUES (?, ?)").run(id, e.text);
+    return id;
+  });
+  return tx();
+}
+function listActiveEntries(db, project) {
+  const rows = db.prepare(
+    `SELECT * FROM digest_entry
+       WHERE project = ? AND superseded_by IS NULL
+       ORDER BY period_start DESC, id DESC`
+  ).all(project);
+  return rows.map(fromRow);
+}
+function toFtsQuery(query) {
+  const terms = query.match(/[\p{L}\p{N}_]+/gu) ?? [];
+  if (terms.length === 0) return null;
+  return terms.map((t) => `"${t}"`).join(" ");
+}
+function searchDigest(db, query, project, limit = 10) {
+  const q2 = toFtsQuery(query);
+  if (!q2) return [];
+  const rows = db.prepare(
+    `SELECT e.* FROM digest_fts f
+       JOIN digest_entry e ON e.id = f.id
+       WHERE digest_fts MATCH ? AND e.superseded_by IS NULL
+         AND (? IS NULL OR e.project = ?)
+       ORDER BY rank
+       LIMIT ?`
+  ).all(q2, project ?? null, project ?? null, limit);
+  return rows.map(fromRow);
+}
+var init_digest_db = __esm({
+  "src/digest-db.ts"() {
+    "use strict";
+  }
+});
+
 // src/db.ts
 import Database from "better-sqlite3";
 import path2 from "path";
@@ -188,6 +284,7 @@ function migrateSchema(db) {
   }
   migrateToolCallsCascade(db);
   ensureFts(db);
+  ensureDigestSchema(db);
 }
 function migrateToolCallsCascade(db) {
   const row = db.prepare(
@@ -389,6 +486,7 @@ var init_db = __esm({
     init_embedding_migration();
     init_constants();
     init_redact();
+    init_digest_db();
     sharedReader = null;
   }
 });
@@ -2203,7 +2301,7 @@ function formatConversationAsMarkdown(jsonl, startLine, endLine) {
     const timestamp = new Date(msg.timestamp).toLocaleString();
     const messageId = msg.uuid || `msg-${i}`;
     if (msg.type === "user" && Array.isArray(msg.message.content)) {
-      const hasOnlyToolResults = msg.message.content.every((block) => block.type === "tool_result");
+      const hasOnlyToolResults = msg.message.content.every((block2) => block2.type === "tool_result");
       if (hasOnlyToolResults) {
         continue;
       }
@@ -2247,9 +2345,9 @@ function formatConversationAsMarkdown(jsonl, startLine, endLine) {
 
 `;
       } else if (Array.isArray(msg.message.content)) {
-        for (const block of msg.message.content) {
-          if (block.type === "text" && block.text) {
-            output += `${block.text}
+        for (const block2 of msg.message.content) {
+          if (block2.type === "text" && block2.text) {
+            output += `${block2.text}
 
 `;
           }
@@ -2262,16 +2360,16 @@ function formatConversationAsMarkdown(jsonl, startLine, endLine) {
 
 `;
       } else if (Array.isArray(content)) {
-        for (const block of content) {
-          if (block.type === "text" && block.text) {
-            output += `${block.text}
+        for (const block2 of content) {
+          if (block2.type === "text" && block2.text) {
+            output += `${block2.text}
 
 `;
-          } else if (block.type === "tool_use") {
-            output += `**Tool Use:** \`${block.name}\`
+          } else if (block2.type === "tool_use") {
+            output += `**Tool Use:** \`${block2.name}\`
 
 `;
-            const input = block.input;
+            const input = block2.input;
             if (input && typeof input === "object") {
               for (const [key, value] of Object.entries(input)) {
                 if (typeof value === "string" && value.includes("\n")) {
@@ -2293,7 +2391,7 @@ ${JSON.stringify(value, null, 2)}
               }
               output += "\n";
             }
-            const toolUseId = block.id;
+            const toolUseId = block2.id;
             if (toolUseId) {
               let foundResult = false;
               for (let j2 = i + 1; j2 < Math.min(i + 6, messages.length) && !foundResult; j2++) {
@@ -2394,9 +2492,9 @@ function formatConversationAsHTML(jsonl) {
   const toolUseMap = /* @__PURE__ */ new Map();
   for (const msg of messages) {
     if (msg.type === "assistant" && Array.isArray(msg.message.content)) {
-      for (const block of msg.message.content) {
-        if (block.type === "tool_use" && block.id) {
-          toolUseMap.set(block.id, { msg, block });
+      for (const block2 of msg.message.content) {
+        if (block2.type === "tool_use" && block2.id) {
+          toolUseMap.set(block2.id, { msg, block: block2 });
         }
       }
     }
@@ -2407,7 +2505,7 @@ function formatConversationAsHTML(jsonl) {
     const timestamp = new Date(msg.timestamp).toLocaleString();
     const messageId = `msg-${msg.uuid || i}`;
     if (msg.type === "user" && Array.isArray(msg.message.content)) {
-      const hasOnlyToolResults = msg.message.content.every((block) => block.type === "tool_result");
+      const hasOnlyToolResults = msg.message.content.every((block2) => block2.type === "tool_result");
       if (hasOnlyToolResults) {
         continue;
       }
@@ -2447,13 +2545,13 @@ function formatConversationAsHTML(jsonl) {
       } else if (typeof msg.message.content === "string") {
         bodyContent += `<p>${escapeHtml(msg.message.content)}</p>`;
       } else if (Array.isArray(msg.message.content)) {
-        for (const block of msg.message.content) {
-          if (block.type === "text" && block.text) {
-            bodyContent += `<p>${escapeHtml(block.text)}</p>`;
-          } else if (block.type === "tool_result") {
+        for (const block2 of msg.message.content) {
+          if (block2.type === "text" && block2.text) {
+            bodyContent += `<p>${escapeHtml(block2.text)}</p>`;
+          } else if (block2.type === "tool_result") {
             bodyContent += '<div class="tool-result">';
             bodyContent += "<strong>Tool Result:</strong> ";
-            bodyContent += `<code>${escapeHtml(String(block.content || ""))}</code>`;
+            bodyContent += `<code>${escapeHtml(String(block2.content || ""))}</code>`;
             bodyContent += "</div>";
           }
         }
@@ -2463,19 +2561,19 @@ function formatConversationAsHTML(jsonl) {
       if (typeof content === "string") {
         bodyContent += `<p>${escapeHtml(content)}</p>`;
       } else if (Array.isArray(content)) {
-        for (const block of content) {
-          if (block.type === "text" && block.text) {
-            if (isMarkdown(block.text)) {
+        for (const block2 of content) {
+          if (block2.type === "text" && block2.text) {
+            if (isMarkdown(block2.text)) {
               bodyContent += '<div class="markdown-content">';
-              bodyContent += renderMarkdownSafely(block.text);
+              bodyContent += renderMarkdownSafely(block2.text);
               bodyContent += "</div>";
             } else {
-              bodyContent += `<div class="plain-content">${escapeHtml(block.text)}</div>`;
+              bodyContent += `<div class="plain-content">${escapeHtml(block2.text)}</div>`;
             }
-          } else if (block.type === "tool_use") {
+          } else if (block2.type === "tool_use") {
             bodyContent += '<div class="tool-use">';
-            bodyContent += `<div class="tool-name"><strong>Tool Use:</strong> <code>${escapeHtml(block.name || "")}</code></div>`;
-            const input = block.input;
+            bodyContent += `<div class="tool-name"><strong>Tool Use:</strong> <code>${escapeHtml(block2.name || "")}</code></div>`;
+            const input = block2.input;
             if (input && typeof input === "object") {
               bodyContent += '<div class="tool-params">';
               for (const [key, value] of Object.entries(input)) {
@@ -2498,7 +2596,7 @@ function formatConversationAsHTML(jsonl) {
               }
               bodyContent += "</div>";
             }
-            const toolUseId = block.id;
+            const toolUseId = block2.id;
             if (toolUseId) {
               let foundResult = false;
               for (let j2 = i + 1; j2 < Math.min(i + 6, messages.length) && !foundResult; j2++) {
@@ -2855,7 +2953,7 @@ function extractCodexText(content) {
   if (!Array.isArray(content)) {
     return "";
   }
-  return content.filter((block) => block && typeof block === "object" && typeof block.text === "string").map((block) => block.text).join("\n");
+  return content.filter((block2) => block2 && typeof block2 === "object" && typeof block2.text === "string").map((block2) => block2.text).join("\n");
 }
 function safeParseJson(value) {
   try {
@@ -3107,6 +3205,123 @@ var init_show = __esm({
   "src/show.ts"() {
     "use strict";
     init_marked_esm();
+  }
+});
+
+// src/digest-inject.ts
+function projectKeyFromCwd(cwd) {
+  return cwd.replace(/[^A-Za-z0-9]/g, "-");
+}
+function digestMaxChars() {
+  const n = Number(process.env.EPISODIC_MEMORY_DIGEST_MAX_CHARS);
+  return Number.isInteger(n) && n > 0 ? n : DEFAULT_DIGEST_MAX_CHARS;
+}
+function label(e) {
+  if (e.handoff) return "Handoff note";
+  const day = e.periodStart.slice(0, 10);
+  return e.tier === "session" ? `Session ${day}` : e.tier === "day" ? `Day ${day}` : `Week of ${day}`;
+}
+function block(e) {
+  return `## ${label(e)}
+${e.text.trim()}
+
+`;
+}
+function buildDigestText(db, project, maxChars) {
+  const entries = listActiveEntries(db, project);
+  const handoffs = entries.filter((e) => e.handoff);
+  const rest = entries.filter((e) => !e.handoff).sort((a, b2) => a.periodEnd < b2.periodEnd ? 1 : a.periodEnd > b2.periodEnd ? -1 : b2.id - a.id);
+  let out = HEADER + "\n";
+  let added = 0;
+  for (const e of [...handoffs, ...rest]) {
+    const b2 = block(e);
+    if (out.length + b2.length > maxChars) break;
+    out += b2;
+    added++;
+  }
+  return added === 0 ? "" : out;
+}
+var DEFAULT_DIGEST_MAX_CHARS, HEADER;
+var init_digest_inject = __esm({
+  "src/digest-inject.ts"() {
+    "use strict";
+    init_digest_db();
+    DEFAULT_DIGEST_MAX_CHARS = 6e3;
+    HEADER = "Digest of earlier sessions in this project. Each line ends with [#id] marks naming its source exchanges.\nTo see a source, call the episodic-memory digest tool with expand set to the id, then read the returned path and lines.\n";
+  }
+});
+
+// src/digest-validate.ts
+function redactEntryText(text) {
+  return redactSecrets(text);
+}
+var init_digest_validate = __esm({
+  "src/digest-validate.ts"() {
+    "use strict";
+    init_redact();
+  }
+});
+
+// src/digest-tool.ts
+var digest_tool_exports = {};
+__export(digest_tool_exports, {
+  digestToolText: () => digestToolText,
+  normalizeHandoff: () => normalizeHandoff
+});
+function normalizeHandoff(note) {
+  const oneLine = redactEntryText(note).replace(/\s+/g, " ").trim();
+  return oneLine.length > HANDOFF_MAX_CHARS ? `${oneLine.slice(0, HANDOFF_MAX_CHARS - 3)}...` : oneLine;
+}
+function digestToolText(params) {
+  const db = initDatabase();
+  try {
+    const project = params.project ?? projectKeyFromCwd(process.cwd());
+    if (params.expand) {
+      const row = db.prepare("SELECT archive_path, line_start, line_end, project, timestamp FROM exchanges WHERE id = ?").get(params.expand);
+      if (!row) throw new Error(`No exchange with id ${params.expand}`);
+      return `Exchange ${params.expand} (${row.project}, ${row.timestamp})
+path: ${row.archive_path}
+startLine: ${row.line_start}
+endLine: ${row.line_end}
+Pass path, startLine and endLine to the read tool.`;
+    }
+    if (params.handoff) {
+      const note = normalizeHandoff(params.handoff);
+      if (!note) throw new Error("The handoff note is empty after redaction");
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      const id = insertDigestEntry(db, {
+        tier: "session",
+        project,
+        periodStart: now,
+        periodEnd: now,
+        text: note,
+        sources: [],
+        model: "handoff",
+        handoff: true
+      });
+      return id === null ? "A note with the same timestamp already exists; try again." : `Handoff note saved for ${project}.`;
+    }
+    if (params.query) {
+      const hits = searchDigest(db, params.query, params.project, params.limit ?? 10);
+      if (hits.length === 0) return `No digest entries match "${params.query}".`;
+      return hits.map((h) => `## ${h.tier} ${h.periodStart.slice(0, 10)} (${h.project})
+${h.text}`).join("\n\n");
+    }
+    const text = buildDigestText(db, project, digestMaxChars());
+    return text || `No digest entries for ${project}.`;
+  } finally {
+    db.close();
+  }
+}
+var HANDOFF_MAX_CHARS;
+var init_digest_tool = __esm({
+  "src/digest-tool.ts"() {
+    "use strict";
+    init_db();
+    init_digest_db();
+    init_digest_inject();
+    init_digest_validate();
+    HANDOFF_MAX_CHARS = 500;
   }
 });
 
@@ -17691,6 +17906,14 @@ var ShowConversationInputSchema = external_exports.object({
   endLine: external_exports.number().int().min(1).optional().describe("Ending line number (1-indexed, inclusive). Omit to read to end."),
   auth_token: external_exports.string().min(1).optional().describe("Required when EPISODIC_MEMORY_MCP_TOKEN is set")
 }).strict();
+var DigestInputSchema = external_exports.object({
+  query: external_exports.string().min(1).optional().describe("Search the digest instead of showing it"),
+  project: external_exports.string().min(1).optional().describe("Project key. Defaults to the key for the current working directory."),
+  limit: external_exports.number().int().min(1).max(50).optional().describe("Max search hits (default 10)"),
+  expand: external_exports.string().min(1).optional().describe("An exchange id from a [#id] mark. Returns the archive path and line range to pass to read."),
+  handoff: external_exports.string().min(1).max(2e3).optional().describe("Store a one-line note for the next session (capped at 500 characters, redacted)"),
+  auth_token: external_exports.string().min(1).optional().describe("Required when EPISODIC_MEMORY_MCP_TOKEN is set")
+}).strict();
 function handleMcpError(error51) {
   if (error51 instanceof Error) {
     return `Error: ${error51.message}`;
@@ -17788,6 +18011,11 @@ async function handleToolCall(name, args) {
         content: [{ type: "text", text: markdownContent }]
       };
     }
+    if (name === "digest") {
+      const params = DigestInputSchema.parse(args);
+      const { digestToolText: digestToolText2 } = await Promise.resolve().then(() => (init_digest_tool(), digest_tool_exports));
+      return { content: [{ type: "text", text: digestToolText2(params) }] };
+    }
     throw new Error(`Unknown tool: ${name}`);
   } catch (error51) {
     return {
@@ -17839,6 +18067,27 @@ function buildServer() {
     },
     async (args) => {
       const result = await handleToolCall("read", args);
+      return {
+        content: result.content,
+        ...result.isError ? { isError: true } : {}
+      };
+    }
+  );
+  server.registerTool(
+    "digest",
+    {
+      title: "Session Digest",
+      description: `Short, cited digest of earlier sessions in a project. With no arguments it shows the digest for the current project. Use query to search it, expand with an exchange id from a [#id] mark to get the archive path and line range for the read tool, and handoff to leave a one-line note for the next session.`,
+      inputSchema: DigestInputSchema,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: false
+      }
+    },
+    async (args) => {
+      const result = await handleToolCall("digest", args);
       return {
         content: result.content,
         ...result.isError ? { isError: true } : {}

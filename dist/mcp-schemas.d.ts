@@ -39,4 +39,13 @@ export declare const ShowConversationInputSchema: z.ZodObject<{
     auth_token: z.ZodOptional<z.ZodString>;
 }, z.core.$strict>;
 export type ShowConversationInput = z.infer<typeof ShowConversationInputSchema>;
+export declare const DigestInputSchema: z.ZodObject<{
+    query: z.ZodOptional<z.ZodString>;
+    project: z.ZodOptional<z.ZodString>;
+    limit: z.ZodOptional<z.ZodNumber>;
+    expand: z.ZodOptional<z.ZodString>;
+    handoff: z.ZodOptional<z.ZodString>;
+    auth_token: z.ZodOptional<z.ZodString>;
+}, z.core.$strict>;
+export type DigestInput = z.infer<typeof DigestInputSchema>;
 export declare function handleMcpError(error: unknown): string;

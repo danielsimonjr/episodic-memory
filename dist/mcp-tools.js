@@ -5,7 +5,7 @@
 import { resolveArchiveJsonlPath, readJsonlLines, } from './archive-path.js';
 import { maybeRedactSecrets } from './redact.js';
 import { assertMcpAuthorized } from './mcp-auth.js';
-import { SearchInputSchema, ShowConversationInputSchema, handleMcpError, } from './mcp-schemas.js';
+import { DigestInputSchema, SearchInputSchema, ShowConversationInputSchema, handleMcpError, } from './mcp-schemas.js';
 export async function handleToolCall(name, args) {
     try {
         assertMcpAuthorized(args);
@@ -77,6 +77,11 @@ export async function handleToolCall(name, args) {
             return {
                 content: [{ type: 'text', text: markdownContent }],
             };
+        }
+        if (name === 'digest') {
+            const params = DigestInputSchema.parse(args);
+            const { digestToolText } = await import('./digest-tool.js');
+            return { content: [{ type: 'text', text: digestToolText(params) }] };
         }
         throw new Error(`Unknown tool: ${name}`);
     }

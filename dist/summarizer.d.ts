@@ -43,5 +43,7 @@ export declare function buildCodexSummarizerCommand(args: {
     model?: string;
     codexBin?: string;
 }): CodexSummarizerCommand;
+/** Digest entry point: same backend, model and fallback choice as session summaries. */
+export declare function callDigestModel(prompt: string): Promise<string>;
 export declare function runCodexCommand(command: CodexSummarizerCommand): Promise<string>;
 export declare function summarizeConversation(exchanges: ConversationExchange[], sessionId?: string): Promise<string>;

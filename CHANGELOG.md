@@ -1,5 +1,12 @@
 ## [Unreleased]
 
+### Added
+- **Session digest (off by default).** A cited, size-bounded digest of earlier sessions loads at session start.
+  New table `digest_entry` (with an FTS mirror), a `digest` MCP tool (show, search, expand a source, leave a
+  handoff note), a second SessionStart hook (`cli/digest-hook.js`), and a digest step after each sync that
+  writes session entries and merges busy days and finished weeks. Enable with `EPISODIC_MEMORY_DIGEST=1`.
+  Settings and behavior are in the README ("Session Digest") and `docs/SCHEMA.md`.
+
 ### Security
 - **CI `bun audit --audit-level=critical` failed on three new critical advisories.** `proxy-addr` 2.0.7
   (reached through `claude-agent-sdk` > MCP sdk > `express`) is raised to a fixed version by

@@ -93,7 +93,7 @@ describe('MCP protocol compliance', () => {
 
     const tools = messages.find((m) => m.id === 2);
     const toolNames = (tools?.result as { tools: Array<{ name: string }> })?.tools.map((t) => t.name);
-    expect(toolNames).toEqual(['search', 'read']);
+    expect(toolNames).toEqual(['search', 'read', 'digest']);
   });
 
   it('answers server/discover for MCP 2026-07-28 with supported versions', async () => {
@@ -145,6 +145,6 @@ describe('MCP protocol compliance', () => {
     const messages = parseStdoutLines(stdout);
     const tools = messages.find((m) => m.id === 2);
     const toolNames = (tools?.result as { tools: Array<{ name: string }> })?.tools.map((t) => t.name);
-    expect(toolNames).toEqual(['search', 'read']);
+    expect(toolNames).toEqual(['search', 'read', 'digest']);
   });
 });

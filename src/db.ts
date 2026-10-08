@@ -7,6 +7,7 @@ import { getDbPath, tryChmod } from './paths.js';
 import { EMBEDDING_VERSION } from './embedding-migration.js';
 import { truncateForIndex } from './constants.js';
 import { maybeRedactSecrets } from './redact.js';
+import { ensureDigestSchema } from './digest-db.js';
 
 export interface OpenDatabaseOptions {
   /**
@@ -54,6 +55,7 @@ export function migrateSchema(db: Database.Database): void {
 
   migrateToolCallsCascade(db);
   ensureFts(db);
+  ensureDigestSchema(db);
 }
 
 /**

@@ -73,6 +73,30 @@ CREATE VIRTUAL TABLE vec_exchanges USING vec0(
 );
 ```
 
+### `digest_entry`
+
+Cited summaries of past sessions, used by the session-start digest. Entries are never deleted; compression
+sets `superseded_by`.
+
+```sql
+CREATE TABLE digest_entry (
+  id INTEGER PRIMARY KEY,
+  tier TEXT NOT NULL,          -- 'session', 'day' or 'week'
+  project TEXT NOT NULL,       -- same key as exchanges.project
+  period_start TEXT NOT NULL,  -- ISO time; day and week entries start at 00:00 UTC (week = Monday)
+  period_end TEXT NOT NULL,
+  text TEXT NOT NULL,          -- one fact per line, each ending in [#exchangeId,...] marks
+  sources TEXT NOT NULL,       -- JSON array of exchanges.id values cited by the text
+  model TEXT NOT NULL,         -- model tag that wrote the text ('handoff' for a handoff note)
+  created_at TEXT NOT NULL,
+  superseded_by INTEGER,       -- id of the compressed entry that replaced this one
+  handoff INTEGER NOT NULL DEFAULT 0,
+  UNIQUE (tier, project, period_start)
+);
+```
+
+`digest_fts` is an FTS5 table (`id`, `text`) over the same text, used by the `digest` tool's `query`.
+
 ## Indexes
 
 ```sql

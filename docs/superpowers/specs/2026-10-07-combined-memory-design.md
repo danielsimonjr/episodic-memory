@@ -10,7 +10,7 @@ A session starts with no memory loaded. The user re-explains recent work each ti
 This design adds a small digest that loads at session start. Every line of the digest cites the conversations it
 came from. When a line is not enough, Claude searches the index for the full text.
 
-The result is one plugin with two parts:
+The digest is a new part of the `episodic-memory` plugin. The plugin then has two parts:
 
 - **Digest**: short, always loaded, lossy, cited.
 - **Index**: complete, searched on demand, exact. (Exists today.)
@@ -20,7 +20,7 @@ The result is one plugin with two parts:
 In scope:
 
 - A digest store, a compression job, a session-start injection and a handoff note.
-- Summaries made by a local Ollama model by default.
+- Summaries made by the Claude `haiku` model through the existing summarizer.
 - A size budget, redaction, citation checks and an additive-only rule.
 
 Out of scope:
@@ -34,7 +34,7 @@ Out of scope:
 | Part | File | Use in this design |
 |---|---|---|
 | Exchange table with `session_id`, `project`, `timestamp`, `archive_path` | `db.ts`, `docs/SCHEMA.md` | Source of every citation |
-| Summarizer with backends `claude` and `ollama` | `summarizer.ts`, `ollama-backend.ts` | Reuse the backend switch |
+| Summarizer with backends `claude` and `ollama` | `summarizer.ts`, `ollama-backend.ts` | Reuse the `claude` backend and its model setting |
 | Redaction | `redact.ts` | Run on all text before summarizing |
 | Session-start sync hook (startup, resume, clear, compact) | `hooks/hooks.json`, `cli/sync-hook.js` | Add the injection here |
 | Tools `search` and `read` (`read` is confined to the archive and to `.jsonl` files) | `mcp-tools.ts` | Drill-down path; unchanged |
@@ -77,9 +77,12 @@ The handoff note is a `session` entry with a flag `handoff = 1`.
 
 ## 6. Summarizer
 
-- Default backend: Ollama, model set by `EPISODIC_MEMORY_DIGEST_MODEL`. The call uses a JSON-schema `format`
-  and a fixed seed.
-- The `claude` backend stays available and stays off by default for the digest.
+- Default backend: `claude`, model `haiku`. The model comes from the existing `EPISODIC_MEMORY_API_MODEL`
+  setting, with its existing fallback.
+- The `ollama` backend stays available for the digest. It is a setting, not the default.
+- The `claude` backend starts a Claude subprocess. The reentrancy guard in section 7 is therefore required.
+- Each session summary costs model tokens. The job summarizes each session once and skips sessions that already
+  have an entry.
 - A summary is a hint. The citation rule exists so that a wrong line can be checked against its source.
 - A failed call writes no entry and logs the failure. The next sync retries the session.
 
@@ -93,9 +96,10 @@ The handoff note is a `session` entry with a flag `handoff = 1`.
 4. **Size budget.** The injected digest never exceeds `EPISODIC_MEMORY_DIGEST_MAX_CHARS` (default 6000). The
    builder drops the oldest tier first.
 5. **Reentrancy guard.** The digest job runs inside the sync. Any digest step that starts a Claude subprocess
-   inherits `EPISODIC_MEMORY_SUMMARIZER_GUARD`. The Ollama backend starts no such subprocess.
+   inherits `EPISODIC_MEMORY_SUMMARIZER_GUARD`. This applies to the default `claude` backend.
 6. **Feature flag.** `EPISODIC_MEMORY_DIGEST` defaults to off. With the flag off, behavior is unchanged.
-7. **No new network target.** Ollama calls use the same base-URL validation as the current backend.
+7. **No new network target.** The digest uses the endpoint settings of the current backend and the same base-URL
+   validation.
 
 ## 8. Runtime and build
 
@@ -130,7 +134,7 @@ Tests come first. Each rule in section 7 has a failing test before its code.
 - Idempotence: running the job twice writes no duplicate entry.
 - Reentrancy: with the guard variable set, the digest job exits before any heavy import.
 - Flag off: the hook output equals the current output byte for byte.
-- Failure: an unreachable Ollama writes no entry and does not block the sync.
+- Failure: a failed summarizer call writes no entry and does not block the sync.
 
 ## 11. Phases
 
@@ -142,8 +146,6 @@ Tests come first. Each rule in section 7 has a failing test before its code.
 
 ## 12. Open questions
 
-1. Replace both existing plugins with this one, or ship the digest as an add-on beside `episodic-memory`?
-   Default in this draft: one combined plugin.
-2. Which Ollama model writes the summaries? The choice needs a measured comparison on real sessions.
-3. Should the digest be embedded and searched too, or only injected?
-4. The cap N for session entries per day before compression.
+1. Should the digest be embedded and searched too, or only injected?
+2. The cap N for session entries per day before compression.
+3. Should the `ollama` backend be offered for the digest in the first release, or added later?

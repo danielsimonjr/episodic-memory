@@ -232,6 +232,10 @@ async function callClaude(prompt, useFallback = false) {
 function callModel(prompt) {
     return summarizerBackend() === 'ollama' ? callOllama(prompt) : callClaude(prompt);
 }
+/** Digest entry point: same backend, model and fallback choice as session summaries. */
+export function callDigestModel(prompt) {
+    return callModel(prompt);
+}
 function appServerTimeoutMs() {
     const configured = Number(process.env.EPISODIC_MEMORY_CODEX_SUMMARY_TIMEOUT_MS);
     return Number.isFinite(configured) && configured > 0 ? configured : 120000;

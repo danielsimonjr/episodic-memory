@@ -150,6 +150,37 @@ var init_redact = __esm({
   }
 });
 
+// src/digest-db.ts
+function ensureDigestSchema(db) {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS digest_entry (
+      id INTEGER PRIMARY KEY,
+      tier TEXT NOT NULL CHECK (tier IN ('session','day','week')),
+      project TEXT NOT NULL,
+      period_start TEXT NOT NULL,
+      period_end TEXT NOT NULL,
+      text TEXT NOT NULL,
+      sources TEXT NOT NULL,
+      model TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      superseded_by INTEGER,
+      handoff INTEGER NOT NULL DEFAULT 0,
+      UNIQUE (tier, project, period_start)
+    );
+    CREATE INDEX IF NOT EXISTS idx_digest_project ON digest_entry(project, superseded_by);
+    CREATE VIRTUAL TABLE IF NOT EXISTS digest_fts USING fts5(
+      id UNINDEXED,
+      text,
+      tokenize = 'porter unicode61'
+    );
+  `);
+}
+var init_digest_db = __esm({
+  "src/digest-db.ts"() {
+    "use strict";
+  }
+});
+
 // src/db.ts
 import Database from "better-sqlite3";
 import path2 from "path";
@@ -188,6 +219,7 @@ function migrateSchema(db) {
   }
   migrateToolCallsCascade(db);
   ensureFts(db);
+  ensureDigestSchema(db);
 }
 function migrateToolCallsCascade(db) {
   const row = db.prepare(
@@ -389,6 +421,7 @@ var init_db = __esm({
     init_embedding_migration();
     init_constants();
     init_redact();
+    init_digest_db();
     sharedReader = null;
   }
 });

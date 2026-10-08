@@ -28,6 +28,8 @@ items move between sections as state changes.
 
 ## Active queue
 
+- [ ] **Combined memory digest** — add a tiered, always-loaded digest (cited, local-summarized, additive, size-capped) beside the search index. Design spec first: `docs/superpowers/specs/2026-10-07-combined-memory-design.md`. Done when the spec is reviewed and approved; implementation is a separate row.
+
 ### Immediate (next session-or-two)
 
 - [ ] **Swap install source from upstream → fork** — first-time activation. Daniel runs `/plugin uninstall episodic-memory@superpowers-marketplace` then `/plugin install episodic-memory@local-marketplace` then `/reload-plugins`. Memory is already in place at `~/.claude/episodic-memory-data/` (cloned from `~/.config/superpowers/` on 2026-05-18); `EPISODIC_MEMORY_CONFIG_DIR` user env var points the fork at it. Original at `~/.config/superpowers/` preserved as fallback.

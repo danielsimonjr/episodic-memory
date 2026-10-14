@@ -1,5 +1,19 @@
 ## [Unreleased]
 
+### Fixed
+- **The bundled `claude` binary of the summarizer deleted the session record of a live, elevated
+  Claude Code session.** `@anthropic-ai/claude-agent-sdk` 0.2.x ships a `claude` binary of version
+  2.1.141. When that binary starts at Medium integrity, it removes the session record
+  (`~/.claude/sessions/<pid>.json`) of a running session that has High integrity. The session keeps
+  running, but session-record tools no longer see it. The same start at High integrity does not do
+  this, and a Medium start of binary 2.1.299 does not. The range `^0.2.126` could never leave 0.2.141,
+  which is the last 0.2.x release. The dependency is now `^0.3.299`, whose bundled binary is 2.1.299
+  (byte-identical to the installed CLI of that version). The 0.3 line moves `@anthropic-ai/sdk`,
+  `@modelcontextprotocol/sdk` and `zod` to peer dependencies; all three are already present. A new
+  test keeps the lower bound of the range at or above 0.3.299. The summarizer options (`persistSession`,
+  `settingSources`, `mcpServers`, `systemPrompt`, `abortController`) are unchanged and exist in the
+  0.3 types; a live summary through the new SDK returns normally.
+
 ## [1.7.0] - 2026-10-08
 
 ### Added

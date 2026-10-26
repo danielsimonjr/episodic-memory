@@ -12,6 +12,8 @@ export interface SyncResult {
     summarized: number;
     summaryAttempts: number;
     pendingSummaries: number;
+    /** Set when this run asked for no summary because another agent holds the shared GPU. */
+    summariesDeferred?: string;
     /**
      * Zero-byte -summary.txt files seen this run, and how many of those carry NO recorded reason.
      *
@@ -50,5 +52,9 @@ export declare function syncConversations(sourceDir: string, destDir: string, op
  * Summarize ONE archived conversation and record the outcome on disk: a summary, a no-exchanges
  * sentinel, an oversized skip, a retry record, or a give-up. Shared by sync and the archive backfill
  * so both leave identical evidence. Never throws; failures are recorded in result.errors.
+ *
+ * Returns the reservation message when another agent holds the shared GPU. That is a wait, not a
+ * failure: nothing is recorded on disk, the attempt is not counted, and the caller should stop
+ * asking for summaries. Returns `undefined` in every other case.
  */
-export declare function summarizeOneFile(filePath: string, sessionId: string, result: Pick<SyncResult, 'errors' | 'summaryAttempts' | 'summarized'>, summarize: (exchanges: ConversationExchange[], sessionId: string) => Promise<string>): Promise<void>;
+export declare function summarizeOneFile(filePath: string, sessionId: string, result: Pick<SyncResult, 'errors' | 'summaryAttempts' | 'summarized'>, summarize: (exchanges: ConversationExchange[], sessionId: string) => Promise<string>): Promise<string | undefined>;

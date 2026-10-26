@@ -6,7 +6,7 @@ import { spawn } from 'child_process';
 import { createInterface } from 'readline';
 import { codexVersionRequirementMessage, parseCodexCliVersion, versionMeetsMinimum, } from './codex-support.js';
 import { validateApiBaseUrl } from './api-endpoint.js';
-import { summarizerBackend, callOllama } from './ollama-backend.js';
+import { summarizerBackend, callOllama, GpuReservedError } from './ollama-backend.js';
 /**
  * Get API environment overrides for summarization calls.
  * Returns full env merged with process.env so subprocess inherits PATH, HOME, etc.
@@ -547,6 +547,9 @@ Example: <summary>Implemented HID keyboard functionality for ESP32. Hit Bluetoot
             console.log(`  Chunk ${i + 1}/${chunks.length}: ${extracted.split(/\s+/).length} words`);
         }
         catch (error) {
+            // A reserved GPU stops the whole summary: skipping the chunk would store a partial summary.
+            if (error instanceof GpuReservedError)
+                throw error;
             console.log(`  Chunk ${i + 1} failed, skipping`);
         }
     }
@@ -574,6 +577,8 @@ Your summary (max 200 words):`;
         return extractSummary(result);
     }
     catch (error) {
+        if (error instanceof GpuReservedError)
+            throw error;
         console.log(`  Synthesis failed, using chunk summaries`);
         return chunkSummaries.join(' ');
     }

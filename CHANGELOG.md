@@ -13,6 +13,21 @@
   test keeps the lower bound of the range at or above 0.3.299. The summarizer options (`persistSession`,
   `settingSources`, `mcpServers`, `systemPrompt`, `abortController`) are unchanged and exist in the
   0.3 types; a live summary through the new SDK returns normally.
+- **The ollama summarizer backend put a model on the shared GPU while another agent held a GPU
+  reservation.** The SessionStart hook runs a sync at every start, resume, clear and compaction.
+  With the ollama backend, each sync called the configured model, and nothing read the fleet GPU
+  reservation file. Measured on 2026-10-26: three syncs sent 28 calls to a GPU that a benchmark held,
+  and the benchmark decode speed fell from 10.5 to about 6.5 tokens per second. The backend now
+  reads the reservation file (`~/Dropbox/_fleet/gpu-reserved.json`, or `FLEET_GPU_RESERVATION`). While
+  the file names a holder, the hook skips the sync, the sync asks for no summary, the archive
+  backfill pauses, the digest writes nothing, and `callOllama` throws `GpuReservedError` before it
+  sends a request. A reservation that appears during a run stops that run at once. The attempt is not
+  counted, no failure marker is written, the digest and backfill report a wait and not a failure, and
+  no partial summary of a long conversation is stored. A missing file means the GPU is free. A file
+  that cannot be read, is not valid JSON, or holds the text `null` means the GPU is reserved, and the
+  message names the cause and the path of the file. The Claude backend does not use the GPU and
+  ignores the file. The test configuration pins the Claude backend and a closed model URL, so a test
+  run sends no request to a shared GPU.
 
 ## [1.7.0] - 2026-10-08
 

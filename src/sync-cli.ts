@@ -5,6 +5,7 @@
 // invocation — exits without paying the multi-second module load. (#87)
 import { getArchiveDir, getConversationSourceDirs, getIndexDir } from './paths.js';
 import { shouldSkipReentrantSync } from './reentrancy.js';
+import { syncHeadline } from './sync-banner.js';
 import { acquireLock, releaseLock } from './lockfile.js';
 import { BACKGROUND_WORKER_ENV, lowerPriorityIfBackgroundWorker } from './priority.js';
 import { spawn } from 'child_process';
@@ -137,7 +138,7 @@ console.log(`Sources: ${sourceDirs.join(', ')}`);
 console.log(`Destination: ${destDir}\n`);
 
 async function syncAll() {
-  const totals = { copied: 0, skipped: 0, indexed: 0, summarized: 0, errors: [] as Array<{file: string; error: string}>, pendingSummaries: 0, emptySummaries: 0, unexplainedEmptySummaries: 0 };
+  const totals = { copied: 0, skipped: 0, indexed: 0, summarized: 0, errors: [] as Array<{file: string; error: string}>, pendingSummaries: 0, emptySummaries: 0, unexplainedEmptySummaries: 0, summariesDeferred: '' };
 
   // Global per-sync summary budget shared across ALL source dirs (F2). Previously
   // the 10-summary cap applied per source dir, so the real cap was 10 × dirs and
@@ -155,6 +156,7 @@ async function syncAll() {
     totals.indexed += result.indexed;
     totals.summarized += result.summarized;
     totals.pendingSummaries += result.pendingSummaries;
+    if (result.summariesDeferred) totals.summariesDeferred = result.summariesDeferred;
     totals.emptySummaries += result.emptySummaries;
     totals.unexplainedEmptySummaries += result.unexplainedEmptySummaries;
     totals.errors.push(...result.errors);
@@ -165,13 +167,7 @@ async function syncAll() {
   // 87-of-140 runs that summarised nothing while a backlog waited. A success banner over a stalled
   // queue is the exact failure this tool exists to prevent: it reads as health from outside, so the
   // real alarm (archive lag) only arrives days later and downstream of the cause.
-  const summaryStalled = totals.pendingSummaries > 0 && totals.summarized === 0;
-  if (summaryStalled) {
-    console.log(`\n⚠️  Sync finished WITHOUT SUMMARISING ANYTHING - ${totals.pendingSummaries} conversation(s) still need summaries.`);
-    console.log(`  This is NOT a healthy run; copy and index results below are still valid.`);
-  } else {
-    console.log(`\n✅ Sync complete!`);
-  }
+  for (const line of syncHeadline(totals)) console.log(line);
   console.log(`  Copied: ${totals.copied}`);
   console.log(`  Skipped: ${totals.skipped}`);
   console.log(`  Indexed: ${totals.indexed}`);

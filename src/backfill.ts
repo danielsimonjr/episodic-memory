@@ -15,6 +15,8 @@
 import fs from 'fs';
 import path from 'path';
 import { getExcludedProjects } from './paths.js';
+import { gpuReservationBlock } from './gpu-reservation.js';
+import { summarizerBackend } from './ollama-backend.js';
 import {
   extractSessionIdFromPath,
   isTerminalFailRecord,
@@ -38,6 +40,8 @@ export interface BackfillResult {
   summarized: number;
   summaryAttempts: number;
   errors: Array<{ file: string; error: string }>;
+  /** Set when the run stopped because another agent holds the shared GPU. Not a failure. */
+  deferred?: string;
 }
 
 function needsSummary(filePath: string): boolean {
@@ -85,10 +89,24 @@ export async function backfillArchive(archiveDir: string, opts: BackfillOptions)
   const result: BackfillResult = { candidates: candidates.length, processed: 0, summarized: 0, summaryAttempts: 0, errors: [] };
   if (opts.dryRun) return result;
 
+  // The ollama backend loads a model on the shared GPU. Ask for no summary while another agent holds it.
+  if (summarizerBackend() === 'ollama') {
+    const reserved = gpuReservationBlock();
+    if (reserved) {
+      result.deferred = reserved;
+      return result;
+    }
+  }
+
   const { summarizeConversation } = await import('./summarizer.js');
   const limit = opts.limit && opts.limit > 0 ? opts.limit : candidates.length;
   for (const c of candidates.slice(0, limit)) {
-    await summarizeOneFile(c.path, c.sessionId, result, summarizeConversation);
+    const deferred = await summarizeOneFile(c.path, c.sessionId, result, summarizeConversation);
+    if (deferred) {
+      // The reservation appeared during the run. This conversation stays a candidate.
+      result.deferred = deferred;
+      break;
+    }
     result.processed++;
   }
   return result;
@@ -101,8 +119,10 @@ export async function backfillArchive(archiveDir: string, opts: BackfillOptions)
  */
 export function batchVerdict(
   prevRemaining: number | undefined,
-  r: Pick<BackfillResult, 'candidates' | 'processed' | 'summarized' | 'summaryAttempts'>
-): 'continue' | 'done' | 'backend-down' | 'no-progress' {
+  r: Pick<BackfillResult, 'candidates' | 'processed' | 'summarized' | 'summaryAttempts' | 'deferred'>
+): 'continue' | 'done' | 'backend-down' | 'no-progress' | 'deferred' {
+  // A wait for the shared GPU is neither progress nor a dead backend, and it comes before both.
+  if (r.deferred) return 'deferred';
   if (r.processed === 0) return 'done';
   // Three or more real attempts and not one success: the backend is down, not one bad transcript.
   if (r.summaryAttempts >= 3 && r.summarized === 0) return 'backend-down';

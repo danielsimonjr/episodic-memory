@@ -86,6 +86,11 @@ for (;;) {
   const verdict = batchVerdict(lastRemaining, r);
   lastRemaining = r.candidates - r.processed;
   if (verdict === 'done') break;
+  if (verdict === 'deferred') {
+    // A deliberate wait, not a fault: exit code stays 0. Run it again after the reservation ends.
+    console.log(`Backfill paused: ${r.deferred}. Run it again when the GPU is free.`);
+    break;
+  }
   if (verdict === 'backend-down') {
     console.error('Every summarize attempt in this batch failed; stopping. Check the backend.');
     process.exitCode = 1;

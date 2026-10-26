@@ -28,6 +28,8 @@ export interface BackfillResult {
         file: string;
         error: string;
     }>;
+    /** Set when the run stopped because another agent holds the shared GPU. Not a failure. */
+    deferred?: string;
 }
 export declare function selectBackfillCandidates(archiveDir: string, opts?: {
     excludedProjects?: string[];
@@ -38,4 +40,4 @@ export declare function backfillArchive(archiveDir: string, opts: BackfillOption
  * (candidates - processed); undefined on the first batch. A batch always STARTS at the previous
  * remainder, so progress is measured on what THIS batch leaves, never on where it starts.
  */
-export declare function batchVerdict(prevRemaining: number | undefined, r: Pick<BackfillResult, 'candidates' | 'processed' | 'summarized' | 'summaryAttempts'>): 'continue' | 'done' | 'backend-down' | 'no-progress';
+export declare function batchVerdict(prevRemaining: number | undefined, r: Pick<BackfillResult, 'candidates' | 'processed' | 'summarized' | 'summaryAttempts' | 'deferred'>): 'continue' | 'done' | 'backend-down' | 'no-progress' | 'deferred';

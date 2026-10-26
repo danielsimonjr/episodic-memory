@@ -10,6 +10,8 @@ export interface DigestResult {
     failed: number;
     /** Day and week entries created by compression (present only when the job ran). */
     compressed?: number;
+    /** Set when the job stopped because another agent holds the shared GPU. Not a failure. */
+    deferred?: string;
 }
 export declare function digestEnabled(): boolean;
 /** Write session digest entries, then compress old days and weeks. Does nothing unless EPISODIC_MEMORY_DIGEST=1 and the summarizer guard is unset. */

@@ -1,5 +1,6 @@
 import type Database from 'better-sqlite3';
 import { callDigestModel } from './summarizer.js';
+import { GpuReservedError } from './ollama-backend.js';
 import { buildCompressPrompt } from './digest-prompts.js';
 import { parseCitedLines, redactEntryText } from './digest-validate.js';
 import { insertDigestEntry, listActiveByTier, supersede, type DigestEntry, type DigestTier } from './digest-db.js';
@@ -16,6 +17,8 @@ export interface CompressOptions {
 export interface CompressResult {
   created: number;
   failed: number;
+  /** Set when the run stopped because another agent holds the shared GPU. Not a failure. */
+  deferred?: string;
 }
 
 const DEFAULT_DAY_CAP = 5;
@@ -63,6 +66,10 @@ async function mergeGroup(
   try {
     raw = await model(prompt);
   } catch (err) {
+    if (err instanceof GpuReservedError) {
+      result.deferred = err.detail;
+      return;
+    }
     console.error(`digest: ${tier} compression failed: ${err instanceof Error ? err.message : String(err)}`);
     result.failed++;
     return;
@@ -105,12 +112,14 @@ export async function compressDigest(db: Database.Database, opts: CompressOption
     const day = dayOf(group[0].periodStart);
     if (day >= today || group.length <= dayCap) continue;
     await mergeGroup(db, model, group, 'day', `${day}T00:00:00.000Z`, result);
+    if (result.deferred) return result;
   }
 
   for (const group of groupBy(listActiveByTier(db, 'day'), e => weekStartOf(e.periodStart)).values()) {
     const week = weekStartOf(group[0].periodStart);
     if (week >= thisWeek || group.length <= weekCap) continue;
     await mergeGroup(db, model, group, 'week', `${week}T00:00:00.000Z`, result);
+    if (result.deferred) return result;
   }
   return result;
 }

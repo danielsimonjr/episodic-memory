@@ -15,6 +15,20 @@
  * - EPISODIC_MEMORY_API_TIMEOUT_MS  per-call timeout, shared with the Claude backend (default 120 s).
  */
 import { validateApiBaseUrl } from './api-endpoint.js';
+import { gpuReservationBlock } from './gpu-reservation.js';
+/**
+ * The shared GPU is reserved by another agent, so no model may be loaded now. This is not a
+ * failure of the summary: callers leave the work queued and do not count an attempt.
+ */
+export class GpuReservedError extends Error {
+    /** The reservation message: who holds the GPU. */
+    detail;
+    constructor(detail) {
+        super(`GPU reserved, summary deferred: ${detail}`);
+        this.name = 'GpuReservedError';
+        this.detail = detail;
+    }
+}
 export function summarizerBackend() {
     return (process.env.EPISODIC_MEMORY_SUMMARIZER_BACKEND || '').trim().toLowerCase() === 'ollama'
         ? 'ollama'
@@ -29,6 +43,9 @@ function positiveInt(raw, fallback) {
     return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
 }
 export async function callOllama(prompt, opts = {}) {
+    const reserved = gpuReservationBlock();
+    if (reserved)
+        throw new GpuReservedError(reserved);
     const model = (process.env.EPISODIC_MEMORY_OLLAMA_MODEL || '').trim();
     if (!model) {
         throw new Error('EPISODIC_MEMORY_OLLAMA_MODEL is required for the ollama summarizer backend');

@@ -10,6 +10,8 @@ export interface CompressOptions {
 export interface CompressResult {
     created: number;
     failed: number;
+    /** Set when the run stopped because another agent holds the shared GPU. Not a failure. */
+    deferred?: string;
 }
 /**
  * Merge many session entries of a past day into one day entry, and many day entries of a finished

@@ -2,6 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import { SUMMARIZER_CONTEXT_MARKER } from './constants.js';
 import { getExcludedProjects, findJsonlFiles } from './paths.js';
+import { gpuReservationBlock } from './gpu-reservation.js';
+import { GpuReservedError, summarizerBackend } from './ollama-backend.js';
 const EXCLUSION_MARKERS = [
     '<INSTRUCTIONS-TO-EPISODIC-MEMORY>DO NOT INDEX THIS CHAT</INSTRUCTIONS-TO-EPISODIC-MEMORY>',
     'Only use NO_INSIGHTS_FOUND',
@@ -275,8 +277,15 @@ export async function syncConversations(sourceDir, destDir, options = {}) {
             db.close();
         }
     }
+    // The ollama backend loads a model on the shared GPU, so it asks for no summary while another
+    // agent holds the GPU. The conversations stay queued and the attempt counters do not move.
+    const gpuHeld = summarizerBackend() === 'ollama' ? gpuReservationBlock() : null;
     // Generate summaries for files that need them
-    if (!options.skipSummaries && filesToSummarize.length > 0) {
+    if (gpuHeld && !options.skipSummaries && filesToSummarize.length > 0) {
+        result.summariesDeferred = gpuHeld;
+        result.pendingSummaries = filesToSummarize.filter(f => !fs.existsSync(f.path.replace('.jsonl', '-summary.txt'))).length;
+    }
+    else if (!options.skipSummaries && filesToSummarize.length > 0) {
         const { summarizeConversation } = await import('./summarizer.js');
         const summaryLimit = options.summaryLimit ?? 10;
         // STARVATION FIX (2026-08-29). Files are enqueued in directory order and the budget takes
@@ -303,7 +312,12 @@ export async function syncConversations(sourceDir, destDir, options = {}) {
             console.log(`  (${remaining} more need summaries - will process on next sync)`);
         }
         for (const { path: filePath, sessionId } of toSummarize) {
-            await summarizeOneFile(filePath, sessionId, result, summarizeConversation);
+            const deferred = await summarizeOneFile(filePath, sessionId, result, summarizeConversation);
+            if (deferred) {
+                // Another agent took the GPU during the run. Every further call would fail the same way.
+                result.summariesDeferred = deferred;
+                break;
+            }
         }
         // PENDING IS MEASURED AFTER THE WORK (2026-09-17). It was assigned before the loop, so every
         // conversation queued this run counted as 'still pending' even after it got a summary or a
@@ -320,6 +334,10 @@ export async function syncConversations(sourceDir, destDir, options = {}) {
  * Summarize ONE archived conversation and record the outcome on disk: a summary, a no-exchanges
  * sentinel, an oversized skip, a retry record, or a give-up. Shared by sync and the archive backfill
  * so both leave identical evidence. Never throws; failures are recorded in result.errors.
+ *
+ * Returns the reservation message when another agent holds the shared GPU. That is a wait, not a
+ * failure: nothing is recorded on disk, the attempt is not counted, and the caller should stop
+ * asking for summaries. Returns `undefined` in every other case.
  */
 export async function summarizeOneFile(filePath, sessionId, result, summarize) {
     const { parseConversation } = await import('./parser.js');
@@ -384,6 +402,12 @@ export async function summarizeOneFile(filePath, sessionId, result, summarize) {
         result.summarized++;
     }
     catch (error) {
+        // A reservation that appeared during the run is not a failed summary. Leave the queue as it is
+        // and take back the attempt that was counted before the call.
+        if (error instanceof GpuReservedError) {
+            result.summaryAttempts--;
+            return error.detail;
+        }
         const errMsg = error instanceof Error ? error.message : String(error);
         const attempts = readSummaryAttempts(filePath) + 1;
         if (attempts >= maxSummaryAttempts()) {

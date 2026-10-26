@@ -14,6 +14,15 @@
  * - EPISODIC_MEMORY_OLLAMA_MAX_PROMPT_CHARS  prompt character budget (default 24000, fits 8k ctx).
  * - EPISODIC_MEMORY_API_TIMEOUT_MS  per-call timeout, shared with the Claude backend (default 120 s).
  */
+/**
+ * The shared GPU is reserved by another agent, so no model may be loaded now. This is not a
+ * failure of the summary: callers leave the work queued and do not count an attempt.
+ */
+export declare class GpuReservedError extends Error {
+    /** The reservation message: who holds the GPU. */
+    readonly detail: string;
+    constructor(detail: string);
+}
 export declare function summarizerBackend(): 'claude' | 'ollama';
 /** Drop <think>...</think> blocks that a reasoning model may emit before its answer. */
 export declare function stripThinking(text: string): string;

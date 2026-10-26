@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [1.7.1] - 2026-10-26
+
 ### Fixed
 - **The bundled `claude` binary of the summarizer deleted the session record of a live, elevated
   Claude Code session.** `@anthropic-ai/claude-agent-sdk` 0.2.x ships a `claude` binary of version

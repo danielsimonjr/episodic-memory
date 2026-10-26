@@ -3330,7 +3330,7 @@ import { McpServer } from "@modelcontextprotocol/server";
 import { serveStdio } from "@modelcontextprotocol/server/stdio";
 
 // src/version.ts
-var VERSION = "1.7.0";
+var VERSION = "1.7.1";
 
 // src/mcp-server.ts
 init_db();

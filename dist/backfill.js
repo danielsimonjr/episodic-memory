@@ -14,6 +14,8 @@
 import fs from 'fs';
 import path from 'path';
 import { getExcludedProjects } from './paths.js';
+import { gpuReservationBlock } from './gpu-reservation.js';
+import { summarizerBackend } from './ollama-backend.js';
 import { extractSessionIdFromPath, isTerminalFailRecord, shouldSkipConversation, summarizeOneFile, } from './sync.js';
 function needsSummary(filePath) {
     const summaryPath = filePath.replace(/\.jsonl$/, '-summary.txt');
@@ -62,10 +64,23 @@ export async function backfillArchive(archiveDir, opts) {
     const result = { candidates: candidates.length, processed: 0, summarized: 0, summaryAttempts: 0, errors: [] };
     if (opts.dryRun)
         return result;
+    // The ollama backend loads a model on the shared GPU. Ask for no summary while another agent holds it.
+    if (summarizerBackend() === 'ollama') {
+        const reserved = gpuReservationBlock();
+        if (reserved) {
+            result.deferred = reserved;
+            return result;
+        }
+    }
     const { summarizeConversation } = await import('./summarizer.js');
     const limit = opts.limit && opts.limit > 0 ? opts.limit : candidates.length;
     for (const c of candidates.slice(0, limit)) {
-        await summarizeOneFile(c.path, c.sessionId, result, summarizeConversation);
+        const deferred = await summarizeOneFile(c.path, c.sessionId, result, summarizeConversation);
+        if (deferred) {
+            // The reservation appeared during the run. This conversation stays a candidate.
+            result.deferred = deferred;
+            break;
+        }
         result.processed++;
     }
     return result;
@@ -76,6 +91,9 @@ export async function backfillArchive(archiveDir, opts) {
  * remainder, so progress is measured on what THIS batch leaves, never on where it starts.
  */
 export function batchVerdict(prevRemaining, r) {
+    // A wait for the shared GPU is neither progress nor a dead backend, and it comes before both.
+    if (r.deferred)
+        return 'deferred';
     if (r.processed === 0)
         return 'done';
     // Three or more real attempts and not one success: the backend is down, not one bad transcript.

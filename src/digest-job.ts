@@ -1,6 +1,8 @@
 import type Database from 'better-sqlite3';
 import type { ConversationExchange } from './types.js';
 import { shouldSkipReentrantSync } from './reentrancy.js';
+import { gpuReservationBlock } from './gpu-reservation.js';
+import { GpuReservedError, summarizerBackend } from './ollama-backend.js';
 import { callDigestModel } from './summarizer.js';
 import { buildSessionPrompt } from './digest-prompts.js';
 import { parseCitedLines, redactEntryText } from './digest-validate.js';
@@ -19,6 +21,8 @@ export interface DigestResult {
   failed: number;
   /** Day and week entries created by compression (present only when the job ran). */
   compressed?: number;
+  /** Set when the job stopped because another agent holds the shared GPU. Not a failure. */
+  deferred?: string;
 }
 
 /** A session whose last exchange is newer than this is still running; summarize it next time. */
@@ -113,6 +117,11 @@ async function writeSessionEntries(
     try {
       raw = await model(prompt);
     } catch (err) {
+      if (err instanceof GpuReservedError) {
+        // Another agent took the GPU during the run. Every further call would fail the same way.
+        result.deferred = err.detail;
+        return;
+      }
       console.error(
         `digest: summarizer failed for session ${s.session_id}: ${err instanceof Error ? err.message : String(err)}`
       );
@@ -139,11 +148,22 @@ async function writeSessionEntries(
 export async function runDigest(db: Database.Database, opts: DigestOptions = {}): Promise<DigestResult> {
   const result: DigestResult = { written: 0, skipped: 0, failed: 0 };
   if (!digestEnabled() || shouldSkipReentrantSync()) return result;
+  // The default model call loads a model on the shared GPU. Wait while another agent holds it.
+  if (!opts.model && summarizerBackend() === 'ollama') {
+    const reserved = gpuReservationBlock();
+    if (reserved) {
+      console.error(`digest: skipped, ${reserved}`);
+      result.deferred = reserved;
+      return result;
+    }
+  }
   const model = opts.model ?? callDigestModel;
   const now = opts.now ?? new Date();
   await writeSessionEntries(db, model, now, result);
+  if (result.deferred) return result;
   const c = await compressDigest(db, { model, now });
   result.compressed = c.created;
   result.failed += c.failed;
+  if (c.deferred) result.deferred = c.deferred;
   return result;
 }

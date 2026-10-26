@@ -16,6 +16,22 @@
  */
 
 import { validateApiBaseUrl } from './api-endpoint.js';
+import { gpuReservationBlock } from './gpu-reservation.js';
+
+/**
+ * The shared GPU is reserved by another agent, so no model may be loaded now. This is not a
+ * failure of the summary: callers leave the work queued and do not count an attempt.
+ */
+export class GpuReservedError extends Error {
+  /** The reservation message: who holds the GPU. */
+  readonly detail: string;
+
+  constructor(detail: string) {
+    super(`GPU reserved, summary deferred: ${detail}`);
+    this.name = 'GpuReservedError';
+    this.detail = detail;
+  }
+}
 
 export function summarizerBackend(): 'claude' | 'ollama' {
   return (process.env.EPISODIC_MEMORY_SUMMARIZER_BACKEND || '').trim().toLowerCase() === 'ollama'
@@ -40,6 +56,8 @@ function positiveInt(raw: string | undefined, fallback: number): number {
 }
 
 export async function callOllama(prompt: string, opts: OllamaCallOptions = {}): Promise<string> {
+  const reserved = gpuReservationBlock();
+  if (reserved) throw new GpuReservedError(reserved);
   const model = (process.env.EPISODIC_MEMORY_OLLAMA_MODEL || '').trim();
   if (!model) {
     throw new Error('EPISODIC_MEMORY_OLLAMA_MODEL is required for the ollama summarizer backend');

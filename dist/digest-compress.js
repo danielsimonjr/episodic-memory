@@ -1,4 +1,5 @@
 import { callDigestModel } from './summarizer.js';
+import { GpuReservedError } from './ollama-backend.js';
 import { buildCompressPrompt } from './digest-prompts.js';
 import { parseCitedLines, redactEntryText } from './digest-validate.js';
 import { insertDigestEntry, listActiveByTier, supersede } from './digest-db.js';
@@ -38,6 +39,10 @@ async function mergeGroup(db, model, group, tier, periodStart, result) {
         raw = await model(prompt);
     }
     catch (err) {
+        if (err instanceof GpuReservedError) {
+            result.deferred = err.detail;
+            return;
+        }
         console.error(`digest: ${tier} compression failed: ${err instanceof Error ? err.message : String(err)}`);
         result.failed++;
         return;
@@ -77,12 +82,16 @@ export async function compressDigest(db, opts = {}) {
         if (day >= today || group.length <= dayCap)
             continue;
         await mergeGroup(db, model, group, 'day', `${day}T00:00:00.000Z`, result);
+        if (result.deferred)
+            return result;
     }
     for (const group of groupBy(listActiveByTier(db, 'day'), e => weekStartOf(e.periodStart)).values()) {
         const week = weekStartOf(group[0].periodStart);
         if (week >= thisWeek || group.length <= weekCap)
             continue;
         await mergeGroup(db, model, group, 'week', `${week}T00:00:00.000Z`, result);
+        if (result.deferred)
+            return result;
     }
     return result;
 }

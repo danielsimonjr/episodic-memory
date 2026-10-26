@@ -82,6 +82,19 @@ async function main() {
   const { getSyncErrorsLogPath, formatLogLine } = await import('../dist/logging.js');
   const logPath = getSyncErrorsLogPath();
 
+  // The ollama backend loads a model on the shared GPU, so the sync waits while another agent
+  // holds the GPU (see src/gpu-reservation.ts). A failure here skips the sync and is logged by
+  // the catch at the bottom of the file.
+  const { summarizerBackend } = await import('../dist/ollama-backend.js');
+  if (summarizerBackend() === 'ollama') {
+    const { gpuReservationBlock } = await import('../dist/gpu-reservation.js');
+    const reserved = gpuReservationBlock();
+    if (reserved) {
+      fs.appendFileSync(logPath, formatLogLine('info', `SessionStart sync skipped: ${reserved}`), 'utf-8');
+      process.exit(0);
+    }
+  }
+
   // Repair node_modules BEFORE syncing. This hook never passes through the MCP wrapper, so a tree
   // missing better-sqlite3's compiled binding failed every background sync with nothing to fix it.
   try {

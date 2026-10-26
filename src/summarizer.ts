@@ -11,7 +11,7 @@ import {
   versionMeetsMinimum,
 } from './codex-support.js';
 import { validateApiBaseUrl } from './api-endpoint.js';
-import { summarizerBackend, callOllama } from './ollama-backend.js';
+import { summarizerBackend, callOllama, GpuReservedError } from './ollama-backend.js';
 
 export interface CodexSummarizerCommand {
   command: string;
@@ -627,6 +627,8 @@ Example: <summary>Implemented HID keyboard functionality for ESP32. Hit Bluetoot
       chunkSummaries.push(extracted);
       console.log(`  Chunk ${i + 1}/${chunks.length}: ${extracted.split(/\s+/).length} words`);
     } catch (error) {
+      // A reserved GPU stops the whole summary: skipping the chunk would store a partial summary.
+      if (error instanceof GpuReservedError) throw error;
       console.log(`  Chunk ${i + 1} failed, skipping`);
     }
   }
@@ -656,6 +658,7 @@ Your summary (max 200 words):`;
     const result = await callModel(synthesisPrompt); // No sessionId for synthesis
     return extractSummary(result);
   } catch (error) {
+    if (error instanceof GpuReservedError) throw error;
     console.log(`  Synthesis failed, using chunk summaries`);
     return chunkSummaries.join(' ');
   }

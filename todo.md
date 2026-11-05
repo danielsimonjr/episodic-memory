@@ -29,7 +29,7 @@ items move between sections as state changes.
 
 ## Active queue
 
-- [ ] **Self-improving memory (Recursa)** — design spec drafted at `docs/superpowers/specs/2026-11-05-recursa-self-improving-memory-design.md`, subagent-driven plan at `docs/superpowers/plans/2026-11-05-recursa-self-improving-memory.md` (11 tasks: knowledge store, gates, `skills` tool, archive-graded task generation + grading, in-process tool server + solver, `learn` CLI, bootstrap, leaf learner, recursive learner, export/approval/doctor, docs). Flag `EPISODIC_MEMORY_LEARN`, off by default. Remaining: Adam+Eve review of spec and plan, then execute Task 1.
+- [ ] **Self-improving memory (Recursa)** — design spec drafted at `docs/superpowers/specs/2026-11-05-recursa-self-improving-memory-design.md`, subagent-driven plan at `docs/superpowers/plans/2026-11-05-recursa-self-improving-memory.md` (11 tasks: knowledge store, gates, `skills` tool, archive-graded task generation + grading, in-process tool server + solver, `learn` CLI, bootstrap, leaf learner, recursive learner, export/approval/doctor, docs). Backed by `@danielsimonjr/memoryjs` (spec decision 10; see `docs/superpowers/specs/2026-11-05-recursa-dependency-leverage-review.md`). Flag `EPISODIC_MEMORY_LEARN`, off by default. Spec approved 2026-11-05 after two review rounds. Next: execute Task 0 (dependency) then Task 1.
 
 - [ ] **Combined memory digest** — spec approved; implemented on branch `feat/digest` (storage, validation, prompts, session job, compression, injection hook, `digest` tool). Remaining: smoke test on a copy of the live database, then enable the flag on both machines.
 

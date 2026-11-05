@@ -1,7 +1,7 @@
 # Recursa for episodic-memory: a self-improving knowledge repository over the conversation archive
 
-Status: draft, revised after two independent reviews (adversarial design review and plan executability
-review, 2026-11-05). Implementation plan beside this file:
+Status: approved 2026-11-05 after two rounds of independent review (adversarial design and plan
+executability, before and after the memoryjs decision). Implementation plan beside this file:
 `docs/superpowers/plans/2026-11-05-recursa-self-improving-memory.md`.
 
 Source paper: Zhu, Lin, Shi, Lin, Zhou. *Recursa: Toward Recursively Self-Improving Foundation Model

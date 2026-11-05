@@ -156,11 +156,31 @@ results can leak the answer. The solver may still `read` any archive file: findi
 
 - **`learned/knowledge.db`**: the knowledge repository, a `@danielsimonjr/memoryjs` SQLite store
   (`new ManagerContext({ storagePath: '<that file>', storageType: 'sqlite', defaultProjectId: '*' })`;
-  memoryjs's `storagePath` is a file path and it places three small JSONL sidecars beside it). memoryjs
-  owns this file and its schema; production code never opens it with its own `better-sqlite3`, because
-  the store keeps its handle private. memoryjs gives the `MEMORY_STORAGE_TYPE` and `MEMORY_SQLITE_DRIVER`
-  environment variables precedence over the explicit option, and the user's machine may set them for
-  `memory-mcp`, so the adapter forces `sqlite` and the default driver for the duration of the open.
+  memoryjs's `storagePath` is a file path and it places small sidecar files beside it, so the whole
+  `learned/` directory is the unit). memoryjs owns this file and its schema; production code never opens
+  it with its own `better-sqlite3`, because the store keeps its handle private.
+  - **Environment scoping.** memoryjs reads many `MEMORY_*` variables at construction and gives them
+    precedence over explicit options: `MEMORY_STORAGE_TYPE` (would turn the store into JSONL),
+    `MEMORY_SQLITE_DRIVER` (swaps the driver), `MEMORY_OBSERVATION_DEDUP` (fuzzy-drops near-duplicate
+    observation lines, which would silently delete body lines that differ only in their marks),
+    `MEMORY_EMBEDDING_PROVIDER` (defaults to a local Transformers.js model that downloads from the
+    network), `MEMORY_AUTO_*`, `MEMORY_GOVERNANCE_ENABLED`, `MEMORY_VALIDATE_ON_STORE`,
+    `MEMORY_SQLITE_READ_POOL_SIZE`. The user runs `memory-mcp` on the same machine and may set any of
+    them. The adapter therefore saves and removes every `process.env` key matching `^MEMORY_`, sets
+    exactly `MEMORY_STORAGE_TYPE=sqlite` and `MEMORY_EMBEDDING_PROVIDER=none`, constructs the context,
+    restores the environment, and asserts that the storage is the SQLite class and that
+    `ctx.semanticSearch` is null.
+  - **No semantic or hybrid search.** The adapter never touches `hybridSearchManager` or
+    `semanticSearch`: their getters build an embedding service that imports `@huggingface/transformers`
+    and fetches a model from huggingface.co, a new network target (rule 14) and a GPU user (rule 12).
+    Text search over entries is `rankedSearch` (BM25) only.
+  - **In-memory cache, one context per unit of work.** memoryjs loads the whole graph into memory once
+    per context and serves every read from that cache, so a long-lived context never sees another
+    process's writes. The `learn` CLI holds one context for the run and closes it on every exit path.
+    The `skills` MCP tool constructs a context per call and closes it in `finally` (construction opens
+    the file and builds facades; it starts no timers). The hook never opens the store at all (§6.3).
+    Each context opens one writer and a small read pool; Windows refuses to rename or unlink an open
+    `knowledge.db-wal`, which is one more reason every path closes.
 - **`learned/learning.sqlite`**: the learning trace (runs, tasks, attempts, snapshots), opened by this
   plugin with the same pragmas and directory modes as the index database and its own idempotent
   `migrateLearningSchema`. It also holds the **rendered learned block** (§6.3) so the SessionStart hook
@@ -181,11 +201,11 @@ It exposes the `KnowledgeEntry` shape below to every other module and maps it as
 | One entry (any kind) | An entity named `learned:<kind>:<project>:<slug>:v<n>`, `entityType` `learned-<kind>`, `projectId` = the project key or `*`, `lifecycleStatus` `draft` / `published` / `archived` for `candidate` / `active` / `retired`, `importance` from confidence, `tags` `kind:<kind>`, `project:<key>`, `trust:<level>`, `status:<status>`, observations: one line per field (`title:`, `description:`, `scope:`, `confidence:`, `trust:`, `status:`, `version:`, `run:`, `validation:` as JSON, `heuristic:`, `decision:`, `procedure:`, `steps:` when present, then one `body:` line per body line). The logical version `n` lives in the name and the `version:` observation; memoryjs's own `Entity.version` auto-increments on every guarded write and is never read as the logical version. Observation lines are the human-readable form the library expects; the adapter parses them back. |
 | Citation | A relation `cites` from the entry entity to a reference entity `exchange:<id>` (`entityType` `exchange-ref`, observations `path:`, `lines:`, `session:`), created before the relation because memoryjs validates both endpoints. A reflection cites `attempt:<id>` the same way. The citation graph is then queryable through `graphTraversal`. |
 | Version chain and `superseded_by` | A new version is a new entity with `parentEntityName` = the previous version and `rootEntityName` = v1. Creating it does not mark the parent, so the adapter's `supersede` explicitly sets `supersededBy` and `isLatest: false` on the older entity through `updateEntity(name, patch, { expectedVersion })`, reading `expectedVersion` fresh before each write. `getLatestVersion(root)` backs lookup by slug. |
-| `candidate` / `active` / `retired` and trust | `lifecycleStatus` plus the `status:` observation and tag; trust as the `trust:` observation and tag with the values `unverified` (candidate), `verified` (validated) and `ground-truth` (human-approved), borrowing memoryjs's `TrustLevel` vocabulary (the entity type itself has no trust field). |
+| `candidate` / `active` / `retired` and trust | `lifecycleStatus` plus the `status:` observation and tag; `status` is the only lifecycle field the gates read. Trust is written explicitly as the agent-memory `source` field, `{ agentId: 'episodic-learn', timestamp, method: 'inferred', reliability, trustLevel }`, with `trustLevel` `unverified` (candidate), `verified` (validated) or `ground-truth` (human-approved), mirrored in the `trust:` observation and tag; memoryjs stores it and filters on nothing. |
 | Instruction lifecycle | Each instruction line is also a `heuristicManager.add({ condition, action, priority, initialConfidence })` whose returned id is stored in the entry's `heuristic:` observation. A kept validation calls `reinforce`, a regression `recordContradiction` (both return result strings the adapter maps to booleans), and the merge step calls `detectConflicts()`. |
-| Navigation skill and exploration notes | `projectContextManager.upsert(project, { facts, conventions, glossary: [{ term, definition }] })` per project, mirrored from the two bootstrap skills' cited lines; `forContext(project, { budgetChars })` is one input to the rendered block. |
-| Procedure skills | When a proposal carries `steps`, `procedureManager.addProcedure({ id: 'proc:<project>:<slug>', name, description, steps: [{ order, action, parameters }], triggers })` beside the entry entity (the id is namespaced because procedure ids are entity names); `matchProcedure(taskPrompt, procedures)` selects skills for a task; `refineProcedure(id, { succeeded })` after each graded attempt that loaded the skill. |
-| Reflections | A `learned-reflection` entity (gated, listed and cited like every entry) and a `reflectionManager.create({ scope: 'project' or 'global', evidence: [cited entity names], summary, generalization_confidence, sourceProjectId })` record. `create` returns the existing record on a repeat (content hash over scope plus sorted evidence); the adapter detects that and the gate reports `duplicate`. |
+| Navigation skill and exploration notes | `projectContextManager.upsert(project, { facts, conventions, glossary: [{ term, definition }] })` per project, each string a cited line copied verbatim with its marks, so the record stays checkable. `forContext` output is for learners' prompts only; the rendered learned block is built from entry entities, never from `forContext`, so nothing uncited can reach a session. |
+| Procedure skills | When a proposal carries `steps`, `procedureManager.addProcedure({ id: 'proc:<project>:<slug>', name, description, steps: [{ order, action, parameters }], triggers })` beside the entry entity (the id is namespaced because procedure ids are entity names). `ProcedureManager` has no list method, so the adapter enumerates `procedure` entities itself and loads each with `getProcedure` before `matchProcedure(taskPrompt, procedures)`. `refineProcedure(id, { succeeded })` after each graded attempt that loaded the skill updates an in-place success rate that is telemetry: it is not an edit, is never validated, and is never rendered. |
+| Reflections | A `learned-reflection` entity (gated, listed and cited like every entry) and a `reflectionManager.create({ scope: 'project' or 'global', evidence: [cited entity names], summary, generalization_confidence, sourceProjectId })` record. memoryjs hashes scope plus sorted evidence only, not the summary, and returns the existing record on a hit without an error, so two different conclusions over the same evidence would collapse. The adapter keeps its own hash over `(scope, project, sorted evidence, NFKC summary)` as an observation: an exact match is `duplicate`; a same-evidence different-summary reflection is stored with its attempt id appended to `evidence` so the two records stay distinct. |
 | Failure categories | `failureManager.record({ context, attempted, failure_mode, root_cause, applicability_hint })` per diagnosed failure category with the task's prompt as context; the diagnose step calls `lookupForTask(prompt, { status: 'open' })` before the model call. |
 | Edit log | `decisionManager.propose({ context, decision, alternatives, consequences, sourceProjectId })` per proposal, its id stored as the `decision:` observation; `accept` on keep, `reject(reason)` on drop, `supersede` on a newer version; `learn report` prints `exportAsAdrMarkdown`. |
 | PII | `new PiiRedactor().redact(text)` after `redactSecrets`, applied to line bodies after the mark group is parsed off, because its phone and card patterns match any 10 to 19 digit run. |
@@ -324,12 +344,17 @@ Implements Algorithm 1 with `D` = the `train` tasks of tiers 2 and 3 and `K` = t
    sentence "Load one with the episodic-memory skills tool before searching." The block is capped by
    `EPISODIC_MEMORY_LEARN_MAX_CHARS` (default 2500), ends on a whole line, and every field passes the
    screen and redaction again at render time. It is stored in `learned_block`. `cli/digest-hook.js`
-   (fast path) reads that one row from `learning.sqlite` with `better-sqlite3`, re-runs the screen on it,
-   and prints it after the digest. The hook never loads memoryjs, the SDK, transformers or sqlite-vec.
+   (fast path) today returns before anything unless `EPISODIC_MEMORY_DIGEST=1`, returns when the index
+   database or the digest text is missing, and writes exactly one JSON object. The learned block is
+   gated on `EPISODIC_MEMORY_LEARN` on its own, read from `learning.sqlite` by its own path with
+   `better-sqlite3` read-only, re-screened, and joined with the digest text into the one
+   `additionalContext` string; the hook emits the single object when either part is non-empty and
+   nothing when both are. The hook never loads memoryjs, the SDK, transformers or sqlite-vec.
 2. The `skills` MCP tool: `list` (default), `get` by slug, `query` by text (memoryjs ranked search over
    `learned-skill` entities). Read-only. The MCP server imports the adapter lazily inside the `skills`
-   branch only, so a session with the flag off never loads memoryjs. Every field returned is screened
-   and redacted again.
+   branch only, so a session with the flag off never loads memoryjs, and it opens and closes a context
+   per call so it always sees the latest `learn` run (§5.1). Every field returned is screened and
+   redacted again.
 3. `agents/search-conversations.md` and `skills/remembering-conversations/SKILL.md` gain one step: read the
    learned block in context, load the matching skill, then search.
 4. `doctor` reports: entries by kind and status, last run and its metrics, candidates awaiting approval,
@@ -407,6 +432,8 @@ Implements Algorithm 1 with `D` = the `train` tasks of tiers 2 and 3 and `K` = t
     convention; the run records the seed; `learn tasks --check` marks tasks whose address no longer resolves
     as `stale` and excludes them.
 14. **No new network target.** All model calls go through `getApiEnv()` and the existing base-URL check.
+    The memoryjs adapter opens the store with no embedding provider and never uses semantic or hybrid
+    search, so memoryjs itself never fetches a model (§5.1).
 15. **Never from a hook.** No SessionStart hook starts a learning run.
 16. **Durability.** Learned knowledge lives in the memoryjs store and the trace in `learning.sqlite`;
     no index reset touches either (§5.1).
@@ -419,6 +446,19 @@ Implements Algorithm 1 with `D` = the `train` tasks of tiers 2 and 3 and `K` = t
 - TypeScript ESM under `src/learn/`; bundled with the rest by `bun run build`; `dist/` committed.
   `@danielsimonjr/memoryjs` is a runtime dependency, marked external in the esbuild bundle like the other
   native-backed packages, and listed in the wrapper's dependency sentinels.
+- **One `better-sqlite3`.** This repo pins `better-sqlite3` exactly; memoryjs declares a caret range on
+  the same major. The day a newer patch publishes, a fresh plugin install (which skips install scripts)
+  would nest a binding-less copy under memoryjs, the top-level sentinel would still pass, and memoryjs
+  would fail to load or fall back to a different driver: the install failure class this fork exists to
+  prevent. So `package.json` adds an npm `overrides` entry pinning `better-sqlite3` to the same exact
+  version (Bun honours the top-level pin; npm in the plugin cache honours `overrides`), `repairPlan`
+  fails when a nested `node_modules/@danielsimonjr/memoryjs/node_modules/better-sqlite3` exists, and
+  `doctor` checks that `better-sqlite3` resolves to the top-level copy from memoryjs's directory.
+  memoryjs's `postinstall` runs a native rebuild check; under the wrapper's `npm install` it may run
+  and is install-time only.
+- **Engine floor enforced at launch.** `engines` is not enforced by Node, so `cli/mcp-server-wrapper.js`
+  and `cli/episodic-memory.js learn` check `process.versions.node` against `22.12.0` and exit with one
+  stderr line naming the floor when below it.
 - `engines.node` becomes `>=22.12.0` (memoryjs's floor); CI's Bun moves to 1.4.2 (memoryjs's Bun floor);
   the repo's `zod` range moves to `^4.6.6` so one copy resolves. CI runs Node 24; both of the user's
   machines run 24. This is a fork-only divergence from upstream, recorded in `docs/roadmap/upstream-sync.md`.
@@ -467,6 +507,11 @@ backend). Child-process tests of the hook, the CLI early exits and the MCP serve
 - Isolation: `buildAgentQueryOptions` sets `tools: []`, `strictMcpConfig`, `settingSources: []`,
   `persistSession: false`, the guard env, the single server and the wildcard `allowedTools`; the served
   tool set has no `handoff`; a `propose_entry` call writes nothing.
+- memoryjs scoping: with `MEMORY_STORAGE_TYPE=jsonl` and `MEMORY_OBSERVATION_DEDUP=true` in the test
+  environment, the store opens as SQLite, two near-identical body lines both persist, the environment is
+  restored afterwards, and `semanticSearch` is null; a store written through one context is not seen by
+  a second context opened earlier, and is seen by a context opened afterwards (the per-call rule);
+  the hook with digest off and learn on prints the block, and with both on prints exactly one JSON object.
 - Leaf loop: with a fake solver whose pass set is a function of the active entries, an edit that fixes a
   target and regresses nothing is kept; one that regresses a sampled task is dropped; a round with no kept
   edit ends the loop; `killed` and `aborted` attempts do not enter diagnosis.

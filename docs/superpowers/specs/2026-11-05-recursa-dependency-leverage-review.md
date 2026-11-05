@@ -130,6 +130,19 @@ content-hash dedup of reflections.
   in diagnose. Task 9: `detectConflicts` in merge; `DecisionManager` records every kept or dropped edit.
   Task 11: `engines.node >= 22.12`, wrapper sentinel, `upstream-sync.md` note.
 
+### 3.6 Errata from the adversarial review of the adopted design
+
+Corrections to the table in §3.1, established by reading memoryjs's built chunks as well as its
+declarations: `entityAsOf` is per-entity bitemporal validity, not a repository snapshot, so
+`knowledge_snapshot` stays; `updateEntity` bumps the same entity's version and creates no new version
+entity, so the adapter builds revisions itself; trust lives on the agent-memory `source` field, not on
+`Entity`; reflection dedup hashes evidence only, not the summary; `rankedSearch` cannot filter by entity
+type; `hybridSearchManager` pulls Transformers.js and a model download, so it is never used; the audit
+chain records only under `MEMORY_GOVERNANCE_ENABLED=true`; `ProcedureManager` has no list method; every
+`MEMORY_*` variable overrides explicit options and must be scoped out at construction; reads come from a
+per-context in-memory cache, so contexts are per unit of work. The design spec §5 carries the corrected
+mapping.
+
 ## 4. Gaps found in this pass that apply either way
 
 1. Subprocess priority (`src/priority.ts`) is not applied to learner subprocesses.

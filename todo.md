@@ -29,6 +29,8 @@ items move between sections as state changes.
 
 ## Active queue
 
+- [ ] **Self-improving memory (Recursa)** — design spec drafted at `docs/superpowers/specs/2026-11-05-recursa-self-improving-memory-design.md`, subagent-driven plan at `docs/superpowers/plans/2026-11-05-recursa-self-improving-memory.md` (11 tasks: knowledge store, gates, `skills` tool, archive-graded task generation + grading, in-process tool server + solver, `learn` CLI, bootstrap, leaf learner, recursive learner, export/approval/doctor, docs). Backed by `@danielsimonjr/memoryjs` (spec decision 10; see `docs/superpowers/specs/2026-11-05-recursa-dependency-leverage-review.md`). Flag `EPISODIC_MEMORY_LEARN`, off by default. Spec approved 2026-11-05 after two review rounds. Next: execute Task 0 (dependency) then Task 1.
+
 - [ ] **Combined memory digest** — spec approved; implemented on branch `feat/digest` (storage, validation, prompts, session job, compression, injection hook, `digest` tool). Remaining: smoke test on a copy of the live database, then enable the flag on both machines.
 
 - [x] **CI RED: `bun audit --audit-level=critical` fails (2026-10-07 22:14)** — 3 new critical advisories: proxy-addr 2.0.7 (via claude-agent-sdk > MCP sdk > express) and tinypool 1.1.1 (via vitest). Found on docs PR #10; main last ran green 2026-09-24, before the advisories. Fix at the parent with `bun audit fix`, verify the resolved lockfile and the full suite, then merge so #10 can go green. DONE: merged in #11 (130c5d0); `bun audit --audit-level=critical` reports none; typecheck clean, 72 files / 355 tests pass.

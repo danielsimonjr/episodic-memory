@@ -30,6 +30,11 @@ deliver the result into sessions.
 **Spec:** `docs/superpowers/specs/2026-11-05-recursa-self-improving-memory-design.md`. Where the spec and
 this plan name a thing differently, this plan wins (the learner's write tool is `propose_entry`).
 
+**Blocking decision before Task 1:** spec §12 decision 10 (back the knowledge repository with
+`@danielsimonjr/memoryjs`). See `docs/superpowers/specs/2026-11-05-recursa-dependency-leverage-review.md`
+§3.5 for the task-by-task changes if adopted. Three items from that review apply either way and are
+already folded into the constraints below: subprocess priority, PII redaction, reflection dedup.
+
 ## Global Constraints
 
 Every implementer receives this list with its task.
@@ -76,6 +81,13 @@ Every implementer receives this list with its task.
 - One global subprocess semaphore (`src/learn/semaphore.ts`, Task 5) bounds every subprocess at every
   level; no per-level concurrency exists. A run's subprocess PIDs are written to `.learn.pids` beside the
   lock, and `selectOrphans` excludes them.
+- The `learn` CLI lowers its own priority the way the background sync does (`lowerPriorityIfBackgroundWorker`
+  in `src/priority.ts`, with the same env marker set on every subprocess through `getApiEnv()`).
+- `redactEntryText` for learned text runs a PII pass (email, phone, SSN, credit card, IP) after
+  `redactSecrets`; with memoryjs adopted that is its `PiiRedactor`, otherwise a small pattern list in
+  `src/learn/pii.ts` (Task 2).
+- Reflections are deduplicated by a content hash of `(project, sorted sources and attempts)`; a duplicate
+  proposal is reported as `rejected: duplicate` and not stored (Task 2 gate, Task 7 onward).
 - Every `learn` entry point and the hook call `shouldSkipReentrantSync()` before any heavy import (`src/
   reentrancy.ts`; pattern in `src/sync-cli.ts`). `learn` also calls `gpuReservationBlock()`
   (`src/gpu-reservation.ts`, returns a message string or null) and exits 0 with status `deferred` and the

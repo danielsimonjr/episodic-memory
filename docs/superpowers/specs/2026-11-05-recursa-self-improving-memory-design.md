@@ -451,3 +451,12 @@ backend). Child-process tests of the hook, the CLI early exits and the MCP serve
    knowledge is the product of real model spend and must survive a rebuild.
 9. **Real isolation, not auto-approval.** `allowedTools` only pre-approves; `tools: []` plus
    `strictMcpConfig` is what removes built-in tools and other servers from a subprocess.
+10. **Open: back the knowledge repository with `@danielsimonjr/memoryjs`.** The dependency-leverage
+    review beside this file (`2026-11-05-recursa-dependency-leverage-review.md`) maps instructions to
+    heuristics, exploration notes to project context, procedure skills to procedures, reflections to
+    reflection memory with content-hash dedup, failure categories to failure memory, and the lifecycle to
+    trust levels and version chains, behind the `KnowledgeStore` adapter, with the learning trace kept as
+    plain tables and every gate kept. Cost: Node `>=22.12`, seven more runtime dependencies, a
+    pre-rendered learned block so the hook never opens memoryjs. Recommended; awaiting the user's call.
+    Either way, three additions from that review apply: lowered process priority for subprocesses, a PII
+    pass in `redactEntryText`, and content-hash dedup of reflections.

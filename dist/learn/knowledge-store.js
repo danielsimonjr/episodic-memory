@@ -370,16 +370,9 @@ export class KnowledgeStore {
         if (parent)
             entity.parentEntityName = parent;
         await this.ctx.entityManager.createEntities([entity]);
-        // Creating a new version does not move the chain head on its own; without
-        // this the parent stays `isLatest: true` and `getLatestVersion` keeps
-        // returning v1. `supersededBy` is intentionally left alone here — that is
-        // `supersede`'s job, and only `activate` decides a version has been replaced.
-        if (parent) {
-            const parentEntity = await this.ctx.entityManager.getEntity(parent);
-            if (parentEntity && parentEntity.isLatest !== false) {
-                await this.ctx.entityManager.updateEntity(parent, { isLatest: false }, { expectedVersion: parentEntity.version ?? 1 });
-            }
-        }
+        // Creating a new version does not move the chain head or touch the parent.
+        // `supersede` sets `supersededBy` and `isLatest: false`; `getBySlug` uses
+        // the highest logical version in the chain, not `isLatest` alone.
         await this.ctx.relationManager.createRelations(entry.sources.map(source => ({
             from: name,
             to: `exchange:${source.id}`,
@@ -525,10 +518,18 @@ export class KnowledgeStore {
     /** The latest version of a `(kind, project, slug)` chain. */
     async getBySlug(kind, project, slug) {
         const root = rootName(kind, project, slug);
-        const latest = await this.ctx.entityManager.getLatestVersion(root);
-        if (!latest)
+        const chain = await this.ctx.entityManager.getVersionChain(root);
+        if (chain.length === 0)
             return null;
-        return parseEntity(latest);
+        let latest = null;
+        for (const entity of chain) {
+            const parsed = parseEntity(entity);
+            if (!parsed)
+                continue;
+            if (!latest || parsed.version > latest.version)
+                latest = parsed;
+        }
+        return latest;
     }
     /** Every learned entity. */
     async allEntities() {
@@ -874,7 +875,7 @@ export class KnowledgeStore {
             scope: input.scope,
             evidence: chosenEvidence,
             summary: input.summary,
-            generalization_confidence: RELIABILITY_BY_TRUST[entry.trust],
+            generalization_confidence: CONFIDENCE_SCORE[input.confidence],
             sourceProjectId: input.project,
         });
         return { duplicate: false, id };

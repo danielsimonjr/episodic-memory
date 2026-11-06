@@ -224,12 +224,11 @@ export async function listActive(
   kinds: KnowledgeKind[],
   project: string
 ): Promise<KnowledgeEntry[]> {
-  const entries = await store.listEntries();
+  const entries = await store.listByStatus(['active']);
   const wanted = kinds.length > 0 ? kinds : ['instruction', 'skill', 'reflection'];
   return entries
     .filter(
       entry =>
-        entry.status === 'active' &&
         entry.supersededBy === null &&
         wanted.includes(entry.kind) &&
         (entry.project === project || entry.project === '*')
@@ -290,9 +289,9 @@ export async function createSnapshot(
     if (!store) {
       throw new Error('createSnapshot needs a store when entryNames is omitted');
     }
-    const entries = await store.listEntries();
+    const entries = await store.listByStatus(['active']);
     names = entries
-      .filter(entry => entry.status === 'active' && entry.supersededBy === null)
+      .filter(entry => entry.supersededBy === null)
       .map(entry => entry.id)
       .sort();
   }

@@ -370,16 +370,9 @@ export class KnowledgeStore {
         if (parent)
             entity.parentEntityName = parent;
         await this.ctx.entityManager.createEntities([entity]);
-        // Creating a new version does not move the chain head on its own; without
-        // this the parent stays `isLatest: true` and `getLatestVersion` keeps
-        // returning v1. `supersededBy` is intentionally left alone here — that is
-        // `supersede`'s job, and only `activate` decides a version has been replaced.
-        if (parent) {
-            const parentEntity = await this.ctx.entityManager.getEntity(parent);
-            if (parentEntity && parentEntity.isLatest !== false) {
-                await this.ctx.entityManager.updateEntity(parent, { isLatest: false }, { expectedVersion: parentEntity.version ?? 1 });
-            }
-        }
+        // A new revision does not clear the parent's `isLatest` or set `supersededBy`;
+        // only `supersede` (via `activate`) does. Chain head for `getBySlug` /
+        // `listEntries` is the highest logical version, not memoryjs's `isLatest`.
         await this.ctx.relationManager.createRelations(entry.sources.map(source => ({
             from: name,
             to: `exchange:${source.id}`,
@@ -525,23 +518,43 @@ export class KnowledgeStore {
     /** The latest version of a `(kind, project, slug)` chain. */
     async getBySlug(kind, project, slug) {
         const root = rootName(kind, project, slug);
-        const latest = await this.ctx.entityManager.getLatestVersion(root);
-        if (!latest)
-            return null;
-        return parseEntity(latest);
+        return this.latestEntryInChain(root);
+    }
+    /** Highest logical version in a chain (by `version:` / name), not `isLatest`. */
+    async latestEntryInChain(rootEntityName) {
+        const entities = await this.allEntities();
+        let best = null;
+        for (const entity of entities) {
+            const chainRoot = entity.rootEntityName ?? entity.name;
+            if (chainRoot !== rootEntityName)
+                continue;
+            const parsed = parseEntity(entity);
+            if (!parsed)
+                continue;
+            if (!best || parsed.version > best.version)
+                best = parsed;
+        }
+        return best;
     }
     /** Every learned entity. */
     async allEntities() {
         const graph = await this.ctx.storage.loadGraph();
         return graph.entities.filter((e) => e.entityType.startsWith(ENTRY_TYPE_PREFIX));
     }
-    /** Every learned entry, latest versions only, any status. */
+    /** Every learned entry, one row per chain (highest logical version), any status. */
     async listEntries() {
         const entities = await this.allEntities();
-        return entities
-            .filter(e => e.isLatest !== false)
-            .map(parseEntity)
-            .filter((e) => e !== null);
+        const byRoot = new Map();
+        for (const entity of entities) {
+            const parsed = parseEntity(entity);
+            if (!parsed)
+                continue;
+            const root = entity.rootEntityName ?? rootName(parsed.kind, parsed.project, parsed.slug);
+            const existing = byRoot.get(root);
+            if (!existing || parsed.version > existing.version)
+                byRoot.set(root, parsed);
+        }
+        return [...byRoot.values()];
     }
     /**
      * Every learned entry with a given status, including superseded and older
@@ -874,7 +887,7 @@ export class KnowledgeStore {
             scope: input.scope,
             evidence: chosenEvidence,
             summary: input.summary,
-            generalization_confidence: RELIABILITY_BY_TRUST[entry.trust],
+            generalization_confidence: CONFIDENCE_SCORE[input.confidence],
             sourceProjectId: input.project,
         });
         return { duplicate: false, id };

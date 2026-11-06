@@ -178,9 +178,11 @@ export declare class KnowledgeStore {
     getEntry(name: string): Promise<KnowledgeEntry | null>;
     /** The latest version of a `(kind, project, slug)` chain. */
     getBySlug(kind: KnowledgeKind, project: string, slug: string): Promise<KnowledgeEntry | null>;
+    /** Highest logical version in a chain (by `version:` / name), not `isLatest`. */
+    private latestEntryInChain;
     /** Every learned entity. */
     private allEntities;
-    /** Every learned entry, latest versions only, any status. */
+    /** Every learned entry, one row per chain (highest logical version), any status. */
     listEntries(): Promise<KnowledgeEntry[]>;
     /**
      * Every learned entry with a given status, including superseded and older

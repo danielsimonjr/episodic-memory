@@ -1,5 +1,8 @@
 ## [Unreleased]
 
+### Added
+- **`learn render [--project P]` is implemented.** It rewrites the learned-hints block the SessionStart hook injects from the entries that are active now and lists each block's size; `--project P` prints that project's block. Every run and approval already renders, so the command is for a store edited by hand and for seeing what a session will be shown. The "not implemented" stub and its exit code are gone.
+
 ### Removed
 - **`@danielsimonjr/memoryjs` is no longer a dependency.** `package.json`, `bun.lock` and the esbuild externals drop it; the plugin install is about 30 packages lighter. With it go the parts of the fork that existed only to police it: the nested-`better-sqlite3` sentinel in `deps-health`, the "memoryjs resolves a different better-sqlite3" doctor warning (the learn section now prints the one resolved path), and the `overrides` pin on `better-sqlite3`, which nothing else pulls in. The Node floor is now the one `better-sqlite3` 13 declares, `>=22.0.0`, enforced at launch as before.
 

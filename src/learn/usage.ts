@@ -50,7 +50,11 @@ COMMANDS:
       learned-skills/, replacing that tree. --to DIR copies into DIR instead
       and removes nothing there.
 
-  learn render
-      Not implemented yet.
+  learn render [--project P]
+      Rewrite the learned-hints block the SessionStart hook injects, from the
+      entries that are active now, and list each block's size. --project P
+      prints that project's block after rendering. The block is rewritten after
+      every run and approval anyway; use this after editing the store by hand
+      or to inspect what a session will see.
 
 Progress goes to stderr; the report goes to stdout.`;

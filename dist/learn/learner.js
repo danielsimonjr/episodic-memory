@@ -354,6 +354,10 @@ export async function runLearn(dbs, options) {
         // fixed some tasks *and* broken others, and only a fresh solve says which.
         const totalRounds = options.dryRun ? 0 : options.rounds;
         let roundSnapshot = beforeSnapshot;
+        // True only when the round that just finished changed active knowledge.
+        // The next measurement is the solve at the start of the following round, so
+        // a round that keeps nothing must not pay for another full-train solve.
+        let roundChangedKnowledge = false;
         for (let round = 0; round < totalRounds; round += 1) {
             if (result.status === 'stopped' || budget.used >= budget.max) {
                 result.status = 'stopped';
@@ -413,6 +417,8 @@ export async function runLearn(dbs, options) {
                     });
                     result.kept.push(...leaf.kept);
                     roundKept.push(...(await collectKept(dbs, leaf.kept, runId)));
+                    if (leaf.stopped)
+                        result.status = 'stopped';
                 }
                 catch (error) {
                     if (!(error instanceof BudgetExhausted))
@@ -447,7 +453,7 @@ export async function runLearn(dbs, options) {
                             solve: options.solve,
                             judge: options.judge,
                         });
-                        finishRun(dbs.learning, childRunId, 'done', {
+                        finishRun(dbs.learning, childRunId, leaf.stopped ? 'stopped' : 'done', {
                             kept: leaf.kept.length,
                             rejected: leaf.rejected.length,
                             suspect: leaf.suspect.length,
@@ -458,19 +464,30 @@ export async function runLearn(dbs, options) {
                     catch (error) {
                         if (error instanceof BudgetExhausted) {
                             finishRun(dbs.learning, childRunId, 'stopped', {});
-                            return { childRunId, subset, leaf: null };
+                            return {
+                                childRunId,
+                                subset,
+                                leaf: {
+                                    kept: [],
+                                    rejected: [],
+                                    suspect: [],
+                                    rounds: [],
+                                    stopped: true,
+                                },
+                            };
                         }
                         finishRun(dbs.learning, childRunId, 'failed', {});
                         throw error;
                     }
                 })));
                 for (const child of children) {
-                    if (!child.leaf) {
-                        result.status = 'stopped';
-                        continue;
-                    }
+                    // A budget stop inside the leaf still returns the entries it had
+                    // already validated. Dropping `leaf` here would hide them from the
+                    // run, the child metrics, and the learned-block write below.
                     result.kept.push(...child.leaf.kept);
                     roundKept.push(...(await collectKept(dbs, child.leaf.kept, child.childRunId)));
+                    if (child.leaf.stopped)
+                        result.status = 'stopped';
                 }
                 // 4. Merge duplicates across children, then prove the merge.
                 await mergeRound(dbs, {
@@ -486,8 +503,10 @@ export async function runLearn(dbs, options) {
                     result,
                 });
             }
-            // 5. One reflection per round.
-            const roundPassed = tasks.length - failures.length;
+            // 5. One reflection per round. `after` is the post-leaf pass count: a
+            //    validate attempt that fixed a baseline failure counts, and a task the
+            //    leaf did not touch keeps its baseline result.
+            const roundPassed = postLeafPassed(dbs, [runId, ...result.children], taskIds);
             const reflectionName = await reflectRound(dbs, {
                 runId,
                 round,
@@ -503,6 +522,7 @@ export async function runLearn(dbs, options) {
             if (reflectionName)
                 result.reflections.push(reflectionName);
             const keptThisRound = result.kept.length - keptBefore;
+            roundChangedKnowledge = keptThisRound > 0;
             if (keptThisRound > 0) {
                 await writeLearnedBlocks(dbs.store, dbs.learning, config.maxChars);
             }
@@ -515,7 +535,7 @@ export async function runLearn(dbs, options) {
         }
         // 6. The after measurement, then the held-out split — once, and last.
         let finalSnapshot = beforeSnapshot;
-        if (result.rounds > 0) {
+        if (result.rounds > 0 && roundChangedKnowledge) {
             finalSnapshot = await createSnapshot(dbs.learning, runId, await activeNames(dbs), dbs.store);
             if (tasks.length > 0) {
                 try {
@@ -527,6 +547,9 @@ export async function runLearn(dbs, options) {
                     result.status = 'stopped';
                 }
             }
+        }
+        else if (result.rounds > 0) {
+            finalSnapshot = roundSnapshot;
         }
         result.after = passRate(dbs.learning, runId, finalSnapshot, {
             split: 'train',
@@ -685,10 +708,14 @@ async function mergeRound(dbs, input) {
     }))
         .filter(sample => sample.taskIds.length > 0);
     const regressionsByChild = new Map();
+    const attemptsByChild = new Map();
+    const passedBeforeByChild = new Map();
+    let mergeCheckStopped = false;
     for (const sample of samples) {
         const before = childPassSet(dbs, sample.runId, sample.taskIds);
         if (before.size === 0)
             continue;
+        passedBeforeByChild.set(sample.runId, before);
         const sampleTasks = listTasks(dbs.learning, {
             split: 'train',
             ids: sample.taskIds,
@@ -705,33 +732,61 @@ async function mergeRound(dbs, input) {
             });
         }
         catch (error) {
-            input.reject('merge-check', `merge-check failed: ${error instanceof Error ? error.message : String(error)}`);
+            const slug = created[0]?.entry.slug ?? 'merged';
+            if (error instanceof BudgetExhausted) {
+                // §7 rule 5: a merge that never finished its check is not activated.
+                // The children's validated versions stay as they were.
+                mergeCheckStopped = true;
+                input.reject(slug, `merge-check stopped before validation: ${error.message}`);
+                break;
+            }
+            input.reject(slug, `merge-check failed: ${error instanceof Error ? error.message : String(error)}`);
             continue;
         }
+        attemptsByChild.set(sample.runId, attempts);
         const regressed = attempts.filter(attempt => before.has(attempt.taskId) && !attempt.passed);
         if (regressed.length > 0) {
             regressionsByChild.set(sample.runId, regressed.map(attempt => attempt.taskId));
         }
+    }
+    if (mergeCheckStopped) {
+        for (const merge of created) {
+            await retire(dbs.store, merge.record.merged);
+            input.result.merges.push(merge.record);
+        }
+        input.result.status = 'stopped';
+        return;
     }
     for (const merge of created) {
         const regressedChildren = [...regressionsByChild.keys()].filter(childRunId => merge.kept.some(entry => entry.childRunId === childRunId));
         const regressions = [
             ...new Set(regressedChildren.flatMap(childRunId => regressionsByChild.get(childRunId) ?? [])),
         ].sort((a, b) => a - b);
+        const evidence = mergeCheckEvidence(merge.kept, attemptsByChild, passedBeforeByChild);
         if (regressions.length > 0) {
             const first = merge.kept[0].entry;
             merge.record.regressions = regressions;
+            if (evidence)
+                await dbs.store.setValidation(merge.record.merged, evidence);
             merge.record.revertedTo = await restoreChildVersion(dbs, merge.record.merged, merge.kept, regressedChildren[0]);
             input.reject(first.slug, `merge reverted: the merged ${first.kind} ${first.project}/${first.slug} regressed task(s) ${regressions.join(', ')}`);
             input.result.merges.push(merge.record);
             continue;
         }
-        // The merge stood: it becomes the key's active version, superseding the
-        // children's copies the way any kept revision does.
+        // The merge stood only when the check actually ran and stored its record.
+        // Trust `verified` without that record would activate an unvalidated skill.
+        if (!evidence) {
+            await retire(dbs.store, merge.record.merged);
+            input.reject(merge.entry.slug, `merge not activated: no merge-check evidence for ${merge.entry.kind} ${merge.entry.project}/${merge.entry.slug}`);
+            input.result.merges.push(merge.record);
+            continue;
+        }
         const canActivate = merge.entry.kind === 'skill' ||
             (merge.entry.kind === 'instruction' && config.approve === 'none');
         if (canActivate)
-            await activate(dbs.store, merge.record.merged, null, 'verified');
+            await activate(dbs.store, merge.record.merged, evidence, 'verified');
+        else
+            await dbs.store.setValidation(merge.record.merged, evidence);
         input.result.merges.push(merge.record);
     }
     // Instruction lines the merge made contradictory: one more model call may
@@ -756,50 +811,181 @@ async function resolveConflicts(dbs, input) {
     }
     if (conflicts.length === 0)
         return;
-    const instructions = input.kept.filter(kept => kept.entry.kind === 'instruction');
-    const involved = instructions.filter(kept => conflicts.some(conflict => kept.entry.heuristicIds.includes(conflict.a) || kept.entry.heuristicIds.includes(conflict.b)));
-    const config = learnConfig();
-    for (const kept of involved) {
-        let resolved = false;
-        try {
-            const body = parseLines(await input.textModel(mergeEntriesPrompt([kept.entry]))).join('\n');
-            if (body && body !== kept.entry.body) {
-                const gated = gateEntry({
-                    kind: kept.entry.kind,
-                    project: kept.entry.project,
-                    slug: kept.entry.slug,
-                    title: kept.entry.title,
-                    description: kept.entry.description,
-                    body,
-                    scope: kept.entry.scope,
-                    confidence: kept.entry.confidence,
-                }, {
-                    resolve: resolveFor(dbs),
-                    redactPii: (text) => dbs.store.redactPii(text),
-                    config,
-                    runId: input.runId,
-                });
-                if (!('rejected' in gated)) {
-                    const name = await insertKnowledgeEntry(dbs.store, gated.entry);
-                    // The revision replaces the version that was in conflict, so the pair
-                    // cannot both stay live. Under the default approval mode the revision
-                    // waits as a candidate and the old line is retired: a contradiction is
-                    // worse than a temporarily missing hint.
-                    await retire(dbs.store, kept.name);
-                    if (config.approve === 'none')
-                        await activate(dbs.store, name, null, 'verified');
-                    resolved = true;
-                }
+    // The detector still reports heuristics from superseded child versions. A
+    // conflict counts only once it is mapped onto the live version of each key:
+    // the active entry, or the merged version this round just wrote.
+    const live = new Map();
+    for (const entry of await dbs.store.listByStatus(['active'], ['instruction'])) {
+        if (entry.supersededBy === null)
+            live.set(entry.id, entry);
+    }
+    for (const merge of input.result.merges) {
+        const entry = await getEntry(dbs.store, merge.merged);
+        if (!entry || entry.kind !== 'instruction' || entry.status === 'retired')
+            continue;
+        if (entry.supersededBy !== null)
+            continue;
+        live.set(entry.id, entry);
+    }
+    const liveOfKey = (entry) => {
+        if (live.has(entry.id))
+            return live.get(entry.id) ?? null;
+        for (const candidate of live.values()) {
+            if (candidate.kind === entry.kind &&
+                candidate.project === entry.project &&
+                candidate.slug === entry.slug) {
+                return candidate;
             }
         }
-        catch {
-            resolved = false;
+        return null;
+    };
+    const owners = new Map();
+    for (const entry of await dbs.store.listByStatus(['active', 'candidate', 'retired'], ['instruction'])) {
+        for (const heuristicId of entry.heuristicIds)
+            owners.set(heuristicId, entry);
+    }
+    const pairs = [];
+    const seen = new Set();
+    for (const conflict of conflicts) {
+        const ownerA = owners.get(conflict.a);
+        const ownerB = owners.get(conflict.b);
+        if (!ownerA || !ownerB)
+            continue;
+        const a = liveOfKey(ownerA);
+        const b = liveOfKey(ownerB);
+        if (!a || !b || a.id === b.id)
+            continue;
+        const key = [a.id, b.id].sort().join('|');
+        if (seen.has(key))
+            continue;
+        seen.add(key);
+        pairs.push({ a, b });
+    }
+    const config = learnConfig();
+    for (const pair of pairs) {
+        const sameKey = pair.a.kind === pair.b.kind && pair.a.project === pair.b.project && pair.a.slug === pair.b.slug;
+        let resolved = false;
+        if (sameKey) {
+            try {
+                const body = parseLines(await input.textModel(mergeEntriesPrompt([pair.a, pair.b]))).join('\n');
+                if (body && body !== pair.a.body && body !== pair.b.body) {
+                    const gated = gateEntry({
+                        kind: pair.a.kind,
+                        project: pair.a.project,
+                        slug: pair.a.slug,
+                        title: pair.a.title,
+                        description: pair.a.description,
+                        body,
+                        scope: pair.a.scope,
+                        confidence: pair.a.confidence,
+                    }, {
+                        resolve: resolveFor(dbs),
+                        redactPii: (text) => dbs.store.redactPii(text),
+                        config,
+                        runId: input.runId,
+                    });
+                    if (!('rejected' in gated)) {
+                        const name = await insertKnowledgeEntry(dbs.store, gated.entry);
+                        await retire(dbs.store, pair.a.id);
+                        await retire(dbs.store, pair.b.id);
+                        if (config.approve === 'none') {
+                            const fresh = await getEntry(dbs.store, name);
+                            if (fresh?.validation)
+                                await activate(dbs.store, name, fresh.validation, 'verified');
+                        }
+                        resolved = true;
+                    }
+                }
+            }
+            catch {
+                resolved = false;
+            }
+        }
+        else {
+            // One body cannot stand in for two different keys. Ask once, then retire
+            // both live lines — never a superseded child row the detector also named.
+            try {
+                await input.textModel(mergeEntriesPrompt([pair.a, pair.b]));
+            }
+            catch {
+                // The call failing is the same outcome as an unusable body.
+            }
         }
         if (!resolved) {
-            await retire(dbs.store, kept.name);
-            input.reject(`${kept.entry.slug}-conflict`, `conflicting instruction line retired: ${kept.name}`);
+            if (pair.a.status !== 'retired')
+                await retire(dbs.store, pair.a.id);
+            if (pair.b.status !== 'retired')
+                await retire(dbs.store, pair.b.id);
+            input.reject(pair.a.slug, `conflicting instruction lines retired: ${pair.a.slug} (${pair.a.id}) and ${pair.b.slug} (${pair.b.id})`);
         }
     }
+}
+/**
+ * The merge-check's validation record for one merged entry.
+ *
+ * Built only from the children that contributed to the merge and only when at
+ * least one merge-check attempt was stored. `null` means the check never
+ * produced evidence, and the caller must not activate.
+ */
+function mergeCheckEvidence(kept, attemptsByChild, passedBeforeByChild) {
+    const attempts = [];
+    const before = new Set();
+    for (const childRunId of new Set(kept.map(entry => entry.childRunId))) {
+        attempts.push(...(attemptsByChild.get(childRunId) ?? []));
+        for (const taskId of passedBeforeByChild.get(childRunId) ?? [])
+            before.add(taskId);
+    }
+    if (attempts.length === 0)
+        return null;
+    const sample = [...new Set(attempts.map(attempt => attempt.taskId))].sort((a, b) => a - b);
+    const after = new Map();
+    for (const attempt of attempts)
+        after.set(attempt.taskId, attempt);
+    const targeted = sample.filter(taskId => before.has(taskId));
+    const turns = attempts.map(attempt => attempt.cost.turns);
+    const usd = attempts.reduce((sum, attempt) => sum + (attempt.cost.usd ?? 0), 0);
+    return {
+        targeted,
+        sample,
+        passedBefore: targeted.length,
+        passedAfter: sample.filter(taskId => after.get(taskId)?.passed === true).length,
+        regressions: sample.filter(taskId => before.has(taskId) && after.get(taskId)?.passed !== true),
+        judgedAt: new Date().toISOString(),
+        meanTurnsBefore: null,
+        meanTurnsAfter: turns.length === 0 ? null : turns.reduce((sum, turn) => sum + turn, 0) / turns.length,
+        usdBefore: null,
+        usdAfter: usd,
+    };
+}
+/**
+ * How many signal tasks pass after this round's leaves.
+ *
+ * The newest graded solve or validate attempt wins, so a leaf's validation
+ * pass replaces the baseline failure and an untouched task keeps the baseline.
+ */
+function postLeafPassed(dbs, runIds, taskIds) {
+    if (taskIds.length === 0)
+        return 0;
+    const latest = new Map();
+    for (const runId of runIds) {
+        for (const role of ['solve', 'validate']) {
+            for (const attempt of listAttempts(dbs.learning, {
+                runId,
+                taskIds,
+                role,
+                outcome: 'graded',
+            })) {
+                const existing = latest.get(attempt.taskId);
+                if (!existing || existing.id < attempt.id)
+                    latest.set(attempt.taskId, attempt);
+            }
+        }
+    }
+    let passed = 0;
+    for (const taskId of taskIds)
+        if (latest.get(taskId)?.passed)
+            passed += 1;
+    return passed;
 }
 /**
  * Put a child's version back after a merge regressed it.

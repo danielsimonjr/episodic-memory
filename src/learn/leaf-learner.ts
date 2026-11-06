@@ -73,6 +73,8 @@ export interface LeafResult {
   suspect: number[];
   /** Per-round solve results, `passed` of `total` graded attempts. */
   rounds: Array<{ passed: number; total: number }>;
+  /** The call budget ran out. Entries already in `kept` stay kept. */
+  stopped: boolean;
 }
 
 export interface LeafLearnerOptions {
@@ -244,7 +246,7 @@ export async function runLeafLearner(
   const runAgentFn = options.runAgent ?? runAgent;
   const pids = options.pids ?? NO_PIDS;
 
-  const result: LeafResult = { kept: [], rejected: [], suspect: [], rounds: [] };
+  const result: LeafResult = { kept: [], rejected: [], suspect: [], rounds: [], stopped: false };
   const reject = (slug: string, reason: string): void => {
     result.rejected.push({ slug, reason });
     addRejection(dbs.learning, options.runId, { slug, reason });
@@ -277,6 +279,7 @@ export async function runLeafLearner(
       });
     } catch (error) {
       if (error instanceof BudgetExhausted) {
+        result.stopped = true;
         result.rounds.push({ passed: 0, total: 0 });
         break;
       }
@@ -406,7 +409,10 @@ export async function runLeafLearner(
         })
       );
     } catch (error) {
-      if (error instanceof BudgetExhausted) break;
+      if (error instanceof BudgetExhausted) {
+        result.stopped = true;
+        break;
+      }
       // One learner turn failing is not the run failing: the round simply keeps
       // nothing and the loop ends.
       reject(options.project, `learner failed: ${error instanceof Error ? error.message : String(error)}`);
@@ -462,6 +468,9 @@ export async function runLeafLearner(
         // A validation re-solve spends the same call budget as a solve. Spent
         // means stop, with every keep so far retained (§7 rule 10a).
         if (error instanceof BudgetExhausted) {
+          // The candidate was not activated: validateCandidate spends the budget
+          // before it keeps. Entries already pushed to `kept` stay there.
+          result.stopped = true;
           budgetStop = true;
           break;
         }

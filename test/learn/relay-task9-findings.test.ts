@@ -366,4 +366,20 @@ describe('relay task 9 findings', () => {
     const namedLegacy = run.rejections.some(rejection => /legacy-rule/.test(rejection.reason));
     expect(namedLegacy).toBe(true);
   });
+
+  it('learns a single project that fits leafMax inside the parent run', async () => {
+    openFixture(['proj-a']);
+    addTask({ project: 'proj-a' });
+    addTask({ project: 'proj-a' });
+    const solve = fakeSolve(() => false);
+    const learner = fakeLearner(() => []);
+    const result = await runLearn(dbs, {
+      ...common({ leafMax: 12 }),
+      solve,
+      runAgent: learner,
+      textModel: fakeTextModel(),
+    });
+    expect(result.children).toEqual([]);
+    expect(childRuns(result.runId)).toHaveLength(0);
+  });
 });

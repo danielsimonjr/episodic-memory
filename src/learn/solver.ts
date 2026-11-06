@@ -248,6 +248,8 @@ export interface SolveManyOptions extends Omit<SolveOptions, 'snapshotId'> {
   snapshotId: number;
   /** The run's shared call budget. A batch stops with `BudgetExhausted` at the cap. */
   budget: CallBudget;
+  /** Test seam: defaults to `solveTask`, so a leaf learner can be driven by a fake. */
+  solve?: typeof solveTask;
 }
 
 /**
@@ -264,13 +266,14 @@ export async function solveMany(
   options: SolveManyOptions
 ): Promise<AttemptRow[]> {
   const semaphore = globalAgentSemaphore();
+  const solveFn = options.solve ?? solveTask;
 
   // One promise per task, each of which yields its semaphore slot between the
   // agent call and the database insert. A worker pool would be equivalent; the
   // global semaphore is what actually bounds subprocesses.
   const settled = await Promise.allSettled(
     tasks.map(task =>
-      semaphore.run(async () => solveTask(dbs, task, { ...options, budget: options.budget }))
+      semaphore.run(async () => solveFn(dbs, task, { ...options, budget: options.budget }))
     )
   );
 

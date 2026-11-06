@@ -10,6 +10,21 @@ const __dirname = dirname(realpathSync(__filename));
 const command = process.argv[2];
 const args = process.argv.slice(3);
 
+/**
+ * `learn` reaches memoryjs, which requires Node >= 22.12.0; `engines` only warns. Checked before the
+ * learn entry point is spawned, so a too-old Node gets one readable line instead of a failure deep
+ * inside a dependency. Imported lazily: every other command works on a tree whose dist/ is not built
+ * yet, and only `learn` has a floor of its own. Returns true when the process should exit.
+ */
+async function blockedByNodeFloor() {
+  if (command !== 'learn') return false;
+  const { assertNodeFloor } = await import('../dist/node-floor.js');
+  const floorError = assertNodeFloor();
+  if (floorError === null) return false;
+  console.error(floorError);
+  return true;
+}
+
 function runScript(scriptPath, args) {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [scriptPath, ...args], {
@@ -63,6 +78,8 @@ EXAMPLES:
 
 async function main() {
   try {
+    if (await blockedByNodeFloor()) process.exit(1);
+
     const distDir = join(__dirname, '../dist');
 
     switch (command) {

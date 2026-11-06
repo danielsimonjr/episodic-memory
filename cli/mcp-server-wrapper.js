@@ -9,6 +9,7 @@ import { existsSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { ensureDeps } from './ensure-deps.js';
+import { assertNodeFloor } from '../dist/node-floor.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -18,6 +19,15 @@ const PLUGIN_ROOT = process.env.CLAUDE_PLUGIN_ROOT || join(__dirname, '..');
 
 async function main() {
   try {
+    // memoryjs (reached by the `skills` tool) requires Node >= 22.12.0 and `engines` only warns.
+    // Bail before the install check: a too-old Node would otherwise run a 200-package install and
+    // then fail inside a dependency on a tool call.
+    const floorError = assertNodeFloor();
+    if (floorError !== null) {
+      console.error(floorError);
+      process.exit(1);
+    }
+
     // Install missing dependencies and build a missing native binding. Directory existence, and
     // even better-sqlite3's JS, are not enough - see NATIVE_ADDON in src/deps-health.ts.
     ensureDeps(PLUGIN_ROOT);

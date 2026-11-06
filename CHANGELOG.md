@@ -1,5 +1,18 @@
 ## [Unreleased]
 
+### Added
+- **`@danielsimonjr/memoryjs` as a runtime dependency, for the `learn` knowledge store (Task 0 of the
+  Recursa plan; no learning code yet).** The package is marked external in the esbuild bundle beside
+  `better-sqlite3`, and its `package.json` joins the wrapper's dependency sentinels so a plugin-cache
+  install that skipped it is repaired instead of failing at an import. Its floor raises the fork's
+  supported runtime: `engines.node` becomes `>=22.12.0`, CI's Bun becomes `1.4.2`, and the `zod` range
+  becomes `^4.6.6` so one copy resolves. `engines` is advisory, so `src/node-floor.ts` holds the floor
+  and `cli/mcp-server-wrapper.js` and `cli/episodic-memory.js learn` exit with one stderr line below it.
+  `overrides["better-sqlite3"]` pins the exact version so npm in the plugin cache collapses memoryjs's
+  caret range into the single installed copy; a second, nested copy under memoryjs makes `repairPlan`
+  answer `install`. The engine-floor divergence from upstream is recorded in
+  `docs/roadmap/upstream-sync.md`.
+
 ### Changed
 - **Docs only.** Recursa spec and implementation plan hardened after an adversarial
   review against `@danielsimonjr/memoryjs@4.5.0` types and this repo's hook/lock/MCP

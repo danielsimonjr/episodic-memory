@@ -76,4 +76,19 @@ describe('allowScripts declaration for native modules', () => {
     const key = Object.keys(pkg.allowScripts).find((k) => k.startsWith('better-sqlite3@'));
     expect(pkg.allowScripts[key!]).toBe(true);
   });
+
+  // memoryjs declares a CARET range on better-sqlite3. The day a newer patch publishes, npm in the
+  // plugin cache (no lockfile, install scripts skipped) resolves it, finds the top-level exact pin
+  // different, and nests a second, binding-less copy under memoryjs - which then fails to open a
+  // store while the top-level sentinel still reports health. The overrides entry is what makes npm
+  // install one copy; it must remain the SAME version as the exact dependency.
+  it('overrides pins the same version as dependencies', () => {
+    const dep = pkg.dependencies?.['better-sqlite3'];
+    expect(pkg.overrides, 'package.json must declare overrides').toBeDefined();
+    expect(
+      pkg.overrides['better-sqlite3'],
+      'overrides must pin better-sqlite3 exactly, or npm nests a second copy under memoryjs'
+    ).toBe(dep);
+    expect(pkg.overrides['better-sqlite3']).toMatch(/^\d+\.\d+\.\d+$/);
+  });
 });

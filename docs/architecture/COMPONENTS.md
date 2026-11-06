@@ -139,7 +139,7 @@ The shims in `cli/` are `episodic-memory.js` (dispatcher), `index-conversations.
 
 ## Learned-knowledge feature (`src/learn/`)
 
-The feature is off unless `EPISODIC_MEMORY_LEARN` is on.
+The feature is off unless `EPISODIC_MEMORY_LEARN` is on. `LEARN.md` gives the full description. This section is a summary only.
 
 | Group | Modules | Role |
 |---|---|---|

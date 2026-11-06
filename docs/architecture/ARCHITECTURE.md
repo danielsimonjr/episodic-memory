@@ -85,7 +85,10 @@ Leaf modules import nothing from the repository, or import only each other. Seve
 
 **Trade-offs.** The set of modules that load eagerly must stay small. Moving a heavy module to a static import breaks the guarantee.
 
-### Decision: Learn with a train and test split, additive changes and a call budget
+### Decision: Learn with a train and test split
+
+`LEARN.md` describes the whole feature. This decision records the reason for its main design choices.
+, additive changes and a call budget
 
 **Rationale.** A learning run solves practice tasks, finds failures, proposes edits, and validates each edit against the tasks. The test split is solved once, at the end, with the final snapshot. The loop stops when a round keeps nothing, when the round limit is reached, or when the call budget is spent. Nothing deletes an entry, a task or an attempt.
 

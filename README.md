@@ -538,6 +538,7 @@ The `docs/architecture/` folder describes the design of the code.
 | [ARCHITECTURE](docs/architecture/ARCHITECTURE.md) | The design, its principles and its decisions |
 | [COMPONENTS](docs/architecture/COMPONENTS.md) | Each module and its role |
 | [DATAFLOW](docs/architecture/DATAFLOW.md) | How a request travels from start to end |
+| [LEARN](docs/architecture/LEARN.md) | The learned-knowledge feature: model, storage, safety, learning loop, every module |
 | [API](docs/architecture/API.md) | The MCP tools, commands, library exports and environment variables |
 | [FILE_INVENTORY](docs/architecture/FILE_INVENTORY.md) | Every file and its role (generated) |
 | [TEST_COVERAGE](docs/architecture/TEST_COVERAGE.md) | What the tests cover (generated) |

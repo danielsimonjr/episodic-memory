@@ -17,6 +17,11 @@ export function includeSearchSummaries(): boolean {
   return true;
 }
 
+/** The env default, unless a caller set the option explicitly. */
+function summariesVisible(options: SearchOptions): boolean {
+  return options.includeSummaries ?? includeSearchSummaries();
+}
+
 export function maxSummaryDisplayChars(): number {
   const raw = process.env.EPISODIC_MEMORY_MAX_SUMMARY_DISPLAY_CHARS;
   if (raw === undefined) return 2000;
@@ -38,6 +43,21 @@ export interface SearchOptions {
   project?: string;     // exact match against e.project
   session_id?: string;  // exact match against e.session_id
   git_branch?: string;  // exact match against e.git_branch
+  /**
+   * Exchange ids to leave out of the result set entirely.
+   *
+   * The learn solver passes a task's source exchange ids here so neither the
+   * vector nor the text path can hand back the answer it is looking for
+   * (spec §4.4 leak rule).
+   */
+  excludeIds?: string[];
+  /**
+   * Show per-file summaries on the results.
+   *
+   * Overrides `EPISODIC_MEMORY_INCLUDE_SUMMARY` when set: the solver's search
+   * turns summaries off even on an install that has them on by default.
+   */
+  includeSummaries?: boolean;
   /**
    * Reuse an open DB handle (MCP hot path). When omitted, opens and closes
    * a one-shot connection (CLI behavior).
@@ -75,6 +95,12 @@ function buildSearchFilters(options: SearchOptions): { sql: string; params: unkn
     parts.push('e.git_branch = ?');
     params.push(options.git_branch);
   }
+  // Bound placeholders, one per id, so an id can never be read as SQL.
+  const excluded = (options.excludeIds ?? []).filter(id => typeof id === 'string' && id.length > 0);
+  if (excluded.length > 0) {
+    parts.push(`e.id NOT IN (${excluded.map(() => '?').join(',')})`);
+    params.push(...excluded);
+  }
   return {
     sql: parts.length ? `AND ${parts.join(' AND ')}` : '',
     params,
@@ -82,7 +108,12 @@ function buildSearchFilters(options: SearchOptions): { sql: string; params: unkn
 }
 
 function hasMetadataFilters(options: SearchOptions): boolean {
-  return Boolean(options.project || options.session_id || options.git_branch);
+  return Boolean(
+    options.project ||
+      options.session_id ||
+      options.git_branch ||
+      (options.excludeIds && options.excludeIds.length > 0)
+  );
 }
 
 const EXCHANGE_SELECT_COLUMNS = `
@@ -289,9 +320,11 @@ export async function searchConversations(
 
     // Try to load summary if available (confined to archive like MCP read)
     let summary: string | undefined;
-    const summaryPath = safeArchiveSummaryPath(row.archive_path);
-    if (summaryPath) {
-      summary = maybeRedactSecrets(fs.readFileSync(summaryPath, 'utf-8').trim());
+    if (summariesVisible(options)) {
+      const summaryPath = safeArchiveSummaryPath(row.archive_path);
+      if (summaryPath) {
+        summary = maybeRedactSecrets(fs.readFileSync(summaryPath, 'utf-8').trim());
+      }
     }
 
     // Create snippet (first 200 chars, collapse newlines)

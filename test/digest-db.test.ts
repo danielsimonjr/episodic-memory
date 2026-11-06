@@ -79,6 +79,44 @@ describe('digest-db', () => {
     insertDigestEntry(db, entry());
     expect(() => searchDigest(db, 'a "b (c')).not.toThrow();
   });
+
+  it('searchDigest drops a line citing a hidden id and keeps the rest', () => {
+    insertDigestEntry(
+      db,
+      entry({
+        text: `Kept line about postgres [#ex1]\nHidden line about the cache [#ex9]\nAnother kept line [#ex1]`,
+      })
+    );
+    // The entry still matches the query, so it comes back — with the hidden
+    // line gone and every other line intact.
+    const [hit] = searchDigest(db, 'cache', undefined, 10, { hideExchangeIds: ['ex9'] });
+    expect(hit).toBeDefined();
+    expect(hit.text).not.toContain('Hidden line about the cache');
+    expect(hit.text).not.toContain('#ex9');
+    expect(hit.text).toContain('Kept line about postgres [#ex1]');
+    expect(hit.text).toContain('Another kept line [#ex1]');
+
+    const [other] = searchDigest(db, 'postgres', undefined, 10, { hideExchangeIds: ['ex9'] });
+    expect(other.text).not.toContain('Hidden line about the cache');
+  });
+
+  it('searchDigest reports nothing when every line cites a hidden id', () => {
+    insertDigestEntry(db, entry({ text: 'Only the cache [#ex9]' }));
+    expect(searchDigest(db, 'cache', undefined, 10, { hideExchangeIds: ['ex9'] })).toEqual([]);
+  });
+
+  it('searchDigest with no hideExchangeIds returns the whole text', () => {
+    insertDigestEntry(db, entry({ text: 'Kept [#ex1]\nHidden [#ex9]' }));
+    const [hit] = searchDigest(db, 'hidden');
+    expect(hit.text).toContain('Hidden [#ex9]');
+    expect(hit.text).toContain('Kept [#ex1]');
+  });
+
+  it('searchDigest leaves an entry unchanged when no line names a hidden id', () => {
+    insertDigestEntry(db, entry({ text: 'Kept [#ex1]' }));
+    const [hit] = searchDigest(db, 'kept', undefined, 10, { hideExchangeIds: ['ex9'] });
+    expect(hit.text).toBe('Kept [#ex1]');
+  });
 });
 
 describe('digest schema via migrateSchema', () => {

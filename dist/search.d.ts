@@ -13,6 +13,21 @@ export interface SearchOptions {
     session_id?: string;
     git_branch?: string;
     /**
+     * Exchange ids to leave out of the result set entirely.
+     *
+     * The learn solver passes a task's source exchange ids here so neither the
+     * vector nor the text path can hand back the answer it is looking for
+     * (spec §4.4 leak rule).
+     */
+    excludeIds?: string[];
+    /**
+     * Show per-file summaries on the results.
+     *
+     * Overrides `EPISODIC_MEMORY_INCLUDE_SUMMARY` when set: the solver's search
+     * turns summaries off even on an install that has them on by default.
+     */
+    includeSummaries?: boolean;
+    /**
      * Reuse an open DB handle (MCP hot path). When omitted, opens and closes
      * a one-shot connection (CLI behavior).
      */

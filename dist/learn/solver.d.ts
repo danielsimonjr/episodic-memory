@@ -82,6 +82,8 @@ export interface SolveManyOptions extends Omit<SolveOptions, 'snapshotId'> {
     snapshotId: number;
     /** The run's shared call budget. A batch stops with `BudgetExhausted` at the cap. */
     budget: CallBudget;
+    /** Test seam: defaults to `solveTask`, so a leaf learner can be driven by a fake. */
+    solve?: typeof solveTask;
 }
 /**
  * Solve a batch of tasks.

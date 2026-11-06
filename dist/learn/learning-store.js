@@ -14,8 +14,15 @@ import Database from 'better-sqlite3';
 import fs from 'fs';
 import path from 'path';
 import { getLearningDbPath, tryChmod } from '../paths.js';
-/** Tables this module owns today. Later tasks extend the list. */
-export const LEARNING_TABLES = ['knowledge_snapshot', 'learned_block'];
+import { ensureLearningSchema } from './learning-db.js';
+/** Tables this module owns. Later tasks extend the list. */
+export const LEARNING_TABLES = [
+    'knowledge_snapshot',
+    'learned_block',
+    'learning_run',
+    'learning_task',
+    'learning_attempt',
+];
 function applySecureFileMode(dbPath) {
     tryChmod(dbPath, 0o600);
     tryChmod(`${dbPath}-wal`, 0o600);
@@ -40,6 +47,8 @@ export function migrateLearningSchema(db) {
       rendered_at TEXT NOT NULL
     )
   `);
+    // The learning trace: runs, tasks, attempts (spec §5.3).
+    ensureLearningSchema(db);
 }
 /**
  * Open the learning trace database.

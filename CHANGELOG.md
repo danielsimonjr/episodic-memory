@@ -5,6 +5,22 @@
 - **A candidate knowledge revision no longer hides the still-active previous version.** `putEntry` no longer clears the parent's `isLatest`; only `supersede` does. `listActive` and snapshots are gated on status and `supersededBy`. `getBySlug` returns the highest logical version. Reflection `generalization_confidence` uses 0.3 / 0.6 / 0.9.
 
 ### Added
+- **Self-practice task generation and grading — the eval harness (Task 4 of the Recursa plan).** The
+  learning trace gains `learning_run`, `learning_task` and `learning_attempt`, and three new modules
+  make the archive grade itself. `src/learn/tasks.ts` selects source exchanges deterministically from
+  a seed (sidechains and projects below the floor excluded), asks a text-only model for a `locate`,
+  `recall`, `when` and `multi` prompt at tiers 1 to 3 per exchange, redacts and screens every prompt,
+  splits 60/40 inside each `(project, tier)` stratum, and stores truth as an address plus the
+  session's date range. `src/learn/grade.ts` grades an answer deterministically for `locate`
+  (1.0 overlap, 0.5 same session, 0 otherwise), `when` (project plus date inside the session range
+  widened one day each side) and `multi` (every address), and gates `recall` on the location before a
+  judge score. `listTasks` is the only task read path and its `split` argument is mandatory, so the
+  held-out split cannot reach a learner prompt; `passRate({ signalOnly })` restricts to
+  `locate`/`when`/`multi` at tiers 2 and 3, so tier 1 and `recall` are reported but never decide
+  whether an edit is kept. Also: `callLearnModel` and `resolveLearnModels` in `summarizer.ts` give
+  learn calls their own model (`EPISODIC_MEMORY_LEARN_MODEL`, default `sonnet`) without moving the
+  digest model, and `callClaude`'s fallback notice now goes to stderr instead of corrupting
+  JSON-RPC stdout.
 - **`@danielsimonjr/memoryjs` as a runtime dependency, for the `learn` knowledge store (Task 0 of the
   Recursa plan; no learning code yet).** The package is marked external in the esbuild bundle beside
   `better-sqlite3`, and its `package.json` joins the wrapper's dependency sentinels so a plugin-cache

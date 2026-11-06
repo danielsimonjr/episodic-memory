@@ -146,8 +146,8 @@ Reference entities are created before the relation, because memoryjs validates b
 ### `learned/learning.sqlite`
 
 The plugin's own database, opened with the same pragmas and directory modes as `db.sqlite` and its
-own idempotent `migrateLearningSchema`. Task 1 creates these two tables; the `learning_*` tables
-(run, task, attempt) are added with their code.
+own idempotent `migrateLearningSchema`. `knowledge_snapshot` and `learned_block` came with Task 1;
+the `learning_*` tables (run, task, attempt) with the eval harness.
 
 ```sql
 CREATE TABLE knowledge_snapshot (
@@ -162,7 +162,61 @@ CREATE TABLE learned_block (
   text TEXT NOT NULL,         -- the rendered, screened, redacted learned block
   rendered_at TEXT NOT NULL
 );
+
+CREATE TABLE learning_run (
+  id TEXT PRIMARY KEY,        -- run-<iso timestamp>-<random>
+  phase TEXT NOT NULL,        -- bootstrap | improve
+  parent_run_id TEXT,         -- a child learner's orchestrator
+  project TEXT,
+  status TEXT NOT NULL,       -- running | done | stopped | failed | deferred
+  started_at TEXT NOT NULL,
+  finished_at TEXT,
+  budget TEXT NOT NULL,       -- JSON: caps and use for calls, USD, wall clock, rounds
+  metrics TEXT NOT NULL,      -- JSON: pass rates before/after per split, kind and tier
+  seed INTEGER,               -- the split seed, recorded on the run (§7 rule 13)
+  rejections TEXT NOT NULL    -- JSON list of { slug, reason }
+);
+
+CREATE TABLE learning_task (
+  id INTEGER PRIMARY KEY,
+  run_id TEXT NOT NULL,
+  kind TEXT NOT NULL,         -- locate | recall | when | multi
+  tier INTEGER NOT NULL,      -- 1 | 2 | 3
+  split TEXT NOT NULL,        -- train | test
+  project TEXT NOT NULL,
+  prompt TEXT NOT NULL,       -- redacted and screened
+  truth TEXT NOT NULL,        -- JSON TaskTruth: addresses, session date range, redacted answer
+  status TEXT NOT NULL        -- ok | stale
+);
+
+CREATE TABLE learning_attempt (
+  id INTEGER PRIMARY KEY,
+  task_id INTEGER NOT NULL,
+  run_id TEXT NOT NULL,
+  snapshot_id INTEGER NOT NULL,  -- knowledge_snapshot.id: K^(t)
+  role TEXT NOT NULL,            -- solve | validate | merge-check
+  passed INTEGER NOT NULL,
+  score REAL NOT NULL,           -- 0, 0.5 or 1 for a deterministic grade; the judge score for recall
+  answer TEXT NOT NULL,          -- redacted, capped at 4000 characters
+  trace TEXT NOT NULL,           -- JSON [{ tool, args, resultAddress, resultChars }]; no result text
+  cost TEXT NOT NULL,            -- JSON { turns, inputTokens, outputTokens, usd }
+  outcome TEXT NOT NULL,         -- graded | aborted | killed | error
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX idx_learning_task_split ON learning_task(split, status);
+CREATE INDEX idx_learning_task_run ON learning_task(run_id);
+CREATE INDEX idx_learning_attempt_run ON learning_attempt(run_id);
+CREATE INDEX idx_learning_attempt_task ON learning_attempt(task_id);
 ```
+
+Two reads are constrained in code, not by convention:
+
+- `listTasks` is the only task read path and takes a mandatory `split`, so the held-out `test`
+  split cannot reach a learner prompt (§7 rule 13).
+- `passRate` counts the newest `graded` attempt per task, never counts a task whose source went
+  `stale`, and with `signalOnly` restricts to `locate`/`when`/`multi` at tiers 2 and 3 — tier 1 and
+  `recall` are reported but never decide whether an edit is kept.
 
 `learned_block` is what the SessionStart hook reads. The hook opens this file **read-only** with
 `migrate: false`, so it never runs DDL, and it never loads memoryjs.

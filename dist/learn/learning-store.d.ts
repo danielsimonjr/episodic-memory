@@ -11,8 +11,8 @@
  * tables (runs, tasks, attempts) are added with their code.
  */
 import Database from 'better-sqlite3';
-/** Tables this module owns today. Later tasks extend the list. */
-export declare const LEARNING_TABLES: readonly ["knowledge_snapshot", "learned_block"];
+/** Tables this module owns. Later tasks extend the list. */
+export declare const LEARNING_TABLES: readonly ["knowledge_snapshot", "learned_block", "learning_run", "learning_task", "learning_attempt"];
 export interface OpenLearningDbOptions {
     /** Open read-only. Implies `migrate: false`. */
     readonly?: boolean;

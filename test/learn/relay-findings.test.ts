@@ -70,10 +70,15 @@ describe('relay findings: writeLearnedBlocks clears a project whose entries are 
   it('does not leave the previous block behind when every entry for a project left the active set', async () => {
     const table = new Map<string, string>();
     const learningDb = {
-      prepare: (_sql: string) => ({
-        run: (project: string, text: string) => {
-          table.set(project, text);
+      prepare: (sql: string) => ({
+        run: (project: string, text?: string) => {
+          if (/\bDELETE\b/i.test(sql)) {
+            table.delete(project);
+            return;
+          }
+          table.set(project, text ?? '');
         },
+        all: () => [...table.keys()].map(project => ({ project })),
       }),
     } as never;
 

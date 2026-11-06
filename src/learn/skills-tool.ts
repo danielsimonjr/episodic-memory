@@ -17,14 +17,13 @@ import path from 'path';
 import { redactSecrets } from '../redact.js';
 import { getSuperpowersDir } from '../paths.js';
 import { projectKeyFromCwd } from '../digest-inject.js';
-import { learnEnabled } from './learn-config.js';
+import { LEARN_OFF_MESSAGE, learnEnabled } from './learn-config.js';
+
+export { LEARN_OFF_MESSAGE };
 import { screenLearnedText } from './learned-text-screen.js';
 import { redactKeepingMarks, type RedactFn } from './learn-inject.js';
 import { openKnowledgeStore, type KnowledgeStore } from './knowledge-store.js';
 import type { KnowledgeEntry } from './types.js';
-
-export const LEARN_OFF_MESSAGE =
-  'Learning is off. Learned skills appear here once EPISODIC_MEMORY_LEARN=1 is set and the episodic-memory learn CLI has written some.';
 
 export const NO_SKILLS_MESSAGE =
   'No learned skills yet. Set EPISODIC_MEMORY_LEARN=1 and run the episodic-memory learn CLI to collect some.';
@@ -125,7 +124,11 @@ export async function skillsToolText(params: SkillsToolParams): Promise<string> 
     if (params.get) {
       const all = await store.listByStatus(['active']);
       const match = all.find(
-        entry => entry.kind === 'skill' && entry.supersededBy === null && entry.slug === params.get
+        entry =>
+          entry.kind === 'skill' &&
+          entry.supersededBy === null &&
+          entry.slug === params.get &&
+          (entry.project === project || entry.project === '*')
       );
       if (!match) return `No learned skill "${params.get}".`;
       const rendered = renderSkill(match, redact);

@@ -208,9 +208,49 @@ describe('MCP protocol compliance', () => {
     const searchText = (search?.result as { content?: Array<{ text: string }> })?.content?.[0]?.text ?? '';
     expect(searchText).not.toMatch(/forbidden module/);
 
-    // The skills call is the first thing that reaches memoryjs, and the probe
-    // catches it. The error is the assertion.
+    // Flag-off `skills` answers without importing skills-tool, so memoryjs stays
+    // unloaded. The probe would have failed the call if the import ran.
     const skills = messages.find((m) => m.id === 4);
+    const skillsText = (skills?.result as { content?: Array<{ text: string }> })?.content?.[0]?.text ?? '';
+    expect(skillsText).toMatch(/Learning is off/);
+    expect(skillsText).not.toMatch(/forbidden module/);
+  });
+
+  it('loads memoryjs on a flag-on skills call and not before', async () => {
+    const probe = 'file://' + join(REPO_ROOT, 'test/helpers/forbid-modules.mjs');
+    const { stdout } = await sendLines(
+      [
+        JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'initialize',
+          params: {
+            protocolVersion: '2025-11-25',
+            capabilities: {},
+            clientInfo: { name: 'probe', version: '0.0' },
+          },
+        }),
+        JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized', params: {} }),
+        JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} }),
+        JSON.stringify({
+          jsonrpc: '2.0',
+          id: 3,
+          method: 'tools/call',
+          params: { name: 'skills', arguments: {} },
+        }),
+      ],
+      {
+        EPISODIC_MEMORY_LEARN: '1',
+        FORBID_MODULES: '@danielsimonjr/memoryjs',
+        NODE_OPTIONS: `--import=${probe}`,
+      }
+    );
+
+    const messages = parseStdoutLines(stdout);
+    const tools = messages.find((m) => m.id === 2);
+    const toolNames = (tools?.result as { tools: Array<{ name: string }> })?.tools.map((t) => t.name);
+    expect(toolNames).toEqual(['search', 'read', 'digest', 'skills']);
+    const skills = messages.find((m) => m.id === 3);
     const skillsText = (skills?.result as { content?: Array<{ text: string }> })?.content?.[0]?.text ?? '';
     expect(skillsText).toMatch(/forbidden module loaded: @danielsimonjr\/memoryjs/);
   });

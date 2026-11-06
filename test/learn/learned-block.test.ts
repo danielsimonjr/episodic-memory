@@ -7,6 +7,7 @@ import { openLearningDb, migrateLearningSchema } from '../../src/learn/learning-
 import {
   insertKnowledgeEntry,
   activate,
+  retire,
 } from '../../src/learn/knowledge-db.js';
 import { writeLearnedBlocks } from '../../src/learn/learned-block.js';
 import type Database from 'better-sqlite3';
@@ -101,6 +102,17 @@ describe('writeLearnedBlocks', () => {
     expect(second).toContain('alpha:');
     // One row per project, never a duplicate.
     expect(rows().filter(r => r.project === 'proj-a')).toHaveLength(1);
+  });
+
+  it('clears the row when the project has no active entries left', async () => {
+    const id = await insertKnowledgeEntry(store, nk({ slug: 'alpha' }));
+    await activate(store, id, null, 'verified');
+    await writeLearnedBlocks(store, learningDb, 2500);
+    expect(rows().some(r => r.project === 'proj-a')).toBe(true);
+
+    await retire(store, id);
+    await writeLearnedBlocks(store, learningDb, 2500);
+    expect(rows().some(r => r.project === 'proj-a')).toBe(false);
   });
 
   it('writes nothing when no entry is active', async () => {

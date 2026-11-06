@@ -11,7 +11,8 @@
  * context would keep answering from whatever was on disk when the server
  * started and a `learn` run later in the session would be invisible.
  */
-export declare const LEARN_OFF_MESSAGE = "Learning is off. Learned skills appear here once EPISODIC_MEMORY_LEARN=1 is set and the episodic-memory learn CLI has written some.";
+import { LEARN_OFF_MESSAGE } from './learn-config.js';
+export { LEARN_OFF_MESSAGE };
 export declare const NO_SKILLS_MESSAGE = "No learned skills yet. Set EPISODIC_MEMORY_LEARN=1 and run the episodic-memory learn CLI to collect some.";
 export interface SkillsToolParams {
     get?: string;

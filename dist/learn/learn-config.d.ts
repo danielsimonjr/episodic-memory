@@ -31,6 +31,13 @@ export interface LearnConfig {
  */
 export declare function learnEnabled(): boolean;
 /**
+ * What the `skills` tool says with the flag off.
+ *
+ * Lives here, not in `skills-tool.ts`, so `mcp-tools.ts` can answer before it
+ * imports that module. Importing `skills-tool` is what loads memoryjs.
+ */
+export declare const LEARN_OFF_MESSAGE = "Learning is off. Learned skills appear here once EPISODIC_MEMORY_LEARN=1 is set and the episodic-memory learn CLI has written some.";
+/**
  * The run's settings. Every value comes from its own `EPISODIC_MEMORY_LEARN_*`
  * variable and falls back to the Global Constraints default when it is absent,
  * not positive, not a whole number where a count is needed, or not in an enum.

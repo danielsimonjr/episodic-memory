@@ -4,6 +4,7 @@
  */
 import { resolveArchiveJsonlPath, readJsonlLines, } from './archive-path.js';
 import { maybeRedactSecrets } from './redact.js';
+import { LEARN_OFF_MESSAGE, learnEnabled } from './learn/learn-config.js';
 import { assertMcpAuthorized } from './mcp-auth.js';
 import { DigestInputSchema, SearchInputSchema, ShowConversationInputSchema, SkillsInputSchema, handleMcpError, } from './mcp-schemas.js';
 export async function handleToolCall(name, args) {
@@ -85,8 +86,13 @@ export async function handleToolCall(name, args) {
         }
         if (name === 'skills') {
             const params = SkillsInputSchema.parse(args);
-            // Lazy on purpose: `skills-tool.js` is the memoryjs half of the tool, and a
-            // server that never gets a `skills` call must never pay to load it.
+            // Flag-off must not import `skills-tool.js`: that module loads memoryjs.
+            // The tool stays registered; it answers without opening a store.
+            if (!learnEnabled()) {
+                return { content: [{ type: 'text', text: LEARN_OFF_MESSAGE }] };
+            }
+            // Lazy on purpose: a server that never gets a flag-on `skills` call must
+            // never pay to load memoryjs.
             const { skillsToolText } = await import('./learn/skills-tool.js');
             return { content: [{ type: 'text', text: await skillsToolText(params) }] };
         }

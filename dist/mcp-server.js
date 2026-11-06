@@ -3339,6 +3339,15 @@ init_db();
 init_archive_path();
 init_redact();
 
+// src/learn/learn-config.ts
+var TRUTHY2 = /* @__PURE__ */ new Set(["1", "true", "yes", "on"]);
+function learnEnabled() {
+  const value = process.env.EPISODIC_MEMORY_LEARN;
+  if (!value) return false;
+  return TRUTHY2.has(value.trim().toLowerCase());
+}
+var LEARN_OFF_MESSAGE = "Learning is off. Learned skills appear here once EPISODIC_MEMORY_LEARN=1 is set and the episodic-memory learn CLI has written some.";
+
 // src/mcp-auth.ts
 import { timingSafeEqual } from "crypto";
 function getRequiredMcpToken() {
@@ -23228,6 +23237,9 @@ async function handleToolCall(name, args) {
     }
     if (name === "skills") {
       const params = SkillsInputSchema.parse(args);
+      if (!learnEnabled()) {
+        return { content: [{ type: "text", text: LEARN_OFF_MESSAGE }] };
+      }
       const { skillsToolText } = await import("./learn/skills-tool.js");
       return { content: [{ type: "text", text: await skillsToolText(params) }] };
     }

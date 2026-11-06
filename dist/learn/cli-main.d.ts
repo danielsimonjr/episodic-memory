@@ -19,7 +19,6 @@ import { type SolveOptions } from './solver.js';
 import { LEARN_USAGE } from './usage.js';
 import type { LearnDbs } from './types.js';
 /** Exit code for a subcommand a later task fills in. Distinct from a failure. */
-export declare const NOT_IMPLEMENTED_EXIT = 3;
 export interface LearnCliDeps {
     /** Open handles. When absent the CLI opens all three and closes them. */
     dbs?: LearnDbs;

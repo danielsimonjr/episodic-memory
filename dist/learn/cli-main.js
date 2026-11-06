@@ -28,10 +28,7 @@ import { isValidSlug } from './types.js';
 import { BudgetExhausted, CallBudget, solveMany } from './solver.js';
 import { runLearn } from './learner.js';
 import { LEARN_USAGE } from './usage.js';
-/** Exit code for a subcommand a later task fills in. Distinct from a failure. */
-export const NOT_IMPLEMENTED_EXIT = 3;
 export { LEARN_USAGE };
-const STUB_COMMANDS = new Set(['render']);
 const IMPLEMENTED = new Set([
     'tasks',
     'solve',
@@ -41,6 +38,7 @@ const IMPLEMENTED = new Set([
     'improve',
     'approve',
     'export',
+    'render',
 ]);
 /** `--name value`, `--name=value`, or undefined when absent. A bare `--name` yields ''. */
 function optionValue(argv, name) {
@@ -604,6 +602,32 @@ async function commandExport(dbs, argv, deps) {
         '\n');
     return result.written.length > 0 || result.warnings.length === 0 ? 0 : 1;
 }
+/**
+ * `learn render [--project P]`: rewrite the learned-hints blocks from the
+ * active entries and say what was written. Every run and approval does this
+ * on its own; the command exists for a store edited by hand and for seeing
+ * what a session will be shown.
+ */
+async function commandRender(dbs, argv, deps) {
+    await writeLearnedBlocks(dbs.store, dbs.learning, learnConfig().maxChars);
+    const rows = dbs.learning
+        .prepare('SELECT project, text FROM learned_block ORDER BY project')
+        .all();
+    const project = optionValue(argv, 'project');
+    if (project) {
+        const row = rows.find(r => r.project === project);
+        if (!row) {
+            deps.stderr(`episodic-memory learn: no learned-hints block for project '${project}'\n`);
+            return 1;
+        }
+        deps.stdout(row.text.endsWith('\n') ? row.text : `${row.text}\n`);
+        return 0;
+    }
+    deps.stdout(`rendered ${rows.length} learned-hints block(s)\n`);
+    for (const row of rows)
+        deps.stdout(`  ${row.project}: ${row.text.length} chars\n`);
+    return 0;
+}
 async function commandReport(dbs, argv, deps) {
     const runId = optionValue(argv, 'run') || latestRunId(dbs.learning);
     if (!runId) {
@@ -630,15 +654,10 @@ export async function runLearnCli(argv, deps) {
         return 0;
     }
     // Flag off wins over everything: spec §7 rule 1 says every `learn` subcommand
-    // exits 0 with this message, including the ones a later task fills in.
+    // exits 0 with this message.
     if (!learnEnabled()) {
         deps.stderr(`${LEARN_OFF_MESSAGE}\n`);
         return 0;
-    }
-    if (STUB_COMMANDS.has(command)) {
-        deps.stderr(`episodic-memory learn: '${command}' is not implemented yet; ` +
-            'it lands with a later task and nothing was changed.\n');
-        return NOT_IMPLEMENTED_EXIT;
     }
     if (!IMPLEMENTED.has(command)) {
         deps.stderr(`episodic-memory learn: unknown command '${command}'\n\n${LEARN_USAGE}\n`);
@@ -662,6 +681,8 @@ export async function runLearnCli(argv, deps) {
                 return await commandApprove(dbs, argv.slice(1), deps);
             case 'export':
                 return await commandExport(dbs, argv.slice(1), deps);
+            case 'render':
+                return await commandRender(dbs, argv.slice(1), deps);
             default:
                 return await commandReport(dbs, argv.slice(1), deps);
         }

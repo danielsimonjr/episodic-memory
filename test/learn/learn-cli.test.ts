@@ -5,7 +5,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { runLearnCli, NOT_IMPLEMENTED_EXIT } from '../../src/learn/cli-main.js';
+import { runLearnCli } from '../../src/learn/cli-main.js';
 import { openLearningDb } from '../../src/learn/learning-store.js';
 import { openKnowledgeStore, type KnowledgeStore } from '../../src/learn/knowledge-store.js';
 import { insertKnowledgeEntry } from '../../src/learn/knowledge-db.js';
@@ -418,19 +418,67 @@ describe('runLearnCli', () => {
     expect(text).toMatch(/improve/);
   });
 
-  it.each(['render'])(
-    '%s is a stub with a clear not-implemented exit code',
-    async command => {
-      const cap = capture();
-      const code = await runLearnCli([command], { ...cap.deps, dbs });
-      expect(code).toBe(NOT_IMPLEMENTED_EXIT);
-      expect(cap.stderr()).toMatch(/not implemented/i);
-    }
-  );
+  it('render rewrites the learned-hints block from the active entries and lists what it wrote', async () => {
+    await insertKnowledgeEntry(store, {
+      kind: 'instruction',
+      project: 'proj-a',
+      slug: 'search-first',
+      title: 'Search first',
+      description: 'Search before reading',
+      body: `mode text for release notes [#${HEX}]`,
+      scope: 'proj-a release work',
+      confidence: 'medium',
+      trust: 'verified',
+      sources: [],
+      status: 'active',
+      runId: 'run-1',
+    });
+    // A stale row for a project with no active entry must be cleared by the render.
+    learning
+      .prepare("INSERT INTO learned_block (project, text, rendered_at) VALUES ('gone', 'old text', '2020-01-01T00:00:00.000Z')")
+      .run();
 
-  it('the flag being off wins over every subcommand, including the stubs', async () => {
+    const cap = capture();
+    expect(await runLearnCli(['render'], { ...cap.deps, dbs })).toBe(0);
+
+    const rows = learning
+      .prepare('SELECT project, text FROM learned_block ORDER BY project')
+      .all() as Array<{ project: string; text: string }>;
+    // The shared `*` block is empty here, so no row is kept for it.
+    expect(rows.map(r => r.project)).toEqual(['proj-a']);
+    expect(rows.find(r => r.project === 'proj-a')?.text).toContain('release notes');
+    expect(cap.stdout()).toMatch(/rendered 1 learned-hints block\(s\)/);
+    expect(cap.stdout()).toMatch(/proj-a: \d+ chars/);
+    expect(cap.stderr()).toBe('');
+  });
+
+  it('render --project prints that block after rendering', async () => {
+    await insertKnowledgeEntry(store, {
+      kind: 'instruction',
+      project: 'proj-a',
+      slug: 'search-first',
+      title: 'Search first',
+      description: 'Search before reading',
+      body: `mode text for release notes [#${HEX}]`,
+      scope: 'proj-a release work',
+      confidence: 'medium',
+      trust: 'verified',
+      sources: [],
+      status: 'active',
+      runId: 'run-1',
+    });
+    const cap = capture();
+    expect(await runLearnCli(['render', '--project', 'proj-a'], { ...cap.deps, dbs })).toBe(0);
+    expect(cap.stdout()).toContain('release notes');
+
+    const missing = capture();
+    expect(await runLearnCli(['render', '--project', 'nope'], { ...missing.deps, dbs })).toBe(1);
+    expect(missing.stderr()).toMatch(/no learned-hints block for project 'nope'/);
+  });
+
+  it('the flag being off wins over every subcommand', async () => {
     process.env.EPISODIC_MEMORY_LEARN = '';
-    for (const command of ['tasks', 'status', 'bootstrap', 'improve']) {
+    for (const command of ['tasks', 'status', 'bootstrap', 'improve', 'render']) {
       const cap = capture();
       const code = await runLearnCli([command], { ...cap.deps, dbs });
       expect(code, command).toBe(0);

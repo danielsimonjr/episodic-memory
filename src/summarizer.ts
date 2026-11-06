@@ -216,9 +216,21 @@ function summarizerTimeoutMs(): number {
   return Number.isFinite(configured) && configured > 0 ? configured : 120000;
 }
 
-async function callClaude(prompt: string, useFallback = false): Promise<string> {
-  const primaryModel = process.env.EPISODIC_MEMORY_API_MODEL || 'haiku';
-  const fallbackModel = process.env.EPISODIC_MEMORY_API_MODEL_FALLBACK || 'sonnet';
+/** Options for one Claude text call. Omitted values read the environment as before. */
+export interface CallClaudeOptions {
+  /** Model for the primary attempt. Default: `EPISODIC_MEMORY_API_MODEL || 'haiku'`. */
+  model?: string;
+  /** Model for the retry. Default: `EPISODIC_MEMORY_API_MODEL_FALLBACK || 'sonnet'`. */
+  fallbackModel?: string;
+  /** Start on the fallback model. */
+  useFallback?: boolean;
+}
+
+async function callClaude(prompt: string, opts: CallClaudeOptions = {}): Promise<string> {
+  const primaryModel = opts.model || process.env.EPISODIC_MEMORY_API_MODEL || 'haiku';
+  const fallbackModel =
+    opts.fallbackModel || process.env.EPISODIC_MEMORY_API_MODEL_FALLBACK || 'sonnet';
+  const useFallback = opts.useFallback === true;
   const model = useFallback ? fallbackModel : primaryModel;
 
   // Bound the call: a stalled SDK subprocess must not wedge the sync forever (the
@@ -240,9 +252,11 @@ async function callClaude(prompt: string, useFallback = false): Promise<string> 
         // Check if result is an API error (SDK returns errors as result strings)
         if (typeof result === 'string' && result.includes('API Error') && result.includes('thinking.budget_tokens')) {
           if (!useFallback) {
-            console.log(`    ${primaryModel} hit thinking budget error, retrying with ${fallbackModel}`);
+            // stderr only: this module is reachable from the MCP server, where
+            // stdout is reserved for JSON-RPC (CLAUDE.md gotcha #1).
+            console.error(`    ${primaryModel} hit thinking budget error, retrying with ${fallbackModel}`);
             clearTimeout(timer);
-            return await callClaude(prompt, true);
+            return await callClaude(prompt, { model: primaryModel, fallbackModel, useFallback: true });
           }
           // If fallback also fails, return error message
           return result;
@@ -274,12 +288,47 @@ async function callClaude(prompt: string, useFallback = false): Promise<string> 
 
 /** Route a summarization prompt to the configured backend (see ollama-backend.ts). */
 function callModel(prompt: string): Promise<string> {
-  return summarizerBackend() === 'ollama' ? callOllama(prompt) : callClaude(prompt);
+  return summarizerBackend() === 'ollama'
+    ? callOllama(prompt)
+    : callClaude(prompt, {
+        model: process.env.EPISODIC_MEMORY_API_MODEL || 'haiku',
+        fallbackModel: process.env.EPISODIC_MEMORY_API_MODEL_FALLBACK || 'sonnet',
+      });
 }
 
 /** Digest entry point: same backend, model and fallback choice as session summaries. */
 export function callDigestModel(prompt: string): Promise<string> {
   return callModel(prompt);
+}
+
+/**
+ * The learn model and its retry, from their own variables.
+ *
+ * Learning calls are text-only (task paraphrases, merge and split decisions,
+ * the recall judge). They get their own model setting so tuning them never
+ * moves the digest's model, and `sonnet` on both sides: the judge and the
+ * paraphrase both need more than a summarizer's instruction-following.
+ */
+export function resolveLearnModels(
+  env: Record<string, string | undefined> = process.env
+): { model: string; fallbackModel: string } {
+  const model = (env.EPISODIC_MEMORY_LEARN_MODEL || '').trim() || 'sonnet';
+  const fallbackModel = (env.EPISODIC_MEMORY_API_MODEL_FALLBACK || '').trim() || 'sonnet';
+  return { model, fallbackModel };
+}
+
+/**
+ * Learn entry point: the backend switch with the learn model.
+ *
+ * Text-only calls (task generation, learner split/merge, the recall judge) go
+ * through here. A tool-using solver or learner is an SDK subprocess and does not
+ * (spec: the ollama backend is a text call, not a harness).
+ */
+export function callLearnModel(prompt: string): Promise<string> {
+  if (summarizerBackend() === 'ollama') {
+    return callOllama(prompt);
+  }
+  return callClaude(prompt, resolveLearnModels());
 }
 
 interface PendingAppServerRequest {

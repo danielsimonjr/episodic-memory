@@ -115,6 +115,28 @@ describe('summarizeConversation Claude path', () => {
     expect(queryMock.mock.calls.length).toBeLessThanOrEqual(21);
   });
 
+  it('logs the thinking-budget fallback to stderr, never to stdout (the MCP server shares this module)', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const budgetError =
+      'API Error: 400 thinking.budget_tokens: budget_tokens must be at least 1024';
+    let call = 0;
+    queryMock.mockImplementation(() => {
+      call += 1;
+      return sdkMessages([RESULT_SUCCESS(call === 1 ? budgetError : '<summary>retried</summary>')]);
+    });
+
+    try {
+      expect(await summarizeConversation(exchanges)).toBe('retried');
+      expect(queryMock).toHaveBeenCalledTimes(2);
+      expect(errorSpy.mock.calls.flat().join(' ')).toContain('retrying with');
+      expect(logSpy.mock.calls.flat().join(' ')).not.toContain('retrying with');
+    } finally {
+      logSpy.mockRestore();
+      errorSpy.mockRestore();
+    }
+  });
+
   it('throws a timeout error instead of hanging forever when the SDK subprocess never returns', async () => {
     // The root cause of the wedged orphans: callClaude awaited the SDK result with
     // no timeout, so a stalled subprocess blocked the sync indefinitely. callClaude

@@ -102,6 +102,12 @@ export interface TaskTruth {
     project: string;
     assistantMessage: string;
 }
+/** The four task kinds (§4.4). Only `locate`, `when` and `multi` are a signal. */
+export type LearningKind = 'locate' | 'recall' | 'when' | 'multi';
+/** Difficulty tiers. Tier 1 reuses the user's words and measures nothing. */
+export type LearningTier = 1 | 2 | 3;
+/** `ok`, or `stale` once `checkTasks` finds the source address gone. */
+export type TaskStatus = 'ok' | 'stale';
 /** One tool call a solver made. Result text is never stored. */
 export interface TraceStep {
     tool: string;

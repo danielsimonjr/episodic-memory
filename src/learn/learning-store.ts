@@ -15,9 +15,16 @@ import Database from 'better-sqlite3';
 import fs from 'fs';
 import path from 'path';
 import { getLearningDbPath, tryChmod } from '../paths.js';
+import { ensureLearningSchema } from './learning-db.js';
 
-/** Tables this module owns today. Later tasks extend the list. */
-export const LEARNING_TABLES = ['knowledge_snapshot', 'learned_block'] as const;
+/** Tables this module owns. Later tasks extend the list. */
+export const LEARNING_TABLES = [
+  'knowledge_snapshot',
+  'learned_block',
+  'learning_run',
+  'learning_task',
+  'learning_attempt',
+] as const;
 
 export interface OpenLearningDbOptions {
   /** Open read-only. Implies `migrate: false`. */
@@ -58,6 +65,9 @@ export function migrateLearningSchema(db: Database.Database): void {
       rendered_at TEXT NOT NULL
     )
   `);
+
+  // The learning trace: runs, tasks, attempts (spec §5.3).
+  ensureLearningSchema(db);
 }
 
 /**

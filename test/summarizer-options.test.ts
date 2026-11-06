@@ -4,9 +4,43 @@ import {
   buildCodexSummarizerCommand,
   buildSummarizerQueryOptions,
   getApiEnv,
+  resolveLearnModels,
   runCodexCommand,
   shouldSkipReentrantSync
 } from '../src/summarizer.js';
+
+describe('resolveLearnModels', () => {
+  it('defaults both the learn model and its fallback to sonnet', () => {
+    expect(resolveLearnModels({})).toEqual({ model: 'sonnet', fallbackModel: 'sonnet' });
+  });
+
+  it('reads EPISODIC_MEMORY_LEARN_MODEL and EPISODIC_MEMORY_API_MODEL_FALLBACK', () => {
+    expect(
+      resolveLearnModels({
+        EPISODIC_MEMORY_LEARN_MODEL: 'opus',
+        EPISODIC_MEMORY_API_MODEL_FALLBACK: 'haiku',
+      })
+    ).toEqual({ model: 'opus', fallbackModel: 'haiku' });
+  });
+
+  it('falls back per key when one variable is empty and never reads the digest model', () => {
+    expect(
+      resolveLearnModels({
+        EPISODIC_MEMORY_LEARN_MODEL: '   ',
+        EPISODIC_MEMORY_API_MODEL: 'haiku',
+      })
+    ).toEqual({ model: 'sonnet', fallbackModel: 'sonnet' });
+  });
+
+  it('reads process.env by default', () => {
+    process.env.EPISODIC_MEMORY_LEARN_MODEL = 'opus-test';
+    try {
+      expect(resolveLearnModels().model).toBe('opus-test');
+    } finally {
+      delete process.env.EPISODIC_MEMORY_LEARN_MODEL;
+    }
+  });
+});
 
 describe('buildSummarizerQueryOptions', () => {
   it('sets persistSession: false so the SDK does not write session JSONLs to ~/.claude/projects/ (#83)', () => {
@@ -33,6 +67,33 @@ describe('buildSummarizerQueryOptions', () => {
   it('exposes no MCP servers to the summarizer subprocess', () => {
     const opts = buildSummarizerQueryOptions({ model: 'haiku' });
     expect(opts.mcpServers).toEqual({});
+  });
+
+  it('passes the learn model through unchanged, alongside the digest model', () => {
+    const learn = resolveLearnModels({
+      EPISODIC_MEMORY_LEARN_MODEL: 'opus',
+      EPISODIC_MEMORY_API_MODEL: 'haiku',
+    });
+    expect(buildSummarizerQueryOptions({ model: learn.model }).model).toBe('opus');
+    // The digest path keeps its own model; the learn setting never reaches it.
+    expect(buildSummarizerQueryOptions({ model: 'haiku' }).model).toBe('haiku');
+  });
+});
+
+describe('callLearnModel', () => {
+  it('routes to the ollama backend when that backend is selected', async () => {
+    // No model name is set, so the ollama call fails before any network I/O; the
+    // error proves the request went to callOllama rather than the Claude path
+    // (the Claude path would spawn the SDK instead of rejecting like this).
+    const { callLearnModel } = await import('../src/summarizer.js');
+    const saved = process.env.EPISODIC_MEMORY_SUMMARIZER_BACKEND;
+    process.env.EPISODIC_MEMORY_SUMMARIZER_BACKEND = 'ollama';
+    try {
+      await expect(callLearnModel('hello')).rejects.toThrow(/EPISODIC_MEMORY_OLLAMA_MODEL/);
+    } finally {
+      if (saved === undefined) delete process.env.EPISODIC_MEMORY_SUMMARIZER_BACKEND;
+      else process.env.EPISODIC_MEMORY_SUMMARIZER_BACKEND = saved;
+    }
   });
 });
 

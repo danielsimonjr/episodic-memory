@@ -1,0 +1,78 @@
+/**
+ * The learned-knowledge feature switch and its settings.
+ *
+ * This module imports nothing on purpose: the SessionStart hook loads it on its
+ * fast path, next to `better-sqlite3` and the small `dist/` modules, and must not
+ * pull in transformers, the SDK or memoryjs to read one environment variable.
+ */
+const TRUTHY = new Set(['1', 'true', 'yes', 'on']);
+const PREFIX = 'EPISODIC_MEMORY_LEARN_';
+const APPROVE_MODES = ['instructions', 'all', 'none'];
+function raw(suffix) {
+    const value = process.env[PREFIX + suffix];
+    if (value === undefined)
+        return undefined;
+    const trimmed = value.trim();
+    return trimmed === '' ? undefined : trimmed;
+}
+/** A count: a positive integer, or the default when the value is unusable. */
+function count(suffix, fallback) {
+    const value = raw(suffix);
+    if (value === undefined)
+        return fallback;
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed) || !Number.isInteger(parsed) || parsed <= 0)
+        return fallback;
+    return parsed;
+}
+/** A positive number that may be fractional, or the default when unusable. */
+function amount(suffix, fallback) {
+    const value = raw(suffix);
+    if (value === undefined)
+        return fallback;
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed) || parsed <= 0)
+        return fallback;
+    return parsed;
+}
+/**
+ * True when `EPISODIC_MEMORY_LEARN` names an affirmative value. Everything is
+ * off by default: with the flag off the hook output is byte-identical to today
+ * and no store is opened.
+ */
+export function learnEnabled() {
+    const value = process.env.EPISODIC_MEMORY_LEARN;
+    if (!value)
+        return false;
+    return TRUTHY.has(value.trim().toLowerCase());
+}
+/**
+ * The run's settings. Every value comes from its own `EPISODIC_MEMORY_LEARN_*`
+ * variable and falls back to the Global Constraints default when it is absent,
+ * not positive, not a whole number where a count is needed, or not in an enum.
+ */
+export function learnConfig() {
+    const approveRaw = raw('APPROVE');
+    const approve = approveRaw !== undefined && APPROVE_MODES.includes(approveRaw)
+        ? approveRaw
+        : 'instructions';
+    const model = raw('MODEL') ?? 'sonnet';
+    return {
+        model,
+        approve,
+        maxCalls: count('MAX_CALLS', 200),
+        maxUsd: amount('MAX_USD', 5),
+        maxMinutes: count('MAX_MINUTES', 60),
+        maxTasks: count('MAX_TASKS', 120),
+        concurrency: count('CONCURRENCY', 3),
+        rounds: count('ROUNDS', 3),
+        minSavingPct: count('MIN_SAVING', 10),
+        minGrounding: count('MIN_GROUNDING', 3),
+        solverMaxTurns: count('SOLVER_MAX_TURNS', 12),
+        learnerMaxTurns: count('LEARNER_MAX_TURNS', 30),
+        maxChars: count('MAX_CHARS', 2500),
+        leafMax: count('LEAF_MAX', 12),
+        editsPerRound: count('EDITS_PER_ROUND', 3),
+        validateSample: count('VALIDATE_SAMPLE', 5),
+    };
+}

@@ -210,5 +210,35 @@ export function buildLearnToolServer(
     );
   }
 
-  return createSdkMcpServer({ name: SERVER_NAME, version: '1.0.0', tools });
+  const server = createSdkMcpServer({ name: SERVER_NAME, version: '1.0.0', tools });
+  assertRegisteredToolsMatchServedList(server, options.allowPropose);
+  return server;
+}
+
+/**
+ * `allowedTools` is a wildcard (`mcp__episodic-learn__*`). A tool registered
+ * here but missing from {@link SERVED_TOOL_NAMES} would be granted by that
+ * wildcard wherever `canUseTool` is not the only gate. Fail at build time
+ * instead of discovering the drift from a solver transcript.
+ */
+function assertRegisteredToolsMatchServedList(
+  server: McpSdkServerConfigWithInstance,
+  allowPropose: boolean
+): void {
+  const instance = server.instance as unknown as {
+    _registeredTools?: Record<string, unknown>;
+  };
+  const registered = Object.keys(instance._registeredTools ?? {}).sort();
+  const prefix = `mcp__${SERVER_NAME}__`;
+  const expected = servedToolNames(allowPropose)
+    .map(name => (name.startsWith(prefix) ? name.slice(prefix.length) : name))
+    .sort();
+  if (registered.join('\0') !== expected.join('\0')) {
+    throw new Error(
+      `episodic-learn tool registration drifted from the served list ` +
+        `(registered: ${registered.join(', ') || 'none'}; ` +
+        `served: ${expected.join(', ') || 'none'}). ` +
+        `allowedTools uses a wildcard, so an unlisted registration must not pass silently.`
+    );
+  }
 }

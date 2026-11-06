@@ -197,13 +197,7 @@ export async function solveMany(dbs, tasks, options) {
     // One promise per task, each of which yields its semaphore slot between the
     // agent call and the database insert. A worker pool would be equivalent; the
     // global semaphore is what actually bounds subprocesses.
-    const settled = await Promise.allSettled(tasks.map(task => semaphore.run(async () => {
-        // Spend inside the slot so a budget stop cancels the remaining work
-        // rather than launching a subprocess to discover it is unaffordable.
-        if (options.budget.used >= options.budget.max)
-            throw new BudgetExhausted(options.budget.max);
-        return solveTask(dbs, task, { ...options, budget: options.budget });
-    })));
+    const settled = await Promise.allSettled(tasks.map(task => semaphore.run(async () => solveTask(dbs, task, { ...options, budget: options.budget }))));
     const attempts = [];
     let budgetError = null;
     let firstError = null;

@@ -80,6 +80,7 @@ export declare function promptInputsForSnapshot(dbs: LearnDbs, snapshotId: numbe
 export declare function solveTask(dbs: LearnDbs, task: LearningTask, options: SolveOptions): Promise<AttemptRow>;
 export interface SolveManyOptions extends Omit<SolveOptions, 'snapshotId'> {
     snapshotId: number;
+    /** The run's shared call budget. A batch stops with `BudgetExhausted` at the cap. */
     budget: CallBudget;
 }
 /**

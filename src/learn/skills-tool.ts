@@ -1,15 +1,14 @@
 /**
  * The `skills` MCP tool: read active learned skills out of the knowledge store.
  *
- * This module holds the store-backed half of the tool on purpose.
- * `mcp-tools.ts` imports it *inside* the `skills` branch, so a server with the
- * flag off never opens the knowledge store — a session that never asks for a
- * skill pays nothing for the feature.
+ * The module holds the store-backed half of the tool on purpose.
+ * `mcp-tools.ts` imports this module *inside* the `skills` branch. A server with the
+ * flag off therefore never opens the knowledge store. A session that never asks for
+ * a skill pays nothing for the feature.
  *
- * It opens a store per call and closes it in `finally`, so a long-running
- * server never holds a handle on `knowledge.db` between calls and a `learn`
- * run in another process is never blocked by a server that
- * started and a `learn` run later in the session would be invisible.
+ * The tool opens a store for each call and closes it in `finally`. A long-running
+ * server therefore holds no handle on `knowledge.db` between calls. The server does not block a `learn` run in
+ * another process, and the next call sees a later `learn` run.
  */
 
 import fs from 'fs';
@@ -19,19 +18,28 @@ import { getSuperpowersDir } from '../paths.js';
 import { projectKeyFromCwd } from '../digest-inject.js';
 import { LEARN_OFF_MESSAGE, learnEnabled } from './learn-config.js';
 
+/**
+ * The message that the skills tool returns when learning is off. learn-config.ts declares the constant, and this module re-exports it.
+ */
 export { LEARN_OFF_MESSAGE };
 import { screenLearnedText } from './learned-text-screen.js';
 import { redactKeepingMarks, type RedactFn } from './learn-inject.js';
 import { openKnowledgeStore, type KnowledgeStore } from './knowledge-store.js';
 import type { KnowledgeEntry } from './types.js';
 
+/** The text that the skills tool returns when the knowledge store file does not exist. */
 export const NO_SKILLS_MESSAGE =
   'No learned skills yet. Set EPISODIC_MEMORY_LEARN=1 and run the episodic-memory learn CLI to collect some.';
 
+/** The parameters of the `skills` tool. Each field has the same name as in `SkillsInputSchema`. */
 export interface SkillsToolParams {
+  /** The slug of one skill to return. */
   get?: string;
+  /** The text to search the learned skills for. */
   query?: string;
+  /** The project key. The default is the key of the working directory. */
   project?: string;
+  /** The maximum number of skills to return. The default is 10. */
   limit?: number;
 }
 
@@ -52,9 +60,9 @@ function sourcesText(entry: KnowledgeEntry): string {
 }
 
 /**
- * One skill as frontmatter plus body. Every field is redacted and screened;
- * a field the screen rejects withholds the whole entry rather than printing a
- * skill whose metadata or body cannot be trusted.
+ * One skill as frontmatter plus body. The function redacts and screens every
+ * field. A field that the screen rejects withholds the whole entry, rather than
+ * printing a skill with untrusted metadata or body.
  */
 function renderSkill(entry: KnowledgeEntry, redact: RedactFn): string | null {
   const fields: Array<[string, string]> = [
@@ -102,9 +110,9 @@ async function activeSkills(store: KnowledgeStore, project: string): Promise<Kno
 /**
  * The tool's text. Opens nothing with the flag off.
  *
- * The store file check comes before construction: an `openKnowledgeStore()`
- * would create `knowledge.db` (a writable open creates its tables), and a read-only tool
- * call must never be what creates the learned directory.
+ * The store file check runs before construction. An `openKnowledgeStore()` call
+ * would create `knowledge.db`, because a writable open creates its tables. A
+ * read-only tool call must never create the learned directory.
  */
 export async function skillsToolText(params: SkillsToolParams): Promise<string> {
   if (!learnEnabled()) return LEARN_OFF_MESSAGE;

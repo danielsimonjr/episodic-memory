@@ -1,20 +1,21 @@
 /**
  * Export the active skills as a tree of `SKILL.md` files.
  *
- * The knowledge store is the source of truth; this tree is generated output and
- * is the **only** place the feature replaces or removes files (spec §5.4, §7
+ * The knowledge store is the source of truth. This tree contains generated output, and
+ * the feature replaces or removes files only in this tree (spec §5.4, §7
  * rule 2). Two modes:
  *
  * - prune (the default, and only for the config-dir root): build the whole tree
- *   in a sibling `learned-skills.tmp-<pid>`, then rename the old root aside and
- *   the new tree into place. A rename that keeps failing with `EPERM` / `EBUSY`
- *   (a file open in a session on Windows) leaves the old tree alone, keeps the
- *   temp tree for the next run and reports a warning. It never throws.
+ *   in a sibling `learned-skills.tmp-<pid>`. Then rename the old root aside and
+ *   the new tree into place.
+ *   A rename that keeps failing with `EPERM` / `EBUSY` (a file open in a session on
+ *   Windows) leaves the old tree alone. The export keeps the temp tree for the next
+ *   run and reports a warning instead of throwing.
  * - copy (`learn export --to <dir>`): write file by file into the target and
  *   remove nothing there, ever.
  *
- * Every field is screened and redacted again on the way out: this text lands in
- * a project directory and is read by later sessions and learners.
+ * The export screens and redacts every field again on the way out. This text lands in
+ * a project directory, and later sessions and learners read it.
  */
 import fs from 'fs';
 import path from 'path';
@@ -38,9 +39,9 @@ function sleep(ms) {
 /**
  * A portable directory name for a project key.
  *
- * Project keys are made from a cwd (`[^A-Za-z0-9]` → `-`), so this is normally
- * the identity; the rewrite only defends against a hand-written key and against
- * `.`/`..`, which `path.join` would resolve as a traversal.
+ * A project key comes from a cwd by replacing each character outside `[A-Za-z0-9]` with `-`, so the rewrite is
+ * normally the identity. The rewrite only defends against a hand-written key and
+ * against `.`/`..`, which `path.join` would resolve as a traversal.
  */
 function projectDir(project) {
     if (project === '*')
@@ -49,9 +50,8 @@ function projectDir(project) {
     if (!safe || safe === '.' || safe === '..')
         return null;
     if (safe !== project) {
-        // A key that needed rewriting would not round-trip through the directory
-        // name, so the export keeps its distance rather than writing a tree a later
-        // reader cannot map back to an entry.
+        // A key that needed rewriting would not round-trip through the directory name.
+        // The export keeps its distance and writes no tree that a later reader cannot map back to an entry.
         return null;
     }
     return safe;
@@ -175,7 +175,7 @@ function listSkillDirs(root) {
  *
  * `KnowledgeEntry.sources` comes back empty from the store: sources live as
  * `cites` relations, not as observations. The body's `[#id]` marks are the same
- * set written at insert time, so they are resolved against the index here. An
+ * set written at insert time. The function resolves them against the index here. An
  * entry that carries `sources` directly (a test seam, a future read-back) is
  * used as-is.
  */
@@ -225,12 +225,11 @@ function orderForExport(a, b) {
     return a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0;
 }
 /**
- * One `SKILL.md`, or a reason it was withheld.
+ * One `SKILL.md`, or the reason that the export did not write it.
  *
- * A metadata field that fails the screen withholds the whole skill (the same
- * rule the `skills` tool applies): a file whose description cannot be trusted is
- * not one the plugin should put on disk. A single body line that fails is
- * dropped; if every line drops, the skill is withheld.
+ * A metadata field that fails the screen withholds the whole skill, as the
+ * `skills` tool does. The plugin does not write a file whose description the screen rejects. The export drops a body line that fails the screen. If every line drops,
+ * the export withholds the skill.
  */
 function renderSkillFile(entry, sources, redact) {
     const prepare = (value, field) => {
@@ -282,9 +281,9 @@ function renderSkillFile(entry, sources, redact) {
 export async function exportSkills(dbs, rootDir = path.join(getSuperpowersDir(), DEFAULT_ROOT_NAME), opts = {}) {
     const result = { written: [], removed: [], warnings: [] };
     const root = path.resolve(rootDir);
-    // Prune replaces the tree. That is only the default `<config>/learned-skills`
-    // root. A custom root inside the config dir is a copy: write the active
-    // skills and leave everything else (spec: prune is default-root only).
+    // Prune replaces the tree. Pruning applies only to the default `<config>/learned-skills`
+    // root. A custom root inside the config dir is a copy. The copy writes the active
+    // skills and leaves everything else (spec: prune is default-root only).
     const prune = opts.prune !== false && isDefaultExportRoot(root);
     const redact = (text) => dbs.store.redactPii(redactSecrets(text));
     const entries = (await dbs.store.listByStatus(['active'], ['skill']))
@@ -293,8 +292,8 @@ export async function exportSkills(dbs, rootDir = path.join(getSuperpowersDir(),
     /** `path.relative(root, file)` → content, in the export's own order. */
     const files = [];
     for (const entry of entries) {
-        // Re-checked here, not only at insert: a slug that reached the store through
-        // an older build must never reach `path.join` unvalidated.
+        // Re-check here, not only at insert, because the store can hold a slug that another
+        // write put there. Such a slug must never reach `path.join` unvalidated.
         if (!isValidSlug(entry.slug)) {
             result.warnings.push(`skipped ${entry.project}/${entry.slug}: invalid slug`);
             continue;
@@ -328,16 +327,16 @@ export async function exportSkills(dbs, rootDir = path.join(getSuperpowersDir(),
         return result;
     }
     if (!isInsideConfigDir(root)) {
-        // The tree is generated output and the one thing the feature deletes. It is
-        // only ever allowed to do that under the config dir; a root anywhere else is
-        // a refusal, not a best-effort prune.
+        // The generated tree is the one thing the feature deletes. The feature deletes the tree
+        // only under the config dir; a root anywhere else is a refusal, not a best-effort prune.
         result.warnings.push(`refusing to replace ${root}: it is outside ${getSuperpowersDir()} (use --to to copy instead)`);
         return result;
     }
     const tempRoot = `${root}.tmp-${process.pid}`;
     removeTree(tempRoot);
-    // Created even when nothing is active: an export that learns nothing must
-    // still replace the tree (an empty one) rather than leave stale skills.
+    // The export creates the temp tree even when no skill is active. With no active
+    // skill, the export still replaces the tree with an empty one, rather than
+    // leaving stale skills.
     fs.mkdirSync(tempRoot, { recursive: true, mode: 0o700 });
     for (const file of files) {
         const target = path.join(tempRoot, file.relative);

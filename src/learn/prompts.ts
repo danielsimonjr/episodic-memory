@@ -1,14 +1,13 @@
 /**
  * Prompts for every role a learning run uses.
  *
- * Task 5 added the solver's prompt. This module now carries the bootstrapper's
- * and the shapes the learner (Tasks 8 and 9) will consume: diagnose, edit,
- * split, merge and reflect. Defining the argument shapes here keeps one file as
- * the reviewable home of the rules a prompt must carry, even for a prompt whose
- * caller lands later.
+ * The module builds a prompt for each role of a learning run. The roles are the
+ * solver, the bootstrapper, and the learner steps diagnose, edit, split, merge and reflect.
+ * Keeping them in one file keeps the rules that each prompt must carry easy to review.
  *
  * Every function is pure: text in, text out, no clock, no environment, no model.
- * Model-supplied text is re-redacted before it is quoted back into a prompt, so
+ * The code re-redacts model-supplied text before it quotes that text back into
+ * a prompt, so
  * a planted secret in the archive cannot ride along.
  */
 
@@ -34,9 +33,9 @@ const CITATION_RULES = [
 /**
  * The rules every learner-side prompt carries (spec §7 rules 3, 4, 6 and 7).
  *
- * One list, quoted into every prompt: a prompt that forgot the no-URL rule
- * would invite a proposal the screen then rejects, and the run would spend a
- * subprocess call to learn nothing.
+ * One list goes into every prompt. A prompt without the no-URL rule invites a
+ * proposal that the screen then rejects, so the run spends a subprocess call and
+ * learns nothing.
  */
 const LEARNED_TEXT_RULES = [
   'Cite every line you write: end it with a mark group naming ids you actually saw, `[#<32 hex id>]` for an exchange and `[@<attempt number>]` in the same group for an attempt. Never invent an id, and copy each mark exactly as given.',
@@ -47,8 +46,8 @@ const LEARNED_TEXT_RULES = [
 ];
 
 /**
- * The template forms an instruction line may take (spec §7 rule 6). Free prose
- * is rejected by the screen, so the prompts state the grammar instead of
+ * The template forms an instruction line may take (spec §7 rule 6). The screen
+ * rejects free prose, so the prompts state the grammar instead of
  * letting a model discover it from a rejection.
  */
 const INSTRUCTION_TEMPLATES = [
@@ -129,24 +128,29 @@ export function solverSystemPrompt(
 }
 
 // ---------------------------------------------------------------------------
-// Bootstrap (Task 7)
+// Bootstrap
 // ---------------------------------------------------------------------------
 
-/** The two skills every bootstrapper proposes (spec §6.1 step 2). */
+/** The slugs of the two skills that the bootstrap brief asks for (spec §6.1 step 2). */
 export const BOOTSTRAP_SKILL_SLUGS = ['navigation', 'exploration-notes'] as const;
 
+/** What the bootstrapper knows about the corpus of one project. */
 export interface BootstrapStats {
+  /** The number of exchanges in the project. */
   exchanges: number;
+  /** The number of sessions in the project. */
   sessions: number;
+  /** The earliest exchange timestamp, or an empty string. */
   first: string;
+  /** The latest exchange timestamp, or an empty string. */
   last: string;
 }
 
 /**
  * The bootstrapper's system prompt: map a project's corpus, propose two skills.
  *
- * The two skills are named by slug because the learner later matches on them;
- * everything else about them is the model's reading of the archive.
+ * The prompt names the two skills by slug, because the learner later matches on
+ * them. The model's reading of the archive supplies everything else about them.
  */
 export function bootstrapperSystemPrompt(): string {
   return [
@@ -198,7 +202,7 @@ export function bootstrapperBrief(project: string, stats: BootstrapStats): strin
 /**
  * Ask for the one global instruction the bootstrapped candidates support.
  *
- * The candidates are evidence, not text to concatenate: the answer must be a
+ * The candidates are evidence, not text to concatenate. The answer must be a
  * small set of template lines that hold across projects, because an instruction
  * rides in every session's context.
  */
@@ -228,7 +232,7 @@ export function mergeInstructionPrompt(candidates: KnowledgeEntry[]): string {
 }
 
 // ---------------------------------------------------------------------------
-// Learner prompts (Tasks 8 and 9)
+// Learner prompts
 // ---------------------------------------------------------------------------
 
 /** One failed attempt as the diagnose prompt sees it: addresses, never transcripts. */
@@ -241,14 +245,20 @@ export interface DiagnosisFailure {
   trace: TraceStep[];
 }
 
+/** The input of diagnosePrompt. */
 export interface DiagnosePromptInput {
   project: string;
+  /** The failed attempts to diagnose. */
   failed: DiagnosisFailure[];
+  /** The entries that are active. */
   active: KnowledgeEntry[];
+  /** Failures from earlier runs, each with a context and, when known, a failure mode and a root cause. */
   priorFailures: Array<{ context: string; failure_mode?: string; root_cause?: string }>;
+  /** The reflection entries that the prompt shows. */
   reflections: KnowledgeEntry[];
   /** `projectContextManager.forContext` output: learner prompts only, never rendered. */
   projectContext?: string;
+  /** The maximum number of proposed edits. The default is 3. */
   maxEdits?: number;
 }
 
@@ -315,8 +325,10 @@ export function diagnosePrompt(input: DiagnosePromptInput): string {
   return parts.join('\n');
 }
 
+/** The input of editBrief. */
 export interface EditBriefInput {
   project: string;
+  /** The maximum number of entries to propose. */
   maxEdits: number;
   /** Task ids the proposals should fix. */
   targets: number[];
@@ -346,7 +358,9 @@ export interface SplitFailure {
   answer: string;
 }
 
+/** The input of splitPrompt. */
 export interface SplitPromptInput {
+  /** The failed tasks to assign to categories. */
   failed: SplitFailure[];
   /** The failure categories the split may assign. */
   categories: string[];
@@ -355,8 +369,8 @@ export interface SplitPromptInput {
 /**
  * The split turn: partition the failed task ids into failure categories.
  *
- * The answer is validated as a partition; one that is not falls back to
- * by-project (spec §6.2 step 3).
+ * The learner validates the answer as a partition. An answer that is not a
+ * partition leaves the cut by project (spec §6.2 step 3).
  */
 export function splitPrompt(input: SplitPromptInput): string {
   const parts: string[] = [
@@ -379,14 +393,16 @@ export function splitPrompt(input: SplitPromptInput): string {
   return parts.join('\n');
 }
 
+/** The input of mergeEntriesPrompt when the caller passes an object. */
 export interface MergeEntriesPromptInput {
+  /** The duplicate entries to merge. */
   entries: KnowledgeEntry[];
 }
 
 /**
  * The merge turn: one body citing the union of the duplicates' sources.
  *
- * Each entry is numbered so the answer can name which version it follows.
+ * Each entry carries a number so the answer can name the version that the entry follows.
  */
 export function mergeEntriesPrompt(
   input: KnowledgeEntry[] | MergeEntriesPromptInput
@@ -415,29 +431,39 @@ export function mergeEntriesPrompt(
   return parts.join('\n');
 }
 
+/** One attempt that the reflection prompt may cite. */
 export interface ReflectEvidence {
   attemptId: number;
   taskId: number;
   /** The task's real kind. Omitted when the attempt has no task row to read. */
   kind?: LearningKind;
+  /** True when the attempt passed. */
   passed: boolean;
 }
 
+/** The input of reflectPrompt: what one learning round kept and rejected, and the evidence that the reflection may cite. */
 export interface ReflectPromptInput {
   runId: string;
   project: string;
+  /** The names of the entries that the round kept. */
   kept: string[];
+  /** The entries that the round rejected, with the reason for each. */
   rejected: Array<{ slug: string; reason: string }>;
+  /** The signal pass count before the round. `total` is the number of signals. */
   before: { passed: number; total: number };
+  /** The signal pass count after the round. */
   after: { passed: number; total: number };
+  /** The attempts that the reflection may cite. */
   evidence: ReflectEvidence[];
+  /** The exchanges that the reflection may cite, with their line ranges. */
   sources: SourceRef[];
 }
 
 /**
  * The reflect turn: what the round changed, with the ids to cite.
  *
- * Attempts are quoted as `[@n]` and exchanges as `[#id]` so the model copies an
+ * The prompt quotes attempts as `[@n]` and exchanges as `[#id]`, so the model
+ * copies an
  * exact mark group instead of inventing one.
  */
 export function reflectPrompt(input: ReflectPromptInput): string {

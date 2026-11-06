@@ -1,53 +1,61 @@
 /**
- * One learning run at a time, and the PIDs it owns.
+ * One learning run at a time, and the PIDs that the run owns.
  *
- * `.learn.lock` lives in the index directory and goes through `lockfile.ts`, so
- * a crashed run's lock is recovered by the same PID-liveness and age rules the
- * sync and the embedding migration use. When it is held, `acquireLock` returns
- * `null` and does not say by whom, which is why this module reads the holder's
- * PID back out of the file and puts it in the error: "another run holds it" is
- * not actionable, "pid 4212 holds it" is.
+ * `.learn.lock` lives in the index directory and goes through `lockfile.ts`.
+ * `lockfile.ts` recovers a crashed run's lock with the same PID-liveness and age rules that sync and the embedding migration use.
+ * When another run holds the lock, `acquireLock` returns `null`. The return value does not name the holder.
+ * This module therefore reads the holder's PID from the file and puts that PID in the error.
+ * A message such as "another run holds it" is not actionable. A message such as "pid 4212 holds it" is.
  *
- * Beside it, `.learn.pids` lists the subprocesses the run currently owns — one
- * PID per line, rewritten on every add and remove, deleted on release. The
- * SessionStart orphan reaper reads that file and never touches a live run's
- * processes (spec §7 rule 11). The registry the solver writes to lives here and
- * not in `agent-runner.ts` because the CLI is what owns a run's lifetime.
+ * The `.learn.pids` file lists the subprocesses that the run currently owns. The file holds one PID per line.
+ * The run rewrites the file on every add and remove, and deletes the file on release.
+ * The SessionStart orphan reaper reads that file and never touches a live run's processes (spec §7 rule 11).
+ * The solver writes its registry here. The CLI owns the lifetime of a run, so the registry lives here, not in `agent-runner.ts`.
  *
  * This module is imported statically by `cli/sync-hook.js`, so it stays light:
  * `fs`, `path`, `../lockfile.js`, `../paths.js` and nothing else.
  */
+/** The file name of the learning lock. The lock file lives in the index directory. */
 export declare const LEARN_LOCK_NAME = ".learn.lock";
+/** The file name of the PID list that a learning run keeps while the run is live. */
 export declare const LEARN_PIDS_NAME = ".learn.pids";
 /**
- * A stale lock is stealable after two hours. A real run is bounded by
- * `EPISODIC_MEMORY_LEARN_MAX_MINUTES` (60 by default), so two hours only ever
- * reclaims a lock whose holder is gone.
+ * The code steals a stale lock after two hours.
+ * `EPISODIC_MEMORY_LEARN_MAX_MINUTES` bounds a real run (60 by default). So two hours only ever reclaims a lock whose holder is gone.
  */
 export declare const LEARN_LOCK_STALE_MS: number;
-/** Where a run records the subprocesses it owns. */
+/** Where a run records the subprocesses that the run owns. */
 export interface PidRegistry {
     add(pid: number): void;
     remove(pid: number): void;
 }
-/** The lock is held by another live run. */
+/** Another live run holds the lock. */
 export declare class LearnLockHeld extends Error {
     readonly holderPid: number | null;
     readonly lockPath: string;
     constructor(holderPid: number | null, lockPath: string);
 }
+/**
+ * Returns the path of the learning lock file in `indexDir`.
+ *
+ * @param indexDir The index directory that holds the lock.
+ */
 export declare function getLearnLockPath(indexDir: string): string;
+/**
+ * Returns the path of the PID list file in `indexDir`.
+ *
+ * @param indexDir The index directory that holds the PID list.
+ */
 export declare function getLearnPidsPath(indexDir: string): string;
 /**
  * The PIDs listed in `.learn.pids`, or an empty set when the file is absent or
- * unreadable. Used by the orphan reaper on its fast path, so it never throws.
+ * unreadable. Used by the orphan reaper on its fast path, so the function never throws.
  */
 export declare function readLearnPids(indexDir: string): Set<number>;
 /**
  * Hold the learning lock for the duration of `fn`.
  *
- * The lock is released on every exit path, and `.learn.pids` is deleted with it,
- * because a PID file that outlives its run would make the reaper refuse to reap
- * the next run's genuinely orphaned children.
+ * The function releases the lock on every exit path. The function also deletes `.learn.pids` with the lock.
+ * A PID file that outlives its run would make the reaper refuse to reap the next run's genuinely orphaned children.
  */
 export declare function withLearnLock<T>(fn: (pids: PidRegistry) => Promise<T>): Promise<T>;

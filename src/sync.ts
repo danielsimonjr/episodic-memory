@@ -37,6 +37,11 @@ export function shouldSkipConversation(filePath: string): boolean {
   }
 }
 
+/**
+ * The counts and errors of one `syncConversations` run.
+ *
+ * `copied` counts the copied files, and `skipped` counts the files that the run leaves unchanged. `indexed` counts the conversations that the index step handles, and `summarized` counts the summaries that the run writes. `errors` lists each failed file with its error text.
+ */
 export interface SyncResult {
   copied: number;
   skipped: number;
@@ -69,6 +74,11 @@ export interface SyncResult {
   errors: Array<{ file: string; error: string }>;
 }
 
+/**
+ * The options of `syncConversations`.
+ *
+ * `skipIndex` leaves the copied files out of the index. `skipSummaries` writes no summary. `summaryLimit` caps the summaries that one run writes, and its default is 10.
+ */
 export interface SyncOptions {
   skipIndex?: boolean;
   skipSummaries?: boolean;
@@ -153,6 +163,11 @@ function copyIfNewer(src: string, dest: string): boolean {
   return true;
 }
 
+/**
+ * Return the session id from a transcript file name, or `null` when the name has none.
+ *
+ * The session id is the last UUID in the file name, without the `.jsonl` extension. The match ignores case.
+ */
 export function extractSessionIdFromPath(filePath: string): string | null {
   // Extract session ID from Claude filename or Codex rollout filename.
   const basename = path.basename(filePath, '.jsonl');
@@ -164,6 +179,13 @@ export function extractSessionIdFromPath(filePath: string): string | null {
   return null;
 }
 
+/**
+ * Copy the changed transcripts from `sourceDir` to `destDir`, then index them and write their summaries.
+ *
+ * Use `skipIndex` and `skipSummaries` to turn off the two later steps. The function skips the excluded projects. The function records an error for each file that fails and continues with the next file.
+ *
+ * When the Ollama summarizer is in use and another agent holds the shared GPU, the function writes no summary. The reason is reported in `summariesDeferred`. The function returns an empty result when `sourceDir` does not exist.
+ */
 export async function syncConversations(
   sourceDir: string,
   destDir: string,

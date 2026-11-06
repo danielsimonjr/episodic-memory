@@ -49,6 +49,9 @@ export interface LeafResult {
     /** The call budget ran out. Entries already in `kept` stay kept. */
     stopped: boolean;
 }
+/**
+ * The options for `runLeafLearner`, which runs one leaf learner over a subset of tasks.
+ */
 export interface LeafLearnerOptions {
     runId: string;
     project: string;

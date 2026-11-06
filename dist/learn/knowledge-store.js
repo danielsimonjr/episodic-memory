@@ -347,6 +347,13 @@ const ENTITY_COLUMNS = [
     ['contentHash', 'TEXT'],
     ['agentMetadata', 'TEXT'],
 ];
+/**
+ * The learned-knowledge store, kept in one SQLite file.
+ *
+ * The file holds the entities and relations that store the learned entries, heuristics, procedures, decisions and failures. `KnowledgeStore.create` opens a store. A store that is not read-only creates the file and its tables when they are absent. The private `write` helper runs a change in one `BEGIN IMMEDIATE` transaction.
+ *
+ * The class takes no file lock. The learn CLI uses `withLearnLock` to serialize its runs. A read-only store rejects every write. Call `close` to release the database handle. A second call does nothing.
+ */
 export class KnowledgeStore {
     db;
     closed = false;

@@ -12,6 +12,13 @@
 
 const TRUTHY = new Set(['1', 'true', 'yes', 'on']);
 
+/**
+ * Return true when secret redaction is enabled.
+ *
+ * Read the `EPISODIC_MEMORY_REDACT_SECRETS` variable on each call. Set the variable to `1`, `true`,
+ * `yes` or `on` to enable redaction. Case and surrounding spaces do not matter. Any other value, or
+ * no value, leaves redaction disabled.
+ */
 export function isSecretRedactionEnabled(): boolean {
   const raw = process.env.EPISODIC_MEMORY_REDACT_SECRETS;
   if (!raw) return false;

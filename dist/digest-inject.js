@@ -1,4 +1,5 @@
 import { hideCitedLines, listActiveEntries } from './digest-db.js';
+/** The default digest character limit. `digestMaxChars` uses the default value when the environment value is not a positive integer. */
 export const DEFAULT_DIGEST_MAX_CHARS = 6000;
 const HEADER = 'Digest of earlier sessions in this project. Each line ends with [#id] marks naming its source exchanges.\n' +
     'To see a source, call the episodic-memory digest tool with expand set to the id, then read the returned path and lines.\n';
@@ -6,6 +7,11 @@ const HEADER = 'Digest of earlier sessions in this project. Each line ends with 
 export function projectKeyFromCwd(cwd) {
     return cwd.replace(/[^A-Za-z0-9]/g, '-');
 }
+/**
+ * Returns the digest character limit from the `EPISODIC_MEMORY_DIGEST_MAX_CHARS` environment variable.
+ *
+ * Returns DEFAULT_DIGEST_MAX_CHARS when the variable is unset or is not a positive integer.
+ */
 export function digestMaxChars() {
     const n = Number(process.env.EPISODIC_MEMORY_DIGEST_MAX_CHARS);
     return Number.isInteger(n) && n > 0 ? n : DEFAULT_DIGEST_MAX_CHARS;

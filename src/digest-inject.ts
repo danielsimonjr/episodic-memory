@@ -1,6 +1,7 @@
 import type Database from 'better-sqlite3';
 import { hideCitedLines, listActiveEntries, type DigestEntry } from './digest-db.js';
 
+/** The default digest character limit. `digestMaxChars` uses the default value when the environment value is not a positive integer. */
 export const DEFAULT_DIGEST_MAX_CHARS = 6000;
 
 const HEADER =
@@ -12,6 +13,11 @@ export function projectKeyFromCwd(cwd: string): string {
   return cwd.replace(/[^A-Za-z0-9]/g, '-');
 }
 
+/**
+ * Returns the digest character limit from the `EPISODIC_MEMORY_DIGEST_MAX_CHARS` environment variable.
+ *
+ * Returns DEFAULT_DIGEST_MAX_CHARS when the variable is unset or is not a positive integer.
+ */
 export function digestMaxChars(): number {
   const n = Number(process.env.EPISODIC_MEMORY_DIGEST_MAX_CHARS);
   return Number.isInteger(n) && n > 0 ? n : DEFAULT_DIGEST_MAX_CHARS;

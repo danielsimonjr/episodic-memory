@@ -8,15 +8,17 @@ import { codexVersionRequirementMessage, parseCodexCliVersion, versionMeetsMinim
 import { validateApiBaseUrl } from './api-endpoint.js';
 import { summarizerBackend, callOllama, GpuReservedError } from './ollama-backend.js';
 /**
- * Get API environment overrides for summarization calls.
- * Returns full env merged with process.env so subprocess inherits PATH, HOME, etc.
+ * Build the environment for a summarization subprocess.
  *
- * Env vars (all optional):
- * - EPISODIC_MEMORY_API_MODEL: Model to use (default: haiku)
- * - EPISODIC_MEMORY_API_MODEL_FALLBACK: Fallback model on error (default: sonnet)
- * - EPISODIC_MEMORY_API_BASE_URL: Custom API endpoint
- * - EPISODIC_MEMORY_API_TOKEN: Auth token for custom endpoint
- * - EPISODIC_MEMORY_API_TIMEOUT_MS: Timeout for API calls (default: SDK default)
+ * The result contains all of process.env, so the subprocess gets PATH, HOME and the other variables.
+ * The result always sets EPISODIC_MEMORY_SUMMARIZER_GUARD to `1`. The guard stops the subprocess from starting another sync.
+ *
+ * The function reads these variables:
+ * - EPISODIC_MEMORY_API_BASE_URL: when the variable has a non-empty value, the function validates it. A valid endpoint sets ANTHROPIC_BASE_URL to the validated URL. For an unsafe endpoint, the function ignores the value and writes a message to stderr.
+ * - EPISODIC_MEMORY_API_TOKEN: when the variable has a non-empty value, the function sets ANTHROPIC_AUTH_TOKEN to that value.
+ * - EPISODIC_MEMORY_API_TIMEOUT_MS: when the variable has a non-empty value, the function sets API_TIMEOUT_MS to that value. callClaude also reads the variable for its own abort timer.
+ *
+ * callClaude and callModel read EPISODIC_MEMORY_API_MODEL and EPISODIC_MEMORY_API_MODEL_FALLBACK. The function getApiEnv does not read them.
  */
 export function getApiEnv() {
     const baseUrlRaw = process.env.EPISODIC_MEMORY_API_BASE_URL;
@@ -36,9 +38,9 @@ export function getApiEnv() {
     }
     // Always include the reentrancy guard so the SDK-spawned Claude subprocess
     // (which inherits this env) marks itself as a reentrant context. The
-    // SessionStart hook checks the guard via shouldSkipReentrantSync() and
-    // exits before launching another sync, breaking the recursive cascade
-    // reported in #87.
+    // SessionStart hook runs `sync --background`, which checks the guard with
+    // shouldSkipReentrantSync() and exits before it syncs. The check stops a
+    // recursive cascade of sync processes.
     return {
         ...process.env,
         [SUMMARIZER_GUARD_ENV]: '1',
@@ -47,21 +49,33 @@ export function getApiEnv() {
         ...(timeoutMs && { API_TIMEOUT_MS: timeoutMs }),
     };
 }
-// Re-exported from the dependency-free reentrancy module so existing importers
-// (and tests) can keep importing it from here. The guard check itself lives in
-// ./reentrancy.js so sync-cli can use it without loading this module's SDK deps.
+/**
+ * Re-export `shouldSkipReentrantSync` from `./reentrancy.js`.
+ *
+ * The sync CLI imports the function from `./reentrancy.js`, so the CLI does not load this module's SDK dependencies.
+ * Code that imports the function from this module keeps working.
+ */
 export { shouldSkipReentrantSync };
+/**
+ * Format exchanges as the transcript text of a summarization prompt.
+ *
+ * Each exchange becomes a `User:` paragraph and an `Agent:` paragraph. The function joins the exchanges with a horizontal rule.
+ */
 export function formatConversationText(exchanges) {
     return exchanges.map(ex => {
         return `User: ${ex.userMessage}\n\nAgent: ${ex.assistantMessage}`;
     }).join('\n\n---\n\n');
 }
+/**
+ * Return the summary that a model answer contains.
+ *
+ * The function returns the trimmed text between the first `<summary>` tag and the next `</summary>` tag.
+ * When the answer has no such pair, the function returns the trimmed answer.
+ * The function throws an Error when the answer is not a string. The message says that the SDK call failed.
+ */
 export function extractSummary(text) {
-    // Guard against a non-string input. callClaude can return undefined when the
-    // SDK signals an error (e.g. resuming a session that no longer exists). Without
-    // this guard the line below crashed with the cryptic "Cannot read properties of
-    // undefined (reading 'match')", which masked the real failure and let the sync
-    // backlog retry forever.
+    // Reject a non-string input with a clear error. Without this check, the match call
+    // below throws a TypeError.
     if (typeof text !== 'string') {
         throw new Error(`Summarizer returned no text (received ${text === undefined ? 'undefined' : typeof text}); the underlying SDK call failed.`);
     }
@@ -73,14 +87,9 @@ export function extractSummary(text) {
     return text.trim();
 }
 /**
- * Build the prompt for summarizing a short conversation from its transcript text.
+ * Build the prompt that summarizes a short conversation from its transcript text.
  *
- * The summarizer used to prefer resuming the original session (sending an empty
- * body, letting the resumed context supply the transcript). That path was removed:
- * resume always fails from the background-sync context because the SDK resolves a
- * session by the subprocess's CWD-derived project dir (the plugin dir), not the
- * user's project — so every resume spawned a doomed subprocess and fell back here
- * anyway. We now always summarize the transcript text we already hold.
+ * The prompt carries the full transcript text.
  */
 function buildShortSummaryPrompt(conversationText) {
     return `${SUMMARIZER_CONTEXT_MARKER}.
@@ -111,10 +120,10 @@ ${conversationText}`;
  * Build the options object passed to the Claude Agent SDK's query() for a
  * summarization call.
  *
- * persistSession: false keeps the SDK from writing its session transcript to
- * ~/.claude/projects/ (#83). Without it, every summarization spawns a fake
- * session JSONL that pollutes the IDE session sidebar. The option is honored
- * by claude-agent-sdk >= 0.2.0.
+ * persistSession: false stops the SDK from saving the session to ~/.claude/projects/.
+ * No later call can resume the session. Without this option, each summary adds
+ * a session to the IDE session sidebar (#83). The claude-agent-sdk type
+ * declarations describe the option.
  */
 export function buildSummarizerQueryOptions(args) {
     const { model } = args;
@@ -123,17 +132,22 @@ export function buildSummarizerQueryOptions(args) {
         max_tokens: 4096,
         env: getApiEnv(),
         persistSession: false,
-        // Run the summarizer subprocess in full isolation. Without `settingSources: []`
-        // the SDK loads the user's filesystem settings, which boots every configured
-        // MCP server AND fires SessionStart hooks inside each summary subprocess — the
-        // process cascade behind the wedged-orphan storm (each hung subprocess spawned
-        // a tree of ~14 children). `[]` also means no tools are available, so the model
-        // simply answers. `mcpServers: {}` is belt-and-suspenders on top of that.
+        // Run the summarizer subprocess in isolation. Without `settingSources: []`, the
+        // SDK loads the user's filesystem settings. Those settings start the configured
+        // MCP servers and run SessionStart hooks inside the summary subprocess.
+        // `mcpServers: {}` adds a second guard that starts no MCP server.
         settingSources: [],
         mcpServers: {},
         systemPrompt: 'Write concise, factual summaries. Output ONLY the summary - no preamble, no "Here is", no "I will". Your output will be indexed directly.',
     };
 }
+/**
+ * Return the prompt for one summary turn in a forked Codex session.
+ *
+ * The prompt contains no transcript. The forked session supplies the context.
+ * The prompt tells the model not to inspect files, run commands, search the web or change state.
+ * The prompt asks for one `<summary>` block. Pass the answer to extractSummary to read the block.
+ */
 export function buildCodexSummaryPrompt() {
     return `${SUMMARIZER_CONTEXT_MARKER}.
 
@@ -159,6 +173,13 @@ Good:
 Bad:
 <summary>I apologize. The conversation discussed authentication and various approaches were considered...</summary>`;
 }
+/**
+ * Build the command that starts a Codex app server for one summary.
+ *
+ * The executable is the `codexBin` argument. If the argument is empty or not set, the function uses the EPISODIC_MEMORY_CODEX_BIN variable. If the variable is also empty or not set, the executable is `codex`.
+ *
+ * The arguments are `app-server`. The result also holds the prompt, the session id and the model. The function starts no process.
+ */
 export function buildCodexSummarizerCommand(args) {
     const command = args.codexBin || process.env.EPISODIC_MEMORY_CODEX_BIN || 'codex';
     return {
@@ -183,9 +204,8 @@ async function callClaude(prompt, opts = {}) {
     const fallbackModel = opts.fallbackModel || process.env.EPISODIC_MEMORY_API_MODEL_FALLBACK || 'sonnet';
     const useFallback = opts.useFallback === true;
     const model = useFallback ? fallbackModel : primaryModel;
-    // Bound the call: a stalled SDK subprocess must not wedge the sync forever (the
-    // root cause of the orphaned-process storm). Abort via an AbortController after
-    // the timeout and surface a clear error the caller can record.
+    // Bound the call. A stalled SDK subprocess would otherwise block the sync. Abort
+    // through an AbortController after the timeout, and throw an error the caller can record.
     const controller = new AbortController();
     const timeoutMs = summarizerTimeoutMs();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -209,10 +229,8 @@ async function callClaude(prompt, opts = {}) {
                     // If fallback also fails, return error message
                     return result;
                 }
-                // The SDK signalled an error rather than producing text (e.g. subtype
-                // 'error_during_execution', is_error true, no `result` field). Throw a
-                // clear, actionable error instead of returning undefined — the caller
-                // records it so the conversation can be retried or sentinel-skipped.
+                // The SDK signalled an error or returned no string result. Throw an error
+                // that names the subtype, so the caller can record the failure.
                 if (m.is_error === true || typeof result !== 'string') {
                     throw new Error(`Summarizer SDK call failed (subtype=${m.subtype ?? 'unknown'}).`);
                 }
@@ -245,12 +263,13 @@ export function callDigestModel(prompt) {
     return callModel(prompt);
 }
 /**
- * The learn model and its retry, from their own variables.
+ * Return the model and the retry model for learning calls.
  *
- * Learning calls are text-only (task paraphrases, merge and split decisions,
- * the recall judge). They get their own model setting so tuning them never
- * moves the digest's model, and `sonnet` on both sides: the judge and the
- * paraphrase both need more than a summarizer's instruction-following.
+ * The learn model reads EPISODIC_MEMORY_LEARN_MODEL. The retry model reads EPISODIC_MEMORY_API_MODEL_FALLBACK, which the digest also reads. Both default to `sonnet`. A blank value counts as unset.
+ *
+ * callLearnModel uses these models for text-only learning calls when the backend is not ollama. The learn model does not change the digest model.
+ *
+ * @param env the variables to read. The default is process.env.
  */
 export function resolveLearnModels(env = process.env) {
     const model = (env.EPISODIC_MEMORY_LEARN_MODEL || '').trim() || 'sonnet';
@@ -262,7 +281,7 @@ export function resolveLearnModels(env = process.env) {
  *
  * Text-only calls (task generation, learner split/merge, the recall judge) go
  * through here. A tool-using solver or learner is an SDK subprocess and does not
- * (spec: the ollama backend is a text call, not a harness).
+ * use this switch. The ollama backend makes text calls only.
  */
 export function callLearnModel(prompt) {
     if (summarizerBackend() === 'ollama') {
@@ -282,8 +301,8 @@ function readCommandOutput(command, args) {
         });
         let output = '';
         let settled = false;
-        // Bound the probe (e.g. `codex --version`): a wedged binary must not hang the
-        // whole summary loop (F7). Mirror the app-server turn timeout.
+        // Bound the probe, for example `codex --version`. A stalled binary must not hang
+        // the summary loop. The probe uses the same timeout as the app-server run.
         const timeoutMs = appServerTimeoutMs();
         const timer = setTimeout(() => {
             if (settled)
@@ -343,6 +362,24 @@ function requireTurnId(result, method) {
     }
     return turnId;
 }
+/**
+ * Run one summary turn in a Codex app server and return the answer text.
+ *
+ * The function runs the version check first, unless the caller sets `skipVersionCheck`. The check runs `command.versionArgs`, or `--version` by default. The function rejects when the version is missing or below the supported minimum.
+ *
+ * The function starts `command.command` with `command.args`, using the environment from getApiEnv. The function forks the thread `command.sessionId` as an ephemeral, read-only thread. The function starts one turn with `command.prompt`.
+ *
+ * The returned promise resolves with the answer text when the turn completes. The function does not parse the text. Pass the text to extractSummary to read the `<summary>` block.
+ *
+ * The returned promise rejects in these cases:
+ *
+ * - the turn does not complete;
+ * - the server answers a request with an error;
+ * - the server exits early;
+ * - the server writes a line that is not valid JSON;
+ * - a process error occurs.
+ * The promise also rejects when the run lasts longer than EPISODIC_MEMORY_CODEX_SUMMARY_TIMEOUT_MS milliseconds (default 120000). The version check uses the same timeout. After the server starts, the function sends SIGTERM to the server before the promise settles.
+ */
 export async function runCodexCommand(command) {
     await assertSupportedCodexVersion(command);
     return new Promise((resolve, reject) => {
@@ -366,9 +403,9 @@ export async function runCodexCommand(command) {
                 clearTimeout(timeout);
             }
             lines.close();
-            // Reject any in-flight requests so their awaiters (the initialize/fork/turn
-            // chain in the IIFE below) don't dangle forever when the child dies or times
-            // out (F8). The IIFE's catch re-routes to finish(), which is idempotent.
+            // Reject any in-flight requests. Their awaiters, the initialize, fork and turn
+            // steps in the IIFE below, do not wait forever when the child dies or times out.
+            // The IIFE's catch calls finish(), which does nothing when the run already settled.
             for (const [, request] of pending) {
                 request.reject(new Error('Codex app-server stream closed before response'));
             }
@@ -377,8 +414,8 @@ export async function runCodexCommand(command) {
                 child.kill('SIGTERM');
             }
         };
-        // Guard stdin writes: writing to a dead child throws EPIPE synchronously on
-        // some platforms, which would otherwise be an uncaught exception (F8).
+        // Guard stdin writes: writing to a dead child can throw EPIPE synchronously on
+        // some platforms. Without the guard, that error is an uncaught exception.
         const safeWrite = (payload) => {
             try {
                 child.stdin.write(payload);
@@ -523,6 +560,25 @@ function getCodexSessionId(exchanges, sessionId) {
 function getCodexModel(exchanges) {
     return exchanges.find(exchange => exchange.harness === 'codex' && exchange.model)?.model;
 }
+/**
+ * Summarize one conversation and return the summary text.
+ *
+ * The function returns `Trivial conversation with no substantive content.` without a model call when the conversation has no exchanges.
+ * The function also returns that text for one exchange when its formatted text is under 100 characters.
+ * The function also returns that text for one exchange whose user message is `/exit`.
+ *
+ * When some exchange comes from Codex and a session id is available, the function asks Codex for the summary first. The session id is the `sessionId` argument, or else the first session id found in the exchanges. When Codex fails, the function logs the error and uses the transcript path.
+ *
+ * The transcript path makes one model call for up to 15 exchanges. Any model error rejects the promise in this case.
+ *
+ * For more than 15 exchanges, the function summarizes each chunk of exchanges, and then synthesizes the chunk summaries into one summary. The chunk size is 8 exchanges. A larger chunk size keeps the chunk count at 20 or less. The function logs a failed chunk and skips it. A failed synthesis returns the chunk summaries joined with a space. When no chunk succeeds, the function returns `Error: Unable to summarize conversation.`
+ *
+ * A GpuReservedError from a model call rejects the promise.
+ *
+ * The function writes its progress lines with console.log, so they go to stdout.
+ *
+ * @param sessionId the Codex session to fork. When the caller omits `sessionId`, the function uses the session id of the first exchange that has one.
+ */
 export async function summarizeConversation(exchanges, sessionId) {
     // Handle trivial conversations
     if (exchanges.length === 0) {
@@ -544,21 +600,16 @@ export async function summarizeConversation(exchanges, sessionId) {
             console.log(`  Codex summarizer unavailable, falling back to transcript text: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
-    // For short conversations (≤15 exchanges), summarize the transcript text
-    // directly. (We no longer attempt to resume the original session — see
-    // buildShortSummaryPrompt: resume always failed from the background-sync
-    // context and only spawned a doomed subprocess.)
+    // For up to 15 exchanges, summarize the transcript text in one model call.
     if (exchanges.length <= 15) {
         const result = await callModel(buildShortSummaryPrompt(formatConversationText(exchanges)));
         return extractSummary(result);
     }
     // For long conversations, use hierarchical summarization
     console.log(`  Long conversation (${exchanges.length} exchanges) - using hierarchical summarization`);
-    // Note: Hierarchical summarization doesn't support resume mode (needs fresh session for each chunk)
-    // This is fine since we only use resume for the main session-end hook
-    // Chunk into groups of ~8 exchanges, but cap the chunk COUNT so a very long
-    // conversation can't fan out an unbounded number of sequential SDK calls (F14).
-    // Above the cap we grow the chunk size instead of adding chunks.
+    // Split the conversation into chunks of 8 exchanges.
+    // Use a larger chunk size when 8 would give more than 20 chunks.
+    // The limit keeps the number of sequential model calls low.
     const MAX_HIERARCHICAL_CHUNKS = 20;
     const chunkSize = Math.max(8, Math.ceil(exchanges.length / MAX_HIERARCHICAL_CHUNKS));
     const chunks = chunkExchanges(exchanges, chunkSize);

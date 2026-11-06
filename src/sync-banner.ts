@@ -1,5 +1,8 @@
 // Dependency-free, so sync-cli can use it and a test can import it without the native stack.
 
+/**
+ * The counts that `syncHeadline` reads from one finished sync run.
+ */
 export interface SyncHeadlineTotals {
   pendingSummaries: number;
   summarized: number;

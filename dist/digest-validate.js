@@ -1,8 +1,15 @@
 import { redactSecrets } from './redact.js';
 const TRAILING_MARKS = /\s*\[(\d+(?:\s*,\s*\d+)*)\]\s*$/;
 /**
- * Keep only model lines that end in a mark group such as `[3,5]` where every mark names a real
- * exchange. A line with no group, or with any unknown mark, is dropped whole.
+ * Keep the model lines that cite only known exchanges, and rewrite their marks.
+ *
+ * A kept line ends in a mark group such as `[3,5]`. Each number in the group must be a key of `marks`.
+ * The function removes a leading bullet marker from each line and skips blank lines without counting them.
+ * The function drops a line that has no mark group, that cites an unknown number, or that has no text before the group.
+ * The function rewrites the mark group of a kept line to `[#<exchangeId>,#<exchangeId>]`.
+ *
+ * @param raw the model output. Each line holds one statement.
+ * @param marks maps each mark number to the exchange id that the number names
  */
 export function parseCitedLines(raw, marks) {
     const lines = [];
@@ -43,7 +50,12 @@ export function parseCitedLines(raw, marks) {
     }
     return { lines, sources, dropped };
 }
-/** Always redact digest text. Unlike maybeRedactSecrets this ignores the opt-in env: the digest is injected into new sessions. */
+/**
+ * Redact the secrets in digest text. The function always redacts.
+ *
+ * Unlike maybeRedactSecrets, the function does not check the EPISODIC_MEMORY_REDACT_SECRETS setting,
+ * because digest text reaches new sessions.
+ */
 export function redactEntryText(text) {
     return redactSecrets(text);
 }

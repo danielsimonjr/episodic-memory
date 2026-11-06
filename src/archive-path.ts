@@ -14,6 +14,11 @@ import { getArchiveDir } from './paths.js';
 /** Default cap for a full (no line-range) MCP read. Override via env. */
 export const DEFAULT_MAX_READ_BYTES = 32 * 1024 * 1024;
 
+/**
+ * Return the size limit, in bytes, for a full read without a line range.
+ *
+ * The function reads `EPISODIC_MEMORY_MAX_READ_BYTES` on each call. The default limit is 32 MiB. A value that `parseInt` does not read as a positive number gives the default.
+ */
 export function maxReadBytes(): number {
   const raw = process.env.EPISODIC_MEMORY_MAX_READ_BYTES;
   if (raw === undefined) return DEFAULT_MAX_READ_BYTES;

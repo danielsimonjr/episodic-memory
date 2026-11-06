@@ -112,6 +112,11 @@ function copyIfNewer(src, dest) {
     }
     return true;
 }
+/**
+ * Return the session id from a transcript file name, or `null` when the name has none.
+ *
+ * The session id is the last UUID in the file name, without the `.jsonl` extension. The match ignores case.
+ */
 export function extractSessionIdFromPath(filePath) {
     // Extract session ID from Claude filename or Codex rollout filename.
     const basename = path.basename(filePath, '.jsonl');
@@ -122,6 +127,13 @@ export function extractSessionIdFromPath(filePath) {
     }
     return null;
 }
+/**
+ * Copy the changed transcripts from `sourceDir` to `destDir`, then index them and write their summaries.
+ *
+ * Use `skipIndex` and `skipSummaries` to turn off the two later steps. The function skips the excluded projects. The function records an error for each file that fails and continues with the next file.
+ *
+ * When the Ollama summarizer is in use and another agent holds the shared GPU, the function writes no summary. The reason is reported in `summariesDeferred`. The function returns an empty result when `sourceDir` does not exist.
+ */
 export async function syncConversations(sourceDir, destDir, options = {}) {
     const result = {
         copied: 0,

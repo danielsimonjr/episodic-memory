@@ -2,29 +2,32 @@ import { pipeline, FeatureExtractionPipeline, env } from '@huggingface/transform
 import { maybeRedactSecrets } from './redact.js';
 import { truncateForIndex } from './constants.js';
 
-// Disable progress callbacks to prevent stdout pollution in MCP context
-// In MCP, stdout is reserved for JSON-RPC communication.
+// In MCP, stdout must carry only JSON-RPC communication. These settings
+// allow models from local files and turn off the browser cache.
 env.allowLocalModels = true;
 env.useBrowserCache = false;
 
 /**
- * Embedding model configuration.
+ * The embedding model: bge-small-en-v1.5, from the Xenova ONNX export, with the `q8` data type.
  *
- * Using BAAI's bge-small-en-v1.5 (via Xenova's ONNX export) instead of the
- * older all-MiniLM-L6-v2 — measured +6.34 R@1 on a 17K-corpus retrieval test
- * against real production data. Same 384 dimensions, so vec_exchanges schema
- * is unchanged.
- *
- * BGE models recommend prepending a task prefix to QUERY embeddings only
- * (passages/documents go through unmodified). See `withQueryPrefix` and
- * `generateQueryEmbedding` below.
+ * The model produces 384-dimensional vectors, which the vec_exchanges table expects.
+ * The query embedder adds BGE_QUERY_PREFIX before the embedder embeds a query. The passage embedders do not.
+ * See `withQueryPrefix` and `generateQueryEmbedding`.
  */
 const MODEL_ID = 'Xenova/bge-small-en-v1.5';
 const MODEL_DTYPE = 'q8';
+/** The prefix that the query embedder adds to a search query. Passage embeddings do not use it. */
 export const BGE_QUERY_PREFIX = 'Represent this sentence for searching relevant passages: ';
 
 let embeddingPipeline: FeatureExtractionPipeline | null = null;
 
+/**
+ * Load the embedding model. The function does nothing when the model is already loaded.
+ *
+ * When no model is in memory, the function writes two messages to stderr. The first load can take some time.
+ * Calls that overlap a load can start more than one load. If a load fails, the function throws,
+ * and the next call tries the load again.
+ */
 export async function initEmbeddings(): Promise<void> {
   if (!embeddingPipeline) {
     console.error('Loading embedding model (first run may take time)...');
@@ -48,9 +51,10 @@ function truncateForEmbed(text: string): string {
 const EMBED_DIM = 384;
 
 /**
- * Embed one or more texts in a single pipeline call.
- * Semantics match repeated `generateEmbedding` calls (same truncate / pool /
- * normalize), so batching does not require an EMBEDDING_VERSION bump.
+ * Embed one or more texts in one pipeline call. The function returns an empty list for an empty input.
+ *
+ * Each text gets the same truncation, mean pooling and normalization as a single-text call.
+ * For that reason, batching does not require a change to EMBEDDING_VERSION.
  */
 export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
   if (texts.length === 0) return [];
@@ -78,6 +82,11 @@ export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
   return vectors;
 }
 
+/**
+ * Embed one text and return its vector. The vector has 384 numbers.
+ *
+ * The function calls generateEmbeddings, so the first call loads the model.
+ */
 export async function generateEmbedding(text: string): Promise<number[]> {
   const [vec] = await generateEmbeddings([text]);
   return vec;
@@ -93,23 +102,27 @@ export function withQueryPrefix(query: string): string {
 }
 
 /**
- * Generate an embedding for a search QUERY. Adds the model-specific prefix
- * before embedding, which gives a small but consistent recall lift on
- * retrieval tasks. Document/passage embeddings (`generateExchangeEmbedding`)
- * stay unmodified — that's the asymmetric pattern BGE models are trained for.
+ * Embed a search query. The function adds BGE_QUERY_PREFIX before the function embeds the query.
+ *
+ * Passage embedders, such as generateExchangeEmbedding, do not add the prefix.
  */
 export async function generateQueryEmbedding(query: string): Promise<number[]> {
   return generateEmbedding(withQueryPrefix(query));
 }
 
-/** Build the passage text that both single and batch exchange embedders use. */
+/**
+ * Build the passage text that the single and batch exchange embedders use.
+ *
+ * The function redacts secrets when EPISODIC_MEMORY_REDACT_SECRETS is on, and caps each message before the function joins them.
+ * The function lists the tool names after the assistant message when the caller gives at least one tool name.
+ */
 export function formatExchangeEmbeddingText(
   userMessage: string,
   assistantMessage: string,
   toolNames?: string[]
 ): string {
-  // Redact then cap before concatenate so multi-MB prompt payload is never
-  // allocated into the combined string (insertExchange already caps at store).
+  // The function redacts and caps each message before it joins them, so a multi-MB
+  // payload never reaches the combined string.
   const user = truncateForIndex(maybeRedactSecrets(userMessage));
   const assistant = truncateForIndex(maybeRedactSecrets(assistantMessage));
   let combined = `User: ${user}\n\nAssistant: ${assistant}`;
@@ -119,6 +132,12 @@ export function formatExchangeEmbeddingText(
   return combined;
 }
 
+/**
+ * Embed one exchange as a passage. The function formats the text with formatExchangeEmbeddingText.
+ * The function does not add the query prefix.
+ *
+ * @param toolNames the tool names to list after the assistant message. Optional.
+ */
 export async function generateExchangeEmbedding(
   userMessage: string,
   assistantMessage: string,
@@ -129,7 +148,7 @@ export async function generateExchangeEmbedding(
   );
 }
 
-/** Batch variant of `generateExchangeEmbedding` — one ONNX forward pass. */
+/** Embed a batch of exchanges in one pipeline call, as the batch form of `generateExchangeEmbedding`. */
 export async function generateExchangeEmbeddings(
   items: Array<{
     userMessage: string;

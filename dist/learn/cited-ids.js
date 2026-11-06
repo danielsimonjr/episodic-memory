@@ -1,24 +1,28 @@
 /**
  * Citation gate for model-written learned text.
  *
- * Tool-using agents see real exchange ids, so their lines must end in a mark
- * group naming those ids: `[#<32 hex>,...]`, and a reflection may add
- * `[@<attemptId>]` marks in the same group. A line survives only when it has at
- * least one `#` mark, every mark resolves, and the line shares enough content
- * tokens with one cited exchange to make the citation meaningful.
+ * Tool-using agents see real exchange ids. Their lines must end in a mark group
+ * that names those ids: `[#<32 hex>,...]`. A reflection may add `[@<attemptId>]`
+ * marks in the same group. The gate keeps a line only when all three
+ * tests pass:
  *
- * This module is pure: the resolvers are injected, it reads no environment, and
- * it imports only types. The digest's text-only `parseCitedLines` is untouched
- * and still owns the `[3,5]` mark-map form.
+ * - the line has at least one `#` mark;
+ * - every mark resolves;
+ * - the line shares enough content tokens with one cited exchange to make the
+ *   citation meaningful.
+ *
+ * The module is pure. Callers inject the resolvers. The module reads no environment and imports only types.
+ * The digest's text-only `parseCitedLines` is a separate function that owns the `[3,5]` mark-map form.
  */
 /** One `#`/`@` mark inside a bracket group. */
 const MARK = /#[0-9a-f]{32}|@\d+/;
 /** The mark group a line must end with. Numeric `[7]` digest marks never match. */
 const TRAILING_MARK_GROUP = /\[((?:#[0-9a-f]{32}|@\d+)(?:\s*,\s*(?:#[0-9a-f]{32}|@\d+))*)\]\s*$/;
 /**
- * Every mark group on the line, including ones that sit before the trailing
- * group. A mid-line group is still a citation: an id in it has to resolve or
- * the line is dropped, so an unresolved id cannot survive in the stored body.
+ * This pattern matches every mark group on the line, including ones before the
+ * trailing group. A mid-line group is still a citation. An id in that group has
+ * to resolve, or the gate drops the line. An unresolved id therefore cannot
+ * survive in the stored body.
  */
 const MARK_GROUP = /\[((?:#[0-9a-f]{32}|@\d+)(?:\s*,\s*(?:#[0-9a-f]{32}|@\d+))*)\]/g;
 /** A content token: four or more lowercase letters or digits. */
@@ -110,9 +114,12 @@ function splitMarks(group) {
  * Split a model's answer into the lines the citation gate keeps.
  *
  * A kept line keeps its body and gets its marks rewritten to the canonical
- * form, so a downstream writer stores one citation shape. Blank lines are
- * skipped without counting as drops; every other rejected line is reported
- * with its reason.
+ * form, so a downstream writer stores one citation shape. The function skips blank lines without counting them as drops.
+ * The function reports every other rejected line with its reason.
+ *
+ * @param raw the model answer, one statement for each line
+ * @param resolve looks up the exchange marks and the attempt marks
+ * @param minGrounding the number of content tokens that a line must share with one cited exchange
  */
 export function parseIdCitedLines(raw, resolve, minGrounding) {
     const lines = [];
@@ -137,8 +144,8 @@ export function parseIdCitedLines(raw, resolve, minGrounding) {
             dropped.push({ line, reason: 'no-marks' });
             continue;
         }
-        // Marks that appear before the trailing group. They are not the citation
-        // the line ends with, but an unresolved one must not be stored in the body.
+        // Marks before the trailing group are not the citation that ends the line.
+        // An unresolved mark still drops the line, so no unresolved mark reaches the body.
         const earlierMarks = [];
         for (const match of body.matchAll(MARK_GROUP))
             earlierMarks.push(...splitMarks(match[1]));
@@ -168,8 +175,8 @@ export function parseIdCitedLines(raw, resolve, minGrounding) {
             continue;
         }
         // Drop the mid-line groups from the stored body once they have resolved.
-        // The trailing group is rewritten below; leaving an earlier group in place
-        // would keep a second citation shape, and its id is already in `sources`.
+        // The code below writes the trailing group in canonical form. Leaving an earlier group
+        // in place would keep a second citation shape, and its id is already in `sources`.
         const storedBody = body.replace(MARK_GROUP, ' ').replace(/[ \t]{2,}/g, ' ').trim();
         if (!storedBody) {
             dropped.push({ line, reason: 'no-marks' });

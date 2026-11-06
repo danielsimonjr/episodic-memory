@@ -4,6 +4,7 @@ import { readFileSync } from 'fs';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { initDatabase } from '../src/db.js';
 import { insertDigestEntry } from '../src/digest-db.js';
 import { projectKeyFromCwd } from '../src/digest-inject.js';
@@ -17,7 +18,7 @@ import { safeRmSync, suppressConsole } from './test-utils.js';
 
 suppressConsole();
 
-const REPO_ROOT = path.dirname(new URL('../package.json', import.meta.url).pathname);
+const REPO_ROOT = path.dirname(fileURLToPath(new URL('../package.json', import.meta.url)));
 const hookPath = new URL('../cli/digest-hook.js', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
 const CWD = process.platform === 'win32' ? 'C:\\work\\proj' : '/work/proj';
 const PROJECT = projectKeyFromCwd(CWD);

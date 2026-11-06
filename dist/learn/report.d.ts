@@ -41,6 +41,11 @@ export interface SplitReport {
         };
     }>;
 }
+/**
+ * The report of one learning run, as `buildReport` builds it.
+ *
+ * `kept` lists the active instructions and skills for the run's project. `pending` lists the candidates that wait for approval. `merges` lists the duplicate entries that the run merges, and any revert.
+ */
 export interface ReportModel {
     run: LearningRun;
     train: SplitReport;

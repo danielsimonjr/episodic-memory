@@ -77,6 +77,9 @@ export interface LeafResult {
   stopped: boolean;
 }
 
+/**
+ * The options for `runLeafLearner`, which runs one leaf learner over a subset of tasks.
+ */
 export interface LeafLearnerOptions {
   runId: string;
   project: string;

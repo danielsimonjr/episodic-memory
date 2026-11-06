@@ -1,19 +1,26 @@
 /**
  * The one subprocess semaphore (spec §7 rule 10a).
  *
- * Every SDK subprocess a learning run starts — bootstrapper, child learner,
- * solver, validation — goes through this limiter, not through a per-level one.
- * Depth therefore never multiplies processes: a run that splits into projects
+ * This limiter serves every SDK subprocess that a learning run starts.
+ * The subprocesses include the bootstrapper, child learner, solver and validation. No level has its own limiter.
+ * Depth therefore never multiplies processes. A run that splits into projects
  * and then into leaf learners still holds at most `concurrency` subprocesses.
  *
- * An awaited nested `run` reuses the slot the caller already holds. A plain
- * counting semaphore would deadlock the moment a solver called something that
- * itself runs `run` while every slot is held by such a caller. A nested `run`
- * that is not awaited is a second body: it takes its own slot, so a
- * fire-and-forget call cannot slip past the limit on the caller's async context.
+ * An awaited nested `run` reuses the slot that the caller already holds.
+ * A plain counting semaphore deadlocks when every slot holds a caller that waits for a nested `run`.
+ * A nested `run` that nobody awaits is a second body. That body takes its own slot.
+ * A fire-and-forget call therefore cannot slip past the limit on the caller's async context.
  */
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { learnConfig } from './learn-config.js';
+/**
+ * Creates a limiter with `limit` slots.
+ *
+ * A limit below 1, or a limit that is not a finite number, gives one slot. A fractional limit rounds down.
+ * A nested `run` that the caller awaits reuses the slot of the outer run. So the nested run does not wait for a slot that its caller holds.
+ *
+ * @param limit The number of tasks that may run at once.
+ */
 export function createSemaphore(limit) {
     const slots = Number.isFinite(limit) && limit >= 1 ? Math.floor(limit) : 1;
     const holding = new AsyncLocalStorage();
@@ -50,15 +57,12 @@ export function createSemaphore(limit) {
         return execute();
     };
     /**
-     * A nested `run` returns a thenable, not a native Promise: `await` adopts a
-     * native Promise without calling a replaced `.then`, so that would not tell
-     * us whether the caller is sequencing on this body.
+     * A nested `run` returns a thenable, not a native Promise. `await` adopts a native Promise without calling a replaced `.then`.
+     * Such an adoption would not show whether the caller sequences on this body.
      *
-     * The caller attaches `.then` from a microtask queued after this function
-     * returns (async-function adoption). The decision is deferred one microtask
-     * further, so an attached continuation shares the parent's slot and a
-     * detached call — which attaches nothing — takes its own. Only one child
-     * borrows at a time; a second overlapping body acquires.
+     * The caller attaches `.then` from a microtask queued after this function returns (async-function adoption).
+     * The decision waits one microtask longer. An attached continuation shares the parent's slot.
+     * A detached call, which attaches nothing, takes its own slot. Only one child borrows at a time. A second overlapping body acquires.
      */
     const runNested = (parent, fn) => {
         let consumed = false;
@@ -116,9 +120,8 @@ let globalSemaphoreSize = 0;
 /**
  * The process-wide limiter, sized by `learnConfig().concurrency`.
  *
- * A size change takes effect only while nothing is in flight. Swapping the
- * object out from under holders would drop them from the count and let a second
- * limiter admit a full new set of subprocesses.
+ * A size change takes effect only while nothing is in flight. Replacing the object under its holders would drop them from the count.
+ * A second limiter would then admit a full new set of subprocesses.
  */
 export function globalAgentSemaphore() {
     const size = learnConfig().concurrency;

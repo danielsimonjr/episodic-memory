@@ -1,4 +1,17 @@
 import { marked } from 'marked';
+/**
+ * Format a conversation transcript as Markdown.
+ *
+ * A Codex rollout uses the Codex formatter. Every other transcript uses the Claude formatter.
+ * The Claude formatter skips non-conversation messages, messages without a timestamp and messages without content.
+ * The Claude formatter keeps an assistant message without content when the message has usage data.
+ * The Claude formatter throws a SyntaxError when a line is not valid JSON.
+ * The line numbers count the non-blank lines of `jsonl`.
+ *
+ * @param jsonl the transcript, one JSON object for each line. The function skips blank lines.
+ * @param startLine the first line to format, 1-indexed and inclusive. The default is the first line.
+ * @param endLine the last line to format, 1-indexed and inclusive. The default is the last line.
+ */
 export function formatConversationAsMarkdown(jsonl, startLine, endLine) {
     const allLines = jsonl.trim().split('\n').filter(line => line.trim());
     // Apply line range if specified (1-indexed, inclusive)
@@ -192,6 +205,15 @@ export function formatConversationAsMarkdown(jsonl, startLine, endLine) {
     }
     return output;
 }
+/**
+ * Format a conversation transcript as a complete HTML document.
+ *
+ * The function formats a Codex rollout as Markdown first, and then converts the Markdown to HTML.
+ * The function renders every other transcript to HTML directly.
+ * The Claude path throws a SyntaxError when a line is not valid JSON.
+ *
+ * @param jsonl the transcript, one JSON object for each line. The function skips blank lines.
+ */
 export function formatConversationAsHTML(jsonl) {
     const lines = jsonl.trim().split('\n').filter(line => line.trim());
     if (isCodexRollout(lines)) {
@@ -261,7 +283,7 @@ export function formatConversationAsHTML(jsonl) {
         const msg = messages[i];
         const timestamp = new Date(msg.timestamp).toLocaleString();
         const messageId = `msg-${msg.uuid || i}`;
-        // Skip user messages that are just tool results - they'll be rendered with their tool use
+        // Skip user messages that hold only tool results. Each result renders with its tool use.
         if (msg.type === 'user' && Array.isArray(msg.message.content)) {
             const hasOnlyToolResults = msg.message.content.every(block => block.type === 'tool_result');
             if (hasOnlyToolResults) {

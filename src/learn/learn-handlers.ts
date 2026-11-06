@@ -25,6 +25,9 @@ import { buildDigestText, digestMaxChars } from '../digest-inject.js';
 import { searchDigest } from '../digest-db.js';
 import { skillsToolText, type SkillsToolParams } from './skills-tool.js';
 
+/**
+ * The arguments of `learnSearch`. They follow the `search` tool, with a markdown response only.
+ */
 export interface LearnSearchArgs {
   query: string | string[];
   mode?: 'vector' | 'text' | 'both';
@@ -38,23 +41,37 @@ export interface LearnSearchArgs {
   response_format?: 'markdown';
 }
 
+/**
+ * The arguments of `learnRead`. They follow the `read` tool.
+ */
 export interface LearnReadArgs {
   path: string;
   startLine?: number;
   endLine?: number;
 }
 
+/**
+ * The arguments of `learnDigest`.
+ *
+ * When `expand` is set, the function ignores `query`. Without `expand`, a set `query` searches the digest. Without either field, the function returns the default digest view.
+ */
 export interface LearnDigestArgs {
   query?: string;
   expand?: string;
   limit?: number;
 }
 
+/**
+ * The per-task context of `learnSearch`. The context names the exchange ids that the search must not return.
+ */
 export interface LearnContext {
   /** Exchange ids that must not appear in any output. */
   hideExchangeIds: string[];
 }
 
+/**
+ * The per-task context of `learnDigest`. The context names the project to read and the exchange ids to hide.
+ */
 export interface LearnDigestContext {
   /** The project whose digest to read; never inferred from the solver's cwd. */
   project: string;

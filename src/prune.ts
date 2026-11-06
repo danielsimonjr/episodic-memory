@@ -1,16 +1,7 @@
 import Database from 'better-sqlite3';
 
-/**
- * Remove every indexed row belonging to a set of projects.
- *
- * `exclude.txt` / CONVERSATION_SEARCH_EXCLUDE_PROJECTS are consulted only while
- * walking source directories at index time (indexer.ts:62-63). Adding a project to
- * the exclude list therefore stops new rows appearing but leaves everything already
- * indexed in place and searchable. In practice users only reach for the exclude list
- * *after* something has flooded the index, which is exactly the point at which it can
- * no longer help — so there needs to be a way to remove what is already there.
- */
 
+/** The counts from one `pruneProjects` call. With `dryRun`, the counts show what a real run would remove. */
 export interface PruneResult {
   projects: string[];
   exchangesDeleted: number;
@@ -21,11 +12,29 @@ export interface PruneResult {
   dryRun: boolean;
 }
 
+/**
+ * Options for `pruneProjects`.
+ */
 export interface PruneOptions {
-  /** Count what would be removed without touching the database. */
+  /** Count what a real run would remove, without changing the database. */
   dryRun?: boolean;
 }
 
+/**
+ * Removes every indexed row that belongs to a set of projects.
+ *
+ * The exclude list stops indexing of new rows, but does not remove rows that are already in the index.
+ *
+ * An empty list returns at once and changes nothing. With `dryRun`, the function counts the rows and deletes nothing.
+ * Otherwise, the function deletes the rows in one transaction from four tables: `tool_calls`, `vec_exchanges`, `exchanges_fts` and `exchanges`.
+ * The function prepares the `exchanges_fts` delete before the loop. Without `dryRun` and with matching rows, a missing table makes the function throw before the function deletes any row.
+ * Inside the loop, the function ignores a run error from the `exchanges_fts` delete.
+ * The connection must load the sqlite-vec extension, as `openDatabase` does.
+ *
+ * @param db The open database connection to change.
+ * @param projects The project names to remove, as stored in the `project` column.
+ * @param options Set `dryRun` to count the rows without deleting them.
+ */
 export function pruneProjects(
   db: Database.Database,
   projects: string[],

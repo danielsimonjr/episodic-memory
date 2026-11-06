@@ -22,16 +22,30 @@
 import type { NewKnowledgeEntry, ProposedEntry } from './types.js';
 import { type IdCitationResolver } from './cited-ids.js';
 import type { LearnConfig } from './learn-config.js';
+/**
+ * The dependencies that `gateEntry` needs. The caller supplies all of them, so this module imports no store or database.
+ */
 export interface GateDeps {
     resolve: IdCitationResolver;
     redactPii: (text: string) => string;
     config: Pick<LearnConfig, 'minGrounding'>;
+    /** The id of the learning run that made the proposal. The stored entry records it. */
     runId: string;
 }
+/**
+ * A proposal that passed every check. The entry starts as a `candidate` with trust `unverified`.
+ *
+ * `attempts` lists the attempt ids that the entry's kept lines cite.
+ */
 export interface GateAccepted {
     entry: NewKnowledgeEntry;
     attempts: number[];
 }
+/**
+ * The result of `gateEntry`. It holds either an accepted entry or a `rejected` reason.
+ *
+ * A reason is a short code, such as `invalid-slug` or `no-cited-lines`.
+ */
 export type GateResult = GateAccepted | {
     rejected: string;
 };

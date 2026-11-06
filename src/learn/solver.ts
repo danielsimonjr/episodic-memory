@@ -244,6 +244,11 @@ export async function solveTask(
   };
 }
 
+/**
+ * The options of `solveMany`.
+ *
+ * Every task in the batch uses the same snapshot and the same call budget. The other options go to each `solveTask` call unchanged.
+ */
 export interface SolveManyOptions extends Omit<SolveOptions, 'snapshotId'> {
   snapshotId: number;
   /** The run's shared call budget. A batch stops with `BudgetExhausted` at the cap. */

@@ -1,7 +1,7 @@
 {
   "metadata": {
     "name": "episodic-memory",
-    "version": "1.7.1",
+    "version": "1.7.2",
     "schemaVersion": "2.0.0",
     "language": "typescript"
   },
@@ -426,7 +426,7 @@
         ]
       },
       "src/codex-hook-trust.ts": {
-        "description": "codex-hook-trust module",
+        "description": "The trust state that Codex reports for the episodic-memory hooks.",
         "externalDependencies": [],
         "nodeDependencies": [
           {
@@ -454,7 +454,7 @@
         ]
       },
       "src/codex-support.ts": {
-        "description": "codex-support module",
+        "description": "The minimum Codex CLI version that summarization requires.",
         "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [],
@@ -498,7 +498,7 @@
         ]
       },
       "src/db.ts": {
-        "description": "Run CREATE TABLE / migrations / CREATE INDEX.",
+        "description": "The options for `openDatabase`.",
         "externalDependencies": [
           {
             "package": "better-sqlite3",
@@ -646,7 +646,7 @@
         ]
       },
       "src/digest-compress.ts": {
-        "description": "Merge many session entries of a past day into one day entry, and many day entries of a finished",
+        "description": "Options for `compressDigest`. Each field is optional and replaces its default.",
         "externalDependencies": [
           {
             "package": "better-sqlite3",
@@ -706,7 +706,7 @@
         ]
       },
       "src/digest-db.ts": {
-        "description": "Drop every line that cites a hidden exchange, keeping the rest verbatim.",
+        "description": "One digest entry describes one project for one period.",
         "externalDependencies": [
           {
             "package": "better-sqlite3",
@@ -743,7 +743,7 @@
         ]
       },
       "src/digest-inject.ts": {
-        "description": "The digest for one project, within maxChars. Order: handoff notes first, then newest entries first.",
+        "description": "Returns the digest character limit from the `EPISODIC_MEMORY_DIGEST_MAX_CHARS` environment variable.",
         "externalDependencies": [
           {
             "package": "better-sqlite3",
@@ -780,7 +780,7 @@
         ]
       },
       "src/digest-job.ts": {
-        "description": "digest-job module",
+        "description": "Return true when the digest feature is on.",
         "externalDependencies": [
           {
             "package": "better-sqlite3",
@@ -900,7 +900,7 @@
         ]
       },
       "src/digest-prompts.ts": {
-        "description": "digest-prompts module",
+        "description": "A summarizer prompt, with the numbers that the prompt uses.",
         "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
@@ -995,7 +995,7 @@
         ]
       },
       "src/digest-validate.ts": {
-        "description": "Keep only model lines that end in a mark group such as `[3,5]` where every mark names a real",
+        "description": "Keep the model lines that cite only known exchanges, and rewrite their marks.",
         "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
@@ -1156,7 +1156,7 @@
         ]
       },
       "src/doctor.ts": {
-        "description": "The learn section's text.",
+        "description": "The values that `buildCodexDoctorReport` checks.",
         "externalDependencies": [],
         "nodeDependencies": [
           {
@@ -1313,7 +1313,7 @@
         ]
       },
       "src/embeddings.ts": {
-        "description": "Embedding model configuration.",
+        "description": "The embedding model: bge-small-en-v1.5, from the Xenova ONNX export, with the `q8` data type.",
         "externalDependencies": [
           {
             "package": "@huggingface/transformers",
@@ -1464,7 +1464,7 @@
         "exports": []
       },
       "src/indexer.ts": {
-        "description": "Set max output tokens for Claude SDK (used by summarizer)",
+        "description": "Index the conversations in every source folder.",
         "externalDependencies": [],
         "nodeDependencies": [
           {
@@ -1644,7 +1644,7 @@
         ]
       },
       "src/logging.ts": {
-        "description": "Dedicated log for `learn` runs.",
+        "description": "The severity label that a log line records.",
         "externalDependencies": [],
         "nodeDependencies": [
           {
@@ -1716,7 +1716,7 @@
         ]
       },
       "src/mcp-schemas.ts": {
-        "description": "Zod schemas for MCP tool inputs. Kept out of mcp-server.ts so tests can",
+        "description": "Zod schemas for the MCP tool inputs.",
         "externalDependencies": [
           {
             "package": "zod",
@@ -1940,7 +1940,7 @@
         ]
       },
       "src/parser.ts": {
-        "description": "Convenience function to parse a conversation file",
+        "description": "Parse a conversation transcript into exchanges.",
         "externalDependencies": [],
         "nodeDependencies": [
           {
@@ -2073,7 +2073,7 @@
         ]
       },
       "src/prune.ts": {
-        "description": "Remove every indexed row belonging to a set of projects.",
+        "description": "Options for `pruneProjects`.",
         "externalDependencies": [
           {
             "package": "better-sqlite3",
@@ -2150,7 +2150,7 @@
         "exports": []
       },
       "src/search.ts": {
-        "description": "Exchange ids to leave out of the result set entirely.",
+        "description": "Returns the longest summary, in characters, that the results display.",
         "externalDependencies": [
           {
             "package": "better-sqlite3",
@@ -2254,7 +2254,7 @@
         "exports": []
       },
       "src/show.ts": {
-        "description": "show module",
+        "description": "Format a conversation transcript as Markdown.",
         "externalDependencies": [
           {
             "package": "marked",
@@ -2292,7 +2292,7 @@
         "exports": []
       },
       "src/stats.ts": {
-        "description": "stats module",
+        "description": "The counts and sizes that describe the conversation index.",
         "externalDependencies": [
           {
             "package": "better-sqlite3",
@@ -2324,7 +2324,7 @@
         ]
       },
       "src/summarizer.ts": {
-        "description": "Get API environment overrides for summarization calls.",
+        "description": "Build the environment for a summarization subprocess.",
         "externalDependencies": [
           {
             "package": "@anthropic-ai/claude-agent-sdk",
@@ -2424,7 +2424,7 @@
         ]
       },
       "src/sync-banner.ts": {
-        "description": "The first lines a finished sync prints. A success line over a stalled queue reads as health from",
+        "description": "The counts that `syncHeadline` reads from one finished sync run.",
         "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [],
@@ -2631,7 +2631,7 @@
         ]
       },
       "src/types.ts": {
-        "description": "Type definitions (4 interfaces, 1 type aliases)",
+        "description": "One tool call that an agent made during an exchange.",
         "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [],
@@ -2645,7 +2645,7 @@
         ]
       },
       "src/verify.ts": {
-        "description": "verify module",
+        "description": "The problems that `verifyIndex` found, grouped by kind.",
         "externalDependencies": [],
         "nodeDependencies": [
           {
@@ -3847,7 +3847,7 @@
         ]
       },
       "src/learn/learn-lock.ts": {
-        "description": "One learning run at a time, and the PIDs it owns.",
+        "description": "One learning run at a time, and the PIDs that the run owns.",
         "externalDependencies": [],
         "nodeDependencies": [
           {

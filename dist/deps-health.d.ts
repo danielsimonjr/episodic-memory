@@ -17,6 +17,11 @@ export declare function nativeAddonPresent(nodeModulesPath: string): boolean;
 export declare const JS_SENTINELS: string[];
 /** Unchanged export: the JS sentinels plus the legacy binding path. Derived so the two cannot drift. */
 export declare const DEP_SENTINELS: string[];
+/**
+ * Return true when `node_modules` holds the packages and the native binding that the plugin needs.
+ *
+ * The folder must exist. Every path in `JS_SENTINELS` must exist. A compiled better-sqlite3 binding must exist in a layout that `nativeAddonPresent` accepts. The function checks file names only and loads no package.
+ */
 export declare function nodeModulesIsHealthy(nodeModulesPath: string): boolean;
 /**
  * What a caller must run to make node_modules usable. `npm install` on a tree that already lists

@@ -5,7 +5,17 @@
  * fast path, next to `better-sqlite3` and the small `dist/` modules, and must not
  * pull in transformers, the SDK or the knowledge store to read one environment variable.
  */
+/**
+ * Which new instructions wait for a person before they activate.
+ *
+ * `instructions`, the default, keeps each instruction as a candidate until `learn approve` runs. `none` activates an instruction after validation, without a person. Skills activate after validation in every mode. `all` is accepted, and no code path gives `all` a separate effect.
+ */
 export type LearnApproveMode = 'instructions' | 'all' | 'none';
+/**
+ * The settings of one learning run, as `learnConfig` reads them from the `EPISODIC_MEMORY_LEARN_*` variables.
+ *
+ * Each field has a default. A variable that is missing, empty or invalid leaves its default in place.
+ */
 export interface LearnConfig {
     model: string;
     approve: LearnApproveMode;

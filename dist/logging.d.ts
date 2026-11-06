@@ -1,5 +1,18 @@
+/**
+ * The severity label that a log line records.
+ */
 export type LogLevel = 'info' | 'warn' | 'error';
+/**
+ * Returns the `logs` directory under the directory from `getSuperpowersDir`.
+ *
+ * Creates the directory when the directory is missing.
+ */
 export declare function getLogDir(): string;
+/**
+ * Returns the path of the sync log, `episodic-memory.log`.
+ *
+ * Creates the log directory when the directory is missing.
+ */
 export declare function getSyncLogPath(): string;
 /** Dedicated log for SessionStart hook failures (upstream #94). */
 export declare function getSyncErrorsLogPath(): string;
@@ -19,5 +32,15 @@ export declare function getSyncLockPath(): string;
  * Keeps a single `.1` backup. Best-effort: any failure leaves the log as-is.
  */
 export declare function rotateSyncLogIfNeeded(maxBytes?: number): void;
+/**
+ * Formats one log line. The line contains a UTC timestamp, the level in brackets, the message, and a newline.
+ *
+ * The function does not escape the message. A newline in the message starts a new line in the file.
+ */
 export declare function formatLogLine(level: LogLevel, message: string): string;
+/**
+ * Appends one line to the sync log, using the path from `getSyncLogPath`.
+ *
+ * The write is synchronous. The call throws when the write fails.
+ */
 export declare function appendLogLine(level: LogLevel, message: string): void;

@@ -12,6 +12,7 @@
 import { z } from 'zod';
 import { createSdkMcpServer, tool, } from '@anthropic-ai/claude-agent-sdk';
 import { learnDigest, learnRead, learnSearch, learnSkills, } from './learn-handlers.js';
+/** The name of the in-process MCP server. The tool names below include the server name, as `mcp__episodic-learn__`. */
 export const SERVER_NAME = 'episodic-learn';
 /** The four tools every agent gets, fully qualified as an SDK `allowedTools` entry. */
 export const SERVED_TOOL_NAMES = [
@@ -20,13 +21,13 @@ export const SERVED_TOOL_NAMES = [
     'mcp__episodic-learn__digest',
     'mcp__episodic-learn__skills',
 ];
-/** The write-shaped exception: learners and bootstrappers only, and it stores nothing. */
+/** The write-shaped exception: learners and bootstrappers only. The write-shaped exception stores nothing. */
 export const PROPOSE_TOOL_NAME = 'mcp__episodic-learn__propose_entry';
-/** The exact tool list a run's agent is allowed to see. */
+/** The exact tool list that a run's agent can see. */
 export function servedToolNames(allowPropose) {
     return allowPropose ? [...SERVED_TOOL_NAMES, PROPOSE_TOOL_NAME] : [...SERVED_TOOL_NAMES];
 }
-/** What the server says when a proposal was handed over (or dropped) without writing. */
+/** What the server says when a caller hands over a proposal, or drops one, without writing. */
 export const PROPOSAL_RECEIVED_MESSAGE = 'Proposal received. The orchestrator validates it; nothing was written by this tool.';
 /** A successful MCP tool result. */
 function ok(text) {

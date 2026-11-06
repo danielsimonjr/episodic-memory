@@ -7,6 +7,13 @@ import { maybeRedactSecrets } from './redact.js';
 import { LEARN_OFF_MESSAGE, learnEnabled } from './learn/learn-config.js';
 import { assertMcpAuthorized } from './mcp-auth.js';
 import { DigestInputSchema, SearchInputSchema, ShowConversationInputSchema, SkillsInputSchema, handleMcpError, } from './mcp-schemas.js';
+/**
+ * Run one MCP tool call and return its result.
+ *
+ * The tools are `search`, `read`, `digest` and `skills`. When `EPISODIC_MEMORY_MCP_TOKEN` is set, the function first requires a matching `auth_token` argument. The function then parses the arguments with the schema of the tool.
+ *
+ * The function does not throw. A failed check, an invalid argument or an unknown tool name gives a result with `isError` set.
+ */
 export async function handleToolCall(name, args) {
     try {
         assertMcpAuthorized(args);

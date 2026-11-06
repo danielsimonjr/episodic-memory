@@ -3,6 +3,13 @@ import path from 'path';
 import { parseConversation } from './parser.js';
 import { initDatabase, getAllExchanges, getFileLastIndexed } from './db.js';
 import { getArchiveDir, getExcludedProjects, findJsonlFiles } from './paths.js';
+/**
+ * Compare the conversation archive with the index and list the differences.
+ *
+ * The function checks each archived conversation in a project that is not excluded. The function then checks each indexed exchange for an archive file. The function opens the index with `initDatabase`, which runs its migrations, and prints progress lines to standard output.
+ *
+ * The function returns an empty result when the archive folder does not exist. The function repairs nothing.
+ */
 export async function verifyIndex() {
     const result = {
         missing: [],
@@ -88,6 +95,15 @@ export async function verifyIndex() {
     }
     return result;
 }
+/**
+ * Repair the problems that `verifyIndex` found.
+ *
+ * The function deletes the index rows of orphaned exchanges. For each missing or outdated conversation, the function parses the conversation again. The function then writes the summary file when the summary succeeds, and indexes the exchanges with new embeddings. A conversation that fails is logged and skipped, and the other conversations still run.
+ *
+ * The function does not repair corrupted conversations. The function prints them for manual review.
+ *
+ * The function throws when the index database or the embedding model cannot start.
+ */
 export async function repairIndex(issues) {
     console.log('Repairing index...');
     // To avoid circular dependencies, we import the indexer functions dynamically

@@ -1,10 +1,29 @@
 /**
- * Zod schemas for MCP tool inputs. Kept out of mcp-server.ts so tests can
- * validate them without starting a stdio transport.
+ * Zod schemas for the MCP tool inputs.
+ *
+ * The schemas live in this module, not in mcp-server.ts. Tests validate the
+ * schemas without starting a stdio transport.
  */
 import { z } from 'zod';
+/**
+ * The search methods that the `mode` input of the `search` tool accepts.
+ *
+ * `vector` ranks exchanges by semantic similarity. `text` finds exchanges that
+ * contain the query text. `both` runs the two methods and combines the results.
+ */
 export const SearchModeEnum = z.enum(['vector', 'text', 'both']);
+/** The output formats of the `search` tool: `markdown` for people, `json` for programs. */
 export const ResponseFormatEnum = z.enum(['markdown', 'json']);
+/**
+ * The input schema of the `search` tool.
+ *
+ * The schema rejects unknown fields. A string `query` has at least 2 characters.
+ * An array `query` has 2 to 5 strings, and each string has at least 2 characters.
+ * The `mode` input applies only to a string `query`.
+ * The `after` and `before` inputs must match YYYY-MM-DD. The schema does not check that the date exists.
+ * When the caller omits an input, the schema uses these defaults: mode `both`, limit 10 and response_format `markdown`.
+ * `assertMcpAuthorized` checks the `auth_token` input, and this schema does not.
+ */
 export const SearchInputSchema = z
     .object({
     query: z
@@ -45,6 +64,18 @@ export const SearchInputSchema = z
         .describe('Required when EPISODIC_MEMORY_MCP_TOKEN is set'),
 })
     .strict();
+/**
+ * The input schema of the `read` tool, which shows one archived conversation.
+ *
+ * The schema requires a non-empty `path`, but the schema does not check the path.
+ * The read tool passes `path` to resolveArchiveJsonlPath. That function refuses a file
+ * outside the conversation archive and a file that does not end in .jsonl.
+ * `startLine` and `endLine` are 1-indexed and inclusive. Without `startLine`, the read
+ * starts at line 1. Without `endLine`, the read runs to the end of the file.
+ * A read without a line range fails when the file is larger than the read cap. The
+ * EPISODIC_MEMORY_MAX_READ_BYTES variable sets the read cap.
+ * `assertMcpAuthorized` checks the `auth_token` input, and this schema does not.
+ */
 export const ShowConversationInputSchema = z
     .object({
     path: z
@@ -70,6 +101,16 @@ export const ShowConversationInputSchema = z
         .describe('Required when EPISODIC_MEMORY_MCP_TOKEN is set'),
 })
     .strict();
+/**
+ * The input schema of the `digest` tool.
+ *
+ * The tool checks `expand`, then `handoff`, then `query`. The first one that the caller sets decides the action.
+ * When the caller sets none of them, the tool shows the digest for `project`, or for the working directory when the caller omits `project`.
+ * The `query` action searches every project when the caller omits `project`.
+ * `limit` sets the number of search hits. The default is 10.
+ * `handoff` accepts up to 2000 characters. The stored note is one line, redacted, and capped at 500 characters.
+ * `assertMcpAuthorized` checks the `auth_token` input, and this schema does not.
+ */
 export const DigestInputSchema = z
     .object({
     query: z.string().min(1).optional().describe('Search the digest instead of showing it'),
@@ -93,6 +134,16 @@ export const DigestInputSchema = z
     auth_token: z.string().min(1).optional().describe('Required when EPISODIC_MEMORY_MCP_TOKEN is set'),
 })
     .strict();
+/**
+ * The input schema of the `skills` tool.
+ *
+ * The tool checks `get`, then `query`. The first one that the caller sets decides the action.
+ * When the caller sets neither, the tool lists the learned skills.
+ * `project` selects the project for each action. The default is the working directory.
+ * `limit` sets the number of skills that the `query` action and the list action return. The default is 10.
+ * When the learn feature is off, the tool returns a fixed message.
+ * `assertMcpAuthorized` checks the `auth_token` input, and this schema does not.
+ */
 export const SkillsInputSchema = z
     .object({
     get: z
@@ -114,6 +165,13 @@ export const SkillsInputSchema = z
     auth_token: z.string().min(1).optional().describe('Required when EPISODIC_MEMORY_MCP_TOKEN is set'),
 })
     .strict();
+/**
+ * Format a caught value as the text of an MCP error result.
+ *
+ * An Error gives its message. Any other value gives its String form. The text always starts with "Error: ".
+ *
+ * @param error the value that the tool handler caught
+ */
 export function handleMcpError(error) {
     if (error instanceof Error) {
         return `Error: ${error.message}`;

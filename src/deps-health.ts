@@ -52,6 +52,11 @@ export const JS_SENTINELS = [
 /** Unchanged export: the JS sentinels plus the legacy binding path. Derived so the two cannot drift. */
 export const DEP_SENTINELS = [NATIVE_ADDON, ...JS_SENTINELS];
 
+/**
+ * Return true when `node_modules` holds the packages and the native binding that the plugin needs.
+ *
+ * The folder must exist. Every path in `JS_SENTINELS` must exist. A compiled better-sqlite3 binding must exist in a layout that `nativeAddonPresent` accepts. The function checks file names only and loads no package.
+ */
 export function nodeModulesIsHealthy(nodeModulesPath: string): boolean {
   if (!existsSync(nodeModulesPath)) return false;
   if (!JS_SENTINELS.every((rel) => existsSync(join(nodeModulesPath, rel)))) return false;

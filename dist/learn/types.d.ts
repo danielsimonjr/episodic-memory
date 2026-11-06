@@ -8,8 +8,21 @@
  */
 import type Database from 'better-sqlite3';
 import type { KnowledgeStore } from './knowledge-store.js';
+/**
+ * The kind of a learned entry.
+ *
+ * An `instruction` is a rule for the agent. A `skill` is a procedure with steps. A `reflection` is a conclusion drawn from evidence.
+ */
 export type KnowledgeKind = 'instruction' | 'skill' | 'reflection';
+/**
+ * The lifecycle state of a learned entry.
+ *
+ * A `candidate` waits for validation or approval. An `active` entry is in use. A `retired` entry is no longer in use.
+ */
 export type KnowledgeStatus = 'candidate' | 'active' | 'retired';
+/**
+ * How sure the learner is of a learned entry: `low`, `medium` or `high`.
+ */
 export type Confidence = 'low' | 'medium' | 'high';
 /**
  * The three trust levels the spec names. The store writes nothing else.
@@ -41,7 +54,7 @@ export interface ProcedureStepSpec {
     action: 'search' | 'read' | 'digest' | 'skills' | 'check';
     parameters: Record<string, string>;
 }
-/** One learned entry, as every module outside the adapter sees it. */
+/** One learned entry, as every module outside knowledge-store.ts sees it. */
 export interface KnowledgeEntry {
     /** The entity name: `learned:<kind>:<project>:<slug>:v<n>`. */
     id: string;
@@ -113,12 +126,25 @@ export interface TraceStep {
     resultAddress: string | null;
     resultChars: number;
 }
+/**
+ * What one agent attempt cost: turns, input and output tokens, and dollars.
+ *
+ * Input tokens include cache reads. `usd` is null when the agent reports no cost.
+ */
 export interface Cost {
     turns: number;
     inputTokens: number;
     outputTokens: number;
     usd: number | null;
 }
+/**
+ * How one agent attempt ended.
+ *
+ * - `graded`: the agent returned a result that is not an error. The answer can be scored.
+ * - `aborted`: the attempt passed its time limit.
+ * - `killed`: the agent process ended because of a signal.
+ * - `error`: the attempt failed in another way, or the agent returned an error result.
+ */
 export type AttemptOutcome = 'graded' | 'aborted' | 'killed' | 'error';
 /** One row of `learning_attempt`. */
 export interface AttemptRow {
@@ -137,4 +163,9 @@ export interface AttemptRow {
 }
 /** A slug is also a directory name in the export, so it must be portable. */
 export declare const SLUG_RE: RegExp;
+/**
+ * Return true when `slug` is safe to use as a directory name on every platform.
+ *
+ * A valid slug matches `SLUG_RE`. The pattern accepts lowercase letters, digits and hyphens. A slug has one to 64 characters. The first character must be a lowercase letter or a digit. The slug must not be a reserved Windows device name, such as `con`, `nul` or `com1`. An upper-case letter makes the check fail.
+ */
 export declare function isValidSlug(slug: string): boolean;

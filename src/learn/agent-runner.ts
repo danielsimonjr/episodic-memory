@@ -47,6 +47,9 @@ export interface PidRegistry {
   remove(pid: number): void;
 }
 
+/**
+ * The inputs to `buildAgentQueryOptions`.
+ */
 export interface BuildAgentQueryOptionsArgs {
   server: McpSdkServerConfigWithInstance;
   allowPropose: boolean;
@@ -98,6 +101,9 @@ export function buildAgentQueryOptions(
 // PID registration
 // ---------------------------------------------------------------------------
 
+/**
+ * One process from a process listing, with its id, its parent id when known, and its command line.
+ */
 export interface ProcSnapshot {
   pid: number;
   ppid?: number;
@@ -169,6 +175,9 @@ export function listAgentProcesses(): ProcSnapshot[] | null {
 // runAgent
 // ---------------------------------------------------------------------------
 
+/**
+ * The inputs to `runAgent`. The `queryFn` and `processLister` fields are test seams.
+ */
 export interface AgentRunOptions {
   prompt: string;
   systemPrompt: string;
@@ -187,6 +196,9 @@ export interface AgentRunOptions {
   pollMs?: number;
 }
 
+/**
+ * What one `runAgent` call returns: the final text, the trace, the cost, and the outcome.
+ */
 export interface AgentRunResult {
   text: string;
   trace: TraceStep[];

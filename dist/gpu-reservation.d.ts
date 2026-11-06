@@ -19,6 +19,11 @@
  *
  * `FLEET_GPU_RESERVATION` overrides the path, so tests never read the real file.
  */
+/**
+ * The fleet GPU reservation, as `readGpuReservation` returns it.
+ *
+ * `readGpuReservation` returns a value of this type while the GPU is held. The function also returns a value of this type when the reservation file cannot be read. In that case `holder` is `unknown`, and `fault` names the cause.
+ */
 export interface GpuReservation {
     /** The session or job that holds the GPU. "unknown" when the file could not be read. */
     holder: string;
@@ -31,8 +36,17 @@ export interface GpuReservation {
     /** Set when the file could not be read or parsed. The holder is then "unknown". */
     fault?: string;
 }
+/**
+ * Return the path of the fleet GPU reservation file.
+ *
+ * The `FLEET_GPU_RESERVATION` environment variable sets the path. When that variable is empty or unset, the path is `gpu-reserved.json` in the `_fleet` folder of the `Dropbox` folder in the home folder.
+ */
 export declare function reservationPath(): string;
-/** The current reservation, or `null` when the GPU is free. */
+/**
+ * Return the current GPU reservation, or `null` when the GPU is free.
+ *
+ * The function returns `null` when the file is missing or names no holder. The function returns a reservation with `holder` set to `unknown` when the file cannot be read, is not valid JSON, or parses to `null`. The `fault` field names the cause.
+ */
 export declare function readGpuReservation(): GpuReservation | null;
 /**
  * A message that says who holds the GPU while it is reserved, or `null` when it is free.

@@ -1,19 +1,20 @@
 /**
  * Self-practice task generation and staleness checks (spec §4.4).
  *
- * A task is built from one held-out exchange: the solver never sees its address
- * or its assistant message, and the grade compares what the solver found with
- * the address the exchange actually has. The archive is therefore both the
+ * The module builds each task from one held-out exchange. The solver never sees
+ * the address or the assistant message of that exchange. The grade compares what
+ * the solver found with the address the exchange actually has. The archive is
+ * therefore both the
  * corpus and the answer key, and no rubric author is needed.
  *
  * What this module guarantees:
  *
  * - **Redaction before any model sees text, and again before storage.** The
- *   paraphrase prompt carries redacted exchange text; the returned prompt is
- *   redacted and truth is redacted before the row is written.
- * - **Screening.** A prompt that fails the learned-text screen is not stored.
- *   A paraphrase is untrusted text from a model that just read the archive, and
- *   it becomes a learner prompt later.
+ *   paraphrase prompt carries redacted exchange text. The module redacts the returned
+ *   prompt and the assistant message in the truth before the module writes the row.
+ * - **Screening.** The module does not store a prompt that fails the learned-text screen.
+ *   A paraphrase is untrusted text from a model that just read the archive.
+ *   The learned-text screen applies to every paraphrase before storage.
  * - **A stratified 60/40 split** per `(project, tier)` from the seed stored on
  *   the run, so the held-out split is comparable across runs.
  * - **Truth is an address**, not a copied transcript, so a re-index that moves a
@@ -24,9 +25,13 @@ import { redactSecrets } from '../redact.js';
 import { screenLearnedText } from './learned-text-screen.js';
 import { insertTask, markStale } from './learning-db.js';
 import { callLearnModel } from '../summarizer.js';
-/** Default floors from spec §4.4. */
+/**
+ * The default minimum number of non-sidechain exchanges that a project needs before selectSourceExchanges uses it. The defaults come from spec §4.4.
+ */
 export const MIN_PER_PROJECT = 20;
+/** The default minimum length, in characters, of a user message. selectSourceExchanges skips exchanges with a shorter user message. */
 export const MIN_USER_CHARS = 80;
+/** The default minimum length, in characters, of an assistant message. selectSourceExchanges skips exchanges with a shorter assistant message. */
 export const MIN_ASSISTANT_CHARS = 200;
 /** The train fraction of each `(project, tier)` cell. */
 const TRAIN_SHARE = 0.6;
@@ -74,12 +79,12 @@ function exchangeFromRow(row) {
     };
 }
 /**
- * Pick the exchanges tasks may be built from.
+ * Select the exchanges that the module may build tasks from.
  *
- * Deterministic from the seed. Excludes sidechains, exchanges whose user or
- * assistant message is below the floor (a one-line exchange has nothing to
- * locate), and projects below `minPerProject` indexed exchanges (a project with
- * a dozen exchanges makes a task trivially findable).
+ * Deterministic from the seed. The function excludes sidechains, exchanges whose
+ * user or assistant message is below the floor, and projects with fewer than
+ * `minPerProject` indexed exchanges. A one-line exchange has nothing to locate,
+ * and a project with a dozen exchanges makes a task trivially findable.
  */
 export function selectSourceExchanges(indexDb, options) {
     const minPerProject = options.minPerProject ?? MIN_PER_PROJECT;
@@ -150,7 +155,7 @@ function sessionSiblings(indexDb, exchange) {
  * The paraphrase prompt.
  *
  * One call per source exchange returns all three tiers; the tiers differ only in
- * how much of the user's own vocabulary survives. Tier 3 deliberately adds a
+ * how much of the source user message's vocabulary survives. Tier 3 deliberately adds a
  * wrong-but-plausible detail the solver has to reject.
  */
 export function paraphrasePrompt(exchange) {
@@ -194,12 +199,12 @@ export function paraphrasePrompt(exchange) {
 const TIER_TAG = /<tier([123])>([\s\S]*?)<\/tier\1>/g;
 /**
  * A stored prompt is the solver's only view of the task. The archive path and
- * the session id are the answer key (spec §4.4), so a paraphrase that echoes
- * either of them is dropped rather than stored.
+ * the session id are the answer key (spec §4.4). The function returns true for a
+ * paraphrase that echoes either of them, and the caller then drops that paraphrase.
  *
  * The check is lexical: a `.jsonl` path (POSIX or Windows), the source
  * exchange's own path or session id, or a bare `session-<id>` token. The word
- * "session" on its own is a legitimate question and is kept.
+ * "session" on its own is a legitimate question, so the check does not flag it.
  */
 export function promptLeaksAnswerKey(prompt, exchange) {
     if (typeof prompt !== 'string' || !prompt)
@@ -219,7 +224,7 @@ export function promptLeaksAnswerKey(prompt, exchange) {
         if (base.length >= 3 && prompt.includes(base))
             return true;
     }
-    // A session id the model named even when it is not this exchange's id
+    // A session id the model named even when the id differs from this exchange's id
     // (`session-0` while paraphrasing a sibling) is still an address.
     if (/\bsession[-_][A-Za-z0-9][\w.-]*/.test(prompt))
         return true;
@@ -247,9 +252,10 @@ export function parseParaphrase(raw) {
 /**
  * Generate tasks from the archive, split them, and store them.
  *
- * One paraphrase call per source exchange. Each returned prompt is redacted and
- * screened; a prompt that fails either is dropped, and an exchange whose whole
- * answer is unusable simply contributes no tasks.
+ * The module makes one paraphrase call per source exchange. The module redacts
+ * each returned prompt. The module drops a prompt that leaks the answer key or
+ * fails the learned-text screen. An exchange whose whole answer is unusable
+ * contributes no tasks.
  */
 export async function generateTasks(learningDb, indexDb, options) {
     const model = options.model ?? callLearnModel;
@@ -305,9 +311,9 @@ export async function generateTasks(learningDb, indexDb, options) {
         }
     }
     // Stratify by (project, tier), sample each stratum down to its share of
-    // `maxTasks`, then split 60/40 inside the surviving stratum. The share is a
-    // floor plus a remainder handed out in a stable order, so the total never
-    // exceeds the cap and the allocation is reproducible.
+    // `maxTasks`, then split 60/40 inside the surviving stratum. Each share is a
+    // floor plus a remainder. The code hands out the remainder in a stable order,
+    // so the total never exceeds the cap and the allocation is reproducible.
     const strata = new Map();
     for (const draft of drafts) {
         const key = `${draft.project}\u0000${draft.tier}`;
@@ -379,12 +385,13 @@ function overlaps(aStart, aEnd, bStart, bEnd) {
     return start <= end;
 }
 /**
- * Mark every task whose source address no longer resolves.
+ * Mark every task whose source address does not resolve.
  *
- * A re-indexed session keeps its path but moves its lines (the last exchange of
- * a growing session grows, and later inserts shift nothing but a repair can
- * renumber); a pruned project loses the path entirely. Both are `stale`, which
- * excludes the task from reads and metrics rather than scoring it as a failure.
+ * A re-indexed session keeps its path but moves its lines. The last exchange of a
+ * growing session grows. Later inserts shift nothing, but a repair can renumber
+ * lines. A pruned project loses the path entirely. The function marks both cases
+ * `stale`, which excludes the task from reads and metrics rather than scoring it
+ * as a failure.
  */
 export function checkTasks(learningDb, indexDb) {
     const rows = learningDb

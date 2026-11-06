@@ -1,22 +1,24 @@
 /**
  * Export the active skills as a tree of `SKILL.md` files.
  *
- * The knowledge store is the source of truth; this tree is generated output and
- * is the **only** place the feature replaces or removes files (spec §5.4, §7
+ * The knowledge store is the source of truth. This tree contains generated output, and
+ * the feature replaces or removes files only in this tree (spec §5.4, §7
  * rule 2). Two modes:
  *
  * - prune (the default, and only for the config-dir root): build the whole tree
- *   in a sibling `learned-skills.tmp-<pid>`, then rename the old root aside and
- *   the new tree into place. A rename that keeps failing with `EPERM` / `EBUSY`
- *   (a file open in a session on Windows) leaves the old tree alone, keeps the
- *   temp tree for the next run and reports a warning. It never throws.
+ *   in a sibling `learned-skills.tmp-<pid>`. Then rename the old root aside and
+ *   the new tree into place.
+ *   A rename that keeps failing with `EPERM` / `EBUSY` (a file open in a session on
+ *   Windows) leaves the old tree alone. The export keeps the temp tree for the next
+ *   run and reports a warning instead of throwing.
  * - copy (`learn export --to <dir>`): write file by file into the target and
  *   remove nothing there, ever.
  *
- * Every field is screened and redacted again on the way out: this text lands in
- * a project directory and is read by later sessions and learners.
+ * The export screens and redacts every field again on the way out. This text lands in
+ * a project directory, and later sessions and learners read it.
  */
 import { type LearnDbs } from './types.js';
+/** The outcome of an export that exportSkills runs. */
 export interface ExportResult {
     /** Absolute paths of the `SKILL.md` files written. */
     written: string[];
@@ -25,6 +27,7 @@ export interface ExportResult {
     /** Non-fatal problems: a refused root, a failed rename, a withheld skill. */
     warnings: string[];
 }
+/** Options for exportSkills. */
 export interface ExportOptions {
     /**
      * Replace the whole tree instead of copying into it. Default true. Only the

@@ -17,6 +17,13 @@ const LEARNED_DIR_NAME = 'learned';
 function emptyCounts() {
     return { candidate: 0, active: 0, retired: 0 };
 }
+/**
+ * Returns a section that reports nothing found. The `learnedDir` field contains the given path.
+ *
+ * `collectLearnDoctorSection` starts from this section and fills in each value that the function finds.
+ *
+ * @param learnedDir The `learned` directory to report. Empty when `collectLearnDoctorSection` finds no value.
+ */
 export function emptyLearnSection(learnedDir = '') {
     return {
         present: false,

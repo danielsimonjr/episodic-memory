@@ -31,6 +31,11 @@ export interface ParsedAnswer {
   locations: AnswerLocation[];
 }
 
+/**
+ * The verdict and the score of one graded answer.
+ *
+ * `passed` is the verdict. `score` lies from 0 to 1.
+ */
 export interface Grade {
   passed: boolean;
   score: number;

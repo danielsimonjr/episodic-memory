@@ -1,7 +1,13 @@
 import type Database from 'better-sqlite3';
+/** The default digest character limit. `digestMaxChars` uses the default value when the environment value is not a positive integer. */
 export declare const DEFAULT_DIGEST_MAX_CHARS = 6000;
 /** The archive project key for a working directory: every non-alphanumeric character becomes a hyphen. */
 export declare function projectKeyFromCwd(cwd: string): string;
+/**
+ * Returns the digest character limit from the `EPISODIC_MEMORY_DIGEST_MAX_CHARS` environment variable.
+ *
+ * Returns DEFAULT_DIGEST_MAX_CHARS when the variable is unset or is not a positive integer.
+ */
 export declare function digestMaxChars(): number;
 /**
  * The digest for one project, within maxChars. Order: handoff notes first, then newest entries first.

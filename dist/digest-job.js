@@ -9,6 +9,11 @@ import { compressDigest } from './digest-compress.js';
 /** A session whose last exchange is newer than this is still running; summarize it next time. */
 const QUIET_MS = 30 * 60 * 1000;
 const DEFAULT_MAX_SESSIONS = 5;
+/**
+ * Return true when the digest feature is on.
+ *
+ * The feature is on only when EPISODIC_MEMORY_DIGEST is exactly `1`. Other values, such as `true`, leave it off.
+ */
 export function digestEnabled() {
     return process.env.EPISODIC_MEMORY_DIGEST === '1';
 }
@@ -95,7 +100,16 @@ async function writeSessionEntries(db, model, now, result) {
             result.written++;
     }
 }
-/** Write session digest entries, then compress old days and weeks. Does nothing unless EPISODIC_MEMORY_DIGEST=1 and the summarizer guard is unset. */
+/**
+ * Run the digest job. The job writes session entries, then compresses older entries.
+ *
+ * The function returns at once, and writes nothing, when EPISODIC_MEMORY_DIGEST is not `1`.
+ * The function also returns at once when EPISODIC_MEMORY_SUMMARIZER_GUARD is `1`, which marks a summarizer subprocess.
+ * The job stops early when another agent holds the shared GPU and reports the reason in `deferred`.
+ *
+ * @param db the open index database
+ * @param opts replaces the model call or the clock. Without it, the job uses the default summarizer call and the current time.
+ */
 export async function runDigest(db, opts = {}) {
     const result = { written: 0, skipped: 0, failed: 0 };
     if (!digestEnabled() || shouldSkipReentrantSync())

@@ -17,6 +17,11 @@ const WINDOWS_RESERVED_NAMES = new Set([
 ]);
 /** A slug is also a directory name in the export, so it must be portable. */
 export const SLUG_RE = /^[a-z0-9][a-z0-9-]{0,63}$/;
+/**
+ * Return true when `slug` is safe to use as a directory name on every platform.
+ *
+ * A valid slug matches `SLUG_RE`. The pattern accepts lowercase letters, digits and hyphens. A slug has one to 64 characters. The first character must be a lowercase letter or a digit. The slug must not be a reserved Windows device name, such as `con`, `nul` or `com1`. An upper-case letter makes the check fail.
+ */
 export function isValidSlug(slug) {
     if (!SLUG_RE.test(slug))
         return false;

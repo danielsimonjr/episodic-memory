@@ -1,9 +1,9 @@
 /**
  * The injection screen for learned text.
  *
- * Learned text is written by a model that has just read untrusted archive
- * content, and it is then injected into every future session, exported to disk
- * and read by later learners. Every field of every kind therefore passes this
+ * A model that has just read untrusted archive content writes the learned text.
+ * The plugin then injects this text into every future session, exports it to disk, and
+ * gives it to later learners. Every field of every kind therefore passes this
  * screen before storage and again on the way out.
  *
  * The screen is a barrier, not a proof: approval mode and the grounding check
@@ -19,9 +19,9 @@ const BIDI_OVERRIDES = /[\u202a-\u202e\u2066-\u2069\u061c]/g;
 // checked line by line.
 const CONTROL = /[\u0000-\u0008\u000b-\u001f\u007f-\u009f]/g;
 /**
- * Normalise text before any pattern runs: NFKC folds fullwidth and other
- * compatibility forms into ASCII, then the invisible characters an attacker uses
- * to split a keyword are removed.
+ * Normalise text before any pattern runs. NFKC folds fullwidth and other
+ * compatibility forms into ASCII. The function then removes the invisible characters
+ * that an attacker uses to split a keyword.
  */
 export function normalizeForScreen(text) {
     if (!text)
@@ -40,10 +40,10 @@ function words(...parts) {
     return new RegExp(`\\b${parts.join('[\\s_-]+')}\\b`, 'i');
 }
 /**
- * Ordered: a line that trips two rules is attributed to the first. Authority
- * framing precedes the shell words because "always run X before" is the shape
- * worth naming, and the foreign `mcp__` rule is last so a plugin name is never
- * mistaken for one.
+ * Ordered: the first rule that a line trips gives the line its reason. Authority
+ * framing comes before the shell words, because "always run X before" is the
+ * shape worth naming. The foreign `mcp__` rule is last, so the screen never mistakes a plugin name
+ * for one.
  */
 const RULES = [
     {
@@ -89,7 +89,7 @@ const RULES = [
     },
     {
         // "call the github tool", "invoke the notebook tool", "use the foo tool".
-        // Allowlisted phrases are removed first, so "use the search tool" stays.
+        // The screen removes allowlisted phrases first, so "use the search tool" stays.
         name: 'tool-invocation',
         re: /\b(?:call|calls|invoke|invokes|use|uses)\s+the\s+(?:\S+\s+){1,4}?tool\b/i,
     },
@@ -99,9 +99,9 @@ const RULES = [
     { name: 'foreign-mcp-name', re: /\bmcp__(?!episodic-)[a-z0-9_-]+/i },
 ];
 /**
- * The exact phrases the plugin itself prints. They are removed before the rule
- * set runs so the plugin's own vocabulary can never be read as a tool
- * invocation; everything else that looks like one is rejected.
+ * The exact phrases the plugin itself prints. The screen removes these phrases before
+ * the rule set runs, so the screen never reads the plugin's own vocabulary as a tool
+ * invocation. The screen rejects everything else that looks like one.
  */
 const ALLOWLISTED_TOOL_PHRASES = [
     'episodic-memory skills tool',
@@ -147,9 +147,9 @@ function screenLine(line) {
  * Screen one field of learned text.
  *
  * Every field passes the same pattern set, case-insensitively, on the
- * normalised text. With `kind: 'instruction'` and `field: 'body'` each line must
- * additionally match one of the template forms, so an instruction cannot smuggle
- * free prose into the always-loaded block.
+ * normalised text. With `kind: 'instruction'` and `field: 'body'`, each line must
+ * also match one of the template forms. The template forms stop an instruction from
+ * smuggling free prose into the always-loaded block.
  */
 export function screenLearnedText(text, opts = {}) {
     const normalized = normalizeForScreen(text);

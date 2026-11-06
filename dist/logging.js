@@ -1,6 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 import { getSuperpowersDir, getIndexDir } from './paths.js';
+/**
+ * Returns the `logs` directory under the directory from `getSuperpowersDir`.
+ *
+ * Creates the directory when the directory is missing.
+ */
 export function getLogDir() {
     const dir = path.join(getSuperpowersDir(), 'logs');
     if (!fs.existsSync(dir)) {
@@ -8,6 +13,11 @@ export function getLogDir() {
     }
     return dir;
 }
+/**
+ * Returns the path of the sync log, `episodic-memory.log`.
+ *
+ * Creates the log directory when the directory is missing.
+ */
 export function getSyncLogPath() {
     return path.join(getLogDir(), 'episodic-memory.log');
 }
@@ -50,9 +60,19 @@ export function rotateSyncLogIfNeeded(maxBytes = 5 * 1024 * 1024) {
         // No log yet, or stat/rename failed — nothing to rotate.
     }
 }
+/**
+ * Formats one log line. The line contains a UTC timestamp, the level in brackets, the message, and a newline.
+ *
+ * The function does not escape the message. A newline in the message starts a new line in the file.
+ */
 export function formatLogLine(level, message) {
     return `${new Date().toISOString()} [${level}] ${message}\n`;
 }
+/**
+ * Appends one line to the sync log, using the path from `getSyncLogPath`.
+ *
+ * The write is synchronous. The call throws when the write fails.
+ */
 export function appendLogLine(level, message) {
     fs.appendFileSync(getSyncLogPath(), formatLogLine(level, message), 'utf-8');
 }

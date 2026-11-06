@@ -46,6 +46,11 @@ function formatHookTrustState(hookTrustState) {
             return 'unknown; could not inspect Codex hooks. Open /hooks in Codex to verify trust.';
     }
 }
+/**
+ * Build the report that checks the Codex setup from the collected values.
+ *
+ * The function parses the Codex version, the feature flags and the MCP server list. The function reads no file and runs no command. `ok` is true when no issue was found.
+ */
 export function buildCodexDoctorReport(inputs) {
     const version = parseCodexCliVersion(inputs.codexVersionOutput);
     const versionOk = version !== undefined && versionMeetsMinimum(version);
@@ -103,6 +108,11 @@ export function buildCodexDoctorReport(inputs) {
         text: `${lines.join('\n')}\n`,
     };
 }
+/**
+ * Return the last `limit` lines of a log file that contain `[error]`.
+ *
+ * Each line is trimmed before the match. The function returns an empty array when the file is missing or cannot be read. The default `limit` is 5.
+ */
 export function readRecentLogErrors(logPath, limit = 5) {
     if (!fs.existsSync(logPath))
         return [];
@@ -118,6 +128,13 @@ export function readRecentLogErrors(logPath, limit = 5) {
         return [];
     }
 }
+/**
+ * Collect the inputs of `buildDoctorReport` from the file system, the index and the environment.
+ *
+ * When the index database file exists, the function opens it with `initDatabase`, which runs the migrations. The function reads the exchange and embedding counts from that handle. A count that cannot be read stays undefined. The function also reads the recent hook errors and the learn section.
+ *
+ * The plugin root is `CLAUDE_PLUGIN_ROOT`. When that variable is empty or unset, the function uses `PLUGIN_ROOT`.
+ */
 export async function collectDoctorSnapshot() {
     const configDir = getSuperpowersDir();
     const archiveDir = getArchiveDir();
@@ -213,6 +230,11 @@ function learnTextLines(learn) {
     lines.push(`  better-sqlite3: ${learn.betterSqlite3TopLevel ?? 'unresolved'}`);
     return lines;
 }
+/**
+ * Build the doctor report from a snapshot of the installation.
+ *
+ * A missing archive or index database, a recent hook error and an incomplete `node_modules` folder are issues. A stale embedding version and an unresolved learned source are warnings. `ok` is true when no issue was found. Warnings do not change `ok`.
+ */
 export function buildDoctorReport(inputs) {
     const issues = [];
     const warnings = [];

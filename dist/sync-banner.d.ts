@@ -1,3 +1,6 @@
+/**
+ * The counts that `syncHeadline` reads from one finished sync run.
+ */
 export interface SyncHeadlineTotals {
     pendingSummaries: number;
     summarized: number;

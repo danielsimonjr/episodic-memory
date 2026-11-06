@@ -7,6 +7,11 @@ import { EMBEDDING_VERSION } from './embedding-migration.js';
 import { truncateForIndex } from './constants.js';
 import { maybeRedactSecrets } from './redact.js';
 import { ensureDigestSchema } from './digest-db.js';
+/**
+ * Adds the `exchanges` columns that the database lacks, then runs the other schema migrations.
+ *
+ * The column step reports each added column on stderr. The function then runs `migrateToolCallsCascade`, `ensureFts`, and `ensureDigestSchema`.
+ */
 export function migrateSchema(db) {
     const columns = db.prepare(`SELECT name FROM pragma_table_info('exchanges')`).all();
     const columnNames = new Set(columns.map(c => c.name));
@@ -48,7 +53,7 @@ export function migrateSchema(db) {
  * Without ON DELETE CASCADE, deleting an exchange that had tool calls
  * raised SQLITE_CONSTRAINT_FOREIGNKEY (#81), and orphans accumulated.
  *
- * This migration:
+ * The migration does these steps:
  *   1. Detects the legacy schema by inspecting sqlite_master.sql.
  *   2. Drops orphaned tool_calls rows.
  *   3. Recreates the table with ON DELETE CASCADE and copies surviving rows.
@@ -120,10 +125,20 @@ export function ensureFts(db) {
         console.error('  FTS backfill complete.');
     }
 }
+/**
+ * Replaces the full-text row for one exchange.
+ *
+ * The function deletes any row with the same id, and then inserts the new row.
+ */
 export function upsertExchangeFts(db, id, userMessage, assistantMessage) {
     db.prepare('DELETE FROM exchanges_fts WHERE id = ?').run(id);
     db.prepare(`INSERT INTO exchanges_fts (id, user_message, assistant_message) VALUES (?, ?, ?)`).run(id, userMessage, assistantMessage);
 }
+/**
+ * Removes the full-text row for one exchange.
+ *
+ * The call does nothing when no row has that id.
+ */
 export function deleteExchangeFts(db, id) {
     db.prepare('DELETE FROM exchanges_fts WHERE id = ?').run(id);
 }
@@ -133,6 +148,17 @@ function applySecureDbFileMode(dbPath) {
     tryChmod(`${dbPath}-wal`, 0o600);
     tryChmod(`${dbPath}-shm`, 0o600);
 }
+/**
+ * Opens the index database and prepares the connection.
+ *
+ * The function creates the database directory when the directory is missing.
+ * The function restricts the file mode of the database and its WAL files.
+ * The function loads the sqlite-vec extension and turns on WAL mode.
+ * The busy timeout comes from `EPISODIC_MEMORY_DB_BUSY_TIMEOUT_MS`. The default timeout is 5000 milliseconds.
+ * When `migrate` is true, the function also creates the tables and indexes, and runs `migrateSchema`. When `migrate` is false, the function returns before the function changes the schema.
+ *
+ * @param options Set `migrate` to false to skip the schema changes. The default is true.
+ */
 export function openDatabase(options = {}) {
     const migrate = options.migrate !== false;
     const dbPath = getDbPath();
@@ -262,6 +288,12 @@ export function initDatabase() {
  * First call migrates; later calls reuse without re-running CREATE INDEX.
  */
 let sharedReader = null;
+/**
+ * Returns the process-wide reader connection, and opens the connection on the first call.
+ *
+ * The first call opens the database with migrations. Later calls reuse the same connection.
+ * A later call opens a new connection when the old connection fails a simple query, for example after a close.
+ */
 export function getSharedReaderDatabase() {
     if (sharedReader) {
         try {
@@ -276,6 +308,11 @@ export function getSharedReaderDatabase() {
     sharedReader = openDatabase({ migrate: true });
     return sharedReader;
 }
+/**
+ * Closes the process-wide reader connection, if one is open.
+ *
+ * The function ignores errors from the close. A later call to `getSharedReaderDatabase` opens a new connection.
+ */
 export function closeSharedReaderDatabase() {
     if (sharedReader) {
         try {
@@ -287,6 +324,18 @@ export function closeSharedReaderDatabase() {
         sharedReader = null;
     }
 }
+/**
+ * Writes one exchange to the index, with its embedding, its full-text row, and its tool calls.
+ *
+ * The messages pass through `maybeRedactSecrets` and `truncateForIndex` before storage.
+ * The stored row replaces any earlier row with the same id. The stored row also records the write time and `EMBEDDING_VERSION`.
+ * Tool-call rows from an earlier write stay in place unless their ids match.
+ *
+ * @param db The open database connection.
+ * @param exchange The exchange to store.
+ * @param embedding The embedding vector. The vector must hold 384 numbers, the width of `vec_exchanges`.
+ * @param toolNames Not read by this function.
+ */
 export function insertExchange(db, exchange, embedding, toolNames) {
     const now = Date.now();
     const userMessage = truncateForIndex(maybeRedactSecrets(exchange.userMessage));
@@ -323,10 +372,18 @@ export function insertExchange(db, exchange, embedding, toolNames) {
         }
     }
 }
+/**
+ * Returns the id and the archive path of every indexed exchange.
+ */
 export function getAllExchanges(db) {
     const stmt = db.prepare(`SELECT id, archive_path as archivePath FROM exchanges`);
     return stmt.all();
 }
+/**
+ * Returns the newest `last_indexed` time for the rows of one archive file, or null when no row matches.
+ *
+ * The path must match the `archive_path` column exactly. The time is in milliseconds since the Unix epoch.
+ */
 export function getFileLastIndexed(db, archivePath) {
     const stmt = db.prepare(`
     SELECT MAX(last_indexed) as lastIndexed
@@ -341,15 +398,28 @@ export function getMaxIndexedLine(db, archivePath) {
     const row = db.prepare('SELECT COALESCE(MAX(line_end), 0) as maxLine FROM exchanges WHERE archive_path = ?').get(archivePath);
     return row.maxLine;
 }
+/**
+ * Returns the number of free pages and the page size of the database.
+ *
+ * A `VACUUM` run can reclaim the free pages.
+ */
 export function getFreelistInfo(db) {
     const freePages = db.prepare('PRAGMA freelist_count').get()
         .freelist_count;
     const pageSize = db.prepare('PRAGMA page_size').get().page_size;
     return { freePages, pageSize };
 }
+/**
+ * Runs `VACUUM` on the database, which rebuilds the file and reclaims its free pages.
+ */
 export function vacuumDatabase(db) {
     db.exec('VACUUM');
 }
+/**
+ * Deletes one exchange from the vector table, the full-text table, and the exchanges table.
+ *
+ * The database deletes the exchange's tool-call rows through `ON DELETE CASCADE`. Foreign-key enforcement must be on for the connection.
+ */
 export function deleteExchange(db, id) {
     // Delete from vector table
     db.prepare(`DELETE FROM vec_exchanges WHERE id = ?`).run(id);

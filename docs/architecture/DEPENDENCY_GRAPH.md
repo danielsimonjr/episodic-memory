@@ -4,7 +4,7 @@
 
 # episodic-memory - Dependency Graph
 
-**Version**: 1.7.1
+**Version**: 1.7.2
 
 This document provides a comprehensive dependency graph of all files, components, imports, functions, and variables in the codebase.
 
@@ -203,7 +203,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/codex-hook-trust.ts` - codex-hook-trust module
+### `src/codex-hook-trust.ts` - The trust state that Codex reports for the episodic-memory hooks.
 
 **Node.js Built-in Dependencies:**
 | Module | Import |
@@ -217,7 +217,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/codex-support.ts` - codex-support module
+### `src/codex-support.ts` - The minimum Codex CLI version that summarization requires.
 
 **Exports:**
 - Functions: `parseCodexCliVersion`, `compareSemver`, `versionMeetsMinimum`, `codexVersionRequirementMessage`
@@ -233,7 +233,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/db.ts` - Run CREATE TABLE / migrations / CREATE INDEX.
+### `src/db.ts` - The options for `openDatabase`.
 
 **External Dependencies:**
 | Package | Import |
@@ -285,7 +285,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/digest-compress.ts` - Merge many session entries of a past day into one day entry, and many day entries of a finished
+### `src/digest-compress.ts` - Options for `compressDigest`. Each field is optional and replaces its default.
 
 **External Dependencies:**
 | Package | Import |
@@ -307,7 +307,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/digest-db.ts` - Drop every line that cites a hidden exchange, keeping the rest verbatim.
+### `src/digest-db.ts` - One digest entry describes one project for one period.
 
 **External Dependencies:**
 | Package | Import |
@@ -321,7 +321,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/digest-inject.ts` - The digest for one project, within maxChars. Order: handoff notes first, then newest entries first.
+### `src/digest-inject.ts` - Returns the digest character limit from the `EPISODIC_MEMORY_DIGEST_MAX_CHARS` environment variable.
 
 **External Dependencies:**
 | Package | Import |
@@ -339,7 +339,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/digest-job.ts` - digest-job module
+### `src/digest-job.ts` - Return true when the digest feature is on.
 
 **External Dependencies:**
 | Package | Import |
@@ -383,7 +383,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/digest-prompts.ts` - digest-prompts module
+### `src/digest-prompts.ts` - A summarizer prompt, with the numbers that the prompt uses.
 
 **Internal Dependencies:**
 | File | Imports | Type |
@@ -415,7 +415,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/digest-validate.ts` - Keep only model lines that end in a mark group such as `[3,5]` where every mark names a real
+### `src/digest-validate.ts` - Keep the model lines that cite only known exchanges, and rewrite their marks.
 
 **Internal Dependencies:**
 | File | Imports | Type |
@@ -476,7 +476,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/doctor.ts` - The learn section's text.
+### `src/doctor.ts` - The values that `buildCodexDoctorReport` checks.
 
 **Node.js Built-in Dependencies:**
 | Module | Import |
@@ -528,7 +528,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/embeddings.ts` - Embedding model configuration.
+### `src/embeddings.ts` - The embedding model: bge-small-en-v1.5, from the Xenova ONNX export, with the `q8` data type.
 
 **External Dependencies:**
 | Package | Import |
@@ -581,7 +581,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/indexer.ts` - Set max output tokens for Claude SDK (used by summarizer)
+### `src/indexer.ts` - Index the conversations in every source folder.
 
 **Node.js Built-in Dependencies:**
 | Module | Import |
@@ -640,7 +640,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/logging.ts` - Dedicated log for `learn` runs.
+### `src/logging.ts` - The severity label that a log line records.
 
 **Node.js Built-in Dependencies:**
 | Module | Import |
@@ -671,7 +671,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/mcp-schemas.ts` - Zod schemas for MCP tool inputs. Kept out of mcp-server.ts so tests can
+### `src/mcp-schemas.ts` - Zod schemas for the MCP tool inputs.
 
 **External Dependencies:**
 | Package | Import |
@@ -754,7 +754,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/parser.ts` - Convenience function to parse a conversation file
+### `src/parser.ts` - Parse a conversation transcript into exchanges.
 
 **Node.js Built-in Dependencies:**
 | Module | Import |
@@ -808,7 +808,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/prune.ts` - Remove every indexed row belonging to a set of projects.
+### `src/prune.ts` - Options for `pruneProjects`.
 
 **External Dependencies:**
 | Package | Import |
@@ -845,7 +845,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/search.ts` - Exchange ids to leave out of the result set entirely.
+### `src/search.ts` - Returns the longest summary, in characters, that the results display.
 
 **External Dependencies:**
 | Package | Import |
@@ -893,7 +893,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/show.ts` - show module
+### `src/show.ts` - Format a conversation transcript as Markdown.
 
 **External Dependencies:**
 | Package | Import |
@@ -914,7 +914,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/stats.ts` - stats module
+### `src/stats.ts` - The counts and sizes that describe the conversation index.
 
 **External Dependencies:**
 | Package | Import |
@@ -932,7 +932,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/summarizer.ts` - Get API environment overrides for summarization calls.
+### `src/summarizer.ts` - Build the environment for a summarization subprocess.
 
 **External Dependencies:**
 | Package | Import |
@@ -968,7 +968,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/sync-banner.ts` - The first lines a finished sync prints. A success line over a stalled queue reads as health from
+### `src/sync-banner.ts` - The counts that `syncHeadline` reads from one finished sync run.
 
 **Exports:**
 - Interfaces: `SyncHeadlineTotals`
@@ -1028,7 +1028,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/types.ts` - Type definitions (4 interfaces, 1 type aliases)
+### `src/types.ts` - One tool call that an agent made during an exchange.
 
 **Exports:**
 - Interfaces: `ToolCall`, `ConversationExchange`, `SearchResult`, `MultiConceptResult`
@@ -1036,7 +1036,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/verify.ts` - verify module
+### `src/verify.ts` - The problems that `verifyIndex` found, grouped by kind.
 
 **Node.js Built-in Dependencies:**
 | Module | Import |
@@ -1397,7 +1397,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/learn/learn-lock.ts` - One learning run at a time, and the PIDs it owns.
+### `src/learn/learn-lock.ts` - One learning run at a time, and the PIDs that the run owns.
 
 **Node.js Built-in Dependencies:**
 | Module | Import |
@@ -1917,7 +1917,7 @@ graph TD
 |----------|-------|
 | Total Source Files | 225 |
 | Subsystems | 4 |
-| Total Lines of Code | 43912 |
+| Total Lines of Code | 45109 |
 | Total Exports | 492 |
 | Total Re-exports | 8 |
 | Total Classes | 7 |
@@ -1933,4 +1933,4 @@ graph TD
 
 ---
 
-*Version*: 1.7.1
+*Version*: 1.7.2

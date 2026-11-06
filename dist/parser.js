@@ -29,6 +29,16 @@ async function detectConversationHarness(filePath) {
     }
     return 'claude';
 }
+/**
+ * Parse a conversation transcript into exchanges.
+ *
+ * The function reads the file to detect its format. A Codex transcript uses the Codex reader.
+ * Every other transcript uses the Claude reader.
+ *
+ * @param filePath the transcript file to read
+ * @param projectName the project name to store on each exchange
+ * @param archivePath the archive path to store on each exchange
+ */
 export async function parseConversation(filePath, projectName, archivePath) {
     const harness = await detectConversationHarness(filePath);
     if (harness === 'codex') {
@@ -116,7 +126,7 @@ async function parseClaudeConversation(filePath, projectName, archivePath) {
                                 : crypto.randomUUID();
                             const toolCall = {
                                 id: useId,
-                                exchangeId: '', // Will be set when we know the exchange ID
+                                exchangeId: '', // The parser sets this after it knows the exchange ID.
                                 toolName: block.name || 'unknown',
                                 toolInput: block.input,
                                 isError: false,
@@ -437,13 +447,14 @@ async function parseCodexConversation(filePath, projectName, archivePath) {
     return exchanges;
 }
 /**
- * Convenience function to parse a conversation file
- * Extracts project name from the file path and returns exchanges with metadata
+ * Parse a conversation file and name its project.
+ *
+ * The project name is the name of the folder that holds the file, or `unknown` when that name is empty.
+ * The archive path of each exchange is the file path.
  */
 export async function parseConversationFile(filePath) {
     // Extract project name from path (directory name before the .jsonl file).
-    // path.dirname/basename handle both POSIX (/) and Windows (\) separators —
-    // the older filePath.split('/') broke on Windows and always returned 'unknown'.
+    // path.dirname and path.basename handle both POSIX (/) and Windows (\) separators.
     const parentDir = path.basename(path.dirname(filePath));
     const project = parentDir || 'unknown';
     const exchanges = await parseConversation(filePath, project, filePath);

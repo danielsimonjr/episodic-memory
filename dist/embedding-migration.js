@@ -1,29 +1,49 @@
 /**
  * Embedding migration.
  *
- * The encoder was upgraded from all-MiniLM-L6-v2 to bge-small-en-v1.5. Existing
- * databases have vec_exchanges rows produced by the old encoder. This module
- * provides the primitives for an incremental, lock-protected, resumable
- * background migration that re-embeds stale rows in batches during sync.
+ * Each exchange row records the EMBEDDING_VERSION that embedded its vector, in
+ * embedding_version. Rows with an older version are stale. This module provides
+ * the parts of a lock-protected, resumable migration. The sync step runs the
+ * migration in batches and re-embeds the stale rows.
  *
- *   EMBEDDING_VERSION   — bumped any time the encoder pipeline changes
- *   acquire/release lock — file-based with PID-liveness fallback
+ *   EMBEDDING_VERSION    — increase when the embedding pipeline changes
+ *   acquire/release lock — file-based lock with PID and age checks
  *   pickStaleBatch       — find rows whose embedding_version is behind
- *   recordReembedded     — atomic update of vec_exchanges + version bump
+ *   recordReembedded     — replace one vector and stamp its version
  */
 import path from 'path';
 import { acquireLock, releaseLock } from './lockfile.js';
-/** Bump when anything in the embedding pipeline changes (model, dtype, prefix). */
+/**
+ * The version of the embedding pipeline. New rows carry this value. Rows with a lower value are stale.
+ * Increase the value when the pipeline changes, for example the model, the dtype or the prefix.
+ */
 export const EMBEDDING_VERSION = 1;
+/**
+ * Try to take the migration lock at `lockPath`.
+ *
+ * The function returns a handle, or null when a live process holds a fresh lock. The function does not wait.
+ * The function creates the lock folder when the folder is missing.
+ * The function takes over a stale lock. A lock is stale when its file is older than one hour, or when the file does not name a live process.
+ *
+ * @param lockPath the lock file path. Use getMigrationLockPath to build it.
+ */
 export function acquireMigrationLock(lockPath) {
     return acquireLock(lockPath);
 }
+/**
+ * Release a lock that acquireMigrationLock returned.
+ *
+ * The function closes the lock file and removes it only while the file still records this process's PID.
+ * A lock that another process took over stays in place. The function does not throw.
+ *
+ * @param handle the handle that acquireMigrationLock returned
+ */
 export function releaseMigrationLock(handle) {
     releaseLock(handle);
 }
 /**
- * Return up to `limit` rows whose embedding_version is older than
- * EMBEDDING_VERSION, joined with their tool names so the caller can
+ * The function returns up to `limit` rows whose embedding_version is older than
+ * EMBEDDING_VERSION. Each row carries its tool names, so the caller can
  * reproduce the production exchange-text format.
  */
 export function pickStaleBatch(db, limit) {
@@ -41,10 +61,14 @@ export function pickStaleBatch(db, limit) {
   `).all(EMBEDDING_VERSION, limit);
 }
 /**
- * Replace a row's vec_exchanges embedding and stamp its embedding_version
- * atomically. Wrap each batch's calls in a single transaction at the caller
- * for durability; this function executes its statements in order without
- * starting its own transaction.
+ * Replace the vector of one exchange and stamp the current EMBEDDING_VERSION on the row.
+ *
+ * The function runs three statements in order. The statements delete the old vector, insert the new vector and update embedding_version.
+ * The function does not start a transaction. The caller must wrap the call in a transaction to make the change atomic.
+ *
+ * @param db the open index database
+ * @param id the exchange id
+ * @param embedding the new vector. The function stores it as 32-bit floats.
  */
 export function recordReembedded(db, id, embedding) {
     db.prepare('DELETE FROM vec_exchanges WHERE id = ?').run(id);
@@ -66,11 +90,21 @@ export function getMigrationLockPath(indexDir) {
     return path.join(indexDir, '.embedding-migration.lock');
 }
 /**
- * Run a single migration batch: re-embed up to `batchSize` rows whose
- * embedding_version is behind. Lock-protected; exits silently if another
- * process holds the lock.
+ * Re-embed one batch of stale rows while the function holds the migration lock.
  *
- * Returns the number of rows re-embedded (0 if nothing to do or locked out).
+ * The function re-embeds up to `batchSize` rows whose embedding_version is behind.
+ * The function first calls the batched embedding function. If that call throws, the function embeds each row with `embedFn`.
+ * The function writes the new vectors in one transaction and writes progress messages to stderr.
+ * When another live process holds the lock, the function writes a message to stderr and does not wait.
+ * The function releases the lock before the function returns, even when an error occurs.
+ *
+ * The function returns the number of rows that the batch re-embedded. The function returns 0 when no row is stale,
+ * and returns 0 when another live process holds the lock.
+ *
+ * @param db the open index database
+ * @param indexDir the index folder that holds the lock file
+ * @param batchSize the maximum number of rows to re-embed in this batch
+ * @param embedFn computes one vector from the user text, the assistant text and the tool names. The function calls it only when the batched call fails.
  */
 export async function runMigrationBatch(db, indexDir, batchSize, embedFn) {
     const remaining = countStale(db);
@@ -89,17 +123,16 @@ export async function runMigrationBatch(db, indexDir, batchSize, embedFn) {
         console.error(`episodic-memory: re-embedding batch of ${rows.length} (${remaining} stale total)...`);
         // Compute embeddings outside the transaction (async work),
         // then write atomically (one transaction per batch for durability).
-        // Prefer a single batched ONNX forward when the caller passed the
-        // standard generateExchangeEmbedding-compatible function — we rebuild
-        // texts and call generateExchangeEmbeddings from embeddings.js.
+        // The batched path rebuilds the texts and calls generateExchangeEmbeddings
+        // from embeddings.js. Its text format matches the format that embedFn uses.
         const { generateExchangeEmbeddings } = await import('./embeddings.js');
         const texts = rows.map((row) => ({
             userMessage: row.user_message,
             assistantMessage: row.assistant_message,
             toolNames: row.tools ? row.tools.split(',') : undefined,
         }));
-        // Use the shared batch path (same text format as embedFn) for throughput;
-        // fall back to per-row embedFn if batching fails for any reason.
+        // The batched path uses the same text format as embedFn. If the batch fails for any
+        // reason, the code embeds each row with embedFn instead.
         let embeddings;
         try {
             const vecs = await generateExchangeEmbeddings(texts);

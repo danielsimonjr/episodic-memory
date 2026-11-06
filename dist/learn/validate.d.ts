@@ -17,6 +17,9 @@
 import type { LearnDbs, ValidationRecord } from './types.js';
 import type { CallBudget, solveTask } from './solver.js';
 import type { PidRegistry } from './agent-runner.js';
+/**
+ * The options for `validateCandidate`.
+ */
 export interface ValidateOptions {
     /** Task ids the edit was proposed to fix (the round's failures). */
     targeted: number[];

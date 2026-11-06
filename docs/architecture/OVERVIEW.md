@@ -41,7 +41,7 @@ All figures below come from `repo-tools map` and cover the whole repository. The
 | Metric | Value | Scope |
 |---|---|---|
 | Source files | 225 | whole repository |
-| Lines of code | 43912 | whole repository |
+| Lines of code | 45109 | whole repository |
 | Exports | 492 | whole repository |
 | Modules (areas) | 4 | `src`, `tools`, `tests`, `config` |
 | Entry roots | 4 | `src/index.ts`, `src/node-floor.ts`, `src/index-cli.ts`, `src/mcp-server.ts` |
@@ -77,7 +77,7 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 | Claim | Value | Source |
 |---|---|---|
 | totalSourceFiles | 225 | repo-tools map |
-| totalLinesOfCode | 43912 | repo-tools map |
+| totalLinesOfCode | 45109 | repo-tools map |
 | totalExports | 492 | repo-tools map |
 | totalModules | 4 | repo-tools map |
 | entryRoots | 4 | repo-tools map |

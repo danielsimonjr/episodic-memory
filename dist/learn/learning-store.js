@@ -1,21 +1,23 @@
 /**
  * The learning trace database: `<configDir>/learned/learning.sqlite`.
  *
- * This is the plugin's own database, opened with `better-sqlite3` directly, so
- * a SessionStart hook can read the rendered learned block without opening the
- * knowledge store (§6.3 of the Recursa spec). It sits beside `knowledge.db` under
+ * The file is the plugin's own database. The module opens the file directly with
+ * `better-sqlite3`. A SessionStart hook can then read the rendered learned block
+ * without opening the
+ * knowledge store (§6.3 of the Recursa spec). The file sits beside `knowledge.db` under
  * `learned/`, a sibling of `conversation-index/`, so an index reset never
- * reaches it.
+ * reaches the file.
  *
- * Task 1 creates `knowledge_snapshot` and `learned_block`; the `learning_*`
- * tables (runs, tasks, attempts) are added with their code.
+ * The module creates `knowledge_snapshot` and `learned_block`. The function
+ * `ensureLearningSchema` in `learning-db.ts` creates the `learning_*` tables (runs,
+ * tasks and attempts).
  */
 import Database from 'better-sqlite3';
 import fs from 'fs';
 import path from 'path';
 import { getLearningDbPath, tryChmod } from '../paths.js';
 import { ensureLearningSchema } from './learning-db.js';
-/** Tables this module owns. Later tasks extend the list. */
+/** The tables of the learning trace database, in the order that migrateLearningSchema creates them. */
 export const LEARNING_TABLES = [
     'knowledge_snapshot',
     'learned_block',
@@ -29,7 +31,10 @@ function applySecureFileMode(dbPath) {
     tryChmod(`${dbPath}-shm`, 0o600);
 }
 /**
- * Create the learning tables. Idempotent.
+ * Create the learning tables if they do not exist.
+ *
+ * The function creates `knowledge_snapshot` and `learned_block`, and then the `learning_*` tables.
+ * Running the function again has no effect.
  */
 export function migrateLearningSchema(db) {
     db.exec(`
@@ -54,8 +59,8 @@ export function migrateLearningSchema(db) {
  * Open the learning trace database.
  *
  * Same pragmas and directory modes as `src/db.ts`. With `readonly`, the handle
- * never migrates — the hook opens it read-only on a file that may pre-date a
- * schema change, and SQLite refuses DDL on a read-only connection.
+ * never migrates. The hook opens the file read-only, and the file may pre-date a
+ * schema change. SQLite refuses DDL on a read-only connection.
  */
 export function openLearningDb(options = {}) {
     const readonly = options.readonly === true;

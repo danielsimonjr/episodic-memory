@@ -7,6 +7,11 @@
  */
 /** Default cap for a full (no line-range) MCP read. Override via env. */
 export declare const DEFAULT_MAX_READ_BYTES: number;
+/**
+ * Return the size limit, in bytes, for a full read without a line range.
+ *
+ * The function reads `EPISODIC_MEMORY_MAX_READ_BYTES` on each call. The default limit is 32 MiB. A value that `parseInt` does not read as a positive number gives the default.
+ */
 export declare function maxReadBytes(): number;
 /**
  * Resolve a candidate path to a real path that is guaranteed to lie inside

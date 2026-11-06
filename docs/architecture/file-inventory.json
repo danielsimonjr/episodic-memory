@@ -111,7 +111,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 205
+      "loc": 210
     },
     {
       "file": "src/backfill-cli.ts",
@@ -125,21 +125,21 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 132
+      "loc": 163
     },
     {
       "file": "src/codex-hook-trust.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 134
+      "loc": 157
     },
     {
       "file": "src/codex-support.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 32
+      "loc": 66
     },
     {
       "file": "src/constants.ts",
@@ -153,42 +153,42 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 461
+      "loc": 534
     },
     {
       "file": "src/deps-health.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 71
+      "loc": 76
     },
     {
       "file": "src/digest-compress.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 125
+      "loc": 135
     },
     {
       "file": "src/digest-db.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 207
+      "loc": 262
     },
     {
       "file": "src/digest-inject.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 56
+      "loc": 62
     },
     {
       "file": "src/digest-job.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 169
+      "loc": 189
     },
     {
       "file": "src/digest-phase.ts",
@@ -202,7 +202,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 74
+      "loc": 91
     },
     {
       "file": "src/digest-tool.ts",
@@ -216,7 +216,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 60
+      "loc": 73
     },
     {
       "file": "src/doctor-cli.ts",
@@ -230,35 +230,35 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 330
+      "loc": 345
     },
     {
       "file": "src/doctor.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 412
+      "loc": 454
     },
     {
       "file": "src/embedding-migration.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 157
+      "loc": 196
     },
     {
       "file": "src/embeddings.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 149
+      "loc": 168
     },
     {
       "file": "src/gpu-reservation.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 81
+      "loc": 95
     },
     {
       "file": "src/index-cli.ts",
@@ -279,7 +279,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 394
+      "loc": 417
     },
     {
       "file": "src/learn-cli.ts",
@@ -293,21 +293,21 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 433
+      "loc": 445
     },
     {
       "file": "src/learn/bootstrap.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 839
+      "loc": 847
     },
     {
       "file": "src/learn/cited-ids.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 243
+      "loc": 266
     },
     {
       "file": "src/learn/cli-main.ts",
@@ -321,14 +321,14 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 439
+      "loc": 440
     },
     {
       "file": "src/learn/grade.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 313
+      "loc": 318
     },
     {
       "file": "src/learn/knowledge-db.ts",
@@ -342,35 +342,35 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 178
+      "loc": 192
     },
     {
       "file": "src/learn/knowledge-store.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 1833
+      "loc": 1881
     },
     {
       "file": "src/learn/leaf-learner.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 494
+      "loc": 497
     },
     {
       "file": "src/learn/learn-config.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 113
+      "loc": 123
     },
     {
       "file": "src/learn/learn-handlers.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 205
+      "loc": 222
     },
     {
       "file": "src/learn/learn-inject.ts",
@@ -384,7 +384,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 146
+      "loc": 154
     },
     {
       "file": "src/learn/learned-block.ts",
@@ -398,28 +398,28 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 197
+      "loc": 206
     },
     {
       "file": "src/learn/learner.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 1318
+      "loc": 1328
     },
     {
       "file": "src/learn/learning-db.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 492
+      "loc": 537
     },
     {
       "file": "src/learn/learning-store.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 117
+      "loc": 123
     },
     {
       "file": "src/learn/pii-redactor.ts",
@@ -433,56 +433,56 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 479
+      "loc": 505
     },
     {
       "file": "src/learn/report.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 283
+      "loc": 288
     },
     {
       "file": "src/learn/sdk-tools.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 244
+      "loc": 248
     },
     {
       "file": "src/learn/semaphore.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 157
+      "loc": 163
     },
     {
       "file": "src/learn/skills-tool.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 160
+      "loc": 168
     },
     {
       "file": "src/learn/solver.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 296
+      "loc": 301
     },
     {
       "file": "src/learn/tasks.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 506
+      "loc": 529
     },
     {
       "file": "src/learn/types.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 185
+      "loc": 216
     },
     {
       "file": "src/learn/usage.ts",
@@ -496,35 +496,35 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 354
+      "loc": 357
     },
     {
       "file": "src/lockfile.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 114
+      "loc": 127
     },
     {
       "file": "src/logging.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 63
+      "loc": 86
     },
     {
       "file": "src/mcp-auth.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 40
+      "loc": 68
     },
     {
       "file": "src/mcp-schemas.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 145
+      "loc": 207
     },
     {
       "file": "src/mcp-server.ts",
@@ -538,7 +538,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 154
+      "loc": 166
     },
     {
       "file": "src/node-floor.ts",
@@ -552,7 +552,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 110
+      "loc": 134
     },
     {
       "file": "src/orphan-reaper.ts",
@@ -566,7 +566,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 563
+      "loc": 574
     },
     {
       "file": "src/paths.ts",
@@ -587,14 +587,14 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 104
+      "loc": 113
     },
     {
       "file": "src/redact.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 76
+      "loc": 83
     },
     {
       "file": "src/reentrancy.ts",
@@ -615,7 +615,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 518
+      "loc": 566
     },
     {
       "file": "src/show-cli.ts",
@@ -629,7 +629,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 1025
+      "loc": 1047
     },
     {
       "file": "src/stats-cli.ts",
@@ -643,21 +643,21 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 142
+      "loc": 172
     },
     {
       "file": "src/summarizer.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 714
+      "loc": 773
     },
     {
       "file": "src/sync-banner.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 29
+      "loc": 32
     },
     {
       "file": "src/sync-cli.ts",
@@ -671,21 +671,21 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 510
+      "loc": 532
     },
     {
       "file": "src/types.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 59
+      "loc": 82
     },
     {
       "file": "src/verify.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 200
+      "loc": 226
     },
     {
       "file": "test/agent-sdk-floor.test.ts",
@@ -867,7 +867,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 398
+      "loc": 399
     },
     {
       "file": "test/digest-inject.test.ts",

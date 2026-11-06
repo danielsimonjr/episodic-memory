@@ -17,7 +17,7 @@
 import { validateApiBaseUrl } from './api-endpoint.js';
 import { gpuReservationBlock } from './gpu-reservation.js';
 /**
- * The shared GPU is reserved by another agent, so no model may be loaded now. This is not a
+ * Another agent reserves the shared GPU. The function therefore does not load a model now. This is not a
  * failure of the summary: callers leave the work queued and do not count an attempt.
  */
 export class GpuReservedError extends Error {
@@ -29,6 +29,11 @@ export class GpuReservedError extends Error {
         this.detail = detail;
     }
 }
+/**
+ * Returns `ollama` when `EPISODIC_MEMORY_SUMMARIZER_BACKEND` is `ollama`, ignoring letter case and surrounding spaces.
+ *
+ * Returns `claude` for every other value, including an unset variable.
+ */
 export function summarizerBackend() {
     return (process.env.EPISODIC_MEMORY_SUMMARIZER_BACKEND || '').trim().toLowerCase() === 'ollama'
         ? 'ollama'
@@ -42,6 +47,20 @@ function positiveInt(raw, fallback) {
     const n = Number(raw);
     return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
 }
+/**
+ * Sends a summarizer prompt to an Ollama server and returns the reply text without `<think>` blocks.
+ *
+ * The call throws `GpuReservedError` while another agent holds the shared GPU.
+ * The call throws when `EPISODIC_MEMORY_OLLAMA_MODEL` is unset or blank.
+ * The call throws when the server URL fails validation or the HTTP status is not OK.
+ * The call throws when the reply is empty or has no `<summary>` block.
+ * The call throws when the request runs longer than `timeoutMs`.
+ *
+ * The function cuts the prompt to the character budget before the function sends the request.
+ *
+ * @param prompt The complete summarizer prompt.
+ * @param opts Per-call overrides. See `OllamaCallOptions`.
+ */
 export async function callOllama(prompt, opts = {}) {
     const reserved = gpuReservationBlock();
     if (reserved)

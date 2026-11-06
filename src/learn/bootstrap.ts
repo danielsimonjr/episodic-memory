@@ -84,6 +84,9 @@ export const BOOTSTRAP_INSTRUCTION_SLUG = 'bootstrap-map';
 /** The slug of the run's reflection. */
 export const BOOTSTRAP_REFLECTION_SLUG = 'bootstrap-reflection';
 
+/**
+ * The options for `runBootstrap`. Only `budget` is required.
+ */
 export interface BootstrapOptions {
   /** Test seam: defaults to `runAgent`. */
   runAgent?: typeof runAgent;
@@ -104,6 +107,11 @@ export interface BootstrapOptions {
   textModel?: (prompt: string) => Promise<string>;
 }
 
+/**
+ * The outcome of one `runBootstrap` call.
+ *
+ * `status` is `stopped` when the call budget ran out, or could not cover the next step, before the run finished.
+ */
 export interface BootstrapResult {
   runId: string;
   projects: number;

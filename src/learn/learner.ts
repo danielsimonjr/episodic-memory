@@ -102,6 +102,11 @@ export interface MergeRecord {
   regressions: number[];
 }
 
+/**
+ * The result of one `runLearn` call.
+ *
+ * `status` is `done` when the run ends normally. The status is `stopped` when the call budget is used up before the run ends. A run that throws returns no result, and its run record is marked `failed` before the error reaches the caller.
+ */
 export interface LearnResult {
   runId: string;
   status: 'done' | 'stopped' | 'failed';
@@ -122,6 +127,11 @@ export interface LearnResult {
   rounds: number;
 }
 
+/**
+ * The options of `runLearn`. The learn command builds them from `learnConfig` and its arguments.
+ *
+ * `runAgent`, `solve` and `textModel` are test seams. `judge` scores recall answers. `leafMax` is the largest number of failed tasks that one leaf learner receives. `dryRun` starts no learner round. `seed` is recorded on each run, and its default is 1.
+ */
 export interface LearnOptions {
   /** Test seam: defaults to `runAgent`. */
   runAgent?: typeof runAgent;

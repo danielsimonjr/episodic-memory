@@ -1,5 +1,15 @@
 import Database from 'better-sqlite3';
 import { getDbPath } from './paths.js';
+/**
+ * Read the counts and sizes of the conversation index.
+ *
+ * The function opens the database read-only and closes it before the function returns.
+ * The function returns zero counts when the file does not exist or has no exchanges table.
+ * The function counts a conversation as summarized when its `-summary.txt` file exists.
+ * The function throws when SQLite cannot open or query the file.
+ *
+ * @param dbPath the index file to read. When the caller gives no value or an empty value, the function uses getDbPath.
+ */
 export async function getIndexStats(dbPath) {
     const resolvedDbPath = dbPath || getDbPath();
     // Check if database exists
@@ -80,6 +90,16 @@ export async function getIndexStats(dbPath) {
         db.close();
     }
 }
+/**
+ * Format the index statistics as a plain-text report for a terminal.
+ *
+ * The report always shows the conversation and exchange counts.
+ * The function adds the share of conversations without summaries when that share is above zero.
+ * The function adds the date range when `stats` has one, and the top projects when `stats` has at least one project.
+ * Dates use the locale of the host.
+ *
+ * @param stats the statistics to format, as getIndexStats returns them
+ */
 export function formatStats(stats) {
     let output = 'Episodic Memory Index Statistics\n';
     output += '='.repeat(50) + '\n\n';

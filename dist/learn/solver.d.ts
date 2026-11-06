@@ -78,6 +78,11 @@ export declare function promptInputsForSnapshot(dbs: LearnDbs, snapshotId: numbe
  * archive, which is what makes finding the right file the task.
  */
 export declare function solveTask(dbs: LearnDbs, task: LearningTask, options: SolveOptions): Promise<AttemptRow>;
+/**
+ * The options of `solveMany`.
+ *
+ * Every task in the batch uses the same snapshot and the same call budget. The other options go to each `solveTask` call unchanged.
+ */
 export interface SolveManyOptions extends Omit<SolveOptions, 'snapshotId'> {
     snapshotId: number;
     /** The run's shared call budget. A batch stops with `BudgetExhausted` at the cap. */

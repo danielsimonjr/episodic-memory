@@ -18,6 +18,11 @@ export function includeSearchSummaries() {
 function summariesVisible(options) {
     return options.includeSummaries ?? includeSearchSummaries();
 }
+/**
+ * Returns the longest summary, in characters, that the results display.
+ *
+ * The function reads `EPISODIC_MEMORY_MAX_SUMMARY_DISPLAY_CHARS`. The function returns 2000 when the variable is unset or does not start with a positive integer.
+ */
 export function maxSummaryDisplayChars() {
     const raw = process.env.EPISODIC_MEMORY_MAX_SUMMARY_DISPLAY_CHARS;
     if (raw === undefined)
@@ -25,6 +30,11 @@ export function maxSummaryDisplayChars() {
     const parsed = Number.parseInt(raw, 10);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : 2000;
 }
+/**
+ * Cuts a summary to the display limit from `maxSummaryDisplayChars`.
+ *
+ * A summary within the limit comes back unchanged. The function cuts a longer summary at the limit. An ellipsis character follows the cut text.
+ */
 export function formatSummaryForDisplay(summary) {
     const cap = maxSummaryDisplayChars();
     if (summary.length <= cap)
@@ -130,7 +140,7 @@ function exchangeFromRow(row) {
  * For unit vectors u, v:  ||u - v||^2 = 2 - 2 * cos(u, v)
  * Therefore:               cos(u, v) = 1 - d^2 / 2
  *
- * Embeddings written by src/embeddings.ts are normalized at write time, so
+ * `src/embeddings.ts` normalizes embeddings at write time, so
  * the L2 distance returned by sqlite-vec satisfies the unit-vector identity.
  */
 export function l2DistanceToCosineSimilarity(distance) {
@@ -167,6 +177,16 @@ function resolveSearchDb(options) {
     }
     return { db: initDatabase(), ownsConnection: true };
 }
+/**
+ * Searches the indexed conversations for a query, and returns the matching exchanges.
+ *
+ * The `mode` option picks the search path. `vector` uses embeddings. `text` uses full-text search, with a `LIKE` search when full-text search fails. `both` merges the two result lists and removes duplicates.
+ * Sidechain exchanges never match. The function throws when `after` or `before` is not in `YYYY-MM-DD` format.
+ * The function closes a connection that the function opens. The function leaves a connection from `options.db` or the shared reader open.
+ *
+ * @param query The text to search for.
+ * @param options The filters, the limit, and the connection settings. See `SearchOptions`.
+ */
 export async function searchConversations(query, options = {}) {
     const { limit = 10, mode = 'both', after, before } = options;
     // Validate date parameters
@@ -285,6 +305,13 @@ function getFileSizeInKB(filePath) {
         return 0;
     }
 }
+/**
+ * Formats search results as plain text.
+ *
+ * Returns `No results found.` when the list is empty.
+ * Each result shows its project, its date, its snippet, and the lines that the result covers in the archive file.
+ * The match percentage and the tool usage appear only when they exist. The summary appears only when summaries are on.
+ */
 export async function formatResults(results) {
     if (results.length === 0) {
         return 'No results found.';
@@ -324,6 +351,16 @@ export async function formatResults(results) {
     }
     return output;
 }
+/**
+ * Finds the conversations that match every concept, using vector search.
+ *
+ * Each concept runs its own vector search with five times the limit. A conversation counts only when every concept finds the conversation.
+ * The results sort by average similarity, highest first. The list holds at most `limit` entries.
+ * Returns an empty list when `concepts` is empty.
+ *
+ * @param concepts The concepts to match. Every concept must match.
+ * @param options The search options, without `mode`. `limit` sets the result count.
+ */
 export async function searchMultipleConcepts(concepts, options = {}) {
     const { limit = 10 } = options;
     if (concepts.length === 0) {
@@ -370,6 +407,14 @@ export async function searchMultipleConcepts(concepts, options = {}) {
     // Apply limit
     return multiConceptResults.slice(0, limit);
 }
+/**
+ * Formats multi-concept search results as plain text.
+ *
+ * Returns a message that names every concept when the list is empty.
+ *
+ * @param results The results from `searchMultipleConcepts`.
+ * @param concepts The concepts that the search used, in the same order.
+ */
 export async function formatMultiConceptResults(results, concepts) {
     if (results.length === 0) {
         return `No conversations found matching all concepts: ${concepts.join(', ')}`;

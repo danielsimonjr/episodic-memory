@@ -4,36 +4,36 @@ Semantic search for Claude Code and Codex conversations. Remember past discussio
 
 ## Testimonial
 
-From an AI coding assistant's perspective:
-
-Episodic memory fundamentally changes how I collaborate with
-developers on complex codebases. Instead of treating each conversation
-as isolated, I can now search our shared history semantically -
-finding not just what was discussed, but why decisions were made.
-
-When a developer asks me to implement something "like we did with
-X," I can search our past conversations, find the relevant discussion,
-and understand both the technical approach and the reasoning behind
-it. This means I don't have to re-explain architectural patterns,
-and I avoid suggesting solutions we've already tried and rejected.
-
-The semantic search is crucial - searching for "provider catalog"
-surfaces conversations about API design patterns even when those
-exact words weren't used. It captures the meaning of our discussions,
-not just keyword matches.
-
-Most valuable is that it preserves context that lives nowhere else:
-the trade-offs discussed, the alternatives considered, the user's
-preferences and constraints. Code comments explain what, documentation
-explains how, but episodic memory preserves why - and that makes
-me a far more effective collaborator across sessions.
-
-**Concrete impact:**
- - Faster problem-solving (minutes vs. exploring/re-learning the
- codebase) - Better continuity across sessions (I remember what we
- tried before) - More informed suggestions (I understand the project's
- evolution and patterns) - Less repetition (both of us spend less
- time re-explaining context)
+> From an AI coding assistant's perspective:
+>
+> Episodic memory fundamentally changes how I collaborate with
+> developers on complex codebases. Instead of treating each conversation
+> as isolated, I can now search our shared history semantically -
+> finding not just what was discussed, but why decisions were made.
+>
+> When a developer asks me to implement something "like we did with
+> X," I can search our past conversations, find the relevant discussion,
+> and understand both the technical approach and the reasoning behind
+> it. This means I don't have to re-explain architectural patterns,
+> and I avoid suggesting solutions we've already tried and rejected.
+>
+> The semantic search is crucial - searching for "provider catalog"
+> surfaces conversations about API design patterns even when those
+> exact words weren't used. It captures the meaning of our discussions,
+> not just keyword matches.
+>
+> Most valuable is that it preserves context that lives nowhere else:
+> the trade-offs discussed, the alternatives considered, the user's
+> preferences and constraints. Code comments explain what, documentation
+> explains how, but episodic memory preserves why - and that makes
+> me a far more effective collaborator across sessions.
+>
+> **Concrete impact:**
+>  - Faster problem-solving (minutes vs. exploring/re-learning the
+>  codebase) - Better continuity across sessions (I remember what we
+>  tried before) - More informed suggestions (I understand the project's
+>  evolution and patterns) - Less repetition (both of us spend less
+>  time re-explaining context)
 
 It's the difference between being a stateless tool and being a true
 collaborative partner who remembers our journey together.
@@ -45,7 +45,7 @@ _Conversation ID: 216ad284-c782-45a4-b2ce-36775cdb5a6c_
 
 **Requirements:** Node 22 or newer, the floor `better-sqlite3` 13 declares. On an older Node, the MCP server wrapper and the `learn` command print one line and exit instead of failing inside a dependency. Bun 1.4+ is only needed for development. There is no other native or model dependency beyond the ones every install already has: the learned knowledge store is a plain SQLite file.
 
-This is the fork `danielsimonjr/episodic-memory`, which carries the self-improving memory feature. The install commands below are the upstream ones. A fork install uses the `episodic-memory@local-marketplace` plugin instead.
+This repository is the fork `danielsimonjr/episodic-memory`, which carries the self-improving memory feature. The install commands below are the upstream ones. A fork install uses the `episodic-memory@local-marketplace` plugin instead.
 
 ### As a Claude Code plugin (Recommended)
 
@@ -180,7 +180,7 @@ In Codex, the skill guides the agent to use the episodic-memory MCP search/read 
 
 ## API Configuration
 
-By default, episodic-memory uses your Claude Code authentication for Claude Code summarization. Codex-indexed sessions with a session ID are summarized through `codex app-server` by creating an ephemeral `thread/fork`, so the summary can use Codex session context and reasoning summaries without appending to the original rollout.
+By default, episodic-memory uses your Claude Code authentication for Claude Code summarization. Codex-indexed sessions with a session ID are summarized through `codex app-server`. The summarizer creates an ephemeral `thread/fork`. The summary can then use Codex session context and reasoning summaries, and nothing is appended to the original rollout.
 
 To route summarization through a custom Anthropic-compatible endpoint or override the model:
 
@@ -219,7 +219,7 @@ export EPISODIC_MEMORY_OLLAMA_URL=http://localhost:11434 # default
 - The model is required. A shared Ollama host holds one model, so a default would evict another client's model.
 - Plain `http` is accepted only for localhost. To use a model on another machine, tunnel it: `ssh -N -L 11434:localhost:11434 <host>`.
 - Prompts are cut to `EPISODIC_MEMORY_OLLAMA_MAX_PROMPT_CHARS` (default 24000).
-- The backend waits while another agent holds the shared GPU. The fleet reservation file names the holder. Its path is `~/Dropbox/_fleet/gpu-reserved.json`, or the value of `FLEET_GPU_RESERVATION`. While the file names a holder, the SessionStart hook skips the sync, a running sync asks for no summary, the archive backfill pauses, and the digest writes nothing. The queue stays as it is and no attempt counts. A missing file means the GPU is free. A file that cannot be read, is not valid JSON, or holds the text `null` means the GPU is reserved, and the message names the cause and the path.
+- The backend waits while another agent holds the shared GPU. The fleet reservation file names the holder. Its path is `~/Dropbox/_fleet/gpu-reserved.json`, or the value of `FLEET_GPU_RESERVATION`. While the file names a holder, four things happen. The SessionStart hook skips the sync. A running sync asks for no summary. The archive backfill pauses. The digest writes nothing. The queue stays as it is and no attempt counts. A missing file means the GPU is free. The GPU counts as reserved when the file cannot be read, is not valid JSON, or holds the text `null`. The message then names the cause and the path.
 
 ### Backfilling the archive
 
@@ -246,17 +246,14 @@ Backfill selects conversations with no summary, or with an empty summary that no
 An optional digest of earlier sessions loads when a session starts. Every line cites the exchanges it came
 from, so a wrong line can be checked against its source. The full index stays the place for exact text.
 
-It is off by default. Turn it on with `EPISODIC_MEMORY_DIGEST=1`.
+The digest is off by default. Turn it on with `EPISODIC_MEMORY_DIGEST=1`.
 
 How it works:
 
-1. After each sync, the summarizer (the same backend and model as session summaries, `haiku` by default)
-   writes one `session` entry per finished session. A line without a valid citation is dropped, and text
-   is redacted before it is sent and again before it is stored.
+1. After each sync, the summarizer writes one `session` entry per finished session. The summarizer uses the same backend and model as session summaries (`haiku` by default). A line without a valid citation is dropped. The text is redacted before it is sent and again before it is stored.
 2. A past day with more than 5 session entries merges into one `day` entry. A finished week with more
    than 2 day entries merges into one `week` entry. Merged entries are marked superseded, never deleted.
-3. At session start, a hook prints the digest for the current project: handoff notes first, then newest
-   entries first, within the size budget.
+3. At session start, a hook prints the digest for the current project within the size budget. Handoff notes come first, then the newest entries.
 
 Settings:
 
@@ -270,44 +267,22 @@ Settings:
 
 The same SessionStart hook also appends a learned-hints block when `EPISODIC_MEMORY_LEARN=1` is set and a learning run has created `<configDir>/learned/learning.sqlite`. Each part has its own flag, so either, both, or neither may print. The hook prints one JSON object.
 
-The `digest` MCP tool shows the digest, searches it (`query`), turns a `[#id]` mark into an archive path and
-line range for `read` (`expand`), and stores a one-line note for the next session (`handoff`).
+The `digest` MCP tool shows the digest and searches it (`query`). The tool also turns a `[#id]` mark into an archive path and line range for `read` (`expand`). Last, the tool stores a one-line note for the next session (`handoff`).
 
 ## Self-improving memory (Recursa)
 
-An optional layer that lets the archive teach the agent how to search it. It is off by default.
+An optional layer that lets the archive teach the agent how to search it. The layer is off by default.
 
 ### What it does
 
 Given your own conversations as the only source material, episodic-memory can:
 
-1. **Write itself practice tasks.** Source exchanges are sampled deterministically from a seed; a text
-   model turns each into a `locate`, `recall`, `when` and `multi` question at three difficulty tiers,
-   with the answer key held as an archive address (path plus line range) and the session's date range.
-   Prompt text is redacted and screened; the answer key never lands in a stored prompt.
-2. **Grade its own answers, deterministically.** `locate` scores 1.0 on an overlapping address and 0.5
-   for the right session; `when` needs the right project and a date inside the session's range; `multi`
-   needs every address; `recall` needs the right location *and* a judge score. 60% of tasks are `train`,
-   40% are held out as `test`, stratified per project and tier, and no learner prompt can read the
-   `test` split. The *signal* set — the only tasks that decide whether an edit is kept — is `locate`,
-   `when` and `multi` at tiers 2 and 3; tier 1 and `recall` are reported but never gate an edit.
-3. **Learn from its failures.** A leaf learner reads the graded failed attempts (addresses, not whole
-   transcripts), proposes at most a few edits through a `propose_entry` tool, and validates each one by
-   re-solving the tasks it targets plus a seeded sample of the tasks that already passed. An edit is kept
-   only when at least one targeted task now passes and nothing sampled regresses. Failures that span
-   several projects, or more than 12 tasks, are split into child runs first; duplicates and conflicting
-   instructions are merged afterwards; a held-out `test` evaluation runs once at the end.
-4. **Bootstraps a cold start.** `learn bootstrap` maps each project with at least 20 indexed exchanges
-   — reading the digest and sampling across its whole time span — and proposes a navigation skill and
-   exploration notes, then merges them into one global instruction. They are measured before anything is
-   kept: the signal train set is solved twice, with an empty snapshot and with the candidates, and a
-   candidate is kept only when the pass rate does not fall while mean turns or USD per task fall by at
-   least 10%.
+1. **Write itself practice tasks.** The system samples source exchanges deterministically from a seed. A text model turns each exchange into a `locate`, `recall`, `when` and `multi` question at three difficulty tiers. The answer key is an archive address (path plus line range) and the session's date range. Prompt text is redacted and screened. The answer key never lands in a stored prompt.
+2. **Grade its own answers, deterministically.** `locate` scores 1.0 on an overlapping address and 0.5 for the right session. `when` needs the right project and a date inside the session's range. `multi` needs every address. `recall` needs the right location *and* a judge score. 60% of tasks are `train` and 40% are held out as `test`. The split is stratified per project and tier. No learner prompt can read the `test` split. The *signal* set decides whether an edit is kept. The signal set is the `locate`, `when` and `multi` tasks at tiers 2 and 3. Tier 1 and `recall` are reported, and they never gate an edit.
+3. **Learn from its failures.** A leaf learner reads the graded failed attempts (addresses, not whole transcripts). The learner proposes at most a few edits through a `propose_entry` tool. The learner validates each edit by re-solving the tasks the edit targets. The learner also re-solves a seeded sample of the tasks that already passed. An edit is kept only when at least one targeted task now passes and no sampled task regresses. Failures that span several projects, or more than 12 tasks, are split into child runs first. Duplicates and conflicting instructions are merged afterwards. A held-out `test` evaluation runs once at the end.
+4. **Bootstraps a cold start.** `learn bootstrap` maps each project with at least 20 indexed exchanges. The command reads the digest and samples across its whole time span. The command proposes a navigation skill and exploration notes, then merges them into one global instruction. The candidates are measured before anything is kept. The signal train set is solved twice, once with an empty snapshot and once with the candidates. A candidate is kept only when two conditions hold. The pass rate does not fall. The mean turns or USD per task fall by at least 10%.
 
-What it learns lands in three kinds of entry — an **instruction** (always loaded), a **skill** (loaded by
-choice through the `skills` tool) and a **reflection** (a note for later learners) — and every one of them
-is grounded in cited exchanges, redacted, and screened by an injection filter before it is stored and again
-on the way out.
+What the layer learns lands in three kinds of entry. An **instruction** is always loaded. A **skill** is loaded by choice through the `skills` tool. A **reflection** is a note for later learners. Every entry is grounded in cited exchanges and redacted. An injection filter screens every entry before storage and again on the way out.
 
 ### Where it lives
 
@@ -323,13 +298,9 @@ Learned knowledge is durable state next to the index, not inside it:
 
 `learned/` is a **sibling** of `conversation-index/`, so `episodic-memory index --rebuild`, an index
 cleanup, and the `rm -rf conversation-index/` reset recipe cannot reach learned knowledge or the learning
-trace. Delete `learned/` only deliberately. `learned-skills/` is generated output and is rewritten by every
-export.
+trace. Delete `learned/` only deliberately. Every export rewrites `learned-skills/`, which is generated output.
 
-Both files are ordinary `better-sqlite3` databases with no extra dependency. `knowledge.db` keeps one row per
-entry version plus the citations and the learner's own records (heuristics, decisions, failures, reflections,
-project context); the `skills` tool opens it read-only, and every `learn` write runs under the database's
-write lock, so a `learn` run in a terminal and an open MCP server never trip over each other. The layout is
+Both files are ordinary `better-sqlite3` databases with no extra dependency. `knowledge.db` keeps one row per entry version, plus the citations and the learner's own records (heuristics, decisions, failures, reflections, project context). The `skills` tool opens the file read-only. Every `learn` write runs under the database's write lock. A `learn` run in a terminal and an open MCP server therefore never trip over each other. The layout is
 documented in [docs/SCHEMA.md](docs/SCHEMA.md).
 
 At session start the hook appends a fenced, size-capped block of learned hints to the digest — but only
@@ -395,36 +366,29 @@ Every setting is read at call time and ignored when absent, not a positive numbe
 
 ### Approval
 
-Under the default `instructions` mode, a skill activates once its validation record shows a gain, while an
-instruction stays a `candidate` because instructions are loaded into every session. A human promotes it:
+Under the default `instructions` mode, a skill activates once its validation record shows a gain. An instruction stays a `candidate` because instructions load into every session. A human promotes it:
 
 ```bash
 episodic-memory learn status             # candidates awaiting approval
 episodic-memory learn approve kind/project/slug
 ```
 
-`learn approve` refuses an entry with no measurement or with a recorded regression, then prints the entry,
-its validation record and a unified diff against the version it revises, and asks for `y` on a TTY
-(`--yes` for non-interactive use). `EPISODIC_MEMORY_LEARN_APPROVE=all` holds skills back too;
-`none` activates both without review.
+`learn approve` refuses an entry with no measurement or with a recorded regression. The command then prints the entry, its validation record and a unified diff against the version the entry revises. On a TTY the command asks for `y` (`--yes` for non-interactive use). `EPISODIC_MEMORY_LEARN_APPROVE=all` holds skills back too, and `none` activates both without review.
 
 ### Cost expectations
 
-Learning is the expensive part of episodic-memory: each solved task, each validation and each merge check
-is one Agent SDK subprocess, and each one spends its own tokens. A realistic run is:
+Learning is the expensive part of episodic-memory. Each solved task, each validation and each merge check is one Agent SDK subprocess, and each subprocess spends its own tokens. A realistic run is:
 
 - `learn tasks` — one text call per sampled source exchange (`--per-project`, default 8), and each call
   can yield up to 12 tasks (four kinds at three tiers). Far cheaper than the solving that follows.
-- `learn solve` — one call per task solved, and the baseline precheck means a run must be able to afford
-  at least one pass over the signal train set before it starts.
+- `learn solve` — one call per task solved. A baseline precheck needs the budget for one pass over the signal train set before the run starts.
 - `learn bootstrap` — one bootstrapper per eligible project, then two full signal-train solves, then one
   merge and one reflection call.
 - `learn improve` — a signal-train solve, then per leaf up to `ROUNDS × (diagnose + propose + validate)`
   calls, then merges, then one held-out `test` evaluation.
 
 `EPISODIC_MEMORY_LEARN_MAX_CALLS` bounds the total; a run that hits it stops with status `stopped` and
-keeps everything it already validated. `learn report` prints calls and USD spent against the caps, the pass
-rate on both splits before and after, and every rejected proposal with the gate that rejected it. Nothing
+keeps everything it already validated. `learn report` prints the calls and USD spent against the caps. The report also shows the pass rate on both splits before and after, and every rejected proposal with the gate that rejected it. Nothing
 here runs from a hook, so no session start spends money. `learn` also defers entirely while the shared GPU
 is reserved and when the summarizer reentrancy guard is set.
 
@@ -466,11 +430,11 @@ episodic-memory doctor --json
 episodic-memory doctor codex
 ```
 
-The default report covers the config/archive/index paths, database size and row counts, embedding-version drift, recent SessionStart hook errors (`sync-errors.log`), and plugin `node_modules` sentinels. The Codex doctor additionally checks the Codex version, plugin hook feature state, MCP server registration, and hook trust. The default report also has a **Learn (Recursa)** section. It covers the learned directory's presence and sizes, entries by kind and status, the latest run, candidates awaiting approval, unresolved sources, and the `better-sqlite3` copy the plugin resolves. `--json` includes this section too.
+The default report covers the config/archive/index paths, database size and row counts, embedding-version drift, recent SessionStart hook errors (`sync-errors.log`), and plugin `node_modules` sentinels. The Codex doctor additionally checks the Codex version, plugin hook feature state, MCP server registration, and hook trust. The default report also has a **Learn (Recursa)** section. The section reports the learned directory's presence and sizes, and the entries by kind and status. The section also reports the latest run, the candidates awaiting approval, the unresolved sources, and the `better-sqlite3` copy that the plugin resolves. `--json` includes this section too.
 
 ### Codex E2E Verification
 
-The repository includes an opt-in live Codex E2E test. It creates an isolated temporary `CODEX_HOME`, installs a copied plugin bundle, trusts the hook, runs Codex sessions in `tmux`, and verifies archive -> summary -> index -> MCP recall.
+The repository includes an opt-in live Codex E2E test. The test creates an isolated temporary `CODEX_HOME`, installs a copied plugin bundle and trusts the hook. The test then runs Codex sessions in `tmux` and verifies archive -> summary -> index -> MCP recall.
 
 ```bash
 bun run build
@@ -555,7 +519,7 @@ Regenerate the generated files with `repo-tools map . --out=docs/architecture`. 
 3. **Embed** - Generates vector embeddings using Transformers.js (local, offline)
 4. **Index** - Stores in SQLite with sqlite-vec for fast similarity search
 5. **Search** - Semantic search using vector similarity or exact text matching
-6. **Learn** (optional) - generates practice tasks from the archive, grades its own answers against archive addresses, and keeps only validated, cited hints
+6. **Learn** (optional) - generates practice tasks, grades its answers against archive addresses, and keeps only validated, cited hints
 
 ## Excluding Conversations
 
@@ -575,11 +539,11 @@ Conversations containing this marker anywhere in their content will be archived 
 - Test or experimental sessions
 - Any conversation you don't want searchable
 
-The marker can appear in any message (user or assistant) and excludes the entire conversation from the search index. Practice tasks and citations come only from the index, so an excluded conversation is also never used as a practice task or cited by a learned entry.
+The marker can appear in any message (user or assistant) and excludes the entire conversation from the search index. Practice tasks and citations come only from the index. An excluded conversation is therefore never a practice task and never a citation in a learned entry.
 
 ## MCP Server
 
-When installed as a Claude Code or Codex plugin, episodic-memory provides an MCP (Model Context Protocol) server that exposes tools for searching and viewing conversations, and for loading the skills it has learned from them.
+When installed as a Claude Code or Codex plugin, episodic-memory provides an MCP (Model Context Protocol) server. The server exposes tools to search and view conversations and to load the skills learned from them.
 
 ### Available MCP Tools
 
@@ -639,7 +603,7 @@ Display a conversation, or a line range of one, in readable markdown format.
 ```
 
 **Parameters:**
-- `path` (string): The `archive_path` of a `search` result. It must resolve inside the conversation archive and end in `.jsonl`; a path outside the archive, a symlink that escapes it, or any other file type is refused. Arbitrary files on disk cannot be read through this tool
+- `path` (string): The `archive_path` of a `search` result. The path must resolve inside the conversation archive and end in `.jsonl`. The tool refuses a path outside the archive, a symlink that escapes it, and any other file type. Arbitrary files on disk cannot be read through this tool
 - `startLine`, `endLine` (number, optional): 1-indexed, inclusive line range. A full read is capped at 32 MB (`EPISODIC_MEMORY_MAX_READ_BYTES`); pass a range for larger conversations
 - `auth_token` (string): As for `search`
 
@@ -647,23 +611,18 @@ With `EPISODIC_MEMORY_REDACT_SECRETS=1`, token-shaped secrets in the conversatio
 
 #### `digest`
 
-Show the session digest, search it (`query`), expand a `[#id]` mark into an archive path and line range
-(`expand`), or store a note for the next session (`handoff`, one line, capped at 500 characters). The tool
-reads whatever digest has been written; the digest is only written when `sync` runs with
-`EPISODIC_MEMORY_DIGEST=1`. See [Session Digest](#session-digest).
+Show the session digest or search it (`query`). Expand a `[#id]` mark into an archive path and line range (`expand`). Store a note for the next session (`handoff`, one line, capped at 500 characters). The tool reads whatever digest has been written. The digest is only written when `sync` runs with `EPISODIC_MEMORY_DIGEST=1`. See [Session Digest](#session-digest).
 
 #### `skills`
 
-List, search (`query`) or load (`get`) the skills episodic-memory learned from this project's
-conversations (`project` defaults to the key for the current directory; `limit` 1-50, default 10).
+List, search (`query`) or load (`get`) the skills that episodic-memory learned from this project's conversations. The `project` option defaults to the key for the current directory. The `limit` option is 1-50 (default 10).
 Read-only: it opens `knowledge.db` read-only for the one call and answers that learning is off, opening
 nothing, unless `EPISODIC_MEMORY_LEARN=1`. Every field is screened for injected instructions and redacted
 before it is returned. See [Self-improving memory](#self-improving-memory-recursa).
 
 ### Settings the server sees
 
-A plugin-launched server only receives the environment variables the plugin manifest (`.mcp.json`)
-whitelists: the config and database paths, `CONVERSATION_SEARCH_EXCLUDE_PROJECTS`, `EPISODIC_MEMORY_LEARN`
+A plugin-launched server receives only the environment variables that the plugin manifest (`.mcp.json`) whitelists. The whitelist holds the config and database paths, `CONVERSATION_SEARCH_EXCLUDE_PROJECTS`, `EPISODIC_MEMORY_LEARN`
 and `EPISODIC_MEMORY_LEARN_MAX_CHARS`, `EPISODIC_MEMORY_MCP_TOKEN`, `EPISODIC_MEMORY_REDACT_SECRETS`,
 `EPISODIC_MEMORY_MAX_READ_BYTES`, `EPISODIC_MEMORY_DIGEST_MAX_CHARS`, `EPISODIC_MEMORY_INCLUDE_SUMMARY` and
 `EPISODIC_MEMORY_MAX_SUMMARY_DISPLAY_CHARS`. Set them in the shell that starts Claude Code or Codex. A server

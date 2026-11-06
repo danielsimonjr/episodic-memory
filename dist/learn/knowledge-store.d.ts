@@ -23,12 +23,20 @@
  * timers; the methods stay `async` because callers already await them.
  */
 import type { Confidence, KnowledgeEntry, KnowledgeKind, KnowledgeStatus, ProcedureStepSpec, SourceRef, TrustLevel, ValidationRecord } from './types.js';
+/**
+ * Options for `KnowledgeStore.search`. A field that is not set does not apply.
+ */
 export interface SearchOptions {
     kinds?: KnowledgeKind[];
     /** A project key, or `*`. Rows for this project and `*` are both returned. */
     project?: string;
     limit?: number;
 }
+/**
+ * The input of `KnowledgeStore.createReflection`.
+ *
+ * A reflection is a conclusion that the learner makes from cited evidence. The store writes one `reflection` entry. When `evidence` is empty, the summary is recorded as the evidence.
+ */
 export interface CreateReflectionInput {
     scope: 'project' | 'global';
     project: string;
@@ -54,10 +62,20 @@ export interface CreateReflectionInput {
         taskId: number;
     }>;
 }
+/**
+ * The result of `KnowledgeStore.createReflection`.
+ *
+ * `duplicate` is true when an entry with the same content hash already exists. The store then writes nothing, and `id` names the existing entry. Otherwise `id` names the new entry.
+ */
 export interface CreateReflectionResult {
     duplicate: boolean;
     id: string | null;
 }
+/**
+ * A stored procedure that matches a context, as `KnowledgeStore.matchProcedures` returns it.
+ *
+ * `score` is the Jaccard overlap of the context words and the words of the procedure id and its triggers. Words have at least two characters. `score` lies from 0 to 1.
+ */
 export interface ProcedureMatchLike {
     procedure: {
         id: string;
@@ -76,6 +94,11 @@ export interface RawEntityView {
     parentEntityName: string | null;
     supersededBy: string | null;
 }
+/**
+ * A heuristic, as `KnowledgeStore.getHeuristic` returns it.
+ *
+ * A heuristic pairs a condition with an action. `support` counts the reinforcements, and `contradictions` counts the contradictions. `confidence` lies from 0 to 1. Each reinforcement moves `confidence` toward 1. Each contradiction lowers `confidence`.
+ */
 export interface HeuristicView {
     id: string;
     condition: string;
@@ -84,6 +107,11 @@ export interface HeuristicView {
     contradictions: number;
     confidence: number;
 }
+/**
+ * A decision record, as `KnowledgeStore.getDecision` returns it.
+ *
+ * `status` is `proposed`, `accepted`, `rejected` or `superseded`. The other fields hold the context, the decision, the alternatives and the consequences.
+ */
 export interface DecisionView {
     id: string;
     status: string;
@@ -92,11 +120,21 @@ export interface DecisionView {
     alternatives: string[];
     consequences: string[];
 }
+/**
+ * One step of a stored procedure.
+ *
+ * `order` sets the position of the step. `action` names the action. `parameters` holds the arguments of the action as name and value pairs.
+ */
 export interface ProcedureStep {
     order: number;
     action: string;
     parameters: Record<string, string>;
 }
+/**
+ * A stored procedure, as `KnowledgeStore.getProcedure` returns it.
+ *
+ * `successRate` lies from 0 to 1. `refineProcedure` updates it after each execution. `executionCount` counts the recorded executions. Both fields are 0 when the store holds no value for them.
+ */
 export interface ProcedureView {
     id: string;
     name: string;
@@ -138,6 +176,13 @@ export declare function entryName(kind: KnowledgeKind, project: string, slug: st
 export declare function rootName(kind: KnowledgeKind, project: string, slug: string): string;
 /** `proc:<project>:<slug>`, the id a procedure skill's record carries. */
 export declare function procedureIdFor(project: string, slug: string): string;
+/**
+ * The learned-knowledge store, kept in one SQLite file.
+ *
+ * The file holds the entities and relations that store the learned entries, heuristics, procedures, decisions and failures. `KnowledgeStore.create` opens a store. A store that is not read-only creates the file and its tables when they are absent. The private `write` helper runs a change in one `BEGIN IMMEDIATE` transaction.
+ *
+ * The class takes no file lock. The learn CLI uses `withLearnLock` to serialize its runs. A read-only store rejects every write. Call `close` to release the database handle. A second call does nothing.
+ */
 export declare class KnowledgeStore {
     private readonly db;
     private closed;
@@ -371,6 +416,9 @@ export declare class KnowledgeStore {
         evidence: string[];
     }>>;
 }
+/**
+ * Options for `openKnowledgeStore`. Leave a field out to use its default.
+ */
 export interface OpenKnowledgeStoreOptions {
     /** Override the file path (tests). Defaults to `getKnowledgeDbPath()`. */
     dbPath?: string;

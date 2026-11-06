@@ -8,20 +8,23 @@
  *
  * Two invariants shape the read paths:
  *
- * - `listTasks` is the **only** way tasks are read, and its `split` argument is
- *   mandatory. The `test` split is excluded from every learner prompt by this
- *   SQL predicate, never by convention (spec §7 rule 13).
- * - A `stale` task is excluded from reads and from every metric. A task going
- *   stale means its source address no longer resolves (a re-indexed session, a
- *   pruned project); scoring it as a failure would punish a solver for a moved
- *   file.
+ * - `listTasks` is the **only** read path for tasks, and its `split` argument is
+ *   mandatory. The SQL predicate keeps the `test` split out of every learner
+ *   prompt, never by convention (spec §7 rule 13).
+ * - The reads and every metric skip a `stale` task. A task goes stale when its
+ *   source address does not resolve (a re-indexed session, a pruned project).
+ *   Scoring it as a failure punishes a solver for a moved file.
  *
  * Additive only: nothing here deletes a run, task or attempt.
  */
 import { randomBytes } from 'crypto';
 import { redactSecrets } from '../redact.js';
-/** The kinds and tiers that carry the learning signal (spec §4.4, §7 rule 5). */
+/**
+ * The task kinds that carry the learning signal (spec §4.4, §7 rule 5).
+ * `passRate` uses them when the caller sets `signalOnly`. Callers of `listTasks` pass them to select the training tasks.
+ */
 export const SIGNAL_KINDS = ['locate', 'when', 'multi'];
+/** The task tiers that carry the learning signal. `passRate` uses them when the caller sets `signalOnly`. Callers of `listTasks` pass them with `SIGNAL_KINDS`. */
 export const SIGNAL_TIERS = [2, 3];
 /** Create the `learning_*` tables. Idempotent; called from `migrateLearningSchema`. */
 export function ensureLearningSchema(db) {
@@ -77,13 +80,18 @@ export function ensureLearningSchema(db) {
 /**
  * A run id: `run-<iso timestamp>-<random>`.
  *
- * Sortable by creation time to the second, and unique enough that two runs
- * started in the same second by different processes do not collide (the lock
- * makes that rare, but a crashed run leaves a stale lock).
+ * The id sorts by creation time to the millisecond. The random suffix keeps two
+ * runs that start in the same millisecond by different processes apart. The lock
+ * makes that case rare, but a crashed run leaves a stale lock.
  */
 function newRunId(now) {
     return `run-${now.toISOString().replace(/[:.]/g, '')}-${randomBytes(3).toString('hex')}`;
 }
+/**
+ * Create a run in the `running` state and return its id.
+ *
+ * The function sets the start time to the current time and stores the budget as JSON.
+ */
 export function createRun(db, input) {
     const id = newRunId(new Date());
     db.prepare(`INSERT INTO learning_run
@@ -91,9 +99,19 @@ export function createRun(db, input) {
      VALUES (?, ?, ?, ?, 'running', ?, NULL, ?, '{}', ?, '[]')`).run(id, input.phase, input.parentRunId ?? null, input.project ?? null, new Date().toISOString(), JSON.stringify(input.budget ?? {}), input.seed);
     return id;
 }
+/**
+ * Set the status of a run, its finish time and its metrics.
+ *
+ * The function sets the finish time to the current time and stores the metrics as JSON.
+ */
 export function finishRun(db, id, status, metrics = {}) {
     db.prepare('UPDATE learning_run SET status = ?, finished_at = ?, metrics = ? WHERE id = ?').run(status, new Date().toISOString(), JSON.stringify(metrics ?? {}), id);
 }
+/**
+ * Append one rejection to the rejections list of a run.
+ *
+ * The function does nothing when no run has the id.
+ */
 export function addRejection(db, runId, rejection) {
     const row = db.prepare('SELECT rejections FROM learning_run WHERE id = ?').get(runId);
     if (!row)
@@ -127,6 +145,7 @@ function runFromRow(row) {
         rejections: parseJson(row.rejections, []),
     };
 }
+/** Return the run with this id, or null when no run has the id. */
 export function getRun(db, id) {
     const row = db.prepare('SELECT * FROM learning_run WHERE id = ?').get(id);
     return row ? runFromRow(row) : null;
@@ -138,6 +157,7 @@ export function latestRun(db) {
         .get();
     return row ? runFromRow(row) : null;
 }
+/** Insert one task row and return the new task id. */
 export function insertTask(db, task) {
     const info = db
         .prepare(`INSERT INTO learning_task (run_id, kind, tier, split, project, prompt, truth, status)
@@ -167,8 +187,8 @@ function taskFromRow(row) {
  * The only task read path.
  *
  * `split` is mandatory, so no caller can accidentally hand a learner the
- * held-out split. Stale rows are excluded unless `includeStale` is set (the
- * `--check` command and `learn report` want to see them).
+ * held-out split. The function excludes stale rows unless the caller sets
+ * `includeStale`. The `--check` command and `learn report` want to see them.
  */
 export function listTasks(db, options) {
     const where = ['split = ?'];
@@ -216,8 +236,13 @@ export function markStale(db, ids) {
     });
     run(ids);
 }
-/** `learning_attempt.answer` is redacted and capped, so one runaway answer cannot bloat the trace. */
+/** `insertAttempt` redacts `learning_attempt.answer` and shortens it to `MAX_ANSWER_CHARS` characters, so one runaway answer cannot bloat the trace. */
 export const MAX_ANSWER_CHARS = 4000;
+/**
+ * Insert one attempt row and return the new attempt id.
+ *
+ * The function redacts the answer, caps its length and stamps the creation time.
+ */
 export function insertAttempt(db, attempt) {
     const answer = redactSecrets(String(attempt.answer ?? '')).slice(0, MAX_ANSWER_CHARS);
     const info = db
@@ -243,6 +268,9 @@ function attemptFromRow(row) {
         createdAt: row.created_at,
     };
 }
+/**
+ * Return the attempts of one run that match the options. An empty `taskIds` list returns no attempts.
+ */
 export function listAttempts(db, options) {
     const where = ['run_id = ?'];
     const params = [options.runId];
@@ -281,7 +309,7 @@ export function attemptsExist(db, ids) {
  * round supersedes its own earlier attempt rather than double-counting. Tasks
  * from the other split and stale tasks never contribute. `signalOnly` restricts
  * the count to `locate`/`when`/`multi` at tiers 2 and 3 — the metric that
- * decides whether an edit is kept (spec §7 rule 5).
+ * decides whether to keep an edit (spec §7 rule 5).
  */
 export function passRate(db, runId, snapshotId, options) {
     const where = ['a.run_id = ?', 'a.snapshot_id = ?', "a.outcome = 'graded'", 't.split = ?', "t.status = 'ok'"];

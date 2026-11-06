@@ -14,6 +14,9 @@ export interface LearnEntryCounts {
     skill: Record<KnowledgeStatus, number>;
     reflection: Record<KnowledgeStatus, number>;
 }
+/**
+ * The most recent learning run, as the doctor report shows that run.
+ */
 export interface LearnLatestRunSummary {
     id: string;
     phase: string;
@@ -21,6 +24,11 @@ export interface LearnLatestRunSummary {
     /** `train: 3/5 → 4/5, test: 1/2` or similar; absent metrics read as `n/a`. */
     metrics: string;
 }
+/**
+ * The `learn` section of the doctor report.
+ *
+ * `collectLearnDoctorSection` fills this section. `emptyLearnSection` builds one that reports nothing found.
+ */
 export interface LearnDoctorSection {
     /** `learned/` exists and holds the two databases. */
     present: boolean;
@@ -43,9 +51,16 @@ export interface LearnDoctorSection {
         files: number;
         bytes: number;
     };
-    /** The `better-sqlite3` copy the plugin loads, or null when it does not resolve. */
+    /** The `better-sqlite3` copy the plugin loads, or null when the module does not resolve. */
     betterSqlite3TopLevel: string | null;
 }
+/**
+ * Returns a section that reports nothing found. The `learnedDir` field contains the given path.
+ *
+ * `collectLearnDoctorSection` starts from this section and fills in each value that the function finds.
+ *
+ * @param learnedDir The `learned` directory to report. Empty when `collectLearnDoctorSection` finds no value.
+ */
 export declare function emptyLearnSection(learnedDir?: string): LearnDoctorSection;
 /**
  * Collect the learn section.

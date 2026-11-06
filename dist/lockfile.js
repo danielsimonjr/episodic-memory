@@ -15,6 +15,11 @@ import fs from 'fs';
 import path from 'path';
 /** Default age after which a lock is stealable regardless of PID liveness. */
 const DEFAULT_STALE_MS = 60 * 60 * 1000; // 1 hour
+/**
+ * Return true when a process with the given PID exists.
+ *
+ * The check sends signal 0. Signal 0 tests whether the process exists and delivers nothing. A process that exists but cannot be signaled counts as alive. The PID must be greater than zero.
+ */
 export function isProcessAlive(pid) {
     try {
         process.kill(pid, 0);
@@ -101,6 +106,11 @@ export function acquireLock(lockPath, staleMs = DEFAULT_STALE_MS) {
     }
     return stolen;
 }
+/**
+ * Release a lock that `acquireLock` returned.
+ *
+ * The function closes the file descriptor, then deletes the lock file only when the file still holds the PID of this process. A lock that another process took over stays on disk. Errors are ignored.
+ */
 export function releaseLock(handle) {
     try {
         fs.closeSync(handle.fd);

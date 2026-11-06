@@ -32,6 +32,9 @@ import type { PidRegistry } from './agent-runner.js';
 /** Where a run records the subprocesses it owns. */
 const NO_PIDS: PidRegistry = { add() {}, remove() {} };
 
+/**
+ * The options for `validateCandidate`.
+ */
 export interface ValidateOptions {
   /** Task ids the edit was proposed to fix (the round's failures). */
   targeted: number[];

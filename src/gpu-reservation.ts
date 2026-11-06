@@ -24,6 +24,11 @@ import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
+/**
+ * The fleet GPU reservation, as `readGpuReservation` returns it.
+ *
+ * `readGpuReservation` returns a value of this type while the GPU is held. The function also returns a value of this type when the reservation file cannot be read. In that case `holder` is `unknown`, and `fault` names the cause.
+ */
 export interface GpuReservation {
   /** The session or job that holds the GPU. "unknown" when the file could not be read. */
   holder: string;
@@ -37,11 +42,20 @@ export interface GpuReservation {
   fault?: string;
 }
 
+/**
+ * Return the path of the fleet GPU reservation file.
+ *
+ * The `FLEET_GPU_RESERVATION` environment variable sets the path. When that variable is empty or unset, the path is `gpu-reserved.json` in the `_fleet` folder of the `Dropbox` folder in the home folder.
+ */
 export function reservationPath(): string {
   return process.env.FLEET_GPU_RESERVATION || join(homedir(), 'Dropbox', '_fleet', 'gpu-reserved.json');
 }
 
-/** The current reservation, or `null` when the GPU is free. */
+/**
+ * Return the current GPU reservation, or `null` when the GPU is free.
+ *
+ * The function returns `null` when the file is missing or names no holder. The function returns a reservation with `holder` set to `unknown` when the file cannot be read, is not valid JSON, or parses to `null`. The `fault` field names the cause.
+ */
 export function readGpuReservation(): GpuReservation | null {
   let raw: string;
   try {

@@ -25,6 +25,9 @@ export interface PidRegistry {
     add(pid: number): void;
     remove(pid: number): void;
 }
+/**
+ * The inputs to `buildAgentQueryOptions`.
+ */
 export interface BuildAgentQueryOptionsArgs {
     server: McpSdkServerConfigWithInstance;
     allowPropose: boolean;
@@ -43,6 +46,9 @@ export interface BuildAgentQueryOptionsArgs {
  * covers a same-named tool from another server.
  */
 export declare function buildAgentQueryOptions(args: BuildAgentQueryOptionsArgs): Record<string, unknown>;
+/**
+ * One process from a process listing, with its id, its parent id when known, and its command line.
+ */
 export interface ProcSnapshot {
     pid: number;
     ppid?: number;
@@ -57,6 +63,9 @@ export declare function isAgentSpawnTree(commandLine: string): boolean;
  * better off with a short `.learn.pids` than with a wrong one.
  */
 export declare function listAgentProcesses(): ProcSnapshot[] | null;
+/**
+ * The inputs to `runAgent`. The `queryFn` and `processLister` fields are test seams.
+ */
 export interface AgentRunOptions {
     prompt: string;
     systemPrompt: string;
@@ -77,6 +86,9 @@ export interface AgentRunOptions {
     /** How often the spawn tree is polled while the agent runs. */
     pollMs?: number;
 }
+/**
+ * What one `runAgent` call returns: the final text, the trace, the cost, and the outcome.
+ */
 export interface AgentRunResult {
     text: string;
     trace: TraceStep[];

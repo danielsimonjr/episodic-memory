@@ -8,6 +8,13 @@ function hookBelongsToEpisodicMemory(hook) {
     const key = typeof hook.key === 'string' ? hook.key : '';
     return pluginId.startsWith('episodic-memory@') || key.startsWith('episodic-memory@');
 }
+/**
+ * Reads the trust state of the episodic-memory hooks from a `hooks/list` response.
+ *
+ * A hook belongs to this plugin when its `pluginId` or its `key` starts with `episodic-memory@`.
+ * A trusted or managed hook takes precedence over a modified hook. A modified hook takes precedence over an untrusted one.
+ * Returns `unknown` when the response has no `data` array, or when the function cannot read a trust state.
+ */
 export function trustStateFromHooksList(result) {
     if (!isRecord(result) || !Array.isArray(result.data)) {
         return 'unknown';
@@ -39,6 +46,17 @@ export function trustStateFromHooksList(result) {
     }
     return 'unknown';
 }
+/**
+ * Asks the Codex CLI for the trust state of the episodic-memory hooks in one working directory.
+ *
+ * The function starts `codex app-server` with `CODEX_HOME` set to `codexHome`. The function sends `hooks/list` and reads the answer.
+ * The function returns `unknown` when the server fails, replies with an error, or does not reply within `timeoutMs`.
+ * The function sends SIGTERM to the child process before the function returns.
+ *
+ * @param codexHome The Codex home directory to inspect.
+ * @param cwd The working directory whose hooks the server lists.
+ * @param timeoutMs The longest wait for the whole exchange, in milliseconds. Defaults to 10 seconds.
+ */
 export async function detectCodexHookTrustState(codexHome, cwd, timeoutMs = 10000) {
     const child = spawn('codex', ['app-server'], {
         env: { ...process.env, CODEX_HOME: codexHome },

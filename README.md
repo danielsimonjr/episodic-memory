@@ -43,6 +43,10 @@ _Conversation ID: 216ad284-c782-45a4-b2ce-36775cdb5a6c_
 
 ## Installation
 
+**Requirements:** Node 22.12 or newer. The learning feature's knowledge store needs it. On an older Node, the MCP server wrapper and the `learn` command print one line and exit. Bun 1.4+ is only needed for development.
+
+This is the fork `danielsimonjr/episodic-memory`, which carries the self-improving memory feature. The install commands below are the upstream ones. A fork install uses the `episodic-memory@local-marketplace` plugin instead.
+
 ### As a Claude Code plugin (Recommended)
 
 The plugin provides MCP server integration, automatic session-end indexing, and seamless access to your conversation history.
@@ -56,6 +60,7 @@ The plugin automatically:
 - Indexes conversations at the end of each session
 - Exposes MCP tools for searching and viewing conversations
 - Makes your conversation history searchable via natural language
+- Loads a short, cited block of learned hints at session start when self-improving memory is turned on
 
 ### As a Codex plugin
 
@@ -114,6 +119,9 @@ episodic-memory stats
 # Diagnose Codex setup
 episodic-memory doctor codex
 
+# Check learned-memory state (needs EPISODIC_MEMORY_LEARN=1)
+episodic-memory learn status
+
 # Display a conversation
 episodic-memory show path/to/conversation.jsonl
 ```
@@ -164,6 +172,8 @@ The plugin automatically syncs and indexes conversations from the harness that s
 - "The conversation about async testing patterns"
 - "Error message about sqlite-vec initialization"
 - "Git commit SHA for the routing refactor"
+
+When `EPISODIC_MEMORY_LEARN=1` is set and a learning run has created `learned/learning.sqlite`, a session starts with a fenced "learned hints" block. It gives instructions on where to look, plus an index of learned skills. The search agent loads a matching skill with the `skills` tool before it searches. See [Self-improving memory](#self-improving-memory-recursa).
 
 In Codex, the skill guides the agent to use the episodic-memory MCP search/read tools directly when an agent-dispatch path is not available.
 
@@ -256,6 +266,8 @@ Settings:
 | `EPISODIC_MEMORY_DIGEST_DAY_CAP` | `5` | Session entries in a past day before they merge |
 | `EPISODIC_MEMORY_DIGEST_WEEK_CAP` | `2` | Day entries in a finished week before they merge |
 | `EPISODIC_MEMORY_DIGEST_MAX_SESSIONS` | `5` | Sessions summarized per sync run |
+
+The same SessionStart hook also appends a learned-hints block when `EPISODIC_MEMORY_LEARN=1` is set and a learning run has created `<configDir>/learned/learning.sqlite`. Each part has its own flag, so either, both, or neither may print. The hook prints one JSON object.
 
 The `digest` MCP tool shows the digest, searches it (`query`), turns a `[#id]` mark into an archive path and
 line range for `read` (`expand`), and stores a one-line note for the next session (`handoff`).
@@ -446,7 +458,7 @@ episodic-memory doctor --json
 episodic-memory doctor codex
 ```
 
-The default report covers the config/archive/index paths, database size and row counts, embedding-version drift, recent SessionStart hook errors (`sync-errors.log`), and plugin `node_modules` sentinels. The Codex doctor additionally checks the Codex version, plugin hook feature state, MCP server registration, and hook trust.
+The default report covers the config/archive/index paths, database size and row counts, embedding-version drift, recent SessionStart hook errors (`sync-errors.log`), and plugin `node_modules` sentinels. The Codex doctor additionally checks the Codex version, plugin hook feature state, MCP server registration, and hook trust. The default report also has a **Learn (Recursa)** section. It covers the learned directory's presence and sizes, entries by kind and status, the latest run, candidates awaiting approval, unresolved sources, and whether memoryjs resolves the same better-sqlite3 copy as the top level. `--json` includes this section too.
 
 ### Codex E2E Verification
 
@@ -506,6 +518,7 @@ open output.html
 - **MCP Server** - Model Context Protocol server exposing search, read, digest and skills tools
 - **Claude Code plugin** - Integration with Claude Code (auto-indexing, MCP tools, hooks)
 - **Codex plugin** - Integration with Codex (manifest, MCP config, hooks, skills)
+- **Self-improving memory** - the `learn` CLI, an in-process tool server for isolated solver and learner agents, and a memoryjs-backed knowledge store under `learned/`
 
 ## How It Works
 
@@ -514,6 +527,7 @@ open output.html
 3. **Embed** - Generates vector embeddings using Transformers.js (local, offline)
 4. **Index** - Stores in SQLite with sqlite-vec for fast similarity search
 5. **Search** - Semantic search using vector similarity or exact text matching
+6. **Learn** (optional) - generates practice tasks from the archive, grades its own answers against archive addresses, and keeps only validated, cited hints
 
 ## Excluding Conversations
 
@@ -533,11 +547,11 @@ Conversations containing this marker anywhere in their content will be archived 
 - Test or experimental sessions
 - Any conversation you don't want searchable
 
-The marker can appear in any message (user or assistant) and excludes the entire conversation from the search index.
+The marker can appear in any message (user or assistant) and excludes the entire conversation from the search index. Practice tasks and citations come only from the index, so an excluded conversation is also never used as a practice task or cited by a learned entry.
 
 ## MCP Server
 
-When installed as a Claude Code or Codex plugin, episodic-memory provides an MCP (Model Context Protocol) server that exposes tools for searching and viewing conversations.
+When installed as a Claude Code or Codex plugin, episodic-memory provides an MCP (Model Context Protocol) server that exposes tools for searching and viewing conversations, and for loading the skills it has learned from them.
 
 ### Available MCP Tools
 
@@ -607,7 +621,7 @@ episodic-memory-mcp-server
 ## Development
 
 Bun is the package manager and script driver. Node remains the production runtime
-(CLI / MCP / hooks). Requires [Bun](https://bun.sh) 1.4+ and Node 22.12+.
+(CLI / MCP / hooks). Requires [Bun](https://bun.sh) 1.4+ and Node 22.12+. The learning feature depends on `@danielsimonjr/memoryjs` (Node 22.12 floor) and an exact `better-sqlite3` pin with an npm override so only one copy exists. CI pins Bun 1.4.2.
 
 ```bash
 # Install dependencies

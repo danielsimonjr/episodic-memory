@@ -11,10 +11,12 @@
   a seed (sidechains and projects below the floor excluded), asks a text-only model for a `locate`,
   `recall`, `when` and `multi` prompt at tiers 1 to 3 per exchange, redacts and screens every prompt,
   splits 60/40 inside each `(project, tier)` stratum, and stores truth as an address plus the
-  session's date range. `src/learn/grade.ts` grades an answer deterministically for `locate`
+  session's date range. A paraphrase that echoes an archive path or a session id is dropped, so the
+  answer key never lands in the stored prompt. `src/learn/grade.ts` grades an answer deterministically for `locate`
   (1.0 overlap, 0.5 same session, 0 otherwise), `when` (project plus date inside the session range
   widened one day each side) and `multi` (every address), and gates `recall` on the location before a
-  judge score. `listTasks` is the only task read path and its `split` argument is mandatory, so the
+  judge score. Answer parsing accepts a numbered-list prefix (`1. path:`), and `samePath` folds `..`
+  in Windows-shaped paths the way `path.win32.normalize` does. `listTasks` is the only task read path and its `split` argument is mandatory, so the
   held-out split cannot reach a learner prompt; `passRate({ signalOnly })` restricts to
   `locate`/`when`/`multi` at tiers 2 and 3, so tier 1 and `recall` are reported but never decide
   whether an edit is kept. Also: `callLearnModel` and `resolveLearnModels` in `summarizer.ts` give

@@ -52,6 +52,16 @@ export declare function selectSourceExchanges(indexDb: Database.Database, option
 export declare function paraphrasePrompt(exchange: ConversationExchange): string;
 /** One parsed tier: kind → prompt. */
 type TierBlock = Partial<Record<LearningKind, string>>;
+/**
+ * A stored prompt is the solver's only view of the task. The archive path and
+ * the session id are the answer key (spec §4.4), so a paraphrase that echoes
+ * either of them is dropped rather than stored.
+ *
+ * The check is lexical: a `.jsonl` path (POSIX or Windows), the source
+ * exchange's own path or session id, or a bare `session-<id>` token. The word
+ * "session" on its own is a legitimate question and is kept.
+ */
+export declare function promptLeaksAnswerKey(prompt: string, exchange: ConversationExchange): boolean;
 /** Parse the model's tagged blocks. A missing or malformed block yields no prompts. */
 export declare function parseParaphrase(raw: string): Record<LearningTier, TierBlock>;
 export interface GenerateTasksOptions {

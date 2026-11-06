@@ -19,6 +19,7 @@
  * - **Truth is an address**, not a copied transcript, so a re-index that moves a
  *   line marks the task stale instead of silently wrong.
  */
+import path from 'path';
 import { redactSecrets } from '../redact.js';
 import { screenLearnedText } from './learned-text-screen.js';
 import { insertTask, markStale } from './learning-db.js';
@@ -191,6 +192,39 @@ export function paraphrasePrompt(exchange) {
     ].join('\n');
 }
 const TIER_TAG = /<tier([123])>([\s\S]*?)<\/tier\1>/g;
+/**
+ * A stored prompt is the solver's only view of the task. The archive path and
+ * the session id are the answer key (spec §4.4), so a paraphrase that echoes
+ * either of them is dropped rather than stored.
+ *
+ * The check is lexical: a `.jsonl` path (POSIX or Windows), the source
+ * exchange's own path or session id, or a bare `session-<id>` token. The word
+ * "session" on its own is a legitimate question and is kept.
+ */
+export function promptLeaksAnswerKey(prompt, exchange) {
+    if (typeof prompt !== 'string' || !prompt)
+        return false;
+    if (/\.jsonl\b/i.test(prompt))
+        return true;
+    if (/(?:^|\s)(?:\/|\\|[A-Za-z]:[\\/])\S+/.test(prompt))
+        return true;
+    const sessionId = exchange.sessionId?.trim();
+    if (sessionId && sessionId.length >= 3 && prompt.includes(sessionId))
+        return true;
+    const archivePath = exchange.archivePath?.trim();
+    if (archivePath && prompt.includes(archivePath))
+        return true;
+    if (archivePath) {
+        const base = path.basename(archivePath);
+        if (base.length >= 3 && prompt.includes(base))
+            return true;
+    }
+    // A session id the model named even when it is not this exchange's id
+    // (`session-0` while paraphrasing a sibling) is still an address.
+    if (/\bsession[-_][A-Za-z0-9][\w.-]*/.test(prompt))
+        return true;
+    return false;
+}
 /** Parse the model's tagged blocks. A missing or malformed block yields no prompts. */
 export function parseParaphrase(raw) {
     const blocks = { 1: {}, 2: {}, 3: {} };
@@ -250,6 +284,8 @@ export async function generateTasks(learningDb, indexDb, options) {
                     continue;
                 const prompt = redactSecrets(rawPrompt).trim();
                 if (!prompt)
+                    continue;
+                if (promptLeaksAnswerKey(prompt, exchange))
                     continue;
                 if (!screenLearnedText(prompt).ok)
                     continue;

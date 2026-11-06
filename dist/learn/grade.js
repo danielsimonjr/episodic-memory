@@ -22,9 +22,10 @@ function cleanValue(raw) {
     return value.trim();
 }
 function labelledValues(text, label) {
-    // `file:` is a common synonym for `path:`.
+    // `file:` is a common synonym for `path:`. An ordered-list marker (`1.` / `2)`)
+    // is decoration, same as a bullet: a solver's numbered list still names a location.
     const names = label === 'path' ? 'path|file' : label;
-    const pattern = new RegExp(`^[\\s>*+\\-|]*(?:\\*\\*|__)?(?:${names})(?:\\*\\*|__)?\\s*[:=]\\s*(.*)$`, 'gim');
+    const pattern = new RegExp(`^[\\s>*+\\-|]*(?:\\d{1,3}[.)]\\s+)?(?:\\*\\*|__)?(?:${names})(?:\\*\\*|__)?\\s*[:=]\\s*(.*)$`, 'gim');
     const out = [];
     let match;
     while ((match = pattern.exec(text)) !== null)
@@ -90,13 +91,15 @@ export function parseSolverAnswer(text) {
 function isWindowsShaped(candidate) {
     return /^[A-Za-z]:[\\/]/.test(candidate) || /^\\\\/.test(candidate);
 }
-/** Fold separators, collapse repeats and (on Windows) case, without touching the disk. */
+/**
+ * Fold separators, `.` / `..` segments and (on Windows) case, without touching
+ * the disk. `path.win32.normalize` is the lexical equivalent of `path.resolve`
+ * for a drive-letter path, and it folds `..` on every host. `path.resolve`
+ * itself would anchor a Windows path to the Linux cwd.
+ */
 function normalizeWindowsPath(candidate) {
-    return candidate
-        .replace(/\\/g, '/')
-        .replace(/\/{2,}/g, '/')
-        .replace(/\/+$/, '')
-        .toLowerCase();
+    const folded = path.win32.normalize(candidate.replace(/\//g, '\\'));
+    return folded.replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
 }
 /**
  * True when two paths name the same file, tolerating separators and Windows case.

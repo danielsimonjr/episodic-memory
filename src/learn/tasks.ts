@@ -20,6 +20,7 @@
  *   line marks the task stale instead of silently wrong.
  */
 
+import path from 'path';
 import type Database from 'better-sqlite3';
 import type { ConversationExchange } from '../types.js';
 import { redactSecrets } from '../redact.js';
@@ -240,6 +241,36 @@ type TierBlock = Partial<Record<LearningKind, string>>;
 
 const TIER_TAG = /<tier([123])>([\s\S]*?)<\/tier\1>/g;
 
+/**
+ * A stored prompt is the solver's only view of the task. The archive path and
+ * the session id are the answer key (spec §4.4), so a paraphrase that echoes
+ * either of them is dropped rather than stored.
+ *
+ * The check is lexical: a `.jsonl` path (POSIX or Windows), the source
+ * exchange's own path or session id, or a bare `session-<id>` token. The word
+ * "session" on its own is a legitimate question and is kept.
+ */
+export function promptLeaksAnswerKey(prompt: string, exchange: ConversationExchange): boolean {
+  if (typeof prompt !== 'string' || !prompt) return false;
+  if (/\.jsonl\b/i.test(prompt)) return true;
+  if (/(?:^|\s)(?:\/|\\|[A-Za-z]:[\\/])\S+/.test(prompt)) return true;
+
+  const sessionId = exchange.sessionId?.trim();
+  if (sessionId && sessionId.length >= 3 && prompt.includes(sessionId)) return true;
+
+  const archivePath = exchange.archivePath?.trim();
+  if (archivePath && prompt.includes(archivePath)) return true;
+  if (archivePath) {
+    const base = path.basename(archivePath);
+    if (base.length >= 3 && prompt.includes(base)) return true;
+  }
+
+  // A session id the model named even when it is not this exchange's id
+  // (`session-0` while paraphrasing a sibling) is still an address.
+  if (/\bsession[-_][A-Za-z0-9][\w.-]*/.test(prompt)) return true;
+  return false;
+}
+
 /** Parse the model's tagged blocks. A missing or malformed block yields no prompts. */
 export function parseParaphrase(raw: string): Record<LearningTier, TierBlock> {
   const blocks: Record<LearningTier, TierBlock> = { 1: {}, 2: {}, 3: {} };
@@ -328,6 +359,7 @@ export async function generateTasks(
         if (!rawPrompt) continue;
         const prompt = redactSecrets(rawPrompt).trim();
         if (!prompt) continue;
+        if (promptLeaksAnswerKey(prompt, exchange)) continue;
         if (!screenLearnedText(prompt).ok) continue;
 
         drafts.push({

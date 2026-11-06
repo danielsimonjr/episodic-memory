@@ -6,10 +6,12 @@
  */
 import { spawn, execFileSync } from 'child_process';
 import { selectOrphans } from '../dist/orphan-reaper.js';
+import { readLearnPids } from '../dist/learn/learn-lock.js';
+import { getIndexDir } from '../dist/paths.js';
 import { ensureDeps } from './ensure-deps.js';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const episodicMemory = path.join(__dirname, 'episodic-memory.js');
@@ -20,7 +22,18 @@ const episodicMemory = path.join(__dirname, 'episodic-memory.js');
 // iterating and does NOT terminate the claude.exe --fork-session child or the transient daemon
 // supervising it. Measured 2026-09-02: two workers lived 3 h 45 m against that 120 s bound,
 // ~47 processes and ~5 GB between them. So: snapshot before, sweep after.
-function listClaudeProcs() {
+async function listClaudeProcs() {
+  // A test seam, and the only way to exercise the reaper inside a hook run without touching the
+  // machine's real processes: an absolute path to an ESM module exporting `listClaudeProcs`.
+  const override = process.env.EPISODIC_MEMORY_PROC_LISTER;
+  if (override) {
+    try {
+      const mod = await import(pathToFileURL(override).href);
+      return typeof mod.listClaudeProcs === 'function' ? mod.listClaudeProcs() : null;
+    } catch {
+      return null;   // FAIL OPEN, same as below: a broken lister reaps nothing.
+    }
+  }
   try {
     if (process.platform !== 'win32') {
       const out = execFileSync('ps', ['-eo', 'pid=,args='], {encoding: 'utf8', timeout: 15000});
@@ -41,7 +54,7 @@ function listClaudeProcs() {
   }
 }
 
-function reapOrphans(baselinePids, logPath, formatLogLine) {
+async function reapOrphans(baselinePids, logPath, formatLogLine) {
   // EVERY PATH LOGS, INCLUDING THE QUIET ONE. This function used to `return` silently on three
   // separate paths - enumeration failure, an empty victim list, and all-kills-failing - so
   // "ran and found nothing" was INDISTINGUISHABLE from "never ran". On 2026-09-02 five orphans
@@ -51,14 +64,28 @@ function reapOrphans(baselinePids, logPath, formatLogLine) {
     try { fs.appendFileSync(logPath, formatLogLine(level, `orphan-reaper: ${msg}`), 'utf-8'); } catch {}
   };
 
-  const procs = listClaudeProcs();
+  const procs = await listClaudeProcs();
   if (!procs) {
     note('warn', 'could not enumerate processes - reaped NOTHING (failing open, by design)');
     return;
   }
-  const victims = selectOrphans(procs, baselinePids);
+
+  // A live `learn` run lists its own subprocesses in `.learn.pids`. They are young and match the
+  // reaper signatures, so the baseline cannot protect them - only the run's registry can. Read
+  // at reap time, not at baseline time: a run that started during this sync is exactly the case
+  // this guard exists for.
+  let protectedPids = new Set();
+  try {
+    protectedPids = readLearnPids(getIndexDir());
+  } catch {
+    // No index dir yet, or an unreadable file: protect nothing rather than skip the sweep.
+  }
+
+  const victims = selectOrphans(procs, baselinePids, protectedPids);
   if (!victims.length) {
-    note('info', `ran, ${procs.length} claude process(es) seen, ${baselinePids.size} in baseline, 0 to reap`);
+    note('info',
+      `ran, ${procs.length} claude process(es) seen, ${baselinePids.size} in baseline, ` +
+      `${protectedPids.size} protected by learn, 0 to reap`);
     return;
   }
   const killed = [];
@@ -74,7 +101,8 @@ function reapOrphans(baselinePids, logPath, formatLogLine) {
   // Report BOTH outcomes. A kill list that silently all-failed previously logged nothing at all,
   // which reads exactly like a clean run.
   note(killed.length ? 'warn' : 'error',
-    `ran, ${victims.length} orphan(s) selected, ${killed.length} killed${killed.length ? ' [' + killed.join(', ') + ']' : ''}` +
+    `ran, ${victims.length} orphan(s) selected (${protectedPids.size} protected by learn), ` +
+    `${killed.length} killed${killed.length ? ' [' + killed.join(', ') + ']' : ''}` +
     (failed.length ? `, ${failed.length} FAILED [${failed.join(', ')}]` : ''));
 }
 
@@ -108,7 +136,7 @@ async function main() {
 
   // Baseline BEFORE launch - the rule that makes reaping safe. Anything already running is
   // never ours, however much it looks like plumbing.
-  const baselineProcs = listClaudeProcs();
+  const baselineProcs = await listClaudeProcs();
   const baselinePids = new Set((baselineProcs || []).map((x) => x.pid));
   const canReap = baselineProcs !== null;   // no baseline -> no reaping, ever
 
@@ -127,7 +155,16 @@ async function main() {
   });
 
   child.on('close', (code) => {
-    if (canReap) reapOrphans(baselinePids, logPath, formatLogLine);
+    if (canReap) {
+      reapOrphans(baselinePids, logPath, formatLogLine)
+        .catch(() => {})
+        .finally(() => reportExit(code));
+      return;
+    }
+    reportExit(code);
+  });
+
+  function reportExit(code) {
     if (code !== 0) {
       const detail = [stderr.trim(), stdout.trim()].filter(Boolean).join(' | ');
       fs.appendFileSync(
@@ -137,7 +174,7 @@ async function main() {
       );
     }
     process.exit(0);
-  });
+  }
 
   child.on('error', (err) => {
     fs.appendFileSync(

@@ -1,12 +1,32 @@
 ## [Unreleased]
 
 ### Fixed
+- **`learn --help` no longer loads the Agent SDK or memoryjs, and a solve that spends past its call budget stops instead of crashing.** Help is printed from `src/learn/usage.ts` before `cli-main` is imported. When `solve` hits `BudgetExhausted` — the signal-task baseline can be smaller than the split actually solved — the run is marked `stopped`, the attempts already stored are kept, and the process exits 0 with a budget message on stderr. A still-running run that owns the tasks being solved is the run that gets that status.
 - **The learning subprocess semaphore counts every overlapping body, and an in-flight limiter stays put when concurrency changes.** An awaited nested `run` still shares the caller's slot. A nested `run` that is not awaited takes its own, so a fire-and-forget call cannot slip past the limit. `globalAgentSemaphore()` keeps the live limiter while slots are held. Building the in-process tool server throws if the registered tools drift from `SERVED_TOOL_NAMES` (plus `propose_entry` only when it is enabled), so the `allowedTools` wildcard cannot hide a new tool.
 - **Learned-block injection stays inside the fence, re-redacts PII, and drops retired projects.** The hook stops at the closing fence, re-applies a memoryjs-free PII pass (phone, email, SSN, card, IP) on read, and `writeLearnedBlocks` deletes a project row whose render is empty. Flag-off `skills` checks `learnEnabled()` before importing `skills-tool`, so memoryjs stays unloaded. `skills get` only returns the requested project or a `*` skill.
 - **A candidate knowledge revision no longer hides the still-active previous version.** `putEntry` no longer clears the parent's `isLatest`; only `supersede` does. `listActive` and snapshots are gated on status and `supersededBy`. `getBySlug` returns the highest logical version. Reflection `generalization_confidence` uses 0.3 / 0.6 / 0.9.
 
 ### Added
-- **Self-practice task generation and grading — the eval harness (Task 4 of the Recursa plan).** The
+- **The `learn` CLI: `tasks`, `solve`, `status` and `report` (Task 6 of the Recursa plan).**
+  `episodic-memory learn` now dispatches to `dist/learn-cli.js`, which checks the reentrancy guard,
+  the flag and the fleet GPU reservation — and drops to below-normal priority — before it imports the
+  SDK, memoryjs or transformers, so a guarded or flag-off invocation costs nothing. `learn tasks`
+  generates self-practice tasks (`--per-project`, `--seed`), and `learn tasks --check` marks the tasks
+  whose source address no longer resolves as stale. `learn solve` solves a split, storing one graded
+  attempt per task, and every command that spends money computes its signal-task baseline first and
+  refuses to start when that alone exceeds `EPISODIC_MEMORY_LEARN_MAX_CALLS` (twice the count for
+  bootstrap, which solves the same set before and after). `learn status` prints the flag, entries by
+  kind and status, the candidates awaiting approval and the latest run. `learn report` prints pass
+  rates per split and tier before and after, the entries a run kept, the candidates still pending,
+  every rejection with its reason, the budget spent, child runs and reflections — `--json` for the
+  same model as JSON, and it defaults to the latest run. `bootstrap`, `improve`, `approve`, `export`
+  and `render` are stubs with a distinct not-implemented exit code (Tasks 7 to 10 fill them).
+  One run at a time is enforced by `.learn.lock` in the index directory (`learn-lock.ts`), and a
+  second instance reports the holder's PID instead of a bare failure; `.learn.pids` lists the
+  subprocesses a run owns, so the SessionStart orphan reaper never kills a live run's workers.
+  `selectOrphans` gains a `protectedPids` argument for exactly that, `cli/sync-hook.js` reads the run's
+  registry at reap time, and `EPISODIC_MEMORY_PROC_LISTER` makes the hook's process enumeration
+  testable. Progress goes to stderr and to `logs/learn.log`; the report goes to stdout. The
   learning trace gains `learning_run`, `learning_task` and `learning_attempt`, and three new modules
   make the archive grade itself. `src/learn/tasks.ts` selects source exchanges deterministically from
   a seed (sidechains and projects below the floor excluded), asks a text-only model for a `locate`,

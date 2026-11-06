@@ -45,4 +45,21 @@ describe('orphan reaper selection', () => {
   it('is empty when nothing new appeared', () => {
     expect(selectOrphans([HUMAN], new Set([25452]))).toEqual([]);
   });
+
+  // A live `learn` run's subprocesses are young and match these signatures, so the baseline
+  // cannot cover them. Its `.learn.pids` registry is the only thing that knows they are in use.
+  it('never selects a protected pid', () => {
+    expect(selectOrphans([DAEMON, PTY, FORK, HUMAN], new Set(), new Set([23324, 4300, 25644]))).toEqual([]);
+  });
+
+  it('skips only the protected pids and reaps the rest', () => {
+    const got = selectOrphans([DAEMON, PTY, FORK], new Set(), new Set([4300]));
+    expect(got.map((x) => x.pid)).toEqual([23324, 25644]);
+  });
+
+  it('protection is not a baseline: a protected pid is skipped even when it is also new', () => {
+    // The two sets are independent rules, and both apply.
+    expect(selectOrphans([FORK], new Set([25644]), new Set([25644]))).toEqual([]);
+    expect(selectOrphans([FORK], new Set([999]), new Set([25644]))).toEqual([]);
+  });
 });

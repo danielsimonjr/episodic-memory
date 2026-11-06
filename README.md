@@ -458,7 +458,7 @@ episodic-memory doctor --json
 episodic-memory doctor codex
 ```
 
-The default report covers the config/archive/index paths, database size and row counts, embedding-version drift, recent SessionStart hook errors (`sync-errors.log`), and plugin `node_modules` sentinels. The Codex doctor additionally checks the Codex version, plugin hook feature state, MCP server registration, and hook trust. The default report also has a **Learn (Recursa)** section. It covers the learned directory's presence and sizes, entries by kind and status, the latest run, candidates awaiting approval, unresolved sources, and whether memoryjs resolves the same better-sqlite3 copy as the top level. `--json` includes this section too.
+The default report covers the config/archive/index paths, database size and row counts, embedding-version drift, recent SessionStart hook errors (`sync-errors.log`), and plugin `node_modules` sentinels. The Codex doctor additionally checks the Codex version, plugin hook feature state, MCP server registration, and hook trust. The default report also has a **Learn (Recursa)** section. It covers the learned directory's presence and sizes, entries by kind and status, the latest run, candidates awaiting approval, unresolved sources, and the `better-sqlite3` copy the plugin resolves. `--json` includes this section too.
 
 ### Codex E2E Verification
 
@@ -518,7 +518,7 @@ open output.html
 - **MCP Server** - Model Context Protocol server exposing search, read, digest and skills tools
 - **Claude Code plugin** - Integration with Claude Code (auto-indexing, MCP tools, hooks)
 - **Codex plugin** - Integration with Codex (manifest, MCP config, hooks, skills)
-- **Self-improving memory** - the `learn` CLI, an in-process tool server for isolated solver and learner agents, and a memoryjs-backed knowledge store under `learned/`
+- **Self-improving memory** - the `learn` CLI, an in-process tool server for isolated solver and learner agents, and a `better-sqlite3` knowledge store under `learned/`
 
 ## How It Works
 
@@ -621,7 +621,7 @@ episodic-memory-mcp-server
 ## Development
 
 Bun is the package manager and script driver. Node remains the production runtime
-(CLI / MCP / hooks). Requires [Bun](https://bun.sh) 1.4+ and Node 22.12+. The learning feature depends on `@danielsimonjr/memoryjs` (Node 22.12 floor) and an exact `better-sqlite3` pin with an npm override so only one copy exists. CI pins Bun 1.4.2.
+(CLI / MCP / hooks). Requires [Bun](https://bun.sh) 1.4+ and Node 22+ (the floor `better-sqlite3` 13 declares; both entry points check it at launch). CI pins Bun 1.4.2.
 
 ```bash
 # Install dependencies

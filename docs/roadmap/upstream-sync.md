@@ -142,22 +142,22 @@ future-Daniel.
 
 ## Engine floor divergence (fork-only)
 
-`package.json` declares `engines.node: ">=22.12.0"` and `.github/workflows/ci.yml` pins Bun
-`1.4.2`. Both come from `@danielsimonjr/memoryjs`, the knowledge store behind `learn`: it requires
-Node `>=22.12.0` and Bun `>=1.4.2`. Upstream has neither dependency and declares `>=20`.
+`package.json` declares `engines.node: ">=22.0.0"` and `.github/workflows/ci.yml` pins Bun
+`1.4.2`. The Node floor is the one `better-sqlite3` 13 declares (`>=22`); upstream declares `>=20`.
+(Until 2026-11-06 the floor was `22.12.0`, inherited from `@danielsimonjr/memoryjs`; that dependency
+is gone and the knowledge store is plain `better-sqlite3`.)
 
 This is a deliberate fork-only divergence and it will conflict on merge:
 
 - **Resolving the conflict:** keep the higher floor. Lowering `engines` back to `>=20` makes the
-  declared support a lie — `learn` fails at import on Node 20 no matter what `engines` says. If
-  upstream's `engines` ever rises above `22.12.0`, take upstream's value.
+  declared support a lie — `better-sqlite3` 13 fails to load on Node 20 no matter what `engines`
+  says. If upstream's `engines` ever rises above `22.0.0`, take upstream's value.
 - **Enforcement is in the code, not in `engines`.** `src/node-floor.ts` holds the floor constant and
   `assertNodeFloor()`; `cli/mcp-server-wrapper.js` and `cli/episodic-memory.js learn` call it and
   exit with one stderr line below the floor. `engines` alone only warns, so a Node 20 host would
-  otherwise install 200 packages and then fail inside memoryjs.
-- **`overrides["better-sqlite3"]`** pins the exact version beside `dependencies["better-sqlite3"]`
-  so npm in the plugin cache (no lockfile, install scripts skipped) collapses memoryjs's caret range
-  into one copy. Upstream has no `overrides` block for it; keep ours.
+  otherwise install 200 packages and then fail inside a dependency.
+- **No `overrides["better-sqlite3"]` any more.** The pin existed to collapse memoryjs's caret range
+  into one copy; nothing else pulls `better-sqlite3` in, so the exact `dependencies` entry is enough.
 - **CI's Node stays 24.** Only Bun moves, and only because Bun is what resolves and installs.
 
 ## Where this gets revisited

@@ -105,7 +105,7 @@ Self-improving memory (the `EPISODIC_MEMORY_LEARN` feature) keeps its state in
 ```
 <configDir>/
   conversation-index/     db.sqlite          -- disposable; rebuildable from the archive
-  learned/                knowledge.db       -- learned entries (memoryjs), durable
+  learned/                knowledge.db       -- learned entries (better-sqlite3), durable
                           learning.sqlite    -- the learning trace + rendered block
   learned-skills/                            -- generated SKILL.md export tree
 ```
@@ -115,11 +115,16 @@ learned knowledge or the learning trace.
 
 ### `learned/knowledge.db`
 
-Owned by `@danielsimonjr/memoryjs`, which creates and migrates the schema itself
-(`entities`, `relations`, `entities_fts` and their shadow tables). Production code never opens this
-file with its own `better-sqlite3` handle; tests may, read-only, to assert on tables. Its
-`storagePath` is a file path and memoryjs puts its WAL sidecars beside it, so `learned/` is the unit
-to back up.
+Owned by `src/learn/knowledge-store.ts`, which opens it with `better-sqlite3` and creates two tables,
+`entities` and `relations`, in the layout the former memoryjs adapter used, so a file written before
+2026-11-06 opens unchanged: missing columns are added on open and the old `entities_fts` shadow table
+and its triggers are dropped. The `skills` MCP tool opens it read-only and runs no DDL. WAL sidecars
+sit beside the file, so `learned/` is the unit to back up.
+
+Besides learned entries, the same `entities` table holds the learner's records, one row each with a
+typed JSON payload in `agentMetadata`: `heuristic` (`heuristicRecord`), `decision` (`decisionRecord`),
+`failure` (`failureRecord`), `reflection` (`reflectionRecord`), `project_context`
+(`projectContextRecord`) and `procedure` (steps as a `[procedure-steps]:` observation).
 
 An entry is one `entities` row:
 
@@ -134,14 +139,14 @@ An entry is one `entities` row:
 | `rootEntityName`, `parentEntityName`, `isLatest`, `supersededBy` | the version chain |
 | `observations` | one line per field: `title:`, `description:`, `scope:`, `confidence:`, `trust:`, `status:`, `version:`, `run:`, `validation:` (JSON), `heuristic:`, `decision:`, `procedure:`, `steps:` (JSON), `reflection-hash:`, then one `body:` line per body line |
 
-The logical `version` lives in the name and in the `version:` observation. memoryjs's own
-`entities.version` auto-increments on every optimistic-concurrency write and is never read as the
+The logical `version` lives in the name and in the `version:` observation. The row's own
+`entities.version` is a write counter that increments on every update and is never read as the
 logical version.
 
 Citations are `cites` relations from the entry to reference entities: `exchange:<id>`
 (`entityType` `exchange-ref`, observations `path:`, `lines:`, `session:`) for an exchange, and
 `attempt:<id>` (`entityType` `attempt-ref`, observations `task:`, `run:`) for a learning attempt.
-Reference entities are created before the relation, because memoryjs validates both endpoints.
+Reference entities are created before the relation, because the store validates both endpoints.
 
 ### `learned/learning.sqlite`
 
@@ -225,7 +230,7 @@ Two reads are constrained in code, not by convention:
   `recall` are reported but never decide whether an edit is kept.
 
 `learned_block` is what the SessionStart hook reads. The hook opens this file **read-only** with
-`migrate: false`, so it never runs DDL, and it never loads memoryjs.
+`migrate: false`, so it never runs DDL, and it never opens `knowledge.db`.
 
 `learned/` is outside `conversation-index/`, so an index rebuild or reset leaves both files alone.
 The reset recipe in `CLAUDE.md` (`rm -rf conversation-index/`) therefore cannot reach learned

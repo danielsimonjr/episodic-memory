@@ -1,0 +1,5054 @@
+{
+  "metadata": {
+    "name": "episodic-memory",
+    "version": "1.7.1",
+    "schemaVersion": "2.0.0",
+    "language": "typescript"
+  },
+  "entryPoints": [
+    {
+      "file": "src/index.ts",
+      "type": "main",
+      "description": "Public API for episodic-memory package"
+    }
+  ],
+  "modules": {
+    "cli": {
+      "cli/digest-hook.js": {
+        "description": "SessionStart hook: print the project digest and the learned block as additional context.",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": []
+      },
+      "cli/ensure-deps.js": {
+        "description": "Make node_modules usable before anything opens the database. Shared by the MCP wrapper and the",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "child_process",
+            "imports": [
+              "spawnSync"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "join"
+            ]
+          }
+        ],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "ensureDeps"
+        ],
+        "functions": [
+          "ensureDeps"
+        ]
+      },
+      "cli/episodic-memory.js": {
+        "description": "`learn` opens the knowledge store on better-sqlite3 13, which requires Node >= 22; `engines` only warns. Checked before ",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "url",
+            "imports": [
+              "fileURLToPath"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "dirname",
+              "join"
+            ]
+          },
+          {
+            "module": "child_process",
+            "imports": [
+              "spawn"
+            ]
+          },
+          {
+            "module": "fs",
+            "imports": [
+              "realpathSync"
+            ]
+          }
+        ],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": []
+      },
+      "cli/index-conversations.js": {
+        "description": "index-conversations.js module",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "url",
+            "imports": [
+              "fileURLToPath"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "dirname",
+              "join"
+            ]
+          },
+          {
+            "module": "child_process",
+            "imports": [
+              "spawn"
+            ]
+          },
+          {
+            "module": "fs",
+            "imports": [
+              "realpathSync"
+            ]
+          },
+          {
+            "module": "readline",
+            "imports": [
+              "createInterface"
+            ]
+          }
+        ],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": []
+      },
+      "cli/mcp-server-wrapper.js": {
+        "description": "Cross-platform wrapper script for MCP server that ensures dependencies are installed",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "child_process",
+            "imports": [
+              "spawn"
+            ]
+          },
+          {
+            "module": "fs",
+            "imports": [
+              "existsSync"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "dirname",
+              "join"
+            ]
+          },
+          {
+            "module": "url",
+            "imports": [
+              "fileURLToPath"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "./ensure-deps.js",
+            "imports": [
+              "ensureDeps"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": []
+      },
+      "cli/search-conversations.js": {
+        "description": "search-conversations.js module",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "url",
+            "imports": [
+              "fileURLToPath"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "dirname",
+              "join"
+            ]
+          },
+          {
+            "module": "child_process",
+            "imports": [
+              "spawn"
+            ]
+          },
+          {
+            "module": "fs",
+            "imports": [
+              "realpathSync"
+            ]
+          }
+        ],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": []
+      },
+      "cli/sync-hook.js": {
+        "description": "SessionStart hook entry point. Runs sync --background and logs failures to",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "child_process",
+            "imports": [
+              "spawn",
+              "execFileSync"
+            ]
+          },
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "url",
+            "imports": [
+              "fileURLToPath",
+              "pathToFileURL"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "./ensure-deps.js",
+            "imports": [
+              "ensureDeps"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": []
+      }
+    },
+    "root": {
+      "src/api-endpoint.ts": {
+        "description": "Validate custom summarizer API base URLs so a compromised / mis-set env",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "validateApiBaseUrl"
+        ],
+        "functions": [
+          "validateApiBaseUrl"
+        ]
+      },
+      "src/archive-path.ts": {
+        "description": "Archive path confinement for the MCP `read` tool.",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "readline",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "./paths.js",
+            "imports": [
+              "getArchiveDir"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "DEFAULT_MAX_READ_BYTES",
+          "maxReadBytes",
+          "resolveArchiveJsonlPath",
+          "safeArchiveSummaryPath",
+          "readJsonlLines"
+        ],
+        "functions": [
+          "maxReadBytes",
+          "resolveArchiveJsonlPath",
+          "safeArchiveSummaryPath",
+          "readJsonlLines"
+        ],
+        "constants": [
+          "DEFAULT_MAX_READ_BYTES"
+        ]
+      },
+      "src/backfill-cli.ts": {
+        "description": "Dependency-light imports first, as in sync-cli: the guard and help paths must exit fast.",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./paths.js",
+            "imports": [
+              "getArchiveDir"
+            ]
+          },
+          {
+            "file": "./logging.js",
+            "imports": [
+              "getSyncLockPath"
+            ]
+          },
+          {
+            "file": "./reentrancy.js",
+            "imports": [
+              "shouldSkipReentrantSync"
+            ]
+          },
+          {
+            "file": "./lockfile.js",
+            "imports": [
+              "acquireLock",
+              "releaseLock"
+            ]
+          },
+          {
+            "file": "./backfill.js",
+            "imports": [
+              "*"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": []
+      },
+      "src/backfill.ts": {
+        "description": "Archive backfill: summarize conversations that sync can never reach.",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "./paths.js",
+            "imports": [
+              "getExcludedProjects"
+            ]
+          },
+          {
+            "file": "./gpu-reservation.js",
+            "imports": [
+              "gpuReservationBlock"
+            ]
+          },
+          {
+            "file": "./ollama-backend.js",
+            "imports": [
+              "summarizerBackend"
+            ]
+          },
+          {
+            "file": "./sync.js",
+            "imports": [
+              "extractSessionIdFromPath",
+              "isTerminalFailRecord",
+              "shouldSkipConversation",
+              "summarizeOneFile"
+            ]
+          },
+          {
+            "file": "./summarizer.js",
+            "imports": [
+              "*"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "selectBackfillCandidates",
+          "backfillArchive",
+          "batchVerdict"
+        ],
+        "interfaces": [
+          "BackfillCandidate",
+          "BackfillOptions",
+          "BackfillResult"
+        ],
+        "functions": [
+          "selectBackfillCandidates",
+          "backfillArchive",
+          "batchVerdict"
+        ]
+      },
+      "src/codex-hook-trust.ts": {
+        "description": "codex-hook-trust module",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "child_process",
+            "imports": [
+              "spawn"
+            ]
+          },
+          {
+            "module": "readline",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "trustStateFromHooksList",
+          "detectCodexHookTrustState"
+        ],
+        "functions": [
+          "trustStateFromHooksList",
+          "detectCodexHookTrustState"
+        ]
+      },
+      "src/codex-support.ts": {
+        "description": "codex-support module",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "MIN_CODEX_VERSION",
+          "parseCodexCliVersion",
+          "compareSemver",
+          "versionMeetsMinimum",
+          "codexVersionRequirementMessage"
+        ],
+        "functions": [
+          "parseCodexCliVersion",
+          "compareSemver",
+          "versionMeetsMinimum",
+          "codexVersionRequirementMessage"
+        ],
+        "constants": [
+          "MIN_CODEX_VERSION"
+        ]
+      },
+      "src/constants.ts": {
+        "description": "Marker text that identifies summarizer agent conversations.",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "SUMMARIZER_CONTEXT_MARKER",
+          "MAX_INDEXED_MESSAGE_BYTES",
+          "truncationNoticeFor",
+          "truncateForIndex"
+        ],
+        "functions": [
+          "truncationNoticeFor",
+          "truncateForIndex"
+        ],
+        "constants": [
+          "SUMMARIZER_CONTEXT_MARKER",
+          "MAX_INDEXED_MESSAGE_BYTES"
+        ]
+      },
+      "src/db.ts": {
+        "description": "Run CREATE TABLE / migrations / CREATE INDEX.",
+        "externalDependencies": [
+          {
+            "package": "better-sqlite3",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "package": "sqlite-vec",
+            "imports": [
+              "*"
+            ]
+          }
+        ],
+        "nodeDependencies": [
+          {
+            "module": "path",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "./types.js",
+            "imports": [
+              "ConversationExchange"
+            ]
+          },
+          {
+            "file": "./paths.js",
+            "imports": [
+              "getDbPath",
+              "tryChmod"
+            ]
+          },
+          {
+            "file": "./embedding-migration.js",
+            "imports": [
+              "EMBEDDING_VERSION"
+            ]
+          },
+          {
+            "file": "./constants.js",
+            "imports": [
+              "truncateForIndex"
+            ]
+          },
+          {
+            "file": "./redact.js",
+            "imports": [
+              "maybeRedactSecrets"
+            ]
+          },
+          {
+            "file": "./digest-db.js",
+            "imports": [
+              "ensureDigestSchema"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "migrateSchema",
+          "migrateToolCallsCascade",
+          "ensureFts",
+          "upsertExchangeFts",
+          "deleteExchangeFts",
+          "openDatabase",
+          "initDatabase",
+          "getSharedReaderDatabase",
+          "closeSharedReaderDatabase",
+          "insertExchange",
+          "getAllExchanges",
+          "getFileLastIndexed",
+          "getMaxIndexedLine",
+          "getFreelistInfo",
+          "vacuumDatabase",
+          "deleteExchange"
+        ],
+        "interfaces": [
+          "OpenDatabaseOptions"
+        ],
+        "functions": [
+          "migrateSchema",
+          "migrateToolCallsCascade",
+          "ensureFts",
+          "upsertExchangeFts",
+          "deleteExchangeFts",
+          "openDatabase",
+          "initDatabase",
+          "getSharedReaderDatabase",
+          "closeSharedReaderDatabase",
+          "insertExchange",
+          "getAllExchanges",
+          "getFileLastIndexed",
+          "getMaxIndexedLine",
+          "getFreelistInfo",
+          "vacuumDatabase",
+          "deleteExchange"
+        ]
+      },
+      "src/deps-health.ts": {
+        "description": "node_modules health check shared by the MCP wrapper, the SessionStart sync hook and `doctor`.",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "existsSync"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "join"
+            ]
+          }
+        ],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "NATIVE_ADDON",
+          "nativeAddonPresent",
+          "JS_SENTINELS",
+          "DEP_SENTINELS",
+          "nodeModulesIsHealthy",
+          "repairPlan"
+        ],
+        "functions": [
+          "nativeAddonPresent",
+          "nodeModulesIsHealthy",
+          "repairPlan"
+        ],
+        "constants": [
+          "NATIVE_ADDON",
+          "JS_SENTINELS",
+          "DEP_SENTINELS"
+        ]
+      },
+      "src/digest-compress.ts": {
+        "description": "Merge many session entries of a past day into one day entry, and many day entries of a finished",
+        "externalDependencies": [
+          {
+            "package": "better-sqlite3",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./summarizer.js",
+            "imports": [
+              "callDigestModel"
+            ]
+          },
+          {
+            "file": "./ollama-backend.js",
+            "imports": [
+              "GpuReservedError"
+            ]
+          },
+          {
+            "file": "./digest-prompts.js",
+            "imports": [
+              "buildCompressPrompt"
+            ]
+          },
+          {
+            "file": "./digest-validate.js",
+            "imports": [
+              "parseCitedLines",
+              "redactEntryText"
+            ]
+          },
+          {
+            "file": "./digest-db.js",
+            "imports": [
+              "insertDigestEntry",
+              "listActiveByTier",
+              "supersede",
+              "DigestEntry",
+              "DigestTier"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "compressDigest"
+        ],
+        "interfaces": [
+          "CompressOptions",
+          "CompressResult"
+        ],
+        "functions": [
+          "compressDigest"
+        ]
+      },
+      "src/digest-db.ts": {
+        "description": "Drop every line that cites a hidden exchange, keeping the rest verbatim.",
+        "externalDependencies": [
+          {
+            "package": "better-sqlite3",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "nodeDependencies": [],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "ensureDigestSchema",
+          "insertDigestEntry",
+          "listActiveEntries",
+          "listActiveByTier",
+          "supersede",
+          "citedExchangeIds",
+          "hideCitedLines",
+          "searchDigest"
+        ],
+        "interfaces": [
+          "DigestEntry"
+        ],
+        "functions": [
+          "ensureDigestSchema",
+          "insertDigestEntry",
+          "listActiveEntries",
+          "listActiveByTier",
+          "supersede",
+          "citedExchangeIds",
+          "hideCitedLines",
+          "searchDigest"
+        ]
+      },
+      "src/digest-inject.ts": {
+        "description": "The digest for one project, within maxChars. Order: handoff notes first, then newest entries first.",
+        "externalDependencies": [
+          {
+            "package": "better-sqlite3",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./digest-db.js",
+            "imports": [
+              "hideCitedLines",
+              "listActiveEntries",
+              "DigestEntry"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "DEFAULT_DIGEST_MAX_CHARS",
+          "projectKeyFromCwd",
+          "digestMaxChars",
+          "buildDigestText"
+        ],
+        "functions": [
+          "projectKeyFromCwd",
+          "digestMaxChars",
+          "buildDigestText"
+        ],
+        "constants": [
+          "DEFAULT_DIGEST_MAX_CHARS"
+        ]
+      },
+      "src/digest-job.ts": {
+        "description": "digest-job module",
+        "externalDependencies": [
+          {
+            "package": "better-sqlite3",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./types.js",
+            "imports": [
+              "ConversationExchange"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "./reentrancy.js",
+            "imports": [
+              "shouldSkipReentrantSync"
+            ]
+          },
+          {
+            "file": "./gpu-reservation.js",
+            "imports": [
+              "gpuReservationBlock"
+            ]
+          },
+          {
+            "file": "./ollama-backend.js",
+            "imports": [
+              "GpuReservedError",
+              "summarizerBackend"
+            ]
+          },
+          {
+            "file": "./summarizer.js",
+            "imports": [
+              "callDigestModel"
+            ]
+          },
+          {
+            "file": "./digest-prompts.js",
+            "imports": [
+              "buildSessionPrompt"
+            ]
+          },
+          {
+            "file": "./digest-validate.js",
+            "imports": [
+              "parseCitedLines",
+              "redactEntryText"
+            ]
+          },
+          {
+            "file": "./digest-db.js",
+            "imports": [
+              "insertDigestEntry"
+            ]
+          },
+          {
+            "file": "./digest-compress.js",
+            "imports": [
+              "compressDigest"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "digestEnabled",
+          "runDigest"
+        ],
+        "interfaces": [
+          "DigestOptions",
+          "DigestResult"
+        ],
+        "functions": [
+          "digestEnabled",
+          "runDigest"
+        ]
+      },
+      "src/digest-phase.ts": {
+        "description": "The digest step of a sync run. Never throws and never blocks the sync: with the flag off it does nothing,",
+        "externalDependencies": [
+          {
+            "package": "better-sqlite3",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./digest-job.js",
+            "imports": [
+              "digestEnabled",
+              "runDigest",
+              "DigestOptions",
+              "DigestResult"
+            ]
+          },
+          {
+            "file": "./db.js",
+            "imports": [
+              "initDatabase"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "runDigestPhase"
+        ],
+        "functions": [
+          "runDigestPhase"
+        ]
+      },
+      "src/digest-prompts.ts": {
+        "description": "digest-prompts module",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./constants.js",
+            "imports": [
+              "SUMMARIZER_CONTEXT_MARKER"
+            ]
+          },
+          {
+            "file": "./types.js",
+            "imports": [
+              "ConversationExchange"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "./digest-db.js",
+            "imports": [
+              "DigestEntry"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "./digest-validate.js",
+            "imports": [
+              "redactEntryText"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "buildSessionPrompt",
+          "buildCompressPrompt"
+        ],
+        "interfaces": [
+          "BuiltPrompt"
+        ],
+        "functions": [
+          "buildSessionPrompt",
+          "buildCompressPrompt"
+        ]
+      },
+      "src/digest-tool.ts": {
+        "description": "digest-tool module",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./db.js",
+            "imports": [
+              "initDatabase"
+            ]
+          },
+          {
+            "file": "./digest-db.js",
+            "imports": [
+              "insertDigestEntry",
+              "searchDigest"
+            ]
+          },
+          {
+            "file": "./digest-inject.js",
+            "imports": [
+              "buildDigestText",
+              "digestMaxChars",
+              "projectKeyFromCwd"
+            ]
+          },
+          {
+            "file": "./digest-validate.js",
+            "imports": [
+              "redactEntryText"
+            ]
+          },
+          {
+            "file": "./mcp-schemas.js",
+            "imports": [
+              "DigestInput"
+            ],
+            "typeOnly": true
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "normalizeHandoff",
+          "digestToolText"
+        ],
+        "functions": [
+          "normalizeHandoff",
+          "digestToolText"
+        ]
+      },
+      "src/digest-validate.ts": {
+        "description": "Keep only model lines that end in a mark group such as `[3,5]` where every mark names a real",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./redact.js",
+            "imports": [
+              "redactSecrets"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "parseCitedLines",
+          "redactEntryText"
+        ],
+        "interfaces": [
+          "CitedLines"
+        ],
+        "functions": [
+          "parseCitedLines",
+          "redactEntryText"
+        ]
+      },
+      "src/doctor-cli.ts": {
+        "description": "doctor-cli module",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "child_process",
+            "imports": [
+              "spawnSync"
+            ]
+          },
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "./doctor.js",
+            "imports": [
+              "buildCodexDoctorReport",
+              "buildDoctorReport",
+              "collectDoctorSnapshot"
+            ]
+          },
+          {
+            "file": "./paths.js",
+            "imports": [
+              "getCodexDir",
+              "getDbPath"
+            ]
+          },
+          {
+            "file": "./logging.js",
+            "imports": [
+              "getSyncLogPath"
+            ]
+          },
+          {
+            "file": "./codex-hook-trust.js",
+            "imports": [
+              "detectCodexHookTrustState"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": []
+      },
+      "src/doctor-learn.ts": {
+        "description": "The `learn` section of `episodic-memory doctor`.",
+        "externalDependencies": [
+          {
+            "package": "better-sqlite3",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "module",
+            "imports": [
+              "createRequire"
+            ]
+          },
+          {
+            "module": "url",
+            "imports": [
+              "fileURLToPath"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "./paths.js",
+            "imports": [
+              "getSuperpowersDir",
+              "*"
+            ]
+          },
+          {
+            "file": "./learn/knowledge-store.js",
+            "imports": [
+              "KnowledgeStore"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "./learn/types.js",
+            "imports": [
+              "KnowledgeKind",
+              "KnowledgeStatus"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "./learn/knowledge-store.js",
+            "imports": [
+              "*"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "emptyLearnSection",
+          "collectLearnDoctorSection"
+        ],
+        "interfaces": [
+          "LearnEntryCounts",
+          "LearnLatestRunSummary",
+          "LearnDoctorSection"
+        ],
+        "functions": [
+          "emptyLearnSection",
+          "collectLearnDoctorSection"
+        ]
+      },
+      "src/doctor.ts": {
+        "description": "The learn section's text.",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "./codex-support.js",
+            "imports": [
+              "MIN_CODEX_VERSION",
+              "parseCodexCliVersion",
+              "versionMeetsMinimum"
+            ]
+          },
+          {
+            "file": "./codex-hook-trust.js",
+            "imports": [
+              "CodexHookTrustState"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "./embedding-migration.js",
+            "imports": [
+              "EMBEDDING_VERSION",
+              "countStale"
+            ]
+          },
+          {
+            "file": "./db.js",
+            "imports": [
+              "initDatabase"
+            ]
+          },
+          {
+            "file": "./paths.js",
+            "imports": [
+              "getArchiveDir",
+              "getDbPath",
+              "getIndexDir",
+              "getSuperpowersDir"
+            ]
+          },
+          {
+            "file": "./logging.js",
+            "imports": [
+              "getSyncErrorsLogPath",
+              "getSyncLogPath"
+            ]
+          },
+          {
+            "file": "./deps-health.js",
+            "imports": [
+              "nodeModulesIsHealthy"
+            ]
+          },
+          {
+            "file": "./doctor-learn.js",
+            "imports": [
+              "LearnDoctorSection",
+              "collectLearnDoctorSection"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "buildCodexDoctorReport",
+          "readRecentLogErrors",
+          "collectDoctorSnapshot",
+          "buildDoctorReport"
+        ],
+        "interfaces": [
+          "CodexDoctorInputs",
+          "DoctorReport",
+          "DoctorInputs",
+          "StructuredDoctorReport"
+        ],
+        "functions": [
+          "buildCodexDoctorReport",
+          "readRecentLogErrors",
+          "collectDoctorSnapshot",
+          "buildDoctorReport"
+        ]
+      },
+      "src/embedding-migration.ts": {
+        "description": "Embedding migration.",
+        "externalDependencies": [
+          {
+            "package": "better-sqlite3",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "nodeDependencies": [
+          {
+            "module": "path",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "./lockfile.js",
+            "imports": [
+              "acquireLock",
+              "releaseLock",
+              "LockHandle"
+            ]
+          },
+          {
+            "file": "./embeddings.js",
+            "imports": [
+              "*"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "EMBEDDING_VERSION",
+          "acquireMigrationLock",
+          "releaseMigrationLock",
+          "pickStaleBatch",
+          "recordReembedded",
+          "countStale",
+          "getMigrationLockPath",
+          "runMigrationBatch"
+        ],
+        "interfaces": [
+          "StaleRow"
+        ],
+        "functions": [
+          "acquireMigrationLock",
+          "releaseMigrationLock",
+          "pickStaleBatch",
+          "recordReembedded",
+          "countStale",
+          "getMigrationLockPath",
+          "runMigrationBatch"
+        ],
+        "constants": [
+          "EMBEDDING_VERSION"
+        ]
+      },
+      "src/embeddings.ts": {
+        "description": "Embedding model configuration.",
+        "externalDependencies": [
+          {
+            "package": "@huggingface/transformers",
+            "imports": [
+              "pipeline",
+              "FeatureExtractionPipeline",
+              "env"
+            ]
+          }
+        ],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./redact.js",
+            "imports": [
+              "maybeRedactSecrets"
+            ]
+          },
+          {
+            "file": "./constants.js",
+            "imports": [
+              "truncateForIndex"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "BGE_QUERY_PREFIX",
+          "initEmbeddings",
+          "generateEmbeddings",
+          "generateEmbedding",
+          "withQueryPrefix",
+          "generateQueryEmbedding",
+          "formatExchangeEmbeddingText",
+          "generateExchangeEmbedding",
+          "generateExchangeEmbeddings"
+        ],
+        "functions": [
+          "initEmbeddings",
+          "generateEmbeddings",
+          "generateEmbedding",
+          "withQueryPrefix",
+          "generateQueryEmbedding",
+          "formatExchangeEmbeddingText",
+          "generateExchangeEmbedding",
+          "generateExchangeEmbeddings"
+        ],
+        "constants": [
+          "BGE_QUERY_PREFIX"
+        ]
+      },
+      "src/gpu-reservation.ts": {
+        "description": "The fleet GPU reservation.",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "readFileSync"
+            ]
+          },
+          {
+            "module": "os",
+            "imports": [
+              "homedir"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "join"
+            ]
+          }
+        ],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "reservationPath",
+          "readGpuReservation",
+          "gpuReservationBlock"
+        ],
+        "interfaces": [
+          "GpuReservation"
+        ],
+        "functions": [
+          "reservationPath",
+          "readGpuReservation",
+          "gpuReservationBlock"
+        ]
+      },
+      "src/index-cli.ts": {
+        "description": "Parse --concurrency flag from remaining args",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "./verify.js",
+            "imports": [
+              "verifyIndex",
+              "repairIndex"
+            ]
+          },
+          {
+            "file": "./indexer.js",
+            "imports": [
+              "indexSession",
+              "indexUnprocessed",
+              "indexConversations"
+            ]
+          },
+          {
+            "file": "./db.js",
+            "imports": [
+              "initDatabase",
+              "getFreelistInfo",
+              "vacuumDatabase"
+            ]
+          },
+          {
+            "file": "./paths.js",
+            "imports": [
+              "getDbPath",
+              "getArchiveDir",
+              "getExcludedProjects"
+            ]
+          },
+          {
+            "file": "./prune.js",
+            "imports": [
+              "pruneProjects"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": []
+      },
+      "src/indexer.ts": {
+        "description": "Set max output tokens for Claude SDK (used by summarizer)",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "os",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "events",
+            "imports": [
+              "EventEmitter"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "./db.js",
+            "imports": [
+              "initDatabase",
+              "insertExchange",
+              "getMaxIndexedLine"
+            ]
+          },
+          {
+            "file": "./parser.js",
+            "imports": [
+              "parseConversation"
+            ]
+          },
+          {
+            "file": "./embeddings.js",
+            "imports": [
+              "initEmbeddings",
+              "generateExchangeEmbedding",
+              "generateExchangeEmbeddings"
+            ]
+          },
+          {
+            "file": "./summarizer.js",
+            "imports": [
+              "summarizeConversation"
+            ]
+          },
+          {
+            "file": "./types.js",
+            "imports": [
+              "ConversationExchange"
+            ]
+          },
+          {
+            "file": "./paths.js",
+            "imports": [
+              "getArchiveDir",
+              "getExcludedProjects",
+              "getConversationSourceDirs",
+              "findJsonlFiles"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "indexConversations",
+          "indexSession",
+          "indexUnprocessed"
+        ],
+        "functions": [
+          "indexConversations",
+          "indexSession",
+          "indexUnprocessed"
+        ]
+      },
+      "src/learn-cli.ts": {
+        "description": "`episodic-memory learn` \u2014 the process entry point (`dist/learn-cli.js`).",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "./reentrancy.js",
+            "imports": [
+              "shouldSkipReentrantSync"
+            ]
+          },
+          {
+            "file": "./learn/learn-config.js",
+            "imports": [
+              "learnEnabled",
+              "LEARN_OFF_MESSAGE"
+            ]
+          },
+          {
+            "file": "./learn/usage.js",
+            "imports": [
+              "LEARN_USAGE"
+            ]
+          },
+          {
+            "file": "./gpu-reservation.js",
+            "imports": [
+              "gpuReservationBlock"
+            ]
+          },
+          {
+            "file": "./priority.js",
+            "imports": [
+              "BACKGROUND_WORKER_ENV",
+              "lowerPriorityIfBackgroundWorker"
+            ]
+          },
+          {
+            "file": "./logging.js",
+            "imports": [
+              "formatLogLine",
+              "getLearnLogPath"
+            ]
+          },
+          {
+            "file": "./learn/cli-main.js",
+            "imports": [
+              "*"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": []
+      },
+      "src/lockfile.ts": {
+        "description": "Generic cross-process file lock with PID-liveness + age-based stale recovery.",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "isProcessAlive",
+          "acquireLock",
+          "releaseLock"
+        ],
+        "interfaces": [
+          "LockHandle"
+        ],
+        "functions": [
+          "isProcessAlive",
+          "acquireLock",
+          "releaseLock"
+        ]
+      },
+      "src/logging.ts": {
+        "description": "Dedicated log for `learn` runs.",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "./paths.js",
+            "imports": [
+              "getSuperpowersDir",
+              "getIndexDir"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "getLogDir",
+          "getSyncLogPath",
+          "getSyncErrorsLogPath",
+          "getLearnLogPath",
+          "getSyncLockPath",
+          "rotateSyncLogIfNeeded",
+          "formatLogLine",
+          "appendLogLine"
+        ],
+        "functions": [
+          "getLogDir",
+          "getSyncLogPath",
+          "getSyncErrorsLogPath",
+          "getLearnLogPath",
+          "getSyncLockPath",
+          "rotateSyncLogIfNeeded",
+          "formatLogLine",
+          "appendLogLine"
+        ]
+      },
+      "src/mcp-auth.ts": {
+        "description": "Optional MCP tool authorization.",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "crypto",
+            "imports": [
+              "timingSafeEqual"
+            ]
+          }
+        ],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "getRequiredMcpToken",
+          "tokensEqual",
+          "assertMcpAuthorized"
+        ],
+        "functions": [
+          "getRequiredMcpToken",
+          "tokensEqual",
+          "assertMcpAuthorized"
+        ]
+      },
+      "src/mcp-schemas.ts": {
+        "description": "Zod schemas for MCP tool inputs. Kept out of mcp-server.ts so tests can",
+        "externalDependencies": [
+          {
+            "package": "zod",
+            "imports": [
+              "z"
+            ]
+          }
+        ],
+        "nodeDependencies": [],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "SearchModeEnum",
+          "ResponseFormatEnum",
+          "SearchInputSchema",
+          "ShowConversationInputSchema",
+          "DigestInputSchema",
+          "SkillsInputSchema",
+          "handleMcpError"
+        ],
+        "functions": [
+          "handleMcpError"
+        ],
+        "constants": [
+          "SearchModeEnum",
+          "ResponseFormatEnum",
+          "SearchInputSchema",
+          "ShowConversationInputSchema",
+          "DigestInputSchema",
+          "SkillsInputSchema"
+        ]
+      },
+      "src/mcp-server.ts": {
+        "description": "MCP Server for Episodic Memory.",
+        "externalDependencies": [
+          {
+            "package": "@modelcontextprotocol/server",
+            "imports": [
+              "McpServer"
+            ]
+          },
+          {
+            "package": "@modelcontextprotocol/server/stdio",
+            "imports": [
+              "serveStdio"
+            ]
+          }
+        ],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./db.js",
+            "imports": [
+              "closeSharedReaderDatabase"
+            ]
+          },
+          {
+            "file": "./mcp-tools.js",
+            "imports": [
+              "handleToolCall"
+            ]
+          },
+          {
+            "file": "./mcp-schemas.js",
+            "imports": [
+              "SearchInputSchema",
+              "DigestInputSchema",
+              "ShowConversationInputSchema",
+              "SkillsInputSchema"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": []
+      },
+      "src/mcp-tools.ts": {
+        "description": "MCP tool dispatch. Extracted from mcp-server.ts so tests can exercise",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./archive-path.js",
+            "imports": [
+              "resolveArchiveJsonlPath",
+              "readJsonlLines"
+            ]
+          },
+          {
+            "file": "./redact.js",
+            "imports": [
+              "maybeRedactSecrets"
+            ]
+          },
+          {
+            "file": "./learn/learn-config.js",
+            "imports": [
+              "LEARN_OFF_MESSAGE",
+              "learnEnabled"
+            ]
+          },
+          {
+            "file": "./mcp-auth.js",
+            "imports": [
+              "assertMcpAuthorized"
+            ]
+          },
+          {
+            "file": "./mcp-schemas.js",
+            "imports": [
+              "DigestInputSchema",
+              "SearchInputSchema",
+              "ShowConversationInputSchema",
+              "SkillsInputSchema",
+              "handleMcpError"
+            ]
+          },
+          {
+            "file": "./search.js",
+            "imports": [
+              "*"
+            ]
+          },
+          {
+            "file": "./show.js",
+            "imports": [
+              "*"
+            ]
+          },
+          {
+            "file": "./digest-tool.js",
+            "imports": [
+              "*"
+            ]
+          },
+          {
+            "file": "./learn/skills-tool.js",
+            "imports": [
+              "*"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "handleToolCall"
+        ],
+        "interfaces": [
+          "McpToolResult"
+        ],
+        "functions": [
+          "handleToolCall"
+        ]
+      },
+      "src/node-floor.ts": {
+        "description": "Node version floor, enforced at launch \u2014 dependency-free so both entry points can import it",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "NODE_FLOOR",
+          "assertNodeFloor"
+        ],
+        "functions": [
+          "assertNodeFloor"
+        ],
+        "constants": [
+          "NODE_FLOOR"
+        ]
+      },
+      "src/ollama-backend.ts": {
+        "description": "Local-model summarizer backend (Ollama). Opt-in with EPISODIC_MEMORY_SUMMARIZER_BACKEND=ollama.",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./api-endpoint.js",
+            "imports": [
+              "validateApiBaseUrl"
+            ]
+          },
+          {
+            "file": "./gpu-reservation.js",
+            "imports": [
+              "gpuReservationBlock"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "GpuReservedError",
+          "summarizerBackend",
+          "stripThinking",
+          "callOllama"
+        ],
+        "classes": [
+          "GpuReservedError"
+        ],
+        "interfaces": [
+          "OllamaCallOptions"
+        ],
+        "functions": [
+          "summarizerBackend",
+          "stripThinking",
+          "callOllama"
+        ]
+      },
+      "src/orphan-reaper.ts": {
+        "description": "Reaps the process tree the summariser's SDK call leaves behind.",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "selectOrphans"
+        ],
+        "interfaces": [
+          "ProcSnapshot"
+        ],
+        "functions": [
+          "selectOrphans"
+        ]
+      },
+      "src/parser.ts": {
+        "description": "Convenience function to parse a conversation file",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "readline",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "crypto",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "./types.js",
+            "imports": [
+              "ConversationExchange",
+              "ConversationHarness",
+              "ToolCall"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "parseConversation",
+          "parseConversationFile"
+        ],
+        "functions": [
+          "parseConversation",
+          "parseConversationFile"
+        ]
+      },
+      "src/paths.ts": {
+        "description": "Ensure a directory exists, creating it if necessary.",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "os",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "tryChmod",
+          "getClaudeDir",
+          "getCodexDir",
+          "getConversationSourceDirs",
+          "findJsonlFiles",
+          "getSuperpowersDir",
+          "getArchiveDir",
+          "getIndexDir",
+          "getDbPath",
+          "getLearnedDir",
+          "getKnowledgeDbPath",
+          "getLearningDbPath",
+          "getExcludeConfigPath",
+          "getExcludedProjects"
+        ],
+        "functions": [
+          "tryChmod",
+          "getClaudeDir",
+          "getCodexDir",
+          "getConversationSourceDirs",
+          "findJsonlFiles",
+          "getSuperpowersDir",
+          "getArchiveDir",
+          "getIndexDir",
+          "getDbPath",
+          "getLearnedDir",
+          "getKnowledgeDbPath",
+          "getLearningDbPath",
+          "getExcludeConfigPath",
+          "getExcludedProjects"
+        ]
+      },
+      "src/priority.ts": {
+        "description": "Drop this process to below-normal priority if it is the background sync",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "os",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "BACKGROUND_WORKER_ENV",
+          "isBackgroundWorker",
+          "lowerPriorityIfBackgroundWorker"
+        ],
+        "functions": [
+          "isBackgroundWorker",
+          "lowerPriorityIfBackgroundWorker"
+        ],
+        "constants": [
+          "BACKGROUND_WORKER_ENV"
+        ]
+      },
+      "src/prune.ts": {
+        "description": "Remove every indexed row belonging to a set of projects.",
+        "externalDependencies": [
+          {
+            "package": "better-sqlite3",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "nodeDependencies": [],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "pruneProjects"
+        ],
+        "interfaces": [
+          "PruneResult",
+          "PruneOptions"
+        ],
+        "functions": [
+          "pruneProjects"
+        ]
+      },
+      "src/redact.ts": {
+        "description": "Opt-in secret redaction for indexed / returned conversation text.",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "isSecretRedactionEnabled",
+          "redactSecrets",
+          "maybeRedactSecrets"
+        ],
+        "functions": [
+          "isSecretRedactionEnabled",
+          "redactSecrets",
+          "maybeRedactSecrets"
+        ]
+      },
+      "src/reentrancy.ts": {
+        "description": "Reentrancy guard for the SessionStart sync hook (#87) \u2014 deliberately",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "SUMMARIZER_GUARD_ENV",
+          "shouldSkipReentrantSync"
+        ],
+        "functions": [
+          "shouldSkipReentrantSync"
+        ],
+        "constants": [
+          "SUMMARIZER_GUARD_ENV"
+        ]
+      },
+      "src/search-cli.ts": {
+        "description": "Parse arguments",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./search.js",
+            "imports": [
+              "searchConversations",
+              "formatResults",
+              "searchMultipleConcepts",
+              "formatMultiConceptResults",
+              "SearchOptions"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": []
+      },
+      "src/search.ts": {
+        "description": "Exchange ids to leave out of the result set entirely.",
+        "externalDependencies": [
+          {
+            "package": "better-sqlite3",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "./db.js",
+            "imports": [
+              "initDatabase",
+              "getSharedReaderDatabase"
+            ]
+          },
+          {
+            "file": "./embeddings.js",
+            "imports": [
+              "initEmbeddings",
+              "generateQueryEmbedding"
+            ]
+          },
+          {
+            "file": "./types.js",
+            "imports": [
+              "SearchResult",
+              "ConversationExchange",
+              "MultiConceptResult"
+            ]
+          },
+          {
+            "file": "./redact.js",
+            "imports": [
+              "maybeRedactSecrets"
+            ]
+          },
+          {
+            "file": "./archive-path.js",
+            "imports": [
+              "safeArchiveSummaryPath"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "includeSearchSummaries",
+          "maxSummaryDisplayChars",
+          "formatSummaryForDisplay",
+          "l2DistanceToCosineSimilarity",
+          "buildFtsMatchQuery",
+          "searchConversations",
+          "formatResults",
+          "searchMultipleConcepts",
+          "formatMultiConceptResults"
+        ],
+        "interfaces": [
+          "SearchOptions"
+        ],
+        "functions": [
+          "includeSearchSummaries",
+          "maxSummaryDisplayChars",
+          "formatSummaryForDisplay",
+          "l2DistanceToCosineSimilarity",
+          "buildFtsMatchQuery",
+          "searchConversations",
+          "formatResults",
+          "searchMultipleConcepts",
+          "formatMultiConceptResults"
+        ]
+      },
+      "src/show-cli.ts": {
+        "description": "Parse arguments",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "readFileSync"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "./show.js",
+            "imports": [
+              "formatConversationAsMarkdown",
+              "formatConversationAsHTML"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": []
+      },
+      "src/show.ts": {
+        "description": "show module",
+        "externalDependencies": [
+          {
+            "package": "marked",
+            "imports": [
+              "marked"
+            ]
+          }
+        ],
+        "nodeDependencies": [],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "formatConversationAsMarkdown",
+          "formatConversationAsHTML"
+        ],
+        "functions": [
+          "formatConversationAsMarkdown",
+          "formatConversationAsHTML"
+        ]
+      },
+      "src/stats-cli.ts": {
+        "description": "stats-cli module",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./stats.js",
+            "imports": [
+              "getIndexStats",
+              "formatStats"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": []
+      },
+      "src/stats.ts": {
+        "description": "stats module",
+        "externalDependencies": [
+          {
+            "package": "better-sqlite3",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./paths.js",
+            "imports": [
+              "getDbPath"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "getIndexStats",
+          "formatStats"
+        ],
+        "interfaces": [
+          "IndexStats"
+        ],
+        "functions": [
+          "getIndexStats",
+          "formatStats"
+        ]
+      },
+      "src/summarizer.ts": {
+        "description": "Get API environment overrides for summarization calls.",
+        "externalDependencies": [
+          {
+            "package": "@anthropic-ai/claude-agent-sdk",
+            "imports": [
+              "query"
+            ]
+          }
+        ],
+        "nodeDependencies": [
+          {
+            "module": "child_process",
+            "imports": [
+              "spawn"
+            ]
+          },
+          {
+            "module": "readline",
+            "imports": [
+              "createInterface"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "./types.js",
+            "imports": [
+              "ConversationExchange"
+            ]
+          },
+          {
+            "file": "./constants.js",
+            "imports": [
+              "SUMMARIZER_CONTEXT_MARKER"
+            ]
+          },
+          {
+            "file": "./reentrancy.js",
+            "imports": [
+              "SUMMARIZER_GUARD_ENV",
+              "shouldSkipReentrantSync"
+            ]
+          },
+          {
+            "file": "./codex-support.js",
+            "imports": [
+              "codexVersionRequirementMessage",
+              "parseCodexCliVersion",
+              "versionMeetsMinimum"
+            ]
+          },
+          {
+            "file": "./api-endpoint.js",
+            "imports": [
+              "validateApiBaseUrl"
+            ]
+          },
+          {
+            "file": "./ollama-backend.js",
+            "imports": [
+              "summarizerBackend",
+              "callOllama",
+              "GpuReservedError"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "getApiEnv",
+          "shouldSkipReentrantSync",
+          "formatConversationText",
+          "extractSummary",
+          "buildSummarizerQueryOptions",
+          "buildCodexSummaryPrompt",
+          "buildCodexSummarizerCommand",
+          "callDigestModel",
+          "resolveLearnModels",
+          "callLearnModel",
+          "runCodexCommand",
+          "summarizeConversation"
+        ],
+        "interfaces": [
+          "CodexSummarizerCommand",
+          "CallClaudeOptions"
+        ],
+        "functions": [
+          "getApiEnv",
+          "formatConversationText",
+          "extractSummary",
+          "buildSummarizerQueryOptions",
+          "buildCodexSummaryPrompt",
+          "buildCodexSummarizerCommand",
+          "callDigestModel",
+          "resolveLearnModels",
+          "callLearnModel",
+          "runCodexCommand",
+          "summarizeConversation"
+        ]
+      },
+      "src/sync-banner.ts": {
+        "description": "The first lines a finished sync prints. A success line over a stalled queue reads as health from",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "syncHeadline"
+        ],
+        "interfaces": [
+          "SyncHeadlineTotals"
+        ],
+        "functions": [
+          "syncHeadline"
+        ]
+      },
+      "src/sync-cli.ts": {
+        "description": "Only light, dependency-free imports at the top. The heavy native stack",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "child_process",
+            "imports": [
+              "spawn"
+            ]
+          },
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "./paths.js",
+            "imports": [
+              "getArchiveDir",
+              "getConversationSourceDirs",
+              "getIndexDir"
+            ]
+          },
+          {
+            "file": "./reentrancy.js",
+            "imports": [
+              "shouldSkipReentrantSync"
+            ]
+          },
+          {
+            "file": "./sync-banner.js",
+            "imports": [
+              "syncHeadline"
+            ]
+          },
+          {
+            "file": "./lockfile.js",
+            "imports": [
+              "acquireLock",
+              "releaseLock"
+            ]
+          },
+          {
+            "file": "./priority.js",
+            "imports": [
+              "BACKGROUND_WORKER_ENV",
+              "lowerPriorityIfBackgroundWorker"
+            ]
+          },
+          {
+            "file": "./logging.js",
+            "imports": [
+              "formatLogLine",
+              "getSyncLogPath",
+              "getSyncLockPath",
+              "rotateSyncLogIfNeeded"
+            ]
+          },
+          {
+            "file": "./sync.js",
+            "imports": [
+              "*"
+            ]
+          },
+          {
+            "file": "./db.js",
+            "imports": [
+              "*"
+            ]
+          },
+          {
+            "file": "./embeddings.js",
+            "imports": [
+              "*"
+            ]
+          },
+          {
+            "file": "./embedding-migration.js",
+            "imports": [
+              "*"
+            ]
+          },
+          {
+            "file": "./digest-phase.js",
+            "imports": [
+              "*"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": []
+      },
+      "src/sync.ts": {
+        "description": "True when the conversation should be excluded from indexing / summarization.",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "./types.js",
+            "imports": [
+              "ConversationExchange"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "./constants.js",
+            "imports": [
+              "SUMMARIZER_CONTEXT_MARKER"
+            ]
+          },
+          {
+            "file": "./paths.js",
+            "imports": [
+              "getExcludedProjects",
+              "findJsonlFiles"
+            ]
+          },
+          {
+            "file": "./gpu-reservation.js",
+            "imports": [
+              "gpuReservationBlock"
+            ]
+          },
+          {
+            "file": "./ollama-backend.js",
+            "imports": [
+              "GpuReservedError",
+              "summarizerBackend"
+            ]
+          },
+          {
+            "file": "./db.js",
+            "imports": [
+              "*"
+            ]
+          },
+          {
+            "file": "./embeddings.js",
+            "imports": [
+              "*"
+            ]
+          },
+          {
+            "file": "./parser.js",
+            "imports": [
+              "*"
+            ]
+          },
+          {
+            "file": "./summarizer.js",
+            "imports": [
+              "*"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "shouldSkipConversation",
+          "isTerminalFailRecord",
+          "extractSessionIdFromPath",
+          "syncConversations",
+          "summarizeOneFile"
+        ],
+        "interfaces": [
+          "SyncResult",
+          "SyncOptions"
+        ],
+        "functions": [
+          "shouldSkipConversation",
+          "isTerminalFailRecord",
+          "extractSessionIdFromPath",
+          "syncConversations",
+          "summarizeOneFile"
+        ]
+      },
+      "src/types.ts": {
+        "description": "Type definitions (4 interfaces, 1 type aliases)",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [],
+        "interfaces": [
+          "ToolCall",
+          "ConversationExchange",
+          "SearchResult",
+          "MultiConceptResult"
+        ]
+      },
+      "src/verify.ts": {
+        "description": "verify module",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "./parser.js",
+            "imports": [
+              "parseConversation",
+              "*"
+            ]
+          },
+          {
+            "file": "./db.js",
+            "imports": [
+              "initDatabase",
+              "getAllExchanges",
+              "getFileLastIndexed",
+              "*"
+            ]
+          },
+          {
+            "file": "./paths.js",
+            "imports": [
+              "getArchiveDir",
+              "getExcludedProjects",
+              "findJsonlFiles"
+            ]
+          },
+          {
+            "file": "./embeddings.js",
+            "imports": [
+              "*"
+            ]
+          },
+          {
+            "file": "./summarizer.js",
+            "imports": [
+              "*"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "verifyIndex",
+          "repairIndex"
+        ],
+        "interfaces": [
+          "VerificationResult"
+        ],
+        "functions": [
+          "verifyIndex",
+          "repairIndex"
+        ]
+      }
+    },
+    "entry": {
+      "src/index.ts": {
+        "description": "Public API for episodic-memory package",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./types.js",
+            "imports": [
+              "*"
+            ],
+            "reExport": true
+          },
+          {
+            "file": "./db.js",
+            "imports": [
+              "*"
+            ],
+            "reExport": true
+          },
+          {
+            "file": "./embeddings.js",
+            "imports": [
+              "*"
+            ],
+            "reExport": true
+          },
+          {
+            "file": "./indexer.js",
+            "imports": [
+              "*"
+            ],
+            "reExport": true
+          },
+          {
+            "file": "./parser.js",
+            "imports": [
+              "*"
+            ],
+            "reExport": true
+          },
+          {
+            "file": "./search.js",
+            "imports": [
+              "*"
+            ],
+            "reExport": true
+          },
+          {
+            "file": "./summarizer.js",
+            "imports": [
+              "*"
+            ],
+            "reExport": true
+          },
+          {
+            "file": "./paths.js",
+            "imports": [
+              "*"
+            ],
+            "reExport": true
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [],
+        "reExported": [
+          "* from ./types.js",
+          "* from ./db.js",
+          "* from ./embeddings.js",
+          "* from ./indexer.js",
+          "* from ./parser.js",
+          "* from ./search.js",
+          "* from ./summarizer.js",
+          "* from ./paths.js"
+        ]
+      }
+    },
+    "learn": {
+      "src/learn/agent-runner.ts": {
+        "description": "The agent runner: one isolated Claude Agent SDK subprocess.",
+        "externalDependencies": [
+          {
+            "package": "@anthropic-ai/claude-agent-sdk",
+            "imports": [
+              "query",
+              "McpSdkServerConfigWithInstance",
+              "SDKMessage"
+            ]
+          }
+        ],
+        "nodeDependencies": [
+          {
+            "module": "child_process",
+            "imports": [
+              "execFileSync"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "../summarizer.js",
+            "imports": [
+              "getApiEnv"
+            ]
+          },
+          {
+            "file": "./types.js",
+            "imports": [
+              "AttemptOutcome",
+              "Cost",
+              "TraceStep"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "./sdk-tools.js",
+            "imports": [
+              "servedToolNames"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "DISALLOWED_TOOLS",
+          "buildAgentQueryOptions",
+          "isAgentSpawnTree",
+          "listAgentProcesses",
+          "addressFromResultText",
+          "looksKilled",
+          "runAgent"
+        ],
+        "interfaces": [
+          "PidRegistry",
+          "BuildAgentQueryOptionsArgs",
+          "ProcSnapshot",
+          "AgentRunOptions",
+          "AgentRunResult"
+        ],
+        "functions": [
+          "buildAgentQueryOptions",
+          "isAgentSpawnTree",
+          "listAgentProcesses",
+          "addressFromResultText",
+          "looksKilled",
+          "runAgent"
+        ],
+        "constants": [
+          "DISALLOWED_TOOLS"
+        ]
+      },
+      "src/learn/bootstrap.ts": {
+        "description": "Bootstrapping: map the archive's projects and propose the first knowledge.",
+        "externalDependencies": [
+          {
+            "package": "better-sqlite3",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./learn-config.js",
+            "imports": [
+              "learnConfig",
+              "LearnConfig"
+            ]
+          },
+          {
+            "file": "./learning-db.js",
+            "imports": [
+              "SIGNAL_KINDS",
+              "SIGNAL_TIERS",
+              "addRejection",
+              "attemptsExist",
+              "createRun",
+              "finishRun",
+              "listAttempts",
+              "listTasks",
+              "passRate",
+              "LearningTask",
+              "PassRate"
+            ]
+          },
+          {
+            "file": "./knowledge-db.js",
+            "imports": [
+              "activate",
+              "createSnapshot",
+              "insertKnowledgeEntry",
+              "DuplicateEntry"
+            ]
+          },
+          {
+            "file": "./knowledge-gate.js",
+            "imports": [
+              "gateEntry"
+            ]
+          },
+          {
+            "file": "./cited-ids.js",
+            "imports": [
+              "IdCitationResolver",
+              "ResolvedExchange"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "./semaphore.js",
+            "imports": [
+              "createSemaphore",
+              "globalAgentSemaphore"
+            ]
+          },
+          {
+            "file": "./solver.js",
+            "imports": [
+              "BudgetExhausted",
+              "CallBudget",
+              "solveMany"
+            ]
+          },
+          {
+            "file": "./sdk-tools.js",
+            "imports": [
+              "buildLearnToolServer"
+            ]
+          },
+          {
+            "file": "./agent-runner.js",
+            "imports": [
+              "runAgent",
+              "PidRegistry"
+            ]
+          },
+          {
+            "file": "./prompts.js",
+            "imports": [
+              "BOOTSTRAP_SKILL_SLUGS",
+              "bootstrapperBrief",
+              "bootstrapperSystemPrompt",
+              "mergeInstructionPrompt",
+              "reflectPrompt"
+            ]
+          },
+          {
+            "file": "./learned-block.js",
+            "imports": [
+              "writeLearnedBlocks"
+            ]
+          },
+          {
+            "file": "./tasks.js",
+            "imports": [
+              "checkTasks",
+              "generateTasks",
+              "MIN_PER_PROJECT"
+            ]
+          },
+          {
+            "file": "./types.js",
+            "imports": [
+              "KnowledgeEntry",
+              "LearnDbs",
+              "LearningKind",
+              "ProposedEntry",
+              "SourceRef",
+              "ValidationRecord"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "../summarizer.js",
+            "imports": [
+              "*"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "BOOTSTRAP_INSTRUCTION_SLUG",
+          "BOOTSTRAP_REFLECTION_SLUG",
+          "eligibleProjects",
+          "indexExchangeResolver",
+          "bootstrapGain",
+          "runBootstrap"
+        ],
+        "interfaces": [
+          "BootstrapOptions",
+          "BootstrapResult",
+          "ProjectStats"
+        ],
+        "functions": [
+          "eligibleProjects",
+          "indexExchangeResolver",
+          "bootstrapGain",
+          "runBootstrap"
+        ],
+        "constants": [
+          "BOOTSTRAP_INSTRUCTION_SLUG",
+          "BOOTSTRAP_REFLECTION_SLUG"
+        ]
+      },
+      "src/learn/cited-ids.ts": {
+        "description": "Citation gate for model-written learned text.",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./types.js",
+            "imports": [
+              "SourceRef"
+            ],
+            "typeOnly": true
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "parseIdCitedLines"
+        ],
+        "interfaces": [
+          "ResolvedExchange",
+          "IdCitationResolver",
+          "IdCitedLines"
+        ],
+        "functions": [
+          "parseIdCitedLines"
+        ]
+      },
+      "src/learn/cli-main.ts": {
+        "description": "The `learn` subcommands. Reached only from `src/learn-cli.ts`, which owns the",
+        "externalDependencies": [
+          {
+            "package": "better-sqlite3",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "nodeDependencies": [
+          {
+            "module": "path",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "../paths.js",
+            "imports": [
+              "getSuperpowersDir"
+            ]
+          },
+          {
+            "file": "./learn-lock.js",
+            "imports": [
+              "LearnLockHeld",
+              "withLearnLock",
+              "PidRegistry"
+            ]
+          },
+          {
+            "file": "./learn-config.js",
+            "imports": [
+              "learnConfig",
+              "learnEnabled",
+              "LEARN_OFF_MESSAGE"
+            ]
+          },
+          {
+            "file": "./tasks.js",
+            "imports": [
+              "generateTasks",
+              "checkTasks"
+            ]
+          },
+          {
+            "file": "./learning-db.js",
+            "imports": [
+              "SIGNAL_KINDS",
+              "SIGNAL_TIERS",
+              "createRun",
+              "finishRun",
+              "getRun",
+              "latestRun",
+              "listAttempts",
+              "listTasks",
+              "passRate",
+              "LearningTask"
+            ]
+          },
+          {
+            "file": "./knowledge-db.js",
+            "imports": [
+              "activate",
+              "createSnapshot",
+              "entryName",
+              "getBySlug",
+              "getEntry"
+            ]
+          },
+          {
+            "file": "./export.js",
+            "imports": [
+              "exportSkills"
+            ]
+          },
+          {
+            "file": "./learned-block.js",
+            "imports": [
+              "writeLearnedBlocks"
+            ]
+          },
+          {
+            "file": "./report.js",
+            "imports": [
+              "latestRunId",
+              "buildReport",
+              "formatReport"
+            ]
+          },
+          {
+            "file": "./types.js",
+            "imports": [
+              "isValidSlug",
+              "KnowledgeEntry",
+              "KnowledgeKind"
+            ]
+          },
+          {
+            "file": "./solver.js",
+            "imports": [
+              "BudgetExhausted",
+              "CallBudget",
+              "solveMany",
+              "SolveOptions"
+            ]
+          },
+          {
+            "file": "./learner.js",
+            "imports": [
+              "runLearn"
+            ]
+          },
+          {
+            "file": "./usage.js",
+            "imports": [
+              "LEARN_USAGE"
+            ]
+          },
+          {
+            "file": "./types.js",
+            "imports": [
+              "LearnDbs"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "./knowledge-store.js",
+            "imports": [
+              "*"
+            ]
+          },
+          {
+            "file": "./learning-store.js",
+            "imports": [
+              "*"
+            ]
+          },
+          {
+            "file": "../db.js",
+            "imports": [
+              "*"
+            ]
+          },
+          {
+            "file": "./bootstrap.js",
+            "imports": [
+              "*"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "LEARN_USAGE",
+          "baselineCallCount",
+          "baselineRefusal",
+          "unifiedDiff",
+          "runLearnCli"
+        ],
+        "interfaces": [
+          "LearnCliDeps"
+        ],
+        "functions": [
+          "baselineCallCount",
+          "baselineRefusal",
+          "unifiedDiff",
+          "runLearnCli"
+        ]
+      },
+      "src/learn/export.ts": {
+        "description": "Export the active skills as a tree of `SKILL.md` files.",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "../paths.js",
+            "imports": [
+              "getSuperpowersDir"
+            ]
+          },
+          {
+            "file": "../redact.js",
+            "imports": [
+              "redactSecrets"
+            ]
+          },
+          {
+            "file": "./learned-text-screen.js",
+            "imports": [
+              "screenLearnedText"
+            ]
+          },
+          {
+            "file": "./learn-inject.js",
+            "imports": [
+              "redactKeepingMarks",
+              "RedactFn"
+            ]
+          },
+          {
+            "file": "./types.js",
+            "imports": [
+              "isValidSlug",
+              "KnowledgeEntry",
+              "LearnDbs",
+              "SourceRef"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "exportSkills"
+        ],
+        "interfaces": [
+          "ExportResult",
+          "ExportOptions"
+        ],
+        "functions": [
+          "exportSkills"
+        ]
+      },
+      "src/learn/grade.ts": {
+        "description": "Grading a solver's answer against a task's truth (spec \u00a74.4).",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "path",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "../redact.js",
+            "imports": [
+              "redactSecrets"
+            ]
+          },
+          {
+            "file": "./types.js",
+            "imports": [
+              "SourceRef",
+              "TaskTruth"
+            ],
+            "typeOnly": true
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "parseSolverAnswer",
+          "samePath",
+          "gradeLocate",
+          "gradeWhen",
+          "gradeMulti",
+          "parseJudgeScore",
+          "gradeRecall"
+        ],
+        "interfaces": [
+          "AnswerLocation",
+          "ParsedAnswer",
+          "Grade"
+        ],
+        "functions": [
+          "parseSolverAnswer",
+          "samePath",
+          "gradeLocate",
+          "gradeWhen",
+          "gradeMulti",
+          "parseJudgeScore",
+          "gradeRecall"
+        ]
+      },
+      "src/learn/knowledge-db.ts": {
+        "description": "The `KnowledgeEntry` API over the knowledge store and the learning trace.",
+        "externalDependencies": [
+          {
+            "package": "better-sqlite3",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./knowledge-store.js",
+            "imports": [
+              "entryName",
+              "procedureIdFor",
+              "rootName",
+              "KnowledgeStore"
+            ]
+          },
+          {
+            "file": "./types.js",
+            "imports": [
+              "isValidSlug",
+              "KnowledgeEntry",
+              "KnowledgeKind",
+              "KnowledgeStatus",
+              "NewKnowledgeEntry",
+              "ValidationRecord"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "DuplicateEntry",
+          "InvalidEntryName",
+          "insertKnowledgeEntry",
+          "activate",
+          "retire",
+          "listActive",
+          "listCandidates",
+          "getEntry",
+          "getBySlug",
+          "searchKnowledge",
+          "createSnapshot",
+          "getSnapshot",
+          "entryName",
+          "rootName",
+          "procedureIdFor",
+          "LIVE_STATUSES"
+        ],
+        "classes": [
+          "DuplicateEntry",
+          "InvalidEntryName"
+        ],
+        "functions": [
+          "insertKnowledgeEntry",
+          "activate",
+          "retire",
+          "listActive",
+          "listCandidates",
+          "getEntry",
+          "getBySlug",
+          "searchKnowledge",
+          "createSnapshot",
+          "getSnapshot"
+        ],
+        "constants": [
+          "LIVE_STATUSES"
+        ]
+      },
+      "src/learn/knowledge-gate.ts": {
+        "description": "The gate every proposal passes before it becomes stored knowledge.",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "../redact.js",
+            "imports": [
+              "redactSecrets"
+            ]
+          },
+          {
+            "file": "./types.js",
+            "imports": [
+              "isValidSlug"
+            ]
+          },
+          {
+            "file": "./types.js",
+            "imports": [
+              "Confidence",
+              "NewKnowledgeEntry",
+              "ProcedureStepSpec",
+              "ProposedEntry"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "./cited-ids.js",
+            "imports": [
+              "parseIdCitedLines",
+              "IdCitationResolver"
+            ]
+          },
+          {
+            "file": "./learned-text-screen.js",
+            "imports": [
+              "screenLearnedText"
+            ]
+          },
+          {
+            "file": "./learn-config.js",
+            "imports": [
+              "LearnConfig"
+            ],
+            "typeOnly": true
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "redactLearnedText",
+          "gateEntry"
+        ],
+        "interfaces": [
+          "GateDeps",
+          "GateAccepted"
+        ],
+        "functions": [
+          "redactLearnedText",
+          "gateEntry"
+        ]
+      },
+      "src/learn/knowledge-store.ts": {
+        "description": "The knowledge store: learned entries, their citations and the records the",
+        "externalDependencies": [
+          {
+            "package": "better-sqlite3",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "crypto",
+            "imports": [
+              "createHash",
+              "randomUUID"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "../paths.js",
+            "imports": [
+              "getKnowledgeDbPath"
+            ]
+          },
+          {
+            "file": "./pii-redactor.js",
+            "imports": [
+              "redactPii"
+            ]
+          },
+          {
+            "file": "./types.js",
+            "imports": [
+              "Confidence",
+              "KnowledgeEntry",
+              "KnowledgeKind",
+              "KnowledgeStatus",
+              "ProcedureStepSpec",
+              "SourceRef",
+              "TrustLevel",
+              "ValidationRecord"
+            ],
+            "typeOnly": true
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "parseEntity",
+          "entryName",
+          "rootName",
+          "procedureIdFor",
+          "KnowledgeStore",
+          "openKnowledgeStore"
+        ],
+        "classes": [
+          "KnowledgeStore"
+        ],
+        "interfaces": [
+          "SearchOptions",
+          "CreateReflectionInput",
+          "CreateReflectionResult",
+          "ProcedureMatchLike",
+          "RawEntityView",
+          "HeuristicView",
+          "DecisionView",
+          "ProcedureStep",
+          "ProcedureView",
+          "StoredEntity",
+          "OpenKnowledgeStoreOptions"
+        ],
+        "functions": [
+          "parseEntity",
+          "entryName",
+          "rootName",
+          "procedureIdFor",
+          "openKnowledgeStore"
+        ]
+      },
+      "src/learn/leaf-learner.ts": {
+        "description": "The leaf learner: diagnose a subset's failures, propose edits, validate them.",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./learn-config.js",
+            "imports": [
+              "learnConfig"
+            ]
+          },
+          {
+            "file": "./bootstrap.js",
+            "imports": [
+              "indexExchangeResolver"
+            ]
+          },
+          {
+            "file": "./knowledge-gate.js",
+            "imports": [
+              "gateEntry"
+            ]
+          },
+          {
+            "file": "./cited-ids.js",
+            "imports": [
+              "IdCitationResolver"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "./knowledge-db.js",
+            "imports": [
+              "DuplicateEntry",
+              "createSnapshot",
+              "insertKnowledgeEntry",
+              "listActive"
+            ]
+          },
+          {
+            "file": "./learning-db.js",
+            "imports": [
+              "SIGNAL_KINDS",
+              "SIGNAL_TIERS",
+              "addRejection",
+              "attemptsExist",
+              "listAttempts",
+              "listTasks",
+              "LearningTask"
+            ]
+          },
+          {
+            "file": "./prompts.js",
+            "imports": [
+              "diagnosePrompt"
+            ]
+          },
+          {
+            "file": "./sdk-tools.js",
+            "imports": [
+              "buildLearnToolServer"
+            ]
+          },
+          {
+            "file": "./semaphore.js",
+            "imports": [
+              "globalAgentSemaphore"
+            ]
+          },
+          {
+            "file": "./agent-runner.js",
+            "imports": [
+              "runAgent"
+            ]
+          },
+          {
+            "file": "./solver.js",
+            "imports": [
+              "BudgetExhausted",
+              "CallBudget",
+              "solveMany",
+              "solveTask",
+              "PidRegistry"
+            ]
+          },
+          {
+            "file": "./grade.js",
+            "imports": [
+              "parseSolverAnswer",
+              "samePath"
+            ]
+          },
+          {
+            "file": "./validate.js",
+            "imports": [
+              "validateCandidate"
+            ]
+          },
+          {
+            "file": "./types.js",
+            "imports": [
+              "AttemptRow",
+              "KnowledgeEntry",
+              "LearnDbs",
+              "ProposedEntry",
+              "TraceStep"
+            ],
+            "typeOnly": true
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "PROCEDURE_MATCH_THRESHOLD",
+          "NAVIGATION_SLUG",
+          "suspectTaskIds",
+          "runLeafLearner"
+        ],
+        "interfaces": [
+          "LeafResult",
+          "LeafLearnerOptions"
+        ],
+        "functions": [
+          "suspectTaskIds",
+          "runLeafLearner"
+        ],
+        "constants": [
+          "PROCEDURE_MATCH_THRESHOLD",
+          "NAVIGATION_SLUG"
+        ]
+      },
+      "src/learn/learn-config.ts": {
+        "description": "The learned-knowledge feature switch and its settings.",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "learnEnabled",
+          "LEARN_OFF_MESSAGE",
+          "learnConfig"
+        ],
+        "interfaces": [
+          "LearnConfig"
+        ],
+        "functions": [
+          "learnEnabled",
+          "learnConfig"
+        ],
+        "constants": [
+          "LEARN_OFF_MESSAGE"
+        ]
+      },
+      "src/learn/learn-handlers.ts": {
+        "description": "The read-only handlers behind the solver's in-process `episodic-learn` server.",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "../db.js",
+            "imports": [
+              "initDatabase"
+            ]
+          },
+          {
+            "file": "../mcp-auth.js",
+            "imports": [
+              "getRequiredMcpToken"
+            ]
+          },
+          {
+            "file": "../mcp-tools.js",
+            "imports": [
+              "handleToolCall"
+            ]
+          },
+          {
+            "file": "../digest-inject.js",
+            "imports": [
+              "buildDigestText",
+              "digestMaxChars"
+            ]
+          },
+          {
+            "file": "../digest-db.js",
+            "imports": [
+              "searchDigest"
+            ]
+          },
+          {
+            "file": "./skills-tool.js",
+            "imports": [
+              "skillsToolText",
+              "SkillsToolParams"
+            ]
+          },
+          {
+            "file": "../search.js",
+            "imports": [
+              "*"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "HIDDEN_EXPAND_MESSAGE",
+          "learnSearch",
+          "learnRead",
+          "learnDigest",
+          "learnSkills"
+        ],
+        "interfaces": [
+          "LearnSearchArgs",
+          "LearnReadArgs",
+          "LearnDigestArgs",
+          "LearnContext",
+          "LearnDigestContext"
+        ],
+        "functions": [
+          "learnSearch",
+          "learnRead",
+          "learnDigest",
+          "learnSkills"
+        ],
+        "constants": [
+          "HIDDEN_EXPAND_MESSAGE"
+        ]
+      },
+      "src/learn/learn-inject.ts": {
+        "description": "The learned block the SessionStart hook injects.",
+        "externalDependencies": [
+          {
+            "package": "better-sqlite3",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./types.js",
+            "imports": [
+              "KnowledgeEntry",
+              "KnowledgeKind"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "./learned-text-screen.js",
+            "imports": [
+              "screenLearnedText"
+            ]
+          },
+          {
+            "file": "../redact.js",
+            "imports": [
+              "redactSecrets"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "redactPii",
+          "LEARNED_FENCE_OPEN",
+          "LEARNED_NOTICE",
+          "LEARNED_SKILLS_HEADER",
+          "LEARNED_FENCE_CLOSE",
+          "redactKeepingMarks",
+          "renderLearnedBlock",
+          "capLearnedBlock",
+          "readLearnedBlock",
+          "readLearnedBlockCapped"
+        ],
+        "functions": [
+          "redactPii",
+          "redactKeepingMarks",
+          "renderLearnedBlock",
+          "capLearnedBlock",
+          "readLearnedBlock",
+          "readLearnedBlockCapped"
+        ],
+        "constants": [
+          "LEARNED_FENCE_OPEN",
+          "LEARNED_NOTICE",
+          "LEARNED_SKILLS_HEADER",
+          "LEARNED_FENCE_CLOSE"
+        ]
+      },
+      "src/learn/learn-lock.ts": {
+        "description": "One learning run at a time, and the PIDs it owns.",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "../lockfile.js",
+            "imports": [
+              "acquireLock",
+              "releaseLock"
+            ]
+          },
+          {
+            "file": "../paths.js",
+            "imports": [
+              "getIndexDir"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "LEARN_LOCK_NAME",
+          "LEARN_PIDS_NAME",
+          "LEARN_LOCK_STALE_MS",
+          "LearnLockHeld",
+          "getLearnLockPath",
+          "getLearnPidsPath",
+          "readLearnPids",
+          "withLearnLock"
+        ],
+        "classes": [
+          "LearnLockHeld"
+        ],
+        "interfaces": [
+          "PidRegistry"
+        ],
+        "functions": [
+          "getLearnLockPath",
+          "getLearnPidsPath",
+          "readLearnPids",
+          "withLearnLock"
+        ],
+        "constants": [
+          "LEARN_LOCK_NAME",
+          "LEARN_PIDS_NAME",
+          "LEARN_LOCK_STALE_MS"
+        ]
+      },
+      "src/learn/learned-block.ts": {
+        "description": "Render and persist the learned block for every project that has active",
+        "externalDependencies": [
+          {
+            "package": "better-sqlite3",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "../redact.js",
+            "imports": [
+              "redactSecrets"
+            ]
+          },
+          {
+            "file": "./knowledge-store.js",
+            "imports": [
+              "KnowledgeStore"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "./learn-inject.js",
+            "imports": [
+              "redactPii",
+              "renderLearnedBlock",
+              "RedactFn",
+              "ScreenFn"
+            ]
+          },
+          {
+            "file": "./types.js",
+            "imports": [
+              "KnowledgeEntry"
+            ],
+            "typeOnly": true
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "writeLearnedBlocks"
+        ],
+        "functions": [
+          "writeLearnedBlocks"
+        ]
+      },
+      "src/learn/learned-text-screen.ts": {
+        "description": "The injection screen for learned text.",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "../redact.js",
+            "imports": [
+              "redactSecrets"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "normalizeForScreen",
+          "screenLearnedText"
+        ],
+        "interfaces": [
+          "ScreenOptions"
+        ],
+        "functions": [
+          "normalizeForScreen",
+          "screenLearnedText"
+        ]
+      },
+      "src/learn/learner.ts": {
+        "description": "The recursive learner (spec \u00a76.2, Algorithm 1).",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./learn-config.js",
+            "imports": [
+              "learnConfig"
+            ]
+          },
+          {
+            "file": "./bootstrap.js",
+            "imports": [
+              "indexExchangeResolver"
+            ]
+          },
+          {
+            "file": "./knowledge-gate.js",
+            "imports": [
+              "gateEntry"
+            ]
+          },
+          {
+            "file": "./cited-ids.js",
+            "imports": [
+              "IdCitationResolver"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "./knowledge-db.js",
+            "imports": [
+              "DuplicateEntry",
+              "activate",
+              "createSnapshot",
+              "getEntry",
+              "insertKnowledgeEntry",
+              "retire"
+            ]
+          },
+          {
+            "file": "./learning-db.js",
+            "imports": [
+              "SIGNAL_KINDS",
+              "SIGNAL_TIERS",
+              "addRejection",
+              "attemptsExist",
+              "createRun",
+              "finishRun",
+              "listAttempts",
+              "listTasks",
+              "passRate",
+              "LearningTask",
+              "PassRate"
+            ]
+          },
+          {
+            "file": "./prompts.js",
+            "imports": [
+              "mergeEntriesPrompt",
+              "reflectPrompt",
+              "splitPrompt"
+            ]
+          },
+          {
+            "file": "./semaphore.js",
+            "imports": [
+              "createSemaphore"
+            ]
+          },
+          {
+            "file": "./agent-runner.js",
+            "imports": [
+              "runAgent",
+              "PidRegistry"
+            ]
+          },
+          {
+            "file": "./solver.js",
+            "imports": [
+              "BudgetExhausted",
+              "CallBudget",
+              "solveMany",
+              "solveTask"
+            ]
+          },
+          {
+            "file": "./leaf-learner.js",
+            "imports": [
+              "runLeafLearner"
+            ]
+          },
+          {
+            "file": "./validate.js",
+            "imports": [
+              "sampleIds"
+            ]
+          },
+          {
+            "file": "./learned-block.js",
+            "imports": [
+              "writeLearnedBlocks"
+            ]
+          },
+          {
+            "file": "./types.js",
+            "imports": [
+              "AttemptRow",
+              "KnowledgeEntry",
+              "LearnDbs",
+              "ProposedEntry",
+              "SourceRef",
+              "ValidationRecord"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "../summarizer.js",
+            "imports": [
+              "*"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "FAILURE_CATEGORIES",
+          "REFLECTION_SLUG_PREFIX",
+          "parseAssignment",
+          "splitFailures",
+          "runLearn"
+        ],
+        "interfaces": [
+          "MergeRecord",
+          "LearnResult",
+          "LearnOptions",
+          "LearnSubset"
+        ],
+        "functions": [
+          "parseAssignment",
+          "splitFailures",
+          "runLearn"
+        ],
+        "constants": [
+          "FAILURE_CATEGORIES",
+          "REFLECTION_SLUG_PREFIX"
+        ]
+      },
+      "src/learn/learning-db.ts": {
+        "description": "The learning trace: runs, tasks and attempts, in `learning.sqlite`.",
+        "externalDependencies": [
+          {
+            "package": "better-sqlite3",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "nodeDependencies": [
+          {
+            "module": "crypto",
+            "imports": [
+              "randomBytes"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "../redact.js",
+            "imports": [
+              "redactSecrets"
+            ]
+          },
+          {
+            "file": "./types.js",
+            "imports": [
+              "AttemptOutcome",
+              "AttemptRow",
+              "Cost",
+              "LearningKind",
+              "LearningTier",
+              "TaskStatus",
+              "TaskTruth",
+              "TraceStep"
+            ],
+            "typeOnly": true
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "SIGNAL_KINDS",
+          "SIGNAL_TIERS",
+          "ensureLearningSchema",
+          "createRun",
+          "finishRun",
+          "addRejection",
+          "getRun",
+          "latestRun",
+          "insertTask",
+          "listTasks",
+          "markStale",
+          "MAX_ANSWER_CHARS",
+          "insertAttempt",
+          "listAttempts",
+          "attemptsExist",
+          "passRate"
+        ],
+        "interfaces": [
+          "LearningTask",
+          "RunRejection",
+          "LearningRun",
+          "CreateRunInput",
+          "ListTasksOptions",
+          "ListAttemptsOptions",
+          "PassRate"
+        ],
+        "functions": [
+          "ensureLearningSchema",
+          "createRun",
+          "finishRun",
+          "addRejection",
+          "getRun",
+          "latestRun",
+          "insertTask",
+          "listTasks",
+          "markStale",
+          "insertAttempt",
+          "listAttempts",
+          "attemptsExist",
+          "passRate"
+        ],
+        "constants": [
+          "SIGNAL_KINDS",
+          "SIGNAL_TIERS",
+          "MAX_ANSWER_CHARS"
+        ]
+      },
+      "src/learn/learning-store.ts": {
+        "description": "The learning trace database: `<configDir>/learned/learning.sqlite`.",
+        "externalDependencies": [
+          {
+            "package": "better-sqlite3",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "../paths.js",
+            "imports": [
+              "getLearningDbPath",
+              "tryChmod"
+            ]
+          },
+          {
+            "file": "./learning-db.js",
+            "imports": [
+              "ensureLearningSchema"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "LEARNING_TABLES",
+          "migrateLearningSchema",
+          "openLearningDb"
+        ],
+        "interfaces": [
+          "OpenLearningDbOptions"
+        ],
+        "functions": [
+          "migrateLearningSchema",
+          "openLearningDb"
+        ],
+        "constants": [
+          "LEARNING_TABLES"
+        ]
+      },
+      "src/learn/pii-redactor.ts": {
+        "description": "PII redaction for learned text.",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "PII_PATTERNS",
+          "redactPii"
+        ],
+        "functions": [
+          "redactPii"
+        ],
+        "constants": [
+          "PII_PATTERNS"
+        ]
+      },
+      "src/learn/prompts.ts": {
+        "description": "Prompts for every role a learning run uses.",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "../redact.js",
+            "imports": [
+              "redactSecrets"
+            ]
+          },
+          {
+            "file": "./types.js",
+            "imports": [
+              "KnowledgeEntry",
+              "ProposedEntry",
+              "SourceRef",
+              "TraceStep"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "./types.js",
+            "imports": [
+              "LearningKind"
+            ],
+            "typeOnly": true
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "SOLVER_ANSWER_FORMAT",
+          "solverSystemPrompt",
+          "BOOTSTRAP_SKILL_SLUGS",
+          "bootstrapperSystemPrompt",
+          "bootstrapperBrief",
+          "mergeInstructionPrompt",
+          "diagnosePrompt",
+          "editBrief",
+          "splitPrompt",
+          "mergeEntriesPrompt",
+          "reflectPrompt",
+          "ProposedEntry"
+        ],
+        "interfaces": [
+          "BootstrapStats",
+          "DiagnosisFailure",
+          "DiagnosePromptInput",
+          "EditBriefInput",
+          "SplitFailure",
+          "SplitPromptInput",
+          "MergeEntriesPromptInput",
+          "ReflectEvidence",
+          "ReflectPromptInput"
+        ],
+        "functions": [
+          "solverSystemPrompt",
+          "bootstrapperSystemPrompt",
+          "bootstrapperBrief",
+          "mergeInstructionPrompt",
+          "diagnosePrompt",
+          "editBrief",
+          "splitPrompt",
+          "mergeEntriesPrompt",
+          "reflectPrompt"
+        ],
+        "constants": [
+          "SOLVER_ANSWER_FORMAT",
+          "BOOTSTRAP_SKILL_SLUGS"
+        ]
+      },
+      "src/learn/report.ts": {
+        "description": "`learn report`: what a run changed, what it cost, and what it refused.",
+        "externalDependencies": [
+          {
+            "package": "better-sqlite3",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./learning-db.js",
+            "imports": [
+              "getRun",
+              "latestRun",
+              "listAttempts",
+              "passRate",
+              "LearningRun",
+              "PassRate"
+            ]
+          },
+          {
+            "file": "./knowledge-db.js",
+            "imports": [
+              "listActive",
+              "listCandidates"
+            ]
+          },
+          {
+            "file": "./types.js",
+            "imports": [
+              "KnowledgeEntry",
+              "LearnDbs"
+            ],
+            "typeOnly": true
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "buildReport",
+          "latestRunId",
+          "formatReport"
+        ],
+        "interfaces": [
+          "ReportMerge",
+          "SplitReport",
+          "ReportModel"
+        ],
+        "functions": [
+          "buildReport",
+          "latestRunId",
+          "formatReport"
+        ]
+      },
+      "src/learn/sdk-tools.ts": {
+        "description": "The in-process `episodic-learn` MCP server a solver or learner subprocess sees.",
+        "externalDependencies": [
+          {
+            "package": "zod",
+            "imports": [
+              "z"
+            ]
+          },
+          {
+            "package": "@anthropic-ai/claude-agent-sdk",
+            "imports": [
+              "createSdkMcpServer",
+              "tool",
+              "McpSdkServerConfigWithInstance",
+              "SdkMcpToolDefinition"
+            ]
+          }
+        ],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./learn-handlers.js",
+            "imports": [
+              "learnDigest",
+              "learnRead",
+              "learnSearch",
+              "learnSkills",
+              "LearnDigestContext",
+              "LearnContext"
+            ]
+          },
+          {
+            "file": "./types.js",
+            "imports": [
+              "ProposedEntry"
+            ],
+            "typeOnly": true
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "SERVER_NAME",
+          "SERVED_TOOL_NAMES",
+          "PROPOSE_TOOL_NAME",
+          "servedToolNames",
+          "PROPOSAL_RECEIVED_MESSAGE",
+          "buildLearnToolServer"
+        ],
+        "interfaces": [
+          "LearnToolServerOptions"
+        ],
+        "functions": [
+          "servedToolNames",
+          "buildLearnToolServer"
+        ],
+        "constants": [
+          "SERVER_NAME",
+          "SERVED_TOOL_NAMES",
+          "PROPOSE_TOOL_NAME",
+          "PROPOSAL_RECEIVED_MESSAGE"
+        ]
+      },
+      "src/learn/semaphore.ts": {
+        "description": "The one subprocess semaphore (spec \u00a77 rule 10a).",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "async_hooks",
+            "imports": [
+              "AsyncLocalStorage"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "./learn-config.js",
+            "imports": [
+              "learnConfig"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "createSemaphore",
+          "globalAgentSemaphore"
+        ],
+        "interfaces": [
+          "Semaphore"
+        ],
+        "functions": [
+          "createSemaphore",
+          "globalAgentSemaphore"
+        ]
+      },
+      "src/learn/skills-tool.ts": {
+        "description": "The `skills` MCP tool: read active learned skills out of the knowledge store.",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "../redact.js",
+            "imports": [
+              "redactSecrets"
+            ]
+          },
+          {
+            "file": "../paths.js",
+            "imports": [
+              "getSuperpowersDir"
+            ]
+          },
+          {
+            "file": "../digest-inject.js",
+            "imports": [
+              "projectKeyFromCwd"
+            ]
+          },
+          {
+            "file": "./learn-config.js",
+            "imports": [
+              "LEARN_OFF_MESSAGE",
+              "learnEnabled"
+            ]
+          },
+          {
+            "file": "./learned-text-screen.js",
+            "imports": [
+              "screenLearnedText"
+            ]
+          },
+          {
+            "file": "./learn-inject.js",
+            "imports": [
+              "redactKeepingMarks",
+              "RedactFn"
+            ]
+          },
+          {
+            "file": "./knowledge-store.js",
+            "imports": [
+              "openKnowledgeStore",
+              "KnowledgeStore"
+            ]
+          },
+          {
+            "file": "./types.js",
+            "imports": [
+              "KnowledgeEntry"
+            ],
+            "typeOnly": true
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "LEARN_OFF_MESSAGE",
+          "NO_SKILLS_MESSAGE",
+          "skillsToolText"
+        ],
+        "interfaces": [
+          "SkillsToolParams"
+        ],
+        "functions": [
+          "skillsToolText"
+        ],
+        "constants": [
+          "NO_SKILLS_MESSAGE"
+        ]
+      },
+      "src/learn/solver.ts": {
+        "description": "The solver: answer one task with the knowledge a snapshot held.",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./grade.js",
+            "imports": [
+              "gradeLocate",
+              "gradeMulti",
+              "gradeRecall",
+              "gradeWhen",
+              "parseSolverAnswer"
+            ]
+          },
+          {
+            "file": "./knowledge-db.js",
+            "imports": [
+              "getEntry",
+              "getSnapshot"
+            ]
+          },
+          {
+            "file": "./learning-db.js",
+            "imports": [
+              "insertAttempt",
+              "LearningTask"
+            ]
+          },
+          {
+            "file": "./semaphore.js",
+            "imports": [
+              "globalAgentSemaphore"
+            ]
+          },
+          {
+            "file": "./types.js",
+            "imports": [
+              "AttemptOutcome",
+              "AttemptRow",
+              "Cost",
+              "KnowledgeEntry",
+              "LearnDbs",
+              "TraceStep"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "./sdk-tools.js",
+            "imports": [
+              "buildLearnToolServer"
+            ]
+          },
+          {
+            "file": "./agent-runner.js",
+            "imports": [
+              "runAgent",
+              "PidRegistry"
+            ]
+          },
+          {
+            "file": "./prompts.js",
+            "imports": [
+              "solverSystemPrompt"
+            ]
+          },
+          {
+            "file": "../summarizer.js",
+            "imports": [
+              "*"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "PidRegistry",
+          "BudgetExhausted",
+          "CallBudget",
+          "promptInputsForSnapshot",
+          "solveTask",
+          "solveMany"
+        ],
+        "classes": [
+          "BudgetExhausted",
+          "CallBudget"
+        ],
+        "interfaces": [
+          "SolveOptions",
+          "SolveManyOptions"
+        ],
+        "functions": [
+          "promptInputsForSnapshot",
+          "solveTask",
+          "solveMany"
+        ]
+      },
+      "src/learn/tasks.ts": {
+        "description": "Self-practice task generation and staleness checks (spec \u00a74.4).",
+        "externalDependencies": [
+          {
+            "package": "better-sqlite3",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "nodeDependencies": [
+          {
+            "module": "path",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "../types.js",
+            "imports": [
+              "ConversationExchange"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "../redact.js",
+            "imports": [
+              "redactSecrets"
+            ]
+          },
+          {
+            "file": "./learned-text-screen.js",
+            "imports": [
+              "screenLearnedText"
+            ]
+          },
+          {
+            "file": "./learning-db.js",
+            "imports": [
+              "insertTask",
+              "markStale",
+              "LearningTask"
+            ]
+          },
+          {
+            "file": "./types.js",
+            "imports": [
+              "LearningKind",
+              "LearningTier",
+              "SourceRef"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "../summarizer.js",
+            "imports": [
+              "callLearnModel"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "MIN_PER_PROJECT",
+          "MIN_USER_CHARS",
+          "MIN_ASSISTANT_CHARS",
+          "selectSourceExchanges",
+          "paraphrasePrompt",
+          "promptLeaksAnswerKey",
+          "parseParaphrase",
+          "generateTasks",
+          "checkTasks"
+        ],
+        "interfaces": [
+          "SelectSourceOptions",
+          "GenerateTasksOptions",
+          "GenerateTasksResult"
+        ],
+        "functions": [
+          "selectSourceExchanges",
+          "paraphrasePrompt",
+          "promptLeaksAnswerKey",
+          "parseParaphrase",
+          "generateTasks",
+          "checkTasks"
+        ],
+        "constants": [
+          "MIN_PER_PROJECT",
+          "MIN_USER_CHARS",
+          "MIN_ASSISTANT_CHARS"
+        ]
+      },
+      "src/learn/types.ts": {
+        "description": "Shared types for the Recursa learned-knowledge store.",
+        "externalDependencies": [
+          {
+            "package": "better-sqlite3",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./knowledge-store.js",
+            "imports": [
+              "KnowledgeStore"
+            ],
+            "typeOnly": true
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "SLUG_RE",
+          "isValidSlug"
+        ],
+        "interfaces": [
+          "SourceRef",
+          "ValidationRecord",
+          "ProcedureStepSpec",
+          "KnowledgeEntry",
+          "ProposedEntry",
+          "LearnDbs",
+          "TaskTruth",
+          "TraceStep",
+          "Cost",
+          "AttemptRow"
+        ],
+        "functions": [
+          "isValidSlug"
+        ],
+        "constants": [
+          "SLUG_RE"
+        ]
+      },
+      "src/learn/usage.ts": {
+        "description": "Help text for `episodic-memory learn`.",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "LEARN_USAGE"
+        ],
+        "constants": [
+          "LEARN_USAGE"
+        ]
+      },
+      "src/learn/validate.ts": {
+        "description": "Validation: does a candidate edit actually earn its place?",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./learn-config.js",
+            "imports": [
+              "learnConfig"
+            ]
+          },
+          {
+            "file": "./knowledge-db.js",
+            "imports": [
+              "activate",
+              "createSnapshot",
+              "getBySlug",
+              "getEntry",
+              "entryName"
+            ]
+          },
+          {
+            "file": "./learning-db.js",
+            "imports": [
+              "listAttempts",
+              "listTasks"
+            ]
+          },
+          {
+            "file": "./learned-block.js",
+            "imports": [
+              "writeLearnedBlocks"
+            ]
+          },
+          {
+            "file": "./types.js",
+            "imports": [
+              "AttemptRow",
+              "KnowledgeEntry",
+              "LearnDbs",
+              "ValidationRecord"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "./solver.js",
+            "imports": [
+              "CallBudget",
+              "solveTask"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "./agent-runner.js",
+            "imports": [
+              "PidRegistry"
+            ],
+            "typeOnly": true
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "sampleIds",
+          "validateCandidate"
+        ],
+        "interfaces": [
+          "ValidateOptions"
+        ],
+        "functions": [
+          "sampleIds",
+          "validateCandidate"
+        ]
+      }
+    }
+  },
+  "cyclicComponents": {
+    "runtime": [],
+    "typeOnly": [
+      {
+        "members": [
+          "src/learn/knowledge-store.ts",
+          "src/learn/types.ts"
+        ],
+        "cycle": [
+          "src/learn/knowledge-store.ts",
+          "src/learn/types.ts",
+          "src/learn/knowledge-store.ts"
+        ]
+      }
+    ]
+  },
+  "layers": [
+    {
+      "name": "Cli",
+      "files": [
+        "cli/digest-hook.js",
+        "cli/ensure-deps.js",
+        "cli/episodic-memory.js",
+        "cli/index-conversations.js",
+        "cli/mcp-server-wrapper.js",
+        "cli/search-conversations.js",
+        "cli/sync-hook.js"
+      ]
+    },
+    {
+      "name": "Root",
+      "files": [
+        "src/api-endpoint.ts",
+        "src/archive-path.ts",
+        "src/backfill-cli.ts",
+        "src/backfill.ts",
+        "src/codex-hook-trust.ts",
+        "src/codex-support.ts",
+        "src/constants.ts",
+        "src/db.ts",
+        "src/deps-health.ts",
+        "src/digest-compress.ts",
+        "src/digest-db.ts",
+        "src/digest-inject.ts",
+        "src/digest-job.ts",
+        "src/digest-phase.ts",
+        "src/digest-prompts.ts",
+        "src/digest-tool.ts",
+        "src/digest-validate.ts",
+        "src/doctor-cli.ts",
+        "src/doctor-learn.ts",
+        "src/doctor.ts",
+        "src/embedding-migration.ts",
+        "src/embeddings.ts",
+        "src/gpu-reservation.ts",
+        "src/index-cli.ts",
+        "src/indexer.ts",
+        "src/learn-cli.ts",
+        "src/lockfile.ts",
+        "src/logging.ts",
+        "src/mcp-auth.ts",
+        "src/mcp-schemas.ts",
+        "src/mcp-server.ts",
+        "src/mcp-tools.ts",
+        "src/node-floor.ts",
+        "src/ollama-backend.ts",
+        "src/orphan-reaper.ts",
+        "src/parser.ts",
+        "src/paths.ts",
+        "src/priority.ts",
+        "src/prune.ts",
+        "src/redact.ts",
+        "src/reentrancy.ts",
+        "src/search-cli.ts",
+        "src/search.ts",
+        "src/show-cli.ts",
+        "src/show.ts",
+        "src/stats-cli.ts",
+        "src/stats.ts",
+        "src/summarizer.ts",
+        "src/sync-banner.ts",
+        "src/sync-cli.ts",
+        "src/sync.ts",
+        "src/types.ts",
+        "src/verify.ts"
+      ]
+    },
+    {
+      "name": "Entry",
+      "files": [
+        "src/index.ts"
+      ]
+    },
+    {
+      "name": "Learn",
+      "files": [
+        "src/learn/agent-runner.ts",
+        "src/learn/bootstrap.ts",
+        "src/learn/cited-ids.ts",
+        "src/learn/cli-main.ts",
+        "src/learn/export.ts",
+        "src/learn/grade.ts",
+        "src/learn/knowledge-db.ts",
+        "src/learn/knowledge-gate.ts",
+        "src/learn/knowledge-store.ts",
+        "src/learn/leaf-learner.ts",
+        "src/learn/learn-config.ts",
+        "src/learn/learn-handlers.ts",
+        "src/learn/learn-inject.ts",
+        "src/learn/learn-lock.ts",
+        "src/learn/learned-block.ts",
+        "src/learn/learned-text-screen.ts",
+        "src/learn/learner.ts",
+        "src/learn/learning-db.ts",
+        "src/learn/learning-store.ts",
+        "src/learn/pii-redactor.ts",
+        "src/learn/prompts.ts",
+        "src/learn/report.ts",
+        "src/learn/sdk-tools.ts",
+        "src/learn/semaphore.ts",
+        "src/learn/skills-tool.ts",
+        "src/learn/solver.ts",
+        "src/learn/tasks.ts",
+        "src/learn/types.ts",
+        "src/learn/usage.ts",
+        "src/learn/validate.ts"
+      ]
+    }
+  ]
+}

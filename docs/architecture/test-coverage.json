@@ -1,0 +1,1184 @@
+{
+  "metadata": {
+    "totalSourceFiles": 91,
+    "totalTestFiles": 126,
+    "testedCount": 72,
+    "untestedCount": 19,
+    "coveragePercent": "79.1",
+    "effectiveCoverage": {
+      "policyLoaded": false,
+      "activeFiles": 91,
+      "testedActive": 72,
+      "activeUntested": 19,
+      "excludedTotal": 0,
+      "percent": "79.1",
+      "breakdown": {
+        "active_untested": 19
+      }
+    }
+  },
+  "untestedFiles": [
+    "cli/digest-hook.js",
+    "cli/ensure-deps.js",
+    "cli/episodic-memory.js",
+    "cli/index-conversations.js",
+    "cli/mcp-server-wrapper.js",
+    "cli/search-conversations.js",
+    "cli/sync-hook.js",
+    "src/backfill-cli.ts",
+    "src/doctor-cli.ts",
+    "src/index-cli.ts",
+    "src/index.ts",
+    "src/learn-cli.ts",
+    "src/learn/pii-redactor.ts",
+    "src/learn/usage.ts",
+    "src/mcp-server.ts",
+    "src/search-cli.ts",
+    "src/show-cli.ts",
+    "src/stats-cli.ts",
+    "src/sync-cli.ts"
+  ],
+  "testedFiles": [
+    "src/api-endpoint.ts",
+    "src/archive-path.ts",
+    "src/backfill.ts",
+    "src/codex-hook-trust.ts",
+    "src/codex-support.ts",
+    "src/constants.ts",
+    "src/db.ts",
+    "src/deps-health.ts",
+    "src/digest-compress.ts",
+    "src/digest-db.ts",
+    "src/digest-inject.ts",
+    "src/digest-job.ts",
+    "src/digest-phase.ts",
+    "src/digest-prompts.ts",
+    "src/digest-tool.ts",
+    "src/digest-validate.ts",
+    "src/doctor-learn.ts",
+    "src/doctor.ts",
+    "src/embedding-migration.ts",
+    "src/embeddings.ts",
+    "src/gpu-reservation.ts",
+    "src/indexer.ts",
+    "src/learn/agent-runner.ts",
+    "src/learn/bootstrap.ts",
+    "src/learn/cited-ids.ts",
+    "src/learn/cli-main.ts",
+    "src/learn/export.ts",
+    "src/learn/grade.ts",
+    "src/learn/knowledge-db.ts",
+    "src/learn/knowledge-gate.ts",
+    "src/learn/knowledge-store.ts",
+    "src/learn/leaf-learner.ts",
+    "src/learn/learn-config.ts",
+    "src/learn/learn-handlers.ts",
+    "src/learn/learn-inject.ts",
+    "src/learn/learn-lock.ts",
+    "src/learn/learned-block.ts",
+    "src/learn/learned-text-screen.ts",
+    "src/learn/learner.ts",
+    "src/learn/learning-db.ts",
+    "src/learn/learning-store.ts",
+    "src/learn/prompts.ts",
+    "src/learn/report.ts",
+    "src/learn/sdk-tools.ts",
+    "src/learn/semaphore.ts",
+    "src/learn/skills-tool.ts",
+    "src/learn/solver.ts",
+    "src/learn/tasks.ts",
+    "src/learn/types.ts",
+    "src/learn/validate.ts",
+    "src/lockfile.ts",
+    "src/logging.ts",
+    "src/mcp-auth.ts",
+    "src/mcp-schemas.ts",
+    "src/mcp-tools.ts",
+    "src/node-floor.ts",
+    "src/ollama-backend.ts",
+    "src/orphan-reaper.ts",
+    "src/parser.ts",
+    "src/paths.ts",
+    "src/priority.ts",
+    "src/prune.ts",
+    "src/redact.ts",
+    "src/reentrancy.ts",
+    "src/search.ts",
+    "src/show.ts",
+    "src/stats.ts",
+    "src/summarizer.ts",
+    "src/sync-banner.ts",
+    "src/sync.ts",
+    "src/types.ts",
+    "src/verify.ts"
+  ],
+  "coverageMap": {
+    "cli/digest-hook.js": [],
+    "cli/ensure-deps.js": [],
+    "cli/episodic-memory.js": [],
+    "cli/index-conversations.js": [],
+    "cli/mcp-server-wrapper.js": [],
+    "cli/search-conversations.js": [],
+    "cli/sync-hook.js": [],
+    "src/api-endpoint.ts": [
+      "test/security-speed-helpers.test.ts"
+    ],
+    "src/archive-path.ts": [
+      "test/archive-path-edges.test.ts",
+      "test/archive-path.test.ts"
+    ],
+    "src/backfill-cli.ts": [],
+    "src/backfill.ts": [
+      "test/backfill-gpu-reservation.test.ts",
+      "test/backfill.test.ts"
+    ],
+    "src/codex-hook-trust.ts": [
+      "test/codex-doctor.test.ts",
+      "test/codex-hook-trust.test.ts"
+    ],
+    "src/codex-support.ts": [
+      "test/codex-support-extra.test.ts",
+      "test/codex-support.test.ts"
+    ],
+    "src/constants.ts": [
+      "test/constants.test.ts",
+      "test/digest-prompts.test.ts",
+      "test/embeddings-format.test.ts",
+      "test/oversized-message-guard.test.ts",
+      "test/sync-helpers.test.ts"
+    ],
+    "src/db.ts": [
+      "test/codex-transcripts.test.ts",
+      "test/cross-harness-recall.test.ts",
+      "test/db-helpers.test.ts",
+      "test/db.test.ts",
+      "test/digest-db.test.ts",
+      "test/digest-gpu-reservation.test.ts",
+      "test/digest-hook.test.ts",
+      "test/digest-job.test.ts",
+      "test/digest-mcp.test.ts",
+      "test/doctor.test.ts",
+      "test/embedding-migration-helpers.test.ts",
+      "test/integration.test.ts",
+      "test/learn/learn-handlers.test.ts",
+      "test/mcp-tools.test.ts",
+      "test/oversized-message-guard.test.ts",
+      "test/prune.test.ts",
+      "test/sync-incremental-and-db.test.ts",
+      "test/tool-calls-cascade.test.ts",
+      "test/verify.test.ts"
+    ],
+    "src/deps-health.ts": [
+      "test/deps-health.test.ts"
+    ],
+    "src/digest-compress.ts": [
+      "test/digest-compress.test.ts",
+      "test/digest-gpu-reservation.test.ts"
+    ],
+    "src/digest-db.ts": [
+      "test/digest-compress.test.ts",
+      "test/digest-db.test.ts",
+      "test/digest-gpu-reservation.test.ts",
+      "test/digest-hook.test.ts",
+      "test/digest-inject.test.ts",
+      "test/digest-job.test.ts",
+      "test/digest-mcp.test.ts",
+      "test/digest-prompts.test.ts",
+      "test/learn/learn-handlers.test.ts"
+    ],
+    "src/digest-inject.ts": [
+      "test/digest-hook.test.ts",
+      "test/digest-inject.test.ts",
+      "test/learn/learn-handlers.test.ts",
+      "test/learn/skills-tool.test.ts"
+    ],
+    "src/digest-job.ts": [
+      "test/digest-gpu-reservation.test.ts",
+      "test/digest-job.test.ts"
+    ],
+    "src/digest-phase.ts": [
+      "test/digest-mcp.test.ts"
+    ],
+    "src/digest-prompts.ts": [
+      "test/digest-prompts.test.ts"
+    ],
+    "src/digest-tool.ts": [
+      "test/digest-mcp.test.ts"
+    ],
+    "src/digest-validate.ts": [
+      "test/digest-validate.test.ts"
+    ],
+    "src/doctor-cli.ts": [],
+    "src/doctor-learn.ts": [
+      "test/doctor.test.ts"
+    ],
+    "src/doctor.ts": [
+      "test/codex-doctor.test.ts",
+      "test/doctor.test.ts"
+    ],
+    "src/embedding-migration.ts": [
+      "test/embedding-migration-helpers.test.ts",
+      "test/embedding-migration.test.ts"
+    ],
+    "src/embeddings.ts": [
+      "test/embedding-migration.test.ts",
+      "test/embeddings-format.test.ts",
+      "test/integration.test.ts",
+      "test/multi-concept.test.ts",
+      "test/query-prefix.test.ts",
+      "test/verify.test.ts"
+    ],
+    "src/gpu-reservation.ts": [
+      "test/gpu-reservation.test.ts"
+    ],
+    "src/index-cli.ts": [],
+    "src/index.ts": [],
+    "src/indexer.ts": [
+      "test/exclude-nested.test.ts",
+      "test/incremental-indexing.test.ts",
+      "test/learn/learn-handlers.test.ts",
+      "test/search-metadata-filters.test.ts"
+    ],
+    "src/learn/agent-runner.ts": [
+      "test/learn/agent-runner.test.ts"
+    ],
+    "src/learn/bootstrap.ts": [
+      "test/learn/bootstrap.test.ts",
+      "test/learn/relay-task7-findings.test.ts"
+    ],
+    "src/learn/cited-ids.ts": [
+      "test/learn/cited-ids.test.ts",
+      "test/learn/relay-challenger.test.ts"
+    ],
+    "src/learn/cli-main.ts": [
+      "test/learn/export.test.ts",
+      "test/learn/learn-cli.test.ts",
+      "test/learn/relay-task6-findings.test.ts"
+    ],
+    "src/learn/export.ts": [
+      "test/learn/export.test.ts"
+    ],
+    "src/learn/grade.ts": [
+      "test/learn/grade.test.ts",
+      "test/learn/relay-task4-findings.test.ts"
+    ],
+    "src/learn/knowledge-db.ts": [
+      "test/doctor.test.ts",
+      "test/learn/export.test.ts",
+      "test/learn/knowledge-db.test.ts",
+      "test/learn/knowledge-store.test.ts",
+      "test/learn/leaf-learner.test.ts",
+      "test/learn/learn-cli.test.ts",
+      "test/learn/learned-block.test.ts",
+      "test/learn/learner.test.ts",
+      "test/learn/relay-task8-challenger.test.ts",
+      "test/learn/relay-task9-findings.test.ts",
+      "test/learn/report.test.ts",
+      "test/learn/skills-tool.test.ts",
+      "test/learn/solver.test.ts",
+      "test/learn/validate.test.ts"
+    ],
+    "src/learn/knowledge-gate.ts": [
+      "test/learn/knowledge-gate.test.ts",
+      "test/learn/relay-challenger.test.ts"
+    ],
+    "src/learn/knowledge-store.ts": [
+      "test/doctor.test.ts",
+      "test/learn/bootstrap.test.ts",
+      "test/learn/export.test.ts",
+      "test/learn/knowledge-db.test.ts",
+      "test/learn/knowledge-store.test.ts",
+      "test/learn/leaf-learner.test.ts",
+      "test/learn/learn-cli.test.ts",
+      "test/learn/learned-block.test.ts",
+      "test/learn/learner.test.ts",
+      "test/learn/learning-store.test.ts",
+      "test/learn/relay-task6-findings.test.ts",
+      "test/learn/relay-task8-challenger.test.ts",
+      "test/learn/relay-task9-findings.test.ts",
+      "test/learn/report.test.ts",
+      "test/learn/skills-tool.test.ts",
+      "test/learn/solver.test.ts",
+      "test/learn/validate.test.ts"
+    ],
+    "src/learn/leaf-learner.ts": [
+      "test/learn/leaf-learner.test.ts",
+      "test/learn/relay-task8-challenger.test.ts"
+    ],
+    "src/learn/learn-config.ts": [
+      "test/learn/knowledge-gate.test.ts",
+      "test/learn/learn-config.test.ts",
+      "test/learn/learn-handlers.test.ts"
+    ],
+    "src/learn/learn-handlers.ts": [
+      "test/learn/learn-handlers.test.ts"
+    ],
+    "src/learn/learn-inject.ts": [
+      "test/digest-hook.test.ts",
+      "test/learn/learn-inject.test.ts",
+      "test/learn/relay-findings.test.ts"
+    ],
+    "src/learn/learn-lock.ts": [
+      "test/learn/learn-cli.test.ts",
+      "test/learn/learn-lock.test.ts"
+    ],
+    "src/learn/learned-block.ts": [
+      "test/learn/learned-block.test.ts",
+      "test/learn/relay-findings.test.ts"
+    ],
+    "src/learn/learned-text-screen.ts": [
+      "test/learn/learn-inject.test.ts",
+      "test/learn/learned-text-screen.test.ts"
+    ],
+    "src/learn/learner.ts": [
+      "test/learn/learner.test.ts",
+      "test/learn/relay-task9-findings.test.ts"
+    ],
+    "src/learn/learning-db.ts": [
+      "test/doctor.test.ts",
+      "test/learn/bootstrap.test.ts",
+      "test/learn/leaf-learner.test.ts",
+      "test/learn/learn-cli.test.ts",
+      "test/learn/learner.test.ts",
+      "test/learn/learning-db.test.ts",
+      "test/learn/relay-task4-findings.test.ts",
+      "test/learn/relay-task6-findings.test.ts",
+      "test/learn/relay-task8-challenger.test.ts",
+      "test/learn/relay-task9-findings.test.ts",
+      "test/learn/report.test.ts",
+      "test/learn/solver.test.ts",
+      "test/learn/tasks.test.ts",
+      "test/learn/validate.test.ts"
+    ],
+    "src/learn/learning-store.ts": [
+      "test/digest-hook.test.ts",
+      "test/doctor.test.ts",
+      "test/learn/bootstrap.test.ts",
+      "test/learn/export.test.ts",
+      "test/learn/knowledge-db.test.ts",
+      "test/learn/leaf-learner.test.ts",
+      "test/learn/learn-cli.test.ts",
+      "test/learn/learn-inject.test.ts",
+      "test/learn/learned-block.test.ts",
+      "test/learn/learner.test.ts",
+      "test/learn/learning-db.test.ts",
+      "test/learn/learning-store.test.ts",
+      "test/learn/relay-task4-findings.test.ts",
+      "test/learn/relay-task6-findings.test.ts",
+      "test/learn/relay-task8-challenger.test.ts",
+      "test/learn/relay-task9-findings.test.ts",
+      "test/learn/report.test.ts",
+      "test/learn/solver.test.ts",
+      "test/learn/tasks.test.ts",
+      "test/learn/validate.test.ts"
+    ],
+    "src/learn/pii-redactor.ts": [],
+    "src/learn/prompts.ts": [
+      "test/learn/prompts.test.ts"
+    ],
+    "src/learn/report.ts": [
+      "test/learn/report.test.ts"
+    ],
+    "src/learn/sdk-tools.ts": [
+      "test/learn/agent-runner.test.ts",
+      "test/learn/bootstrap.test.ts",
+      "test/learn/sdk-tools.test.ts"
+    ],
+    "src/learn/semaphore.ts": [
+      "test/learn/relay-task5-findings.test.ts",
+      "test/learn/semaphore.test.ts"
+    ],
+    "src/learn/skills-tool.ts": [
+      "test/learn/skills-tool.test.ts"
+    ],
+    "src/learn/solver.ts": [
+      "test/learn/bootstrap.test.ts",
+      "test/learn/leaf-learner.test.ts",
+      "test/learn/learner.test.ts",
+      "test/learn/relay-task8-challenger.test.ts",
+      "test/learn/relay-task9-findings.test.ts",
+      "test/learn/solver.test.ts",
+      "test/learn/validate.test.ts"
+    ],
+    "src/learn/tasks.ts": [
+      "test/learn/relay-task4-findings.test.ts",
+      "test/learn/tasks.test.ts"
+    ],
+    "src/learn/types.ts": [
+      "test/doctor.test.ts",
+      "test/learn/bootstrap.test.ts",
+      "test/learn/cited-ids.test.ts",
+      "test/learn/export.test.ts",
+      "test/learn/grade.test.ts",
+      "test/learn/knowledge-db.test.ts",
+      "test/learn/knowledge-gate.test.ts",
+      "test/learn/knowledge-store.test.ts",
+      "test/learn/leaf-learner.test.ts",
+      "test/learn/learn-cli.test.ts",
+      "test/learn/learn-inject.test.ts",
+      "test/learn/learned-block.test.ts",
+      "test/learn/learner.test.ts",
+      "test/learn/learning-db.test.ts",
+      "test/learn/prompts.test.ts",
+      "test/learn/relay-findings.test.ts",
+      "test/learn/relay-task6-findings.test.ts",
+      "test/learn/relay-task8-challenger.test.ts",
+      "test/learn/relay-task9-findings.test.ts",
+      "test/learn/report.test.ts",
+      "test/learn/sdk-tools.test.ts",
+      "test/learn/skills-tool.test.ts",
+      "test/learn/solver.test.ts",
+      "test/learn/validate.test.ts"
+    ],
+    "src/learn/usage.ts": [],
+    "src/learn/validate.ts": [
+      "test/learn/validate.test.ts"
+    ],
+    "src/learn-cli.ts": [],
+    "src/lockfile.ts": [
+      "test/learn/learn-cli.test.ts",
+      "test/lockfile.test.ts"
+    ],
+    "src/logging.ts": [
+      "test/doctor.test.ts",
+      "test/logging-append.test.ts",
+      "test/logging.test.ts",
+      "test/sync-cli-lock.test.ts",
+      "test/sync-hook-logging.test.ts"
+    ],
+    "src/mcp-auth.ts": [
+      "test/mcp-auth.test.ts"
+    ],
+    "src/mcp-schemas.ts": [
+      "test/mcp-schemas.test.ts"
+    ],
+    "src/mcp-server.ts": [],
+    "src/mcp-tools.ts": [
+      "test/digest-mcp.test.ts",
+      "test/learn/learn-handlers.test.ts",
+      "test/mcp-tools.test.ts"
+    ],
+    "src/node-floor.ts": [
+      "test/node-floor.test.ts"
+    ],
+    "src/ollama-backend.ts": [
+      "test/backfill-gpu-reservation.test.ts",
+      "test/digest-gpu-reservation.test.ts",
+      "test/gpu-reservation.test.ts",
+      "test/ollama-backend.test.ts",
+      "test/summarizer-gpu-reservation.test.ts",
+      "test/sync-gpu-reservation.test.ts"
+    ],
+    "src/orphan-reaper.ts": [
+      "test/orphan-reaper.test.ts"
+    ],
+    "src/parser.ts": [
+      "test/codex-transcripts.test.ts",
+      "test/integration.test.ts",
+      "test/parser-tool-result.test.ts",
+      "test/parser.test.ts"
+    ],
+    "src/paths.ts": [
+      "test/codex-transcripts.test.ts",
+      "test/learn/knowledge-db.test.ts",
+      "test/learn/knowledge-store.test.ts",
+      "test/learn/learn-cli.test.ts",
+      "test/learn/learn-lock.test.ts",
+      "test/learn/learning-store.test.ts",
+      "test/learn/skills-tool.test.ts",
+      "test/paths.test.ts"
+    ],
+    "src/priority.ts": [
+      "test/priority.test.ts"
+    ],
+    "src/prune.ts": [
+      "test/prune.test.ts"
+    ],
+    "src/redact.ts": [
+      "test/mcp-read-redaction.test.ts",
+      "test/redact-patterns.test.ts",
+      "test/security-speed-helpers.test.ts"
+    ],
+    "src/reentrancy.ts": [
+      "test/backfill-cli-gpu-reservation.test.ts",
+      "test/digest-gpu-reservation.test.ts",
+      "test/digest-job.test.ts",
+      "test/learn/agent-runner.test.ts",
+      "test/reentrancy.test.ts",
+      "test/summarizer-api-env.test.ts"
+    ],
+    "src/search-cli.ts": [],
+    "src/search.ts": [
+      "test/cosine-similarity.test.ts",
+      "test/cross-harness-recall.test.ts",
+      "test/integration.test.ts",
+      "test/multi-concept.test.ts",
+      "test/search-metadata-filters.test.ts",
+      "test/search-with-summary.test.ts",
+      "test/security-speed-helpers.test.ts",
+      "test/sync-incremental-and-db.test.ts"
+    ],
+    "src/show-cli.ts": [],
+    "src/show.ts": [
+      "test/mcp-read-redaction.test.ts",
+      "test/show.test.ts"
+    ],
+    "src/stats-cli.ts": [],
+    "src/stats.ts": [
+      "test/stats-format.test.ts",
+      "test/stats.test.ts"
+    ],
+    "src/summarizer.ts": [
+      "test/summarizer-api-env.test.ts",
+      "test/summarizer-claude-path.test.ts",
+      "test/summarizer-gpu-reservation.test.ts",
+      "test/summarizer-options.test.ts",
+      "test/summarizer-text.test.ts"
+    ],
+    "src/sync-banner.ts": [
+      "test/sync-banner.test.ts"
+    ],
+    "src/sync-cli.ts": [],
+    "src/sync.ts": [
+      "test/exclude-nested.test.ts",
+      "test/sync-empty-summary-audit.test.ts",
+      "test/sync-gpu-reservation.test.ts",
+      "test/sync-helpers.test.ts",
+      "test/sync-incremental-and-db.test.ts",
+      "test/sync-pending-and-legacy-retry.test.ts",
+      "test/sync-session-id.test.ts",
+      "test/sync-summary-retry.test.ts",
+      "test/sync.test.ts"
+    ],
+    "src/types.ts": [
+      "test/codex-transcripts.test.ts",
+      "test/cross-harness-recall.test.ts",
+      "test/db-helpers.test.ts",
+      "test/db.test.ts",
+      "test/digest-prompts.test.ts",
+      "test/embedding-migration-helpers.test.ts",
+      "test/oversized-message-guard.test.ts",
+      "test/prune.test.ts",
+      "test/search-with-summary.test.ts",
+      "test/summarizer-claude-path.test.ts",
+      "test/summarizer-gpu-reservation.test.ts",
+      "test/summarizer-text.test.ts",
+      "test/sync-incremental-and-db.test.ts",
+      "test/verify.test.ts"
+    ],
+    "src/verify.ts": [
+      "test/verify.test.ts"
+    ]
+  },
+  "testToSourceMap": {
+    "test/agent-sdk-floor.test.ts": [],
+    "test/allow-scripts-pin.test.ts": [],
+    "test/archive-path-edges.test.ts": [
+      "src/archive-path.ts"
+    ],
+    "test/archive-path.test.ts": [
+      "src/archive-path.ts"
+    ],
+    "test/backfill-cli-gpu-reservation.test.ts": [
+      "src/reentrancy.ts"
+    ],
+    "test/backfill-gpu-reservation.test.ts": [
+      "src/backfill.ts",
+      "src/ollama-backend.ts"
+    ],
+    "test/backfill.test.ts": [
+      "src/backfill.ts"
+    ],
+    "test/claude-e2e-script.test.ts": [],
+    "test/codex-doctor.test.ts": [
+      "src/codex-hook-trust.ts",
+      "src/doctor.ts"
+    ],
+    "test/codex-e2e-script.test.ts": [],
+    "test/codex-hook-trust.test.ts": [
+      "src/codex-hook-trust.ts"
+    ],
+    "test/codex-plugin.test.ts": [],
+    "test/codex-skills.test.ts": [],
+    "test/codex-support-extra.test.ts": [
+      "src/codex-support.ts"
+    ],
+    "test/codex-support.test.ts": [
+      "src/codex-support.ts"
+    ],
+    "test/codex-transcripts.test.ts": [
+      "src/paths.ts",
+      "src/parser.ts",
+      "src/db.ts",
+      "src/types.ts"
+    ],
+    "test/constants.test.ts": [
+      "src/constants.ts"
+    ],
+    "test/cosine-similarity.test.ts": [
+      "src/search.ts"
+    ],
+    "test/cross-harness-recall.test.ts": [
+      "src/db.ts",
+      "src/search.ts",
+      "src/types.ts"
+    ],
+    "test/db-helpers.test.ts": [
+      "src/db.ts",
+      "src/types.ts"
+    ],
+    "test/db.test.ts": [
+      "src/db.ts",
+      "src/types.ts"
+    ],
+    "test/deps-health.test.ts": [
+      "src/deps-health.ts"
+    ],
+    "test/digest-compress.test.ts": [
+      "src/digest-db.ts",
+      "src/digest-compress.ts"
+    ],
+    "test/digest-db.test.ts": [
+      "src/db.ts",
+      "src/digest-db.ts"
+    ],
+    "test/digest-gpu-reservation.test.ts": [
+      "src/db.ts",
+      "src/digest-job.ts",
+      "src/digest-compress.ts",
+      "src/digest-db.ts",
+      "src/ollama-backend.ts",
+      "src/reentrancy.ts"
+    ],
+    "test/digest-hook.test.ts": [
+      "src/db.ts",
+      "src/digest-db.ts",
+      "src/digest-inject.ts",
+      "src/learn/learning-store.ts",
+      "src/learn/learn-inject.ts"
+    ],
+    "test/digest-inject.test.ts": [
+      "src/digest-db.ts",
+      "src/digest-inject.ts"
+    ],
+    "test/digest-job.test.ts": [
+      "src/db.ts",
+      "src/digest-job.ts",
+      "src/digest-db.ts",
+      "src/reentrancy.ts"
+    ],
+    "test/digest-mcp.test.ts": [
+      "src/db.ts",
+      "src/digest-db.ts",
+      "src/mcp-tools.ts",
+      "src/digest-phase.ts",
+      "src/digest-tool.ts"
+    ],
+    "test/digest-prompts.test.ts": [
+      "src/digest-prompts.ts",
+      "src/constants.ts",
+      "src/types.ts",
+      "src/digest-db.ts"
+    ],
+    "test/digest-validate.test.ts": [
+      "src/digest-validate.ts"
+    ],
+    "test/doctor.test.ts": [
+      "src/doctor.ts",
+      "src/doctor-learn.ts",
+      "src/logging.ts",
+      "src/learn/knowledge-store.ts",
+      "src/learn/learning-store.ts",
+      "src/learn/knowledge-db.ts",
+      "src/learn/learning-db.ts",
+      "src/learn/types.ts",
+      "src/db.ts"
+    ],
+    "test/embedding-migration-helpers.test.ts": [
+      "src/embedding-migration.ts",
+      "src/db.ts",
+      "src/types.ts"
+    ],
+    "test/embedding-migration.test.ts": [
+      "src/embedding-migration.ts",
+      "src/embeddings.ts"
+    ],
+    "test/embeddings-format.test.ts": [
+      "src/embeddings.ts",
+      "src/constants.ts"
+    ],
+    "test/exclude-nested.test.ts": [
+      "src/indexer.ts",
+      "src/sync.ts"
+    ],
+    "test/gpu-reservation.test.ts": [
+      "src/gpu-reservation.ts",
+      "src/ollama-backend.ts"
+    ],
+    "test/hooks.test.ts": [],
+    "test/incremental-indexing.test.ts": [
+      "src/indexer.ts"
+    ],
+    "test/integration.test.ts": [
+      "src/db.ts",
+      "src/embeddings.ts",
+      "src/search.ts",
+      "src/parser.ts"
+    ],
+    "test/learn/agent-runner.test.ts": [
+      "src/learn/agent-runner.ts",
+      "src/learn/sdk-tools.ts",
+      "src/reentrancy.ts"
+    ],
+    "test/learn/bootstrap.test.ts": [
+      "src/learn/bootstrap.ts",
+      "src/learn/solver.ts",
+      "src/learn/knowledge-store.ts",
+      "src/learn/learning-store.ts",
+      "src/learn/learning-db.ts",
+      "src/learn/sdk-tools.ts",
+      "src/learn/types.ts"
+    ],
+    "test/learn/cited-ids.test.ts": [
+      "src/learn/cited-ids.ts",
+      "src/learn/types.ts"
+    ],
+    "test/learn/export.test.ts": [
+      "src/learn/export.ts",
+      "src/learn/knowledge-store.ts",
+      "src/learn/learning-store.ts",
+      "src/learn/knowledge-db.ts",
+      "src/learn/cli-main.ts",
+      "src/learn/types.ts"
+    ],
+    "test/learn/grade.test.ts": [
+      "src/learn/grade.ts",
+      "src/learn/types.ts"
+    ],
+    "test/learn/knowledge-db.test.ts": [
+      "src/paths.ts",
+      "src/learn/knowledge-store.ts",
+      "src/learn/learning-store.ts",
+      "src/learn/knowledge-db.ts",
+      "src/learn/types.ts"
+    ],
+    "test/learn/knowledge-gate.test.ts": [
+      "src/learn/knowledge-gate.ts",
+      "src/learn/learn-config.ts",
+      "src/learn/types.ts"
+    ],
+    "test/learn/knowledge-store.test.ts": [
+      "src/paths.ts",
+      "src/learn/types.ts",
+      "src/learn/knowledge-store.ts",
+      "src/learn/knowledge-db.ts"
+    ],
+    "test/learn/leaf-learner.test.ts": [
+      "src/learn/leaf-learner.ts",
+      "src/learn/solver.ts",
+      "src/learn/knowledge-store.ts",
+      "src/learn/learning-store.ts",
+      "src/learn/learning-db.ts",
+      "src/learn/knowledge-db.ts",
+      "src/learn/types.ts"
+    ],
+    "test/learn/learn-cli.test.ts": [
+      "src/learn/cli-main.ts",
+      "src/learn/learning-store.ts",
+      "src/learn/knowledge-store.ts",
+      "src/learn/knowledge-db.ts",
+      "src/learn/learning-db.ts",
+      "src/lockfile.ts",
+      "src/learn/learn-lock.ts",
+      "src/paths.ts",
+      "src/learn/types.ts"
+    ],
+    "test/learn/learn-config.test.ts": [
+      "src/learn/learn-config.ts"
+    ],
+    "test/learn/learn-handlers.test.ts": [
+      "src/indexer.ts",
+      "src/db.ts",
+      "src/digest-db.ts",
+      "src/learn/learn-handlers.ts",
+      "src/learn/learn-config.ts",
+      "src/digest-inject.ts",
+      "src/mcp-tools.ts"
+    ],
+    "test/learn/learn-inject.test.ts": [
+      "src/learn/learn-inject.ts",
+      "src/learn/learning-store.ts",
+      "src/learn/learned-text-screen.ts",
+      "src/learn/types.ts"
+    ],
+    "test/learn/learn-lock.test.ts": [
+      "src/learn/learn-lock.ts",
+      "src/paths.ts"
+    ],
+    "test/learn/learned-block.test.ts": [
+      "src/learn/knowledge-store.ts",
+      "src/learn/learning-store.ts",
+      "src/learn/knowledge-db.ts",
+      "src/learn/learned-block.ts",
+      "src/learn/types.ts"
+    ],
+    "test/learn/learned-text-screen.test.ts": [
+      "src/learn/learned-text-screen.ts"
+    ],
+    "test/learn/learner.test.ts": [
+      "src/learn/learner.ts",
+      "src/learn/solver.ts",
+      "src/learn/knowledge-store.ts",
+      "src/learn/learning-store.ts",
+      "src/learn/learning-db.ts",
+      "src/learn/knowledge-db.ts",
+      "src/learn/types.ts"
+    ],
+    "test/learn/learning-db.test.ts": [
+      "src/learn/learning-db.ts",
+      "src/learn/learning-store.ts",
+      "src/learn/types.ts"
+    ],
+    "test/learn/learning-store.test.ts": [
+      "src/paths.ts",
+      "src/learn/learning-store.ts",
+      "src/learn/knowledge-store.ts"
+    ],
+    "test/learn/prompts.test.ts": [
+      "src/learn/prompts.ts",
+      "src/learn/types.ts"
+    ],
+    "test/learn/relay-challenger.test.ts": [
+      "src/learn/cited-ids.ts",
+      "src/learn/knowledge-gate.ts"
+    ],
+    "test/learn/relay-findings.test.ts": [
+      "src/learn/learn-inject.ts",
+      "src/learn/learned-block.ts",
+      "src/learn/types.ts"
+    ],
+    "test/learn/relay-task4-findings.test.ts": [
+      "src/learn/tasks.ts",
+      "src/learn/learning-store.ts",
+      "src/learn/learning-db.ts",
+      "src/learn/grade.ts"
+    ],
+    "test/learn/relay-task5-findings.test.ts": [
+      "src/learn/semaphore.ts"
+    ],
+    "test/learn/relay-task6-findings.test.ts": [
+      "src/learn/cli-main.ts",
+      "src/learn/learning-store.ts",
+      "src/learn/learning-db.ts",
+      "src/learn/types.ts",
+      "src/learn/knowledge-store.ts"
+    ],
+    "test/learn/relay-task7-findings.test.ts": [
+      "src/learn/bootstrap.ts"
+    ],
+    "test/learn/relay-task8-challenger.test.ts": [
+      "src/learn/leaf-learner.ts",
+      "src/learn/solver.ts",
+      "src/learn/knowledge-store.ts",
+      "src/learn/learning-store.ts",
+      "src/learn/learning-db.ts",
+      "src/learn/knowledge-db.ts",
+      "src/learn/types.ts"
+    ],
+    "test/learn/relay-task9-findings.test.ts": [
+      "src/learn/learner.ts",
+      "src/learn/solver.ts",
+      "src/learn/knowledge-store.ts",
+      "src/learn/learning-store.ts",
+      "src/learn/learning-db.ts",
+      "src/learn/knowledge-db.ts",
+      "src/learn/types.ts"
+    ],
+    "test/learn/report.test.ts": [
+      "src/learn/report.ts",
+      "src/learn/learning-store.ts",
+      "src/learn/knowledge-store.ts",
+      "src/learn/knowledge-db.ts",
+      "src/learn/learning-db.ts",
+      "src/learn/types.ts"
+    ],
+    "test/learn/sdk-tools.test.ts": [
+      "src/learn/sdk-tools.ts",
+      "src/learn/types.ts"
+    ],
+    "test/learn/semaphore.test.ts": [
+      "src/learn/semaphore.ts"
+    ],
+    "test/learn/skills-tool.test.ts": [
+      "src/learn/knowledge-store.ts",
+      "src/learn/knowledge-db.ts",
+      "src/learn/skills-tool.ts",
+      "src/paths.ts",
+      "src/digest-inject.ts",
+      "src/learn/types.ts"
+    ],
+    "test/learn/solver.test.ts": [
+      "src/learn/solver.ts",
+      "src/learn/knowledge-store.ts",
+      "src/learn/knowledge-db.ts",
+      "src/learn/learning-store.ts",
+      "src/learn/learning-db.ts",
+      "src/learn/types.ts"
+    ],
+    "test/learn/tasks.test.ts": [
+      "src/learn/tasks.ts",
+      "src/learn/learning-store.ts",
+      "src/learn/learning-db.ts"
+    ],
+    "test/learn/validate.test.ts": [
+      "src/learn/validate.ts",
+      "src/learn/solver.ts",
+      "src/learn/knowledge-store.ts",
+      "src/learn/learning-store.ts",
+      "src/learn/learning-db.ts",
+      "src/learn/knowledge-db.ts",
+      "src/learn/types.ts"
+    ],
+    "test/lockfile.test.ts": [
+      "src/lockfile.ts"
+    ],
+    "test/logging-append.test.ts": [
+      "src/logging.ts"
+    ],
+    "test/logging.test.ts": [
+      "src/logging.ts"
+    ],
+    "test/mcp-auth.test.ts": [
+      "src/mcp-auth.ts"
+    ],
+    "test/mcp-protocol.test.ts": [],
+    "test/mcp-read-redaction.test.ts": [
+      "src/redact.ts",
+      "src/show.ts"
+    ],
+    "test/mcp-schemas.test.ts": [
+      "src/mcp-schemas.ts"
+    ],
+    "test/mcp-tools.test.ts": [
+      "src/mcp-tools.ts",
+      "src/db.ts"
+    ],
+    "test/multi-concept.test.ts": [
+      "src/search.ts",
+      "src/embeddings.ts"
+    ],
+    "test/node-floor.test.ts": [
+      "src/node-floor.ts"
+    ],
+    "test/ollama-backend.test.ts": [
+      "src/ollama-backend.ts"
+    ],
+    "test/orphan-reaper.test.ts": [
+      "src/orphan-reaper.ts"
+    ],
+    "test/oversized-message-guard.test.ts": [
+      "src/db.ts",
+      "src/constants.ts",
+      "src/types.ts"
+    ],
+    "test/parser-tool-result.test.ts": [
+      "src/parser.ts"
+    ],
+    "test/parser.test.ts": [
+      "src/parser.ts"
+    ],
+    "test/paths.test.ts": [
+      "src/paths.ts"
+    ],
+    "test/priority.test.ts": [
+      "src/priority.ts"
+    ],
+    "test/prune.test.ts": [
+      "src/db.ts",
+      "src/prune.ts",
+      "src/types.ts"
+    ],
+    "test/query-prefix.test.ts": [
+      "src/embeddings.ts"
+    ],
+    "test/rebuild-native.test.ts": [],
+    "test/redact-patterns.test.ts": [
+      "src/redact.ts"
+    ],
+    "test/reentrancy.test.ts": [
+      "src/reentrancy.ts"
+    ],
+    "test/search-agent-template.test.ts": [],
+    "test/search-metadata-filters.test.ts": [
+      "src/indexer.ts",
+      "src/search.ts"
+    ],
+    "test/search-with-summary.test.ts": [
+      "src/search.ts",
+      "src/types.ts"
+    ],
+    "test/security-speed-helpers.test.ts": [
+      "src/redact.ts",
+      "src/api-endpoint.ts",
+      "src/search.ts"
+    ],
+    "test/show.test.ts": [
+      "src/show.ts"
+    ],
+    "test/stats-format.test.ts": [
+      "src/stats.ts"
+    ],
+    "test/stats.test.ts": [
+      "src/stats.ts"
+    ],
+    "test/summarizer-api-env.test.ts": [
+      "src/summarizer.ts",
+      "src/reentrancy.ts"
+    ],
+    "test/summarizer-claude-path.test.ts": [
+      "src/types.ts",
+      "src/summarizer.ts"
+    ],
+    "test/summarizer-gpu-reservation.test.ts": [
+      "src/summarizer.ts",
+      "src/ollama-backend.ts",
+      "src/types.ts"
+    ],
+    "test/summarizer-options.test.ts": [
+      "src/summarizer.ts"
+    ],
+    "test/summarizer-text.test.ts": [
+      "src/summarizer.ts",
+      "src/types.ts"
+    ],
+    "test/sync-banner.test.ts": [
+      "src/sync-banner.ts"
+    ],
+    "test/sync-cli-lock.test.ts": [
+      "src/logging.ts"
+    ],
+    "test/sync-cli-reentrancy.test.ts": [],
+    "test/sync-empty-summary-audit.test.ts": [
+      "src/sync.ts"
+    ],
+    "test/sync-gpu-reservation.test.ts": [
+      "src/sync.ts",
+      "src/ollama-backend.ts"
+    ],
+    "test/sync-helpers.test.ts": [
+      "src/sync.ts",
+      "src/constants.ts"
+    ],
+    "test/sync-hook-gpu-reservation.test.ts": [],
+    "test/sync-hook-learn-pids.test.ts": [],
+    "test/sync-hook-logging.test.ts": [
+      "src/logging.ts"
+    ],
+    "test/sync-incremental-and-db.test.ts": [
+      "src/sync.ts",
+      "src/db.ts",
+      "src/search.ts",
+      "src/types.ts"
+    ],
+    "test/sync-pending-and-legacy-retry.test.ts": [
+      "src/sync.ts"
+    ],
+    "test/sync-session-id.test.ts": [
+      "src/sync.ts"
+    ],
+    "test/sync-summary-retry.test.ts": [
+      "src/sync.ts"
+    ],
+    "test/sync.test.ts": [
+      "src/sync.ts"
+    ],
+    "test/tool-calls-cascade.test.ts": [
+      "src/db.ts"
+    ],
+    "test/verify.test.ts": [
+      "src/verify.ts",
+      "src/db.ts",
+      "src/embeddings.ts",
+      "src/types.ts"
+    ],
+    "test/version-consistency.test.ts": []
+  },
+  "classifiedUntested": [
+    {
+      "file": "cli/digest-hook.js",
+      "category": null
+    },
+    {
+      "file": "cli/ensure-deps.js",
+      "category": null
+    },
+    {
+      "file": "cli/episodic-memory.js",
+      "category": null
+    },
+    {
+      "file": "cli/index-conversations.js",
+      "category": null
+    },
+    {
+      "file": "cli/mcp-server-wrapper.js",
+      "category": null
+    },
+    {
+      "file": "cli/search-conversations.js",
+      "category": null
+    },
+    {
+      "file": "cli/sync-hook.js",
+      "category": null
+    },
+    {
+      "file": "src/backfill-cli.ts",
+      "category": null
+    },
+    {
+      "file": "src/doctor-cli.ts",
+      "category": null
+    },
+    {
+      "file": "src/index-cli.ts",
+      "category": null
+    },
+    {
+      "file": "src/index.ts",
+      "category": null
+    },
+    {
+      "file": "src/learn-cli.ts",
+      "category": null
+    },
+    {
+      "file": "src/learn/pii-redactor.ts",
+      "category": null
+    },
+    {
+      "file": "src/learn/usage.ts",
+      "category": null
+    },
+    {
+      "file": "src/mcp-server.ts",
+      "category": null
+    },
+    {
+      "file": "src/search-cli.ts",
+      "category": null
+    },
+    {
+      "file": "src/show-cli.ts",
+      "category": null
+    },
+    {
+      "file": "src/stats-cli.ts",
+      "category": null
+    },
+    {
+      "file": "src/sync-cli.ts",
+      "category": null
+    }
+  ]
+}

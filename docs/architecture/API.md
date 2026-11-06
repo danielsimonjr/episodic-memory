@@ -1,0 +1,137 @@
+# API
+
+This document lists the public surface of the package. There are four surfaces: the MCP tools, the command line, the library barrel, and the environment variables.
+
+## MCP tools
+
+The server name is `episodic-memory`. It registers four tools in `src/mcp-server.ts`. Every input schema is strict, and an unknown field is an error. When `EPISODIC_MEMORY_MCP_TOKEN` is set, every call must also carry `auth_token`.
+
+### `search`
+
+Find past conversations.
+
+| Field | Type | Rule |
+|---|---|---|
+| `query` | string, or array of 2 to 5 strings | A string needs at least 2 characters. An array runs a multi-concept AND search. |
+| `mode` | `vector`, `text` or `both` | Default `both`. Used for a single string only. |
+| `limit` | integer 1 to 50 | Default 10. |
+| `after`, `before` | `YYYY-MM-DD` | Optional date bounds. |
+| `project`, `session_id`, `git_branch` | string | Exact-match filters. |
+| `response_format` | `markdown` or `json` | Default `markdown`. |
+| `auth_token` | string | Required when the token variable is set. |
+
+### `read`
+
+Read an archived conversation.
+
+| Field | Type | Rule |
+|---|---|---|
+| `path` | string | The `archive_path` of a search result. It must lie inside the archive and end in `.jsonl`. |
+| `startLine`, `endLine` | integer, 1-indexed, inclusive | Optional range. |
+| `auth_token` | string | As above. |
+
+### `digest`
+
+Read or search the cited digest, or store a note.
+
+| Field | Type | Rule |
+|---|---|---|
+| `query` | string | Search the digest instead of showing it. |
+| `project` | string | Project key. Defaults to the key of the working directory. |
+| `limit` | integer 1 to 50 | Default 10. |
+| `expand` | string | An exchange id from a `[#id]` mark. Returns the archive path and line range to pass to `read`. |
+| `handoff` | string, at most 2000 characters | Store a one-line note for the next session. The tool caps it at 500 characters and redacts it. |
+| `auth_token` | string | As above. |
+
+### `skills`
+
+List learned skills, search them, or load one. It reads the knowledge store only when `EPISODIC_MEMORY_LEARN` is on.
+
+| Field | Type | Rule |
+|---|---|---|
+| `get` | string | The slug of one skill. Returns its front matter and body. |
+| `query` | string | Search the skills instead of listing them. |
+| `project` | string | Project key. |
+| `limit` | integer 1 to 50 | Default 10. |
+| `auth_token` | string | As above. |
+
+## Command line
+
+`package.json` declares four `bin` entries.
+
+| Binary | Target |
+|---|---|
+| `episodic-memory` | `cli/episodic-memory.js`, the dispatcher |
+| `episodic-memory-index` | `cli/index-conversations.js` |
+| `episodic-memory-search` | `cli/search-conversations` |
+| `episodic-memory-mcp-server` | `cli/mcp-server` |
+
+The dispatcher takes a command as its first argument.
+
+| Command | Purpose |
+|---|---|
+| `sync` | Copy new transcripts to the archive and index them. `--background` detaches the work. |
+| `index` | Subcommands `index-all`, `index-session`, `index-cleanup`, `verify`, `repair`, `rebuild`, `prune` and `vacuum`. Options include `--concurrency` and `--no-summaries`. |
+| `search` | Search from the terminal. |
+| `show` | Print one conversation. `--format markdown` (default) or `--format html`. |
+| `stats` | Print index counts. |
+| `doctor` | Check the install, the data and the learned-knowledge store. |
+| `backfill` | Summarize archive conversations that `sync` cannot reach. |
+| `learn` | The learned-knowledge commands: `tasks`, `solve`, `bootstrap`, `improve`, `status`, `approve`, `export`, `render`, and the report command. |
+
+`learn improve --dry-run` solves and reports without running any learner. `learn approve <name> [--yes]` activates a candidate after review.
+
+## Hooks
+
+`hooks/hooks.json` registers `cli/sync-hook.js` and `cli/digest-hook.js` for the session-start events `startup`, `resume`, `clear` and `compact`.
+
+## Library barrel
+
+`src/index.ts` re-exports eight modules. The exports below are the public library surface.
+
+| Module | Exports |
+|---|---|
+| `types` | `ToolCall`, `ConversationHarness`, `ConversationExchange`, `SearchResult`, `MultiConceptResult` |
+| `db` | `OpenDatabaseOptions`, `migrateSchema`, `migrateToolCallsCascade`, `ensureFts`, `upsertExchangeFts`, `deleteExchangeFts`, `openDatabase`, `initDatabase`, `getSharedReaderDatabase`, `closeSharedReaderDatabase`, `insertExchange`, `getAllExchanges`, `getFileLastIndexed`, `getMaxIndexedLine`, `getFreelistInfo`, `vacuumDatabase`, `deleteExchange` |
+| `embeddings` | `BGE_QUERY_PREFIX`, `initEmbeddings`, `generateEmbeddings`, `generateEmbedding`, `withQueryPrefix`, `generateQueryEmbedding`, `formatExchangeEmbeddingText`, `generateExchangeEmbedding`, `generateExchangeEmbeddings` |
+| `indexer` | `indexConversations`, `indexSession`, `indexUnprocessed` |
+| `parser` | `parseConversation`, `parseConversationFile` |
+| `search` | `includeSearchSummaries`, `maxSummaryDisplayChars`, `formatSummaryForDisplay`, `SearchOptions`, `l2DistanceToCosineSimilarity`, `buildFtsMatchQuery`, `searchConversations`, `formatResults`, `searchMultipleConcepts`, `formatMultiConceptResults` |
+| `summarizer` | `CodexSummarizerCommand`, `getApiEnv`, `shouldSkipReentrantSync`, `formatConversationText`, `extractSummary`, `buildSummarizerQueryOptions`, `buildCodexSummaryPrompt`, `buildCodexSummarizerCommand`, `CallClaudeOptions`, `callDigestModel`, `resolveLearnModels`, `callLearnModel`, `runCodexCommand`, `summarizeConversation` |
+| `paths` | `tryChmod`, `getClaudeDir`, `getCodexDir`, `getConversationSourceDirs`, `findJsonlFiles`, `getSuperpowersDir`, `getArchiveDir`, `getIndexDir`, `getDbPath`, `getLearnedDir`, `getKnowledgeDbPath`, `getLearningDbPath`, `getExcludeConfigPath`, `getExcludedProjects` |
+
+A `src` export that the barrel does not re-export is internal to the package, even when `repo-tools map` shows no importer for it. Removing an export from the barrel is a breaking change for library callers.
+
+## Environment variables
+
+| Variable | Effect |
+|---|---|
+| `EPISODIC_MEMORY_CONFIG_DIR` | Moves the config, archive, index and learned-knowledge directories. |
+| `EPISODIC_MEMORY_DB_PATH` | Overrides the database path. |
+| `EPISODIC_MEMORY_DB_BUSY_TIMEOUT_MS` | SQLite busy timeout. |
+| `EPISODIC_MEMORY_MCP_TOKEN` | Requires `auth_token` on MCP calls. |
+| `EPISODIC_MEMORY_REDACT_SECRETS` | Turns on secret redaction for indexed and returned text. |
+| `EPISODIC_MEMORY_INCLUDE_SUMMARY` | Set to `0` to hide summaries in search results. |
+| `EPISODIC_MEMORY_MAX_READ_BYTES`, `_MAX_MESSAGE_BYTES`, `_MAX_SUMMARY_BYTES`, `_MAX_SUMMARY_DISPLAY_CHARS`, `_SUMMARY_LIMIT` | Size caps. |
+| `EPISODIC_MEMORY_SUMMARIZER_BACKEND` | Selects the summary backend. `ollama` selects the local backend. |
+| `EPISODIC_MEMORY_API_MODEL`, `_API_MODEL_FALLBACK`, `_API_BASE_URL`, `_API_TOKEN`, `_API_TIMEOUT_MS` | Summarizer API settings. |
+| `EPISODIC_MEMORY_OLLAMA_URL`, `_OLLAMA_MODEL`, `_OLLAMA_MAX_PROMPT_CHARS` | Local backend settings. |
+| `EPISODIC_MEMORY_CODEX_BIN`, `_CODEX_SUMMARY_TIMEOUT_MS` | Codex summarizer settings. |
+| `EPISODIC_MEMORY_MAX_SUMMARY_ATTEMPTS` | Retry cap for failed summaries. |
+| `EPISODIC_MEMORY_MIGRATION_BATCH` | Batch size of the embedding migration. |
+| `EPISODIC_MEMORY_SUMMARIZER_GUARD` | Set by the plugin on child agent processes. Do not set it by hand. |
+| `EPISODIC_MEMORY_BACKGROUND_WORKER` | Marks the detached background worker. |
+| `EPISODIC_MEMORY_DIGEST` | Turns on the digest. `_DIGEST_MAX_SESSIONS`, `_DIGEST_MAX_CHARS`, `_DIGEST_DAY_CAP` and `_DIGEST_WEEK_CAP` tune it. |
+| `EPISODIC_MEMORY_LEARN` | Turns on the learned-knowledge feature. `_LEARN_MODEL`, `_LEARN_MAX_CALLS`, `_LEARN_MAX_MINUTES` and `_LEARN_MIN_SAVING` tune it. |
+
+## Verification
+
+Generated by `repo-tools map`.
+Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=docs/architecture`
+
+| Claim | Value | Source |
+|---|---|---|
+| totalExports | 492 | repo-tools map |
+| totalSourceFiles | 225 | repo-tools map |
+
+`totalExports` counts every export in the repository, including test and tool files. The library barrel lists only the exports that `src/index.ts` re-exports. The tool schemas come from `src/mcp-schemas.ts`. The command names come from `cli/episodic-memory.js`. The variable names come from a search for `EPISODIC_MEMORY_` in `src/` and `cli/`. None of these facts is a `repo-tools map` metric.

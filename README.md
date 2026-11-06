@@ -528,6 +528,25 @@ open output.html
 - **Codex plugin** - Integration with Codex (manifest, MCP config, hooks, skills)
 - **Self-improving memory** - the `learn` CLI, an in-process tool server for isolated solver and learner agents, and a `better-sqlite3` knowledge store under `learned/`
 
+### Documentation
+
+The `docs/architecture/` folder describes the design of the code.
+
+| Document | Content |
+|---|---|
+| [OVERVIEW](docs/architecture/OVERVIEW.md) | What the repository is, its layout and its numbers |
+| [ARCHITECTURE](docs/architecture/ARCHITECTURE.md) | The design, its principles and its decisions |
+| [COMPONENTS](docs/architecture/COMPONENTS.md) | Each module and its role |
+| [DATAFLOW](docs/architecture/DATAFLOW.md) | How a request travels from start to end |
+| [API](docs/architecture/API.md) | The MCP tools, commands, library exports and environment variables |
+| [FILE_INVENTORY](docs/architecture/FILE_INVENTORY.md) | Every file and its role (generated) |
+| [TEST_COVERAGE](docs/architecture/TEST_COVERAGE.md) | What the tests cover (generated) |
+| [DEPENDENCY_GRAPH](docs/architecture/DEPENDENCY_GRAPH.md) | Which file imports which (generated) |
+| [unused-analysis](docs/architecture/unused-analysis.md) | Files and exports with no importer (generated) |
+| [duplicate-symbols](docs/architecture/duplicate-symbols.md) | Names that more than one file defines (generated) |
+
+Regenerate the generated files with `repo-tools map . --out=docs/architecture`. Check the written documents with `repo-tools check . --docs=docs/architecture`.
+
 ## How It Works
 
 1. **Sync** - Copies conversation files from Claude Code and Codex transcript directories to archive

@@ -59,6 +59,7 @@ COMMANDS:
   show        Display a conversation in readable format
   stats       Show index statistics
   doctor      Diagnose Claude Code or Codex integration issues
+  learn       Self-improving memory: tasks, solve, status, report (needs EPISODIC_MEMORY_LEARN=1)
 
 Run 'episodic-memory <command> --help' for command-specific help.
 
@@ -109,6 +110,10 @@ async function main() {
 
       case 'backfill':
         await runScript(join(distDir, 'backfill-cli.js'), args);
+        break;
+
+      case 'learn':
+        await runScript(join(distDir, 'learn-cli.js'), args);
         break;
 
       case '--help':

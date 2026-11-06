@@ -26,5 +26,10 @@ export interface ProcSnapshot {
  * Everything present in `baselinePids` is left alone no matter what it looks like — a process
  * that predates our sync is not our orphan, and that rule is what keeps a mis-tuned signature
  * from reaching a real session.
+ *
+ * `protectedPids` is the same rule for a different owner: a `learn` run lists the subprocesses
+ * it is still using in `.learn.pids`, and those are young, signature-matching and NOT ours. The
+ * baseline cannot cover them — they are born after the hook starts the sync — so the run's own
+ * registry is the only thing that knows.
  */
-export declare function selectOrphans(procs: ProcSnapshot[], baselinePids: Set<number>): ProcSnapshot[];
+export declare function selectOrphans(procs: ProcSnapshot[], baselinePids: Set<number>, protectedPids?: Set<number>): ProcSnapshot[];

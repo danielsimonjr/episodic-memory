@@ -6,7 +6,26 @@
 - **A candidate knowledge revision no longer hides the still-active previous version.** `putEntry` no longer clears the parent's `isLatest`; only `supersede` does. `listActive` and snapshots are gated on status and `supersededBy`. `getBySlug` returns the highest logical version. Reflection `generalization_confidence` uses 0.3 / 0.6 / 0.9.
 
 ### Added
-- **Self-practice task generation and grading — the eval harness (Task 4 of the Recursa plan).** The
+- **The `learn` CLI: `tasks`, `solve`, `status` and `report` (Task 6 of the Recursa plan).**
+  `episodic-memory learn` now dispatches to `dist/learn-cli.js`, which checks the reentrancy guard,
+  the flag and the fleet GPU reservation — and drops to below-normal priority — before it imports the
+  SDK, memoryjs or transformers, so a guarded or flag-off invocation costs nothing. `learn tasks`
+  generates self-practice tasks (`--per-project`, `--seed`), and `learn tasks --check` marks the tasks
+  whose source address no longer resolves as stale. `learn solve` solves a split, storing one graded
+  attempt per task, and every command that spends money computes its signal-task baseline first and
+  refuses to start when that alone exceeds `EPISODIC_MEMORY_LEARN_MAX_CALLS` (twice the count for
+  bootstrap, which solves the same set before and after). `learn status` prints the flag, entries by
+  kind and status, the candidates awaiting approval and the latest run. `learn report` prints pass
+  rates per split and tier before and after, the entries a run kept, the candidates still pending,
+  every rejection with its reason, the budget spent, child runs and reflections — `--json` for the
+  same model as JSON, and it defaults to the latest run. `bootstrap`, `improve`, `approve`, `export`
+  and `render` are stubs with a distinct not-implemented exit code (Tasks 7 to 10 fill them).
+  One run at a time is enforced by `.learn.lock` in the index directory (`learn-lock.ts`), and a
+  second instance reports the holder's PID instead of a bare failure; `.learn.pids` lists the
+  subprocesses a run owns, so the SessionStart orphan reaper never kills a live run's workers.
+  `selectOrphans` gains a `protectedPids` argument for exactly that, `cli/sync-hook.js` reads the run's
+  registry at reap time, and `EPISODIC_MEMORY_PROC_LISTER` makes the hook's process enumeration
+  testable. Progress goes to stderr and to `logs/learn.log`; the report goes to stdout. The
   learning trace gains `learning_run`, `learning_task` and `learning_attempt`, and three new modules
   make the archive grade itself. `src/learn/tasks.ts` selects source exchanges deterministically from
   a seed (sidechains and projects below the floor excluded), asks a text-only model for a `locate`,

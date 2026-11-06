@@ -15,6 +15,16 @@ export function getSyncLogPath() {
 export function getSyncErrorsLogPath() {
     return path.join(getSuperpowersDir(), 'sync-errors.log');
 }
+/**
+ * Dedicated log for `learn` runs.
+ *
+ * A learning run is long, detached from a terminal and spends money, so its
+ * progress goes to its own file rather than into the sync log where it would
+ * interleave with every session start.
+ */
+export function getLearnLogPath() {
+    return path.join(getLogDir(), 'learn.log');
+}
 /** Lock file serializing background syncs; lives beside the embedding-migration lock. */
 export function getSyncLockPath() {
     return path.join(getIndexDir(), '.sync.lock');

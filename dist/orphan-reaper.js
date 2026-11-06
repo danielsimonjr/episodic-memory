@@ -26,9 +26,14 @@ const FORK = /--fork-session\b/;
  * Everything present in `baselinePids` is left alone no matter what it looks like — a process
  * that predates our sync is not our orphan, and that rule is what keeps a mis-tuned signature
  * from reaching a real session.
+ *
+ * `protectedPids` is the same rule for a different owner: a `learn` run lists the subprocesses
+ * it is still using in `.learn.pids`, and those are young, signature-matching and NOT ours. The
+ * baseline cannot cover them — they are born after the hook starts the sync — so the run's own
+ * registry is the only thing that knows.
  */
-export function selectOrphans(procs, baselinePids) {
-    const fresh = procs.filter((p) => !baselinePids.has(p.pid));
+export function selectOrphans(procs, baselinePids, protectedPids = new Set()) {
+    const fresh = procs.filter((p) => !baselinePids.has(p.pid) && !protectedPids.has(p.pid));
     const daemons = fresh.filter((p) => DAEMON.test(p.commandLine));
     const ptys = fresh.filter((p) => !DAEMON.test(p.commandLine) && PTYHOST.test(p.commandLine));
     const forks = fresh.filter((p) => !DAEMON.test(p.commandLine) && !PTYHOST.test(p.commandLine) && FORK.test(p.commandLine));

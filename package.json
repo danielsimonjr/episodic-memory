@@ -14,7 +14,7 @@
     "generate-version": "node scripts/generate-version.js",
     "prebuild": "bun run generate-version",
     "build": "tsc && bun run bundle",
-    "bundle": "esbuild src/mcp-server.ts --bundle --platform=node --format=esm --outfile=dist/mcp-server.js --external:fsevents --external:@anthropic-ai/claude-agent-sdk --external:@modelcontextprotocol/server --external:@modelcontextprotocol/core --external:sharp --external:onnxruntime-node --external:better-sqlite3 --external:@huggingface/transformers --external:sqlite-vec",
+    "bundle": "esbuild src/mcp-server.ts --bundle --platform=node --format=esm --outfile=dist/mcp-server.js --external:fsevents --external:@anthropic-ai/claude-agent-sdk --external:@modelcontextprotocol/server --external:@modelcontextprotocol/core --external:sharp --external:onnxruntime-node --external:better-sqlite3 --external:@huggingface/transformers --external:sqlite-vec --external:@danielsimonjr/memoryjs",
     "pretest": "bun run generate-version",
     "typecheck": "bun run generate-version && tsc --noEmit",
     "test": "vitest run",
@@ -26,7 +26,7 @@
   },
   "packageManager": "bun@1.4.0",
   "engines": {
-    "node": ">=20"
+    "node": ">=22.12.0"
   },
   "keywords": [
     "claude-code",
@@ -44,13 +44,14 @@
   "type": "module",
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.3.299",
+    "@danielsimonjr/memoryjs": "^4.5.0",
     "@huggingface/transformers": "^4.2.0",
     "@modelcontextprotocol/server": "^2.0.0",
     "better-sqlite3": "13.0.3",
     "marked": "^16.4.0",
     "onnxruntime-common": "1.24.3",
     "sqlite-vec": "^0.1.7-alpha.2",
-    "zod": "^4.4.2"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
@@ -65,7 +66,8 @@
     "hono": "^4.12.27",
     "protobufjs": "^7.6.4",
     "sharp": "^0.35.0",
-    "adm-zip": "^0.6.0"
+    "adm-zip": "^0.6.0",
+    "better-sqlite3": "13.0.3"
   },
   "repository": {
     "type": "git",

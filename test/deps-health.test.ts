@@ -2,7 +2,14 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { DEP_SENTINELS, NATIVE_ADDON, nodeModulesIsHealthy, repairPlan } from '../src/deps-health.js';
+import {
+  DEP_SENTINELS,
+  JS_SENTINELS,
+  NATIVE_ADDON,
+  NESTED_BETTER_SQLITE3,
+  nodeModulesIsHealthy,
+  repairPlan,
+} from '../src/deps-health.js';
 import { safeRmSync } from './test-utils.js';
 
 describe('nodeModulesIsHealthy', () => {
@@ -36,6 +43,28 @@ describe('nodeModulesIsHealthy', () => {
       fs.writeFileSync(full, '{}', 'utf-8');
     }
     expect(nodeModulesIsHealthy(nm)).toBe(true);
+  });
+
+  // Every JS sentinel is load-bearing: a package missing from this tree is a package the MCP
+  // server or the `learn` path will fail to import, and the repair path is the only thing that
+  // fixes a plugin-cache install. Iterate the list rather than naming each entry, so a new
+  // sentinel is covered by construction and a removed one fails here.
+  it('is false when any single JS sentinel is missing', () => {
+    for (const missing of JS_SENTINELS) {
+      const nm = path.join(testDir, `nm-${missing.replace(/[^a-z0-9]+/gi, '-')}`);
+      for (const rel of DEP_SENTINELS) {
+        if (rel === missing) continue;
+        const full = path.join(nm, rel);
+        fs.mkdirSync(path.dirname(full), { recursive: true });
+        fs.writeFileSync(full, '{}', 'utf-8');
+      }
+      expect(nodeModulesIsHealthy(nm), `missing ${missing}`).toBe(false);
+      expect(repairPlan(nm), `missing ${missing}`).toBe('install');
+    }
+  });
+
+  it('lists memoryjs as a JS sentinel', () => {
+    expect(JS_SENTINELS).toContain('@danielsimonjr/memoryjs/package.json');
   });
 });
 
@@ -79,5 +108,18 @@ describe('repairPlan', () => {
     const nm = path.join(testDir, 'node_modules');
     populate(nm, ['onnxruntime-common/package.json']);
     expect(repairPlan(nm)).toBe('install');
+  });
+
+  // A second better-sqlite3 nested under memoryjs is the failure the `overrides` pin exists to
+  // prevent: the top-level copy is fine, so every sentinel and the binding check pass, but memoryjs
+  // resolves its own binding-less copy. Only a reinstall that honours the pin can collapse it.
+  it('a nested better-sqlite3 under memoryjs makes repairPlan fail', () => {
+    const nm = path.join(testDir, 'node_modules');
+    populate(nm);
+    expect(repairPlan(nm)).toBe('none');
+
+    fs.mkdirSync(path.join(nm, NESTED_BETTER_SQLITE3, 'lib'), { recursive: true });
+    expect(repairPlan(nm)).toBe('install');
+    expect(nodeModulesIsHealthy(nm)).toBe(false);
   });
 });

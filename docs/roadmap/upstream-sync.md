@@ -140,6 +140,26 @@ future-Daniel.
 - **Don't add lock-files when upstream doesn't.** `package-lock.json`
   is `.gitignore`'d for a reason — adding it creates noise.
 
+## Engine floor divergence (fork-only)
+
+`package.json` declares `engines.node: ">=22.12.0"` and `.github/workflows/ci.yml` pins Bun
+`1.4.2`. Both come from `@danielsimonjr/memoryjs`, the knowledge store behind `learn`: it requires
+Node `>=22.12.0` and Bun `>=1.4.2`. Upstream has neither dependency and declares `>=20`.
+
+This is a deliberate fork-only divergence and it will conflict on merge:
+
+- **Resolving the conflict:** keep the higher floor. Lowering `engines` back to `>=20` makes the
+  declared support a lie — `learn` fails at import on Node 20 no matter what `engines` says. If
+  upstream's `engines` ever rises above `22.12.0`, take upstream's value.
+- **Enforcement is in the code, not in `engines`.** `src/node-floor.ts` holds the floor constant and
+  `assertNodeFloor()`; `cli/mcp-server-wrapper.js` and `cli/episodic-memory.js learn` call it and
+  exit with one stderr line below the floor. `engines` alone only warns, so a Node 20 host would
+  otherwise install 200 packages and then fail inside memoryjs.
+- **`overrides["better-sqlite3"]`** pins the exact version beside `dependencies["better-sqlite3"]`
+  so npm in the plugin cache (no lockfile, install scripts skipped) collapses memoryjs's caret range
+  into one copy. Upstream has no `overrides` block for it; keep ours.
+- **CI's Node stays 24.** Only Bun moves, and only because Bun is what resolves and installs.
+
 ## Where this gets revisited
 
 - After every upstream release (`git log --oneline main..upstream/main | head` becomes non-empty)

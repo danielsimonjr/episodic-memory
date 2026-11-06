@@ -255,11 +255,12 @@ Vector + text search across indexed conversations.
 Inputs (Zod-validated):
 - `query`: string (required) — natural-language search
 - `mode`: `'vector'` | `'text'` | `'both'` (default: `'both'`)
-- `limit`: number (default: 10, max: 100)
+- `limit`: number (default: 10, max: 50)
 - `project`, `session_id`, `git_branch`: optional metadata filters
 - `after`, `before`: ISO date strings `YYYY-MM-DD`
-- `responseFormat`: `'markdown'` | `'json'`
-- `concepts`: string[] — for multi-concept aggregation
+- `response_format`: `'markdown'` | `'json'`
+- `auth_token`: required only when `EPISODIC_MEMORY_MCP_TOKEN` is set (`src/mcp-auth.ts`)
+- multi-concept AND search: pass `query` as an array of 2–5 strings
 
 Output: list of `ConversationExchange` rows (id, project, timestamp, user/assistant message, archive_path, line_start, line_end, plus metadata).
 
@@ -268,8 +269,9 @@ Output: list of `ConversationExchange` rows (id, project, timestamp, user/assist
 Read a specific JSONL conversation file by path.
 
 Inputs:
-- `path`: string (required) — **must resolve inside `getArchiveDir()` and end in `.jsonl`** (fork hardening)
+- `path`: string (required) — **must resolve inside `getArchiveDir()` and end in `.jsonl`** (fork hardening, `src/archive-path.ts`; symlink escapes refused; full reads capped by `EPISODIC_MEMORY_MAX_READ_BYTES`, default 32 MB)
 - `startLine`, `endLine`: optional line range
+- `auth_token`: as for `search`
 
 Output: markdown-formatted conversation.
 

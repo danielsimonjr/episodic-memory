@@ -56,7 +56,7 @@ function buildServer(): McpServer {
     'read',
     {
       title: 'Read Full Conversation',
-      description: `Read full conversations to extract detailed context after finding relevant results with search. Essential for understanding the complete rationale, evolution, and gotchas behind past decisions. Use startLine/endLine pagination for large conversations to avoid context bloat (line numbers are 1-indexed).`,
+      description: `Read full conversations to extract detailed context after finding relevant results with search. Essential for understanding the complete rationale, evolution, and gotchas behind past decisions. Pass the archive_path a search result gave you; only .jsonl files inside the conversation archive can be read. Use startLine/endLine pagination for large conversations to avoid context bloat (line numbers are 1-indexed).`,
       inputSchema: ShowConversationInputSchema,
       annotations: {
         readOnlyHint: true,

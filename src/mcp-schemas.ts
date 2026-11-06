@@ -62,7 +62,9 @@ export const ShowConversationInputSchema = z
     path: z
       .string()
       .min(1, 'Path is required')
-      .describe('Absolute path to the JSONL conversation file to display'),
+      .describe(
+        'The archive_path of a search result: a .jsonl file inside the conversation archive. Paths outside the archive are refused.'
+      ),
     startLine: z
       .number()
       .int()

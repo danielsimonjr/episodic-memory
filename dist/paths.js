@@ -143,6 +143,24 @@ export function getDbPath() {
     return path.join(getIndexDir(), 'db.sqlite');
 }
 /**
+ * Get the learned-knowledge directory
+ *
+ * A sibling of `conversation-index/`, not a child of it, so `index rebuild` and
+ * the `rm -rf conversation-index/` reset recipe cannot reach learned knowledge
+ * or the learning trace.
+ */
+export function getLearnedDir() {
+    return ensureDir(path.join(getSuperpowersDir(), 'learned'));
+}
+/** The memoryjs knowledge repository (`storagePath` is a FILE path). */
+export function getKnowledgeDbPath() {
+    return path.join(getLearnedDir(), 'knowledge.db');
+}
+/** The learning trace (runs, tasks, attempts, snapshots, rendered block). */
+export function getLearningDbPath() {
+    return path.join(getLearnedDir(), 'learning.sqlite');
+}
+/**
  * Get exclude config path
  */
 export function getExcludeConfigPath() {

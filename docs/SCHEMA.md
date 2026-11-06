@@ -97,6 +97,80 @@ CREATE TABLE digest_entry (
 
 `digest_fts` is an FTS5 table (`id`, `text`) over the same text, used by the `digest` tool's `query`.
 
+## Learned knowledge and the learning trace
+
+Self-improving memory (the `EPISODIC_MEMORY_LEARN` feature) keeps its state in
+`<configDir>/learned/`, which is a **sibling** of `conversation-index/`, not a child of it:
+
+```
+<configDir>/
+  conversation-index/     db.sqlite          -- disposable; rebuildable from the archive
+  learned/                knowledge.db       -- learned entries (memoryjs), durable
+                          learning.sqlite    -- the learning trace + rendered block
+  learned-skills/                            -- generated export tree
+```
+
+`index rebuild`, `prune` and the `rm -rf conversation-index/` reset recipe therefore cannot reach
+learned knowledge or the learning trace.
+
+### `learned/knowledge.db`
+
+Owned by `@danielsimonjr/memoryjs`, which creates and migrates the schema itself
+(`entities`, `relations`, `entities_fts` and their shadow tables). Production code never opens this
+file with its own `better-sqlite3` handle; tests may, read-only, to assert on tables. Its
+`storagePath` is a file path and memoryjs puts its WAL sidecars beside it, so `learned/` is the unit
+to back up.
+
+An entry is one `entities` row:
+
+| Column | Value |
+|---|---|
+| `name` | `learned:<kind>:<project>:<slug>:v<n>` — the primary key and the only entry id |
+| `entityType` | `learned-instruction`, `learned-skill` or `learned-reflection` |
+| `projectId` | the project key, or `*` for all projects |
+| lifecycle (`agentMetadata.lifecycleStatus`) | `draft` (candidate) / `published` (active) / `archived` (retired) |
+| `importance` | 3 / 5 / 8 for confidence low / medium / high |
+| `tags` | `kind:<kind>`, `project:<key>`, `trust:<level>`, `status:<status>` |
+| `rootEntityName`, `parentEntityName`, `isLatest`, `supersededBy` | the version chain |
+| `observations` | one line per field: `title:`, `description:`, `scope:`, `confidence:`, `trust:`, `status:`, `version:`, `run:`, `validation:` (JSON), `heuristic:`, `decision:`, `procedure:`, `steps:` (JSON), `reflection-hash:`, then one `body:` line per body line |
+
+The logical `version` lives in the name and in the `version:` observation. memoryjs's own
+`entities.version` auto-increments on every optimistic-concurrency write and is never read as the
+logical version.
+
+Citations are `cites` relations from the entry to reference entities: `exchange:<id>`
+(`entityType` `exchange-ref`, observations `path:`, `lines:`, `session:`) for an exchange, and
+`attempt:<id>` (`entityType` `attempt-ref`, observations `task:`, `run:`) for a learning attempt.
+Reference entities are created before the relation, because memoryjs validates both endpoints.
+
+### `learned/learning.sqlite`
+
+The plugin's own database, opened with the same pragmas and directory modes as `db.sqlite` and its
+own idempotent `migrateLearningSchema`. Task 1 creates these two tables; the `learning_*` tables
+(run, task, attempt) are added with their code.
+
+```sql
+CREATE TABLE knowledge_snapshot (
+  id INTEGER PRIMARY KEY,
+  run_id TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  entry_names TEXT NOT NULL   -- JSON array of entity names: K^(t), the set a solver ran with
+);
+
+CREATE TABLE learned_block (
+  project TEXT PRIMARY KEY,   -- project key, or '*' for the shared block
+  text TEXT NOT NULL,         -- the rendered, screened, redacted learned block
+  rendered_at TEXT NOT NULL
+);
+```
+
+`learned_block` is what the SessionStart hook reads. The hook opens this file **read-only** with
+`migrate: false`, so it never runs DDL, and it never loads memoryjs.
+
+`learned/` is outside `conversation-index/`, so an index rebuild or reset leaves both files alone.
+The reset recipe in `CLAUDE.md` (`rm -rf conversation-index/`) therefore cannot reach learned
+knowledge; delete `learned/` only deliberately.
+
 ## Indexes
 
 ```sql

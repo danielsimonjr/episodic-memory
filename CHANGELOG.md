@@ -9,8 +9,8 @@
 - **A candidate knowledge revision no longer hides the still-active previous version.** `putEntry` no longer clears the parent's `isLatest`; only `supersede` does. `listActive` and snapshots are gated on status and `supersededBy`. `getBySlug` returns the highest logical version. Reflection `generalization_confidence` uses 0.3 / 0.6 / 0.9.
 
 ### Added
-- **Self-improving memory: `learn`, the `skills` tool, and the learned-hints block (Tasks 1–11 of the
-  Recursa plan).** Off by default behind `EPISODIC_MEMORY_LEARN=1`; with the flag off, hook stdout is
+- **Self-improving memory: `learn`, the `skills` tool, and the learned-hints block (Tasks 0–11 of the
+  Recursa plan, including the `@danielsimonjr/memoryjs` knowledge-store dependency).** Off by default behind `EPISODIC_MEMORY_LEARN=1`; with the flag off, hook stdout is
   byte-identical to the digest-only output, `/mcp` still lists four tools, and nothing opens a store.
   On, the archive becomes a source of self-practice: `learn tasks` writes `locate`, `recall`, `when` and
   `multi` questions at three tiers from deterministically sampled exchanges, stratified 60/40 into a

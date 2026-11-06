@@ -242,11 +242,17 @@ EPISODIC_MEMORY_CONFIG_DIR          PERSONAL_SUPERPOWERS_DIR
 XDG_CONFIG_HOME                     EPISODIC_MEMORY_DB_PATH
 CONVERSATION_SEARCH_EXCLUDE_PROJECTS
 EPISODIC_MEMORY_LEARN               EPISODIC_MEMORY_LEARN_MAX_CHARS
+EPISODIC_MEMORY_MCP_TOKEN           EPISODIC_MEMORY_REDACT_SECRETS
+EPISODIC_MEMORY_MAX_READ_BYTES      EPISODIC_MEMORY_DIGEST_MAX_CHARS
+EPISODIC_MEMORY_INCLUDE_SUMMARY     EPISODIC_MEMORY_MAX_SUMMARY_DISPLAY_CHARS
 ```
 
-`EPISODIC_MEMORY_LEARN` and `EPISODIC_MEMORY_LEARN_MAX_CHARS` are whitelisted explicitly: without them the
-server never sees the feature flag, and `skills` answers "learning is off" forever. Any new
-`EPISODIC_MEMORY_LEARN_*` setting that the MCP server reads at runtime needs its own line here.
+Every variable the server reads at runtime is whitelisted explicitly: without its line the plugin-launched
+server never sees it (so `skills` would answer "learning is off" forever, `auth_token` could never be
+required, and a read cap or redaction setting would be silently ignored). Any new setting that the MCP
+server reads at runtime needs its own line here and in `test/codex-plugin.test.ts`. `EPISODIC_MEMORY_DIGEST`
+is not listed on purpose: it gates *writing* the digest in `sync` and the hook, and the `digest` tool reads
+whatever has been written.
 
 ### `search`
 

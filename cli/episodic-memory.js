@@ -59,7 +59,7 @@ COMMANDS:
   show        Display a conversation in readable format
   stats       Show index statistics
   doctor      Diagnose Claude Code or Codex integration issues
-  learn       Self-improving memory: tasks, solve, bootstrap, improve, status, report, approve, export (needs EPISODIC_MEMORY_LEARN=1)
+  learn       Self-improving memory: tasks, solve, bootstrap, improve, status, report, approve, export, render (needs EPISODIC_MEMORY_LEARN=1)
 
 Run 'episodic-memory <command> --help' for command-specific help.
 

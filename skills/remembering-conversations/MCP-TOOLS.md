@@ -109,7 +109,7 @@ Display a full conversation from episodic memory as markdown.
 | `endLine` | `number` | No | Ending line number (1-indexed, inclusive) |
 | `auth_token` | `string` | Only with `EPISODIC_MEMORY_MCP_TOKEN` | The token the server was started with |
 
-A full read (no range) is capped at 32 MB (`EPISODIC_MEMORY_MAX_READ_BYTES`); pass a range for a larger file. Secrets are redacted before the text is returned.
+A full read (no range) is capped at 32 MB (`EPISODIC_MEMORY_MAX_READ_BYTES`); pass a range for a larger file. With `EPISODIC_MEMORY_REDACT_SECRETS=1`, token-shaped secrets are redacted before the text is returned.
 
 ### Usage
 
@@ -138,7 +138,7 @@ Markdown-formatted conversation with:
 
 ## digest
 
-Show, search or annotate the short, cited digest of earlier sessions in this project. Off unless the server runs with `EPISODIC_MEMORY_DIGEST=1`; with it unset the tool says so and opens nothing.
+Show, search or annotate the short, cited digest of earlier sessions in this project. The tool reads whatever digest has been written; the digest is only written when `episodic-memory sync` runs with `EPISODIC_MEMORY_DIGEST=1`, so without that the tool has nothing to show.
 
 **Tool name:** `mcp__plugin_episodic-memory_episodic-memory__digest`
 

@@ -42,7 +42,13 @@ describe('Codex plugin packaging', () => {
             'EPISODIC_MEMORY_DB_PATH',
             'CONVERSATION_SEARCH_EXCLUDE_PROJECTS',
             'EPISODIC_MEMORY_LEARN',
-            'EPISODIC_MEMORY_LEARN_MAX_CHARS'
+            'EPISODIC_MEMORY_LEARN_MAX_CHARS',
+            'EPISODIC_MEMORY_MCP_TOKEN',
+            'EPISODIC_MEMORY_REDACT_SECRETS',
+            'EPISODIC_MEMORY_MAX_READ_BYTES',
+            'EPISODIC_MEMORY_DIGEST_MAX_CHARS',
+            'EPISODIC_MEMORY_INCLUDE_SUMMARY',
+            'EPISODIC_MEMORY_MAX_SUMMARY_DISPLAY_CHARS'
           ]
         }
       }

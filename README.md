@@ -623,13 +623,14 @@ Display a conversation, or a line range of one, in readable markdown format.
 - `startLine`, `endLine` (number, optional): 1-indexed, inclusive line range. A full read is capped at 32 MB (`EPISODIC_MEMORY_MAX_READ_BYTES`); pass a range for larger conversations
 - `auth_token` (string): As for `search`
 
-Secrets in the conversation are redacted before the text is returned.
+With `EPISODIC_MEMORY_REDACT_SECRETS=1`, token-shaped secrets in the conversation are redacted before the text is returned.
 
 #### `digest`
 
 Show the session digest, search it (`query`), expand a `[#id]` mark into an archive path and line range
-(`expand`), or store a note for the next session (`handoff`). Requires `EPISODIC_MEMORY_DIGEST=1`. See
-[Session Digest](#session-digest).
+(`expand`), or store a note for the next session (`handoff`, one line, capped at 500 characters). The tool
+reads whatever digest has been written; the digest is only written when `sync` runs with
+`EPISODIC_MEMORY_DIGEST=1`. See [Session Digest](#session-digest).
 
 #### `skills`
 
@@ -638,6 +639,15 @@ conversations (`project` defaults to the key for the current directory; `limit` 
 Read-only: it opens `knowledge.db` read-only for the one call and answers that learning is off, opening
 nothing, unless `EPISODIC_MEMORY_LEARN=1`. Every field is screened for injected instructions and redacted
 before it is returned. See [Self-improving memory](#self-improving-memory-recursa).
+
+### Settings the server sees
+
+A plugin-launched server only receives the environment variables the plugin manifest (`.mcp.json`)
+whitelists: the config and database paths, `CONVERSATION_SEARCH_EXCLUDE_PROJECTS`, `EPISODIC_MEMORY_LEARN`
+and `EPISODIC_MEMORY_LEARN_MAX_CHARS`, `EPISODIC_MEMORY_MCP_TOKEN`, `EPISODIC_MEMORY_REDACT_SECRETS`,
+`EPISODIC_MEMORY_MAX_READ_BYTES`, `EPISODIC_MEMORY_DIGEST_MAX_CHARS`, `EPISODIC_MEMORY_INCLUDE_SUMMARY` and
+`EPISODIC_MEMORY_MAX_SUMMARY_DISPLAY_CHARS`. Set them in the shell that starts Claude Code or Codex. A server
+you start yourself sees your whole environment.
 
 ### Using the MCP Server Directly
 

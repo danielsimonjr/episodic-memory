@@ -114,4 +114,41 @@ describe('handleToolCall', () => {
     // May error on missing DB, but must not be Unauthorized
     expect(allowed.content[0].text).not.toMatch(/Unauthorized/);
   });
+
+  describe('skills', () => {
+    const prevLearn = process.env.EPISODIC_MEMORY_LEARN;
+
+    afterEach(() => {
+      if (prevLearn === undefined) delete process.env.EPISODIC_MEMORY_LEARN;
+      else process.env.EPISODIC_MEMORY_LEARN = prevLearn;
+    });
+
+    it('says learning is off and creates no store, with the flag off', async () => {
+      delete process.env.EPISODIC_MEMORY_LEARN;
+      const result = await handleToolCall('skills', {});
+      expect(result.isError).toBeUndefined();
+      expect(result.content[0].text).toMatch(/Learning is off/);
+      expect(fs.existsSync(path.join(testDir, 'config', 'learned'))).toBe(false);
+    });
+
+    it('rejects an unknown argument', async () => {
+      const result = await handleToolCall('skills', { nope: 1 });
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toMatch(/Error:/);
+    });
+
+    it('says there are no skills yet with the flag on and no store', async () => {
+      process.env.EPISODIC_MEMORY_LEARN = '1';
+      const result = await handleToolCall('skills', {});
+      expect(result.isError).toBeUndefined();
+      expect(result.content[0].text).toMatch(/No learned skills yet/);
+    });
+
+    it('requires auth_token like every other tool', async () => {
+      process.env.EPISODIC_MEMORY_MCP_TOKEN = 'gate';
+      const denied = await handleToolCall('skills', {});
+      expect(denied.isError).toBe(true);
+      expect(denied.content[0].text).toMatch(/Unauthorized/);
+    });
+  });
 });

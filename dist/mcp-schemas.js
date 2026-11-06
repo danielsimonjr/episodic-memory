@@ -93,6 +93,27 @@ export const DigestInputSchema = z
     auth_token: z.string().min(1).optional().describe('Required when EPISODIC_MEMORY_MCP_TOKEN is set'),
 })
     .strict();
+export const SkillsInputSchema = z
+    .object({
+    get: z
+        .string()
+        .min(1)
+        .optional()
+        .describe('Slug of one learned skill, as listed. Returns its frontmatter and body.'),
+    query: z
+        .string()
+        .min(1)
+        .optional()
+        .describe('Search the learned skills instead of listing them'),
+    project: z
+        .string()
+        .min(1)
+        .optional()
+        .describe('Project key. Defaults to the key for the current working directory.'),
+    limit: z.number().int().min(1).max(50).optional().describe('Max skills listed (default 10)'),
+    auth_token: z.string().min(1).optional().describe('Required when EPISODIC_MEMORY_MCP_TOKEN is set'),
+})
+    .strict();
 export function handleMcpError(error) {
     if (error instanceof Error) {
         return `Error: ${error.message}`;

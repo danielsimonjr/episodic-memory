@@ -48,4 +48,12 @@ export declare const DigestInputSchema: z.ZodObject<{
     auth_token: z.ZodOptional<z.ZodString>;
 }, z.core.$strict>;
 export type DigestInput = z.infer<typeof DigestInputSchema>;
+export declare const SkillsInputSchema: z.ZodObject<{
+    get: z.ZodOptional<z.ZodString>;
+    query: z.ZodOptional<z.ZodString>;
+    project: z.ZodOptional<z.ZodString>;
+    limit: z.ZodOptional<z.ZodNumber>;
+    auth_token: z.ZodOptional<z.ZodString>;
+}, z.core.$strict>;
+export type SkillsInput = z.infer<typeof SkillsInputSchema>;
 export declare function handleMcpError(error: unknown): string;

@@ -21,6 +21,7 @@ import {
   SearchInputSchema,
   DigestInputSchema,
   ShowConversationInputSchema,
+  SkillsInputSchema,
 } from './mcp-schemas.js';
 
 function buildServer(): McpServer {
@@ -88,6 +89,28 @@ function buildServer(): McpServer {
     },
     async (args) => {
       const result = await handleToolCall('digest', args);
+      return {
+        content: result.content,
+        ...(result.isError ? { isError: true } : {}),
+      };
+    }
+  );
+
+  server.registerTool(
+    'skills',
+    {
+      title: 'Learned Skills',
+      description: `Lists the skills the plugin has learned from past sessions in this project, or loads one. Skills are learned hints about where to look: call this before searching when a learned-hints block in your context names one, pass query to search them, and pass get with a slug to load its instructions. Read-only.`,
+      inputSchema: SkillsInputSchema,
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    async (args) => {
+      const result = await handleToolCall('skills', args);
       return {
         content: result.content,
         ...(result.isError ? { isError: true } : {}),

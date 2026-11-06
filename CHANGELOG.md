@@ -1,6 +1,7 @@
 ## [Unreleased]
 
 ### Fixed
+- **Learned-block injection stays inside the fence, re-redacts PII, and drops retired projects.** The hook stops at the closing fence, re-applies a memoryjs-free PII pass (phone, email, SSN, card, IP) on read, and `writeLearnedBlocks` deletes a project row whose render is empty. Flag-off `skills` checks `learnEnabled()` before importing `skills-tool`, so memoryjs stays unloaded. `skills get` only returns the requested project or a `*` skill.
 - **A candidate knowledge revision no longer hides the still-active previous version.** `putEntry` no longer clears the parent's `isLatest`; only `supersede` does. `listActive` and snapshots are gated on status and `supersededBy`. `getBySlug` returns the highest logical version. Reflection `generalization_confidence` uses 0.3 / 0.6 / 0.9.
 
 ### Added

@@ -4,8 +4,9 @@
  */
 import { resolveArchiveJsonlPath, readJsonlLines, } from './archive-path.js';
 import { maybeRedactSecrets } from './redact.js';
+import { LEARN_OFF_MESSAGE, learnEnabled } from './learn/learn-config.js';
 import { assertMcpAuthorized } from './mcp-auth.js';
-import { DigestInputSchema, SearchInputSchema, ShowConversationInputSchema, handleMcpError, } from './mcp-schemas.js';
+import { DigestInputSchema, SearchInputSchema, ShowConversationInputSchema, SkillsInputSchema, handleMcpError, } from './mcp-schemas.js';
 export async function handleToolCall(name, args) {
     try {
         assertMcpAuthorized(args);
@@ -82,6 +83,18 @@ export async function handleToolCall(name, args) {
             const params = DigestInputSchema.parse(args);
             const { digestToolText } = await import('./digest-tool.js');
             return { content: [{ type: 'text', text: digestToolText(params) }] };
+        }
+        if (name === 'skills') {
+            const params = SkillsInputSchema.parse(args);
+            // Flag-off must not import `skills-tool.js`: that module loads memoryjs.
+            // The tool stays registered; it answers without opening a store.
+            if (!learnEnabled()) {
+                return { content: [{ type: 'text', text: LEARN_OFF_MESSAGE }] };
+            }
+            // Lazy on purpose: a server that never gets a flag-on `skills` call must
+            // never pay to load memoryjs.
+            const { skillsToolText } = await import('./learn/skills-tool.js');
+            return { content: [{ type: 'text', text: await skillsToolText(params) }] };
         }
         throw new Error(`Unknown tool: ${name}`);
     }

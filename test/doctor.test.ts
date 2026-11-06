@@ -315,6 +315,19 @@ describe('doctor learn section', () => {
     expect(learn.exportTree.present).toBe(false);
   });
 
+  it('doctor never creates knowledge.db when only learning.sqlite exists', async () => {
+    // A half-written `learned/` (the trace db landed, the knowledge store did
+    // not, or a user removed knowledge.db) must stay half-written: doctor is a
+    // read-only probe (spec §7 rule 1 — the databases appear on a flag-on
+    // write only).
+    fs.mkdirSync(path.join(testDir, 'learned'), { recursive: true });
+    fs.writeFileSync(path.join(testDir, 'learned', 'learning.sqlite'), '');
+
+    const learn = await collectLearnDoctorSection();
+    expect(learn.present).toBe(true);
+    expect(fs.existsSync(path.join(testDir, 'learned', 'knowledge.db'))).toBe(false);
+  });
+
   it('an empty section prints an absent dir and no warnings', () => {
     const report = buildDoctorReport({
       ...healthy,

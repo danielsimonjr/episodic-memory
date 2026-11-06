@@ -178,9 +178,16 @@ export declare class KnowledgeStore {
     getEntry(name: string): Promise<KnowledgeEntry | null>;
     /** The latest version of a `(kind, project, slug)` chain. */
     getBySlug(kind: KnowledgeKind, project: string, slug: string): Promise<KnowledgeEntry | null>;
+    /** Highest logical version in a chain (by `version:` / name), not `isLatest`. */
+    private latestEntryInChain;
     /** Every learned entity. */
     private allEntities;
-    /** Every learned entry, latest versions only, any status. */
+    /**
+     * Learned entries that are still chain-visible (`isLatest !== false`), any
+     * status. A candidate revision does not clear the parent's `isLatest`, so
+     * both rows are returned until `supersede`. Callers that want one row per
+     * chain use `getBySlug`; callers that want lifecycle use `listByStatus`.
+     */
     listEntries(): Promise<KnowledgeEntry[]>;
     /**
      * Every learned entry with a given status, including superseded and older

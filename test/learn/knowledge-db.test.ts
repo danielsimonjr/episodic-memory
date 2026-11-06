@@ -213,6 +213,15 @@ describe('knowledge-db', () => {
     expect(results.map(e => e.slug)).toEqual(['aardvark']);
   });
 
+  it('searchKnowledge still finds the active version after a candidate revision', async () => {
+    await insertKnowledgeEntry(store, nk({ slug: 'aardvark', body: 'the aardvark burrows at night' }));
+    await activate(store, 'learned:skill:proj-a:aardvark:v1', record(), 'verified');
+    await insertKnowledgeEntry(store, nk({ slug: 'aardvark', body: 'the aardvark burrows at dusk' }));
+
+    const results = await searchKnowledge(store, 'burrows', 'proj-a');
+    expect(results.map(e => e.id)).toEqual(['learned:skill:proj-a:aardvark:v1']);
+  });
+
   it('snapshot records active names at creation and not later ones', async () => {
     await insertKnowledgeEntry(store, nk({ slug: 'one' }));
     await activate(store, 'learned:skill:proj-a:one:v1', record(), 'verified');

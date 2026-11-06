@@ -1,5 +1,8 @@
 ## [Unreleased]
 
+### Fixed
+- **A candidate knowledge revision no longer hides the still-active previous version.** `putEntry` no longer clears the parent's `isLatest`; only `supersede` does. `listActive` and snapshots are gated on status and `supersededBy`. `getBySlug` returns the highest logical version. Reflection `generalization_confidence` uses 0.3 / 0.6 / 0.9.
+
 ### Added
 - **`@danielsimonjr/memoryjs` as a runtime dependency, for the `learn` knowledge store (Task 0 of the
   Recursa plan; no learning code yet).** The package is marked external in the esbuild bundle beside

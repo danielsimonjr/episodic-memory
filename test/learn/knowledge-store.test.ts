@@ -20,6 +20,25 @@ function makeTempDir(prefix: string): string {
   return fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), prefix)));
 }
 
+/** Entity `confidence` copied from `generalization_confidence` on reflection records, oldest first. */
+function reflectionConfidences(): number[] {
+  const db = new Database(getKnowledgeDbPath(), { readonly: true });
+  try {
+    const rows = db
+      .prepare(`SELECT agentMetadata FROM entities WHERE entityType = 'reflection' ORDER BY rowid`)
+      .all() as Array<{ agentMetadata: string | null }>;
+    return rows.map(row => {
+      const meta = JSON.parse(row.agentMetadata ?? '{}') as { confidence?: number };
+      if (typeof meta.confidence !== 'number') {
+        throw new Error(`reflection metadata has no confidence: ${row.agentMetadata}`);
+      }
+      return meta.confidence;
+    });
+  } finally {
+    db.close();
+  }
+}
+
 function source(over: Partial<SourceRef> = {}): SourceRef {
   return {
     id: 'ex1',
@@ -395,6 +414,8 @@ describe('knowledge store (memoryjs adapter)', () => {
     expect(different.duplicate).toBe(false);
     expect(different.id).toBeTruthy();
     expect(different.id).not.toBe(first.id);
+
+    expect(reflectionConfidences()).toEqual([0.6, 0.3]);
   });
 
   it('a procedure skill with steps gets a proc: record and matchProcedures ranks it for a matching context', async () => {

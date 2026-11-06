@@ -370,9 +370,9 @@ export class KnowledgeStore {
         if (parent)
             entity.parentEntityName = parent;
         await this.ctx.entityManager.createEntities([entity]);
-        // Creating a new version does not move the chain head or touch the parent.
-        // `supersede` sets `supersededBy` and `isLatest: false`; `getBySlug` uses
-        // the highest logical version in the chain, not `isLatest` alone.
+        // A new revision does not clear the parent's `isLatest` or set `supersededBy`;
+        // only `supersede` (via `activate`) does. Chain head for `getBySlug` /
+        // `listEntries` is the highest logical version, not memoryjs's `isLatest`.
         await this.ctx.relationManager.createRelations(entry.sources.map(source => ({
             from: name,
             to: `exchange:${source.id}`,
@@ -518,25 +518,35 @@ export class KnowledgeStore {
     /** The latest version of a `(kind, project, slug)` chain. */
     async getBySlug(kind, project, slug) {
         const root = rootName(kind, project, slug);
-        const chain = await this.ctx.entityManager.getVersionChain(root);
-        if (chain.length === 0)
-            return null;
-        let latest = null;
-        for (const entity of chain) {
+        return this.latestEntryInChain(root);
+    }
+    /** Highest logical version in a chain (by `version:` / name), not `isLatest`. */
+    async latestEntryInChain(rootEntityName) {
+        const entities = await this.allEntities();
+        let best = null;
+        for (const entity of entities) {
+            const chainRoot = entity.rootEntityName ?? entity.name;
+            if (chainRoot !== rootEntityName)
+                continue;
             const parsed = parseEntity(entity);
             if (!parsed)
                 continue;
-            if (!latest || parsed.version > latest.version)
-                latest = parsed;
+            if (!best || parsed.version > best.version)
+                best = parsed;
         }
-        return latest;
+        return best;
     }
     /** Every learned entity. */
     async allEntities() {
         const graph = await this.ctx.storage.loadGraph();
         return graph.entities.filter((e) => e.entityType.startsWith(ENTRY_TYPE_PREFIX));
     }
-    /** Every learned entry, latest versions only, any status. */
+    /**
+     * Learned entries that are still chain-visible (`isLatest !== false`), any
+     * status. A candidate revision does not clear the parent's `isLatest`, so
+     * both rows are returned until `supersede`. Callers that want one row per
+     * chain use `getBySlug`; callers that want lifecycle use `listByStatus`.
+     */
     async listEntries() {
         const entities = await this.allEntities();
         return entities

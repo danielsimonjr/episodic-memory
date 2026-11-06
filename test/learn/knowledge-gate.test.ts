@@ -338,10 +338,9 @@ describe('gateEntry output', () => {
 describe('knowledge-gate module graph', () => {
   const SRC = path.join(HERE, '..', '..', 'src', 'learn', 'knowledge-gate.ts');
 
-  it('imports no SDK, memoryjs or database module', () => {
+  it('imports no SDK, store or database module', () => {
     const source = fs.readFileSync(SRC, 'utf8');
     for (const forbidden of [
-      '@danielsimonjr/memoryjs',
       '@anthropic-ai/claude-agent-sdk',
       'better-sqlite3',
       'transformers',

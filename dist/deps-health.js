@@ -38,23 +38,11 @@ export function nativeAddonPresent(nodeModulesPath) {
     const prebuilt = `${process.platform}-${process.arch}.node`;
     return existsSync(join(nodeModulesPath, PREBUILDS_DIR, prebuilt));
 }
-/**
- * A SECOND, binding-less better-sqlite3, nested under memoryjs.
- *
- * npm does not hoist `@danielsimonjr/memoryjs`'s caret range on `better-sqlite3` when a different
- * version is already resolved at the top level, and the plugin installer skips install scripts — so
- * a fresh plugin install can put a copy with no compiled binding here. The top-level sentinel still
- * passes, the repair path never runs, and memoryjs fails at load or silently opens nothing. The
- * repo's `overrides` entry pins one version so npm install collapses the duplicate; the presence of
- * this directory means that did not happen.
- */
-export const NESTED_BETTER_SQLITE3 = '@danielsimonjr/memoryjs/node_modules/better-sqlite3';
 /** JS-only sentinels: present whenever the packages are installed at all, binding or not. */
 export const JS_SENTINELS = [
     'better-sqlite3/lib/index.js',
     '@huggingface/transformers/package.json',
     'onnxruntime-common/package.json',
-    '@danielsimonjr/memoryjs/package.json',
 ];
 /** Unchanged export: the JS sentinels plus the legacy binding path. Derived so the two cannot drift. */
 export const DEP_SENTINELS = [NATIVE_ADDON, ...JS_SENTINELS];
@@ -63,22 +51,15 @@ export function nodeModulesIsHealthy(nodeModulesPath) {
         return false;
     if (!JS_SENTINELS.every((rel) => existsSync(join(nodeModulesPath, rel))))
         return false;
-    if (existsSync(join(nodeModulesPath, NESTED_BETTER_SQLITE3)))
-        return false;
     return nativeAddonPresent(nodeModulesPath);
 }
 /**
  * What a caller must run to make node_modules usable. `npm install` on a tree that already lists
  * better-sqlite3 does not rebuild its binding, so a missing binding alone needs `npm rebuild`.
- *
- * A nested better-sqlite3 under memoryjs always answers 'install': only a resolve that honours the
- * `overrides` pin can collapse the duplicate, and `npm rebuild` of the top-level copy leaves the
- * nested one exactly as broken as it was.
+
  */
 export function repairPlan(nodeModulesPath) {
     if (!existsSync(nodeModulesPath))
-        return 'install';
-    if (existsSync(join(nodeModulesPath, NESTED_BETTER_SQLITE3)))
         return 'install';
     if (nodeModulesIsHealthy(nodeModulesPath))
         return 'none';

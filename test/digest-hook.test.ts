@@ -297,7 +297,7 @@ describe('digest-hook', () => {
       expect(Date.now() - started).toBeLessThan(2000);
     });
 
-    it('never loads memoryjs, the SDK, transformers or sqlite-vec', () => {
+    it('never loads the knowledge store, the SDK, transformers or sqlite-vec', () => {
       seedLearned(block());
       const probe = 'file://' + path.join(REPO_ROOT, 'test/helpers/forbid-modules.mjs');
       const r = runHook({
@@ -305,8 +305,7 @@ describe('digest-hook', () => {
         TEST_DB_PATH: dbPath,
         EPISODIC_MEMORY_LEARN: '1',
         EPISODIC_MEMORY_CONFIG_DIR: configDir,
-        FORBID_MODULES:
-          '@danielsimonjr/memoryjs,@anthropic-ai/claude-agent-sdk,@huggingface/transformers,sqlite-vec',
+        FORBID_MODULES: '@anthropic-ai/claude-agent-sdk,@huggingface/transformers,sqlite-vec',
         NODE_OPTIONS: `--import=${probe}`,
       });
       expect(r.status).toBe(0);
@@ -356,19 +355,18 @@ describe('hook module graph', () => {
     return { files: [...seen].sort(), bare: [...bare].sort() };
   }
 
-  it('the built learn-inject, learn-config and learning-store graphs hold no memoryjs', () => {
+  it('the built learn-inject, learn-config and learning-store graphs hold no heavy package', () => {
     for (const name of ['learn-inject', 'learn-config', 'learning-store']) {
       const entry = path.join(REPO_ROOT, 'dist/learn', `${name}.js`);
       expect(fs.existsSync(entry), `${entry} exists (bun run build)`).toBe(true);
       const { bare } = graphOf(entry);
-      expect(bare, name).not.toContain('@danielsimonjr/memoryjs');
       expect(bare, name).not.toContain('@anthropic-ai/claude-agent-sdk');
       expect(bare, name).not.toContain('@huggingface/transformers');
       expect(bare, name).not.toContain('sqlite-vec');
     }
   });
 
-  it('the built learn-inject graph reaches no memoryjs adapter module', () => {
+  it('the built learn-inject graph reaches no knowledge-store module', () => {
     const entry = path.join(REPO_ROOT, 'dist/learn/learn-inject.js');
     const { files } = graphOf(entry);
     const names = files.map(file => path.basename(file));
@@ -376,20 +374,19 @@ describe('hook module graph', () => {
     expect(names).not.toContain('knowledge-db.js');
   });
 
-  it('learn-inject, learn-config and learning-store never import memoryjs', () => {
+  it('learn-inject, learn-config and learning-store never import the knowledge store', () => {
     for (const file of ['learn-inject', 'learn-config', 'learning-store']) {
       const source = readFileSync(path.join(REPO_ROOT, 'src/learn', `${file}.ts`), 'utf-8');
       // Only import statements count: a doc comment may name the forbidden module.
       const imports = [...source.matchAll(/^import .*?from '(.+?)';/gm)].map(m => m[1]);
       for (const specifier of imports) {
-        expect(specifier, file).not.toContain('@danielsimonjr/memoryjs');
         expect(specifier, file).not.toContain('knowledge-store');
         expect(specifier, file).not.toContain('knowledge-db');
       }
     }
   });
 
-  it('the hook only imports the three memoryjs-free learn modules from dist', () => {
+  it('the hook only imports the three store-free learn modules from dist', () => {
     const source = readFileSync(hookPath, 'utf-8');
     const learnImports = [...source.matchAll(/import\('\.\.\/dist\/learn\/(.+?)'\)/g)].map(m => m[1]);
     expect(learnImports.sort()).toEqual([

@@ -13,17 +13,6 @@
 export declare const NATIVE_ADDON = "better-sqlite3/build/Release/better_sqlite3.node";
 /** True when a compiled binding exists in EITHER the v12 or the v13+ layout. */
 export declare function nativeAddonPresent(nodeModulesPath: string): boolean;
-/**
- * A SECOND, binding-less better-sqlite3, nested under memoryjs.
- *
- * npm does not hoist `@danielsimonjr/memoryjs`'s caret range on `better-sqlite3` when a different
- * version is already resolved at the top level, and the plugin installer skips install scripts — so
- * a fresh plugin install can put a copy with no compiled binding here. The top-level sentinel still
- * passes, the repair path never runs, and memoryjs fails at load or silently opens nothing. The
- * repo's `overrides` entry pins one version so npm install collapses the duplicate; the presence of
- * this directory means that did not happen.
- */
-export declare const NESTED_BETTER_SQLITE3 = "@danielsimonjr/memoryjs/node_modules/better-sqlite3";
 /** JS-only sentinels: present whenever the packages are installed at all, binding or not. */
 export declare const JS_SENTINELS: string[];
 /** Unchanged export: the JS sentinels plus the legacy binding path. Derived so the two cannot drift. */
@@ -32,9 +21,6 @@ export declare function nodeModulesIsHealthy(nodeModulesPath: string): boolean;
 /**
  * What a caller must run to make node_modules usable. `npm install` on a tree that already lists
  * better-sqlite3 does not rebuild its binding, so a missing binding alone needs `npm rebuild`.
- *
- * A nested better-sqlite3 under memoryjs always answers 'install': only a resolve that honours the
- * `overrides` pin can collapse the duplicate, and `npm rebuild` of the top-level copy leaves the
- * nested one exactly as broken as it was.
+
  */
 export declare function repairPlan(nodeModulesPath: string): 'none' | 'install' | 'rebuild';

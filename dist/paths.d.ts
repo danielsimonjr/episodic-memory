@@ -59,7 +59,7 @@ export declare function getDbPath(): string;
  * or the learning trace.
  */
 export declare function getLearnedDir(): string;
-/** The memoryjs knowledge repository (`storagePath` is a FILE path). */
+/** The knowledge store (a SQLite FILE path). */
 export declare function getKnowledgeDbPath(): string;
 /** The learning trace (runs, tasks, attempts, snapshots, rendered block). */
 export declare function getLearningDbPath(): string;

@@ -476,11 +476,11 @@ describe('dist/learn-cli.js early exits', () => {
     });
   }
 
-  it('the guard exits 0 before importing cli-main, the SDK or memoryjs', () => {
+  it('the guard exits 0 before importing cli-main or the SDK', () => {
     const run = runCli(['tasks'], {
       EPISODIC_MEMORY_SUMMARIZER_GUARD: '1',
       EPISODIC_MEMORY_LEARN: '1',
-      FORBID_MODULES: '@danielsimonjr/memoryjs,@anthropic-ai/claude-agent-sdk',
+      FORBID_MODULES: '@anthropic-ai/claude-agent-sdk',
       NODE_OPTIONS: `--import=file://${FORBID.replace(/\\/g, '/')}`,
     });
 
@@ -492,7 +492,7 @@ describe('dist/learn-cli.js early exits', () => {
   it('the flag being off exits 0 with the off message', () => {
     const run = runCli(['tasks'], {
       EPISODIC_MEMORY_LEARN: '',
-      FORBID_MODULES: '@danielsimonjr/memoryjs,@anthropic-ai/claude-agent-sdk',
+      FORBID_MODULES: '@anthropic-ai/claude-agent-sdk',
       NODE_OPTIONS: `--import=file://${FORBID.replace(/\\/g, '/')}`,
     });
 

@@ -4,8 +4,7 @@ import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 
-// Ported from @danielsimonjr/memoryjs's scripts/rebuild-native.mjs fix
-// (tests/unit/core/rebuild-native.test.ts there). This repo's copy of the postinstall
+// Ported from the rebuild-native.mjs fix of a former dependency. This repo's copy of the postinstall
 // script only did `require('better-sqlite3')`, which detects a MISSING module but not
 // one that is PRESENT and broken: ABI-mismatched to the running Node, or failing at
 // lazy load. better-sqlite3 compiles its native binding lazily, in the Database

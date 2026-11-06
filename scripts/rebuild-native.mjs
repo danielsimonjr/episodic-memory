@@ -23,9 +23,9 @@
  *   The first version of this script searched <pkg>/node_modules/<name> for a .node file. That is
  *   filesystem archaeology standing in for a capability, and it was wrong twice over in one sweep:
  *
- *     - memoryjs/tools/migrate-from-jsonl-to-sqlite HAS a local node_modules/better-sqlite3
- *       directory with no binding in it, but `require.resolve` finds the PARENT copy in
- *       memoryjs/node_modules, which is built. The module loads perfectly. The path check reported
+ *     - a nested tool directory of a former dependency HAD a local node_modules/better-sqlite3
+ *       directory with no binding in it, but `require.resolve` found the PARENT copy one
+ *       level up, which was built. The module loads perfectly. The path check reported
  *       a problem that did not exist, then ran a pointless rebuild that returned exit 0 having
  *       built nothing.
  *     - Hoisting, workspaces and peer installs all place the real copy somewhere other than the

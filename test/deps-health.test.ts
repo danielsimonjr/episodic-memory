@@ -6,7 +6,6 @@ import {
   DEP_SENTINELS,
   JS_SENTINELS,
   NATIVE_ADDON,
-  NESTED_BETTER_SQLITE3,
   nodeModulesIsHealthy,
   repairPlan,
 } from '../src/deps-health.js';
@@ -63,8 +62,8 @@ describe('nodeModulesIsHealthy', () => {
     }
   });
 
-  it('lists memoryjs as a JS sentinel', () => {
-    expect(JS_SENTINELS).toContain('@danielsimonjr/memoryjs/package.json');
+  it('lists only packages this plugin itself depends on', () => {
+    for (const rel of JS_SENTINELS) expect(rel.startsWith('@danielsimonjr/')).toBe(false);
   });
 });
 
@@ -110,16 +109,4 @@ describe('repairPlan', () => {
     expect(repairPlan(nm)).toBe('install');
   });
 
-  // A second better-sqlite3 nested under memoryjs is the failure the `overrides` pin exists to
-  // prevent: the top-level copy is fine, so every sentinel and the binding check pass, but memoryjs
-  // resolves its own binding-less copy. Only a reinstall that honours the pin can collapse it.
-  it('a nested better-sqlite3 under memoryjs makes repairPlan fail', () => {
-    const nm = path.join(testDir, 'node_modules');
-    populate(nm);
-    expect(repairPlan(nm)).toBe('none');
-
-    fs.mkdirSync(path.join(nm, NESTED_BETTER_SQLITE3, 'lib'), { recursive: true });
-    expect(repairPlan(nm)).toBe('install');
-    expect(nodeModulesIsHealthy(nm)).toBe(false);
-  });
 });

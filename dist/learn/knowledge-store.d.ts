@@ -182,7 +182,12 @@ export declare class KnowledgeStore {
     private latestEntryInChain;
     /** Every learned entity. */
     private allEntities;
-    /** Every learned entry, one row per chain (highest logical version), any status. */
+    /**
+     * Learned entries that are still chain-visible (`isLatest !== false`), any
+     * status. A candidate revision does not clear the parent's `isLatest`, so
+     * both rows are returned until `supersede`. Callers that want one row per
+     * chain use `getBySlug`; callers that want lifecycle use `listByStatus`.
+     */
     listEntries(): Promise<KnowledgeEntry[]>;
     /**
      * Every learned entry with a given status, including superseded and older

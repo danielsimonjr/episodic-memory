@@ -683,18 +683,18 @@ export class KnowledgeStore {
     return graph.entities.filter((e: Entity) => e.entityType.startsWith(ENTRY_TYPE_PREFIX));
   }
 
-  /** Every learned entry, one row per chain (highest logical version), any status. */
+  /**
+   * Learned entries that are still chain-visible (`isLatest !== false`), any
+   * status. A candidate revision does not clear the parent's `isLatest`, so
+   * both rows are returned until `supersede`. Callers that want one row per
+   * chain use `getBySlug`; callers that want lifecycle use `listByStatus`.
+   */
   async listEntries(): Promise<KnowledgeEntry[]> {
     const entities = await this.allEntities();
-    const byRoot = new Map<string, KnowledgeEntry>();
-    for (const entity of entities) {
-      const parsed = parseEntity(entity);
-      if (!parsed) continue;
-      const root = entity.rootEntityName ?? rootName(parsed.kind, parsed.project, parsed.slug);
-      const existing = byRoot.get(root);
-      if (!existing || parsed.version > existing.version) byRoot.set(root, parsed);
-    }
-    return [...byRoot.values()];
+    return entities
+      .filter(e => e.isLatest !== false)
+      .map(parseEntity)
+      .filter((e): e is KnowledgeEntry => e !== null);
   }
 
   /**

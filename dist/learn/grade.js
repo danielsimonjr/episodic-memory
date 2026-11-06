@@ -153,15 +153,15 @@ export function gradeLocate(truth, answer) {
     for (const ref of refs) {
         for (const location of locations) {
             if (!samePath(ref.path, location.path)) {
+                // A different archive path can still name the same session (a moved file).
                 if (ref.sessionId && sessionOf(location.path) === ref.sessionId) {
                     best = Math.max(best, 0.5);
                 }
                 continue;
             }
-            best = Math.max(best, locates(ref, location) && location.lineStart !== undefined ? 1 : 0.5);
-            // A matching path with no range at all still earns the session credit.
-            if (location.lineStart === undefined)
-                best = Math.max(best, 0.5);
+            // 1.0 needs an overlapping range; a path alone is a session-level hit.
+            const exact = location.lineStart !== undefined && locates(ref, location);
+            best = Math.max(best, exact ? 1 : 0.5);
         }
     }
     return { passed: best === 1, score: best };

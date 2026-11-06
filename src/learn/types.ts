@@ -1,0 +1,178 @@
+/**
+ * Shared types for the Recursa learned-knowledge store.
+ *
+ * Every import here is `import type`, which TypeScript erases: the compiled
+ * module has no runtime imports, so it loads with no memoryjs, no transformers
+ * and no database handle. `src/learn/knowledge-store.ts` is the only module that
+ * imports memoryjs; every other module sees the shapes declared here.
+ */
+
+import type Database from 'better-sqlite3';
+import type { KnowledgeStore } from './knowledge-store.js';
+
+export type KnowledgeKind = 'instruction' | 'skill' | 'reflection';
+
+export type KnowledgeStatus = 'candidate' | 'active' | 'retired';
+
+export type Confidence = 'low' | 'medium' | 'high';
+
+/**
+ * Declared locally on purpose. memoryjs also exports a `TrustLevel` with a
+ * fourth value (`inferred`); this store only ever writes the three the spec
+ * names, and types.ts must stay free of memoryjs imports.
+ */
+export type TrustLevel = 'unverified' | 'verified' | 'ground-truth';
+
+/** A cited exchange, stored so a citation survives an id change. */
+export interface SourceRef {
+  id: string;
+  path: string;
+  lineStart: number;
+  lineEnd: number;
+  sessionId: string | null;
+}
+
+/** The validation record a candidate needs before it can become active. */
+export interface ValidationRecord {
+  targeted: number[];
+  sample: number[];
+  passedBefore: number;
+  passedAfter: number;
+  regressions: number[];
+  judgedAt: string;
+  meanTurnsBefore: number | null;
+  meanTurnsAfter: number | null;
+  usdBefore: number | null;
+  usdAfter: number | null;
+}
+
+/** A procedure skill's step, proposed by the agent alongside the prose body. */
+export interface ProcedureStepSpec {
+  action: 'search' | 'read' | 'digest' | 'skills' | 'check';
+  parameters: Record<string, string>;
+}
+
+/** One learned entry, as every module outside the adapter sees it. */
+export interface KnowledgeEntry {
+  /** The entity name: `learned:<kind>:<project>:<slug>:v<n>`. */
+  id: string;
+  kind: KnowledgeKind;
+  project: string;
+  slug: string;
+  /**
+   * Logical version, from the name and the `version:` observation.
+   * NOT memoryjs's `Entity.version`, which auto-increments on every OCC write.
+   */
+  version: number;
+  title: string;
+  description: string;
+  body: string;
+  scope: string;
+  confidence: Confidence;
+  trust: TrustLevel;
+  sources: SourceRef[];
+  status: KnowledgeStatus;
+  runId: string;
+  createdAt: string;
+  supersededBy: string | null;
+  validation: ValidationRecord | null;
+  heuristicIds: string[];
+  decisionId: string | null;
+  procedureId: string | null;
+  steps?: ProcedureStepSpec[];
+}
+
+/** What an agent proposes; the store assigns id, version and timestamps. */
+export type NewKnowledgeEntry = Omit<
+  KnowledgeEntry,
+  | 'id'
+  | 'version'
+  | 'createdAt'
+  | 'supersededBy'
+  | 'validation'
+  | 'heuristicIds'
+  | 'decisionId'
+  | 'procedureId'
+>;
+
+/** A gated proposal, with `body` still carrying its `[#id]` marks. */
+export interface ProposedEntry {
+  kind: KnowledgeKind;
+  project: string;
+  slug: string;
+  title: string;
+  description: string;
+  body: string;
+  scope: string;
+  confidence: Confidence;
+  steps?: ProcedureStepSpec[];
+  /** Task ids the proposal targets. */
+  targets?: number[];
+}
+
+/** One handle bundle, shared by every function from the solver onward. */
+export interface LearnDbs {
+  store: KnowledgeStore;
+  learning: Database.Database;
+  index: Database.Database;
+}
+
+/** Truth for a generated task: where the answer lives. */
+export interface TaskTruth {
+  exchanges: SourceRef[];
+  /** UTC `YYYY-MM-DD` bounds of the source session. */
+  sessionDateRange: [string, string];
+  project: string;
+  assistantMessage: string;
+}
+
+/** One tool call a solver made. Result text is never stored. */
+export interface TraceStep {
+  tool: string;
+  args: unknown;
+  resultAddress: string | null;
+  resultChars: number;
+}
+
+export interface Cost {
+  turns: number;
+  inputTokens: number;
+  outputTokens: number;
+  usd: number | null;
+}
+
+export type AttemptOutcome = 'graded' | 'aborted' | 'killed' | 'error';
+
+/** One row of `learning_attempt`. */
+export interface AttemptRow {
+  id: number;
+  taskId: number;
+  runId: string;
+  snapshotId: number;
+  role: 'solve' | 'validate' | 'merge-check';
+  passed: boolean;
+  score: number;
+  answer: string;
+  trace: TraceStep[];
+  cost: Cost;
+  outcome: AttemptOutcome;
+  createdAt: string;
+}
+
+/** Names Windows refuses as file or directory names. */
+const WINDOWS_RESERVED_NAMES = new Set([
+  'con',
+  'prn',
+  'aux',
+  'nul',
+  ...Array.from({ length: 9 }, (_, i) => `com${i + 1}`),
+  ...Array.from({ length: 9 }, (_, i) => `lpt${i + 1}`),
+]);
+
+/** A slug is also a directory name in the export, so it must be portable. */
+export const SLUG_RE = /^[a-z0-9][a-z0-9-]{0,63}$/;
+
+export function isValidSlug(slug: string): boolean {
+  if (!SLUG_RE.test(slug)) return false;
+  return !WINDOWS_RESERVED_NAMES.has(slug.toLowerCase());
+}

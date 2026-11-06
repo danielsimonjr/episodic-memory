@@ -66,10 +66,11 @@ export interface LeafLearnerOptions {
 /**
  * Tasks whose solvers disagreed about where the answer lives.
  *
- * Two `graded` attempts from this round, each committing to an address, with
- * different addresses: the task's truth is unreliable for this round, so it
- * cannot be part of a validation set. One attempt, or two attempts naming the
- * same file, is a normal failure and stays in.
+ * Two failed `graded` attempts from this round, each committing to one address,
+ * with different addresses: the task's truth is unreliable for this round, so
+ * it cannot be part of a validation set. A passing attempt is evidence the
+ * ground is reliable. One attempt that names two paths is one solver hedging,
+ * not two solvers disagreeing. Two attempts naming the same file stay in.
  */
 export declare function suspectTaskIds(attempts: AttemptRow[]): number[];
 /**

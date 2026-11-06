@@ -179,13 +179,13 @@ async function reSolve(
   snapshotId: number,
   opts: ValidateOptions,
   model: string
-): Promise<AttemptRow> {
+): Promise<AttemptRow | null> {
+  // Stale tasks are excluded (§7 rule 13). A missing or stale id is not a solve.
   const task = listTasks(dbs.learning, {
     split: 'train',
     ids: [taskId],
-    includeStale: true,
   })[0];
-  if (!task) throw new Error(`validation task not found: ${taskId}`);
+  if (!task) return null;
   return opts.solve(dbs, task, {
     snapshotId,
     runId: opts.runId,
@@ -218,6 +218,39 @@ export async function validateCandidate(
   const config = learnConfig();
   const model = opts.model ?? config.model;
 
+  const requested = [...new Set(opts.targeted)];
+  const requestedSample = sampleIds(
+    opts.sampleFrom.filter(id => !requested.includes(id)),
+    opts.sampleSize,
+    opts.seed
+  );
+  const liveIds = new Set(
+    listTasks(dbs.learning, {
+      split: 'train',
+      ids: [...requested, ...requestedSample],
+    }).map(task => task.id)
+  );
+  const targeted = requested.filter(id => liveIds.has(id));
+  const sample = requestedSample.filter(id => liveIds.has(id));
+
+  // Nothing left to measure (every target was stale or already filtered out).
+  // Leave the candidate unvalidated: do not reject its decision or its heuristics.
+  if (targeted.length === 0) {
+    return {
+      targeted,
+      sample,
+      passedBefore: 0,
+      passedAfter: 0,
+      regressions: [],
+      judgedAt: new Date().toISOString(),
+      meanTurnsBefore: null,
+      meanTurnsAfter: null,
+      usdBefore: null,
+      usdAfter: null,
+      keep: false,
+    };
+  }
+
   // Every proposal is a decision before it is a measurement, so the reason a
   // candidate was dropped survives as a rejected decision, not just a record.
   const decisionId = await dbs.store.proposeDecision({
@@ -233,19 +266,13 @@ export async function validateCandidate(
   });
   await dbs.store.setDecision(candidateName, decisionId);
 
-  const targeted = [...new Set(opts.targeted)];
-  const sample = sampleIds(
-    opts.sampleFrom.filter(id => !targeted.includes(id)),
-    opts.sampleSize,
-    opts.seed
-  );
-
   const before = beforeAttempts(dbs, opts.runId, [...targeted, ...sample]);
   const snapshotId = await evaluationSnapshot(dbs, entry, opts.runId);
 
   const after = new Map<number, AttemptRow>();
   for (const taskId of [...targeted, ...sample]) {
-    after.set(taskId, await reSolve(dbs, taskId, snapshotId, opts, model));
+    const attempt = await reSolve(dbs, taskId, snapshotId, opts, model);
+    if (attempt) after.set(taskId, attempt);
   }
 
   const regressions = sample.filter(taskId => {

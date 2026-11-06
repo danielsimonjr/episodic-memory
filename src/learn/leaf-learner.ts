@@ -117,25 +117,30 @@ function subsetTasks(dbs: LearnDbs, taskIds: number[]): LearningTask[] {
 /**
  * Tasks whose solvers disagreed about where the answer lives.
  *
- * Two `graded` attempts from this round, each committing to an address, with
- * different addresses: the task's truth is unreliable for this round, so it
- * cannot be part of a validation set. One attempt, or two attempts naming the
- * same file, is a normal failure and stays in.
+ * Two failed `graded` attempts from this round, each committing to one address,
+ * with different addresses: the task's truth is unreliable for this round, so
+ * it cannot be part of a validation set. A passing attempt is evidence the
+ * ground is reliable. One attempt that names two paths is one solver hedging,
+ * not two solvers disagreeing. Two attempts naming the same file stay in.
  */
 export function suspectTaskIds(attempts: AttemptRow[]): number[] {
   const pathsByTask = new Map<number, Set<string>>();
+  const failedLocated = new Map<number, number>();
   for (const attempt of attempts) {
-    if (attempt.outcome !== 'graded') continue;
+    if (attempt.outcome !== 'graded' || attempt.passed) continue;
     const parsed = parseSolverAnswer(attempt.answer);
     const located = parsed.locations.map(location => location.path).filter(Boolean);
-    if (located.length === 0) continue;
+    // One answer is one solver. Extra paths in the same answer are a hedge.
+    const path = located[0];
+    if (!path) continue;
     const set = pathsByTask.get(attempt.taskId) ?? new Set<string>();
-    for (const found of located) set.add(found.toLowerCase());
+    set.add(path.toLowerCase());
     pathsByTask.set(attempt.taskId, set);
+    failedLocated.set(attempt.taskId, (failedLocated.get(attempt.taskId) ?? 0) + 1);
   }
   const suspect: number[] = [];
   for (const [taskId, paths] of pathsByTask) {
-    if (paths.size >= 2) suspect.push(taskId);
+    if ((failedLocated.get(taskId) ?? 0) >= 2 && paths.size >= 2) suspect.push(taskId);
   }
   return suspect.sort((a, b) => a - b);
 }
@@ -285,14 +290,14 @@ export async function runLeafLearner(
     const failures = graded.filter(attempt => !attempt.passed);
     if (failures.length === 0) break;
 
-    // 2. Task noise out of the validation sets. Every `solve` attempt this run
-    //    made for the subset counts, so a task two rounds answered differently
-    //    is caught even when this round solved it once.
+    // 2. Task noise out of the validation sets. Only this round's solves count:
+    //    the snapshot just created is the round. Earlier rounds of the same run
+    //    live on earlier snapshots and must not make a task look disputed.
     const roundAttempts = listAttempts(dbs.learning, {
       runId: options.runId,
       taskIds: tasks.map(task => task.id),
       role: 'solve',
-    });
+    }).filter(attempt => attempt.snapshotId === snapshotId);
     const suspect = new Set(suspectTaskIds(roundAttempts));
     for (const taskId of suspect) {
       if (!result.suspect.includes(taskId)) result.suspect.push(taskId);
@@ -413,36 +418,55 @@ export async function runLeafLearner(
     // 5. Gate, store, validate.
     let validated = 0;
     let keptThisRound = 0;
+    let budgetStop = false;
     for (const proposal of proposals.slice(0, options.editsPerRound)) {
       const name = await storeProposal(dbs, proposal, options.runId, reject);
       if (!name) continue;
-      validated += 1;
 
       // A model names the tasks it meant to fix, but the set it may name is the
       // round's own train subset: a proposal cannot drag a held-out or stale task
       // into a validation set.
       const subsetIds = new Set(tasks.map(task => task.id));
       const proposed = (proposal.targets ?? []).filter(taskId => subsetIds.has(taskId));
-      const targeted = (proposed.length > 0 ? proposed : failedIds).filter(
+      let targeted = (proposed.length > 0 ? proposed : failedIds).filter(
         taskId => !suspect.has(taskId)
       );
+      // Every named target was task noise. Measure the round's other failures
+      // instead of validating an empty set, which would reject the edit without
+      // ever solving a task.
+      if (targeted.length === 0) {
+        targeted = failedIds.filter(taskId => !suspect.has(taskId));
+      }
+      if (targeted.length === 0) continue;
+      validated += 1;
       const sampleFrom = passedAttempts
         .map(attempt => attempt.taskId)
         .filter(taskId => !targeted.includes(taskId) && !suspect.has(taskId));
 
-      const verdict = await validateCandidate(dbs, name, {
-        targeted,
-        sampleFrom,
-        sampleSize: config.validateSample,
-        seed: round + 1,
-        solve: options.solve ?? solveTask,
-        runId: options.runId,
-        budget: options.budget,
-        model,
-        runAgent: options.runAgent,
-        judge: options.judge,
-        pids,
-      });
+      let verdict;
+      try {
+        verdict = await validateCandidate(dbs, name, {
+          targeted,
+          sampleFrom,
+          sampleSize: config.validateSample,
+          seed: round + 1,
+          solve: options.solve ?? solveTask,
+          runId: options.runId,
+          budget: options.budget,
+          model,
+          runAgent: options.runAgent,
+          judge: options.judge,
+          pids,
+        });
+      } catch (error) {
+        // A validation re-solve spends the same call budget as a solve. Spent
+        // means stop, with every keep so far retained (§7 rule 10a).
+        if (error instanceof BudgetExhausted) {
+          budgetStop = true;
+          break;
+        }
+        throw error;
+      }
 
       if (verdict.keep) {
         keptThisRound += 1;
@@ -453,6 +477,7 @@ export async function runLeafLearner(
     // A round that validated something and kept none is the stop condition; a
     // round whose proposals all failed the gate is not, because the next round
     // can still produce a usable proposal from the same failures.
+    if (budgetStop) break;
     if (validated > 0 && keptThisRound === 0) break;
   }
 

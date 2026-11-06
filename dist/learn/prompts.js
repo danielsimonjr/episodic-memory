@@ -343,12 +343,12 @@ export function reflectPrompt(input) {
         '',
         'Attempt marks you may cite:',
         ...(input.evidence.length > 0
-            ? input.evidence.map(e => `[@${e.attemptId}] task ${e.taskId} ${e.kind} ${e.passed ? 'passed' : 'failed'}`)
+            ? input.evidence.map(e => `[@${e.attemptId}] task ${e.taskId}${e.kind ? ` ${e.kind}` : ''} ${e.passed ? 'passed' : 'failed'}`)
             : ['- none']),
         '',
         'Exchange marks you may cite:',
         ...(input.sources.length > 0
-            ? input.sources.map(s => `[#${s.id}] ${s.path} lines ${s.lineStart}-${s.lineEnd}`)
+            ? input.sources.map(s => `[#${s.id}] lines ${s.lineStart}-${s.lineEnd}`)
             : ['- none']),
         '',
         ...rulesBlock(),

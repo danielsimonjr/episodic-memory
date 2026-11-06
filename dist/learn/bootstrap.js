@@ -20,10 +20,11 @@
  *    which is what makes a later `reinforce` meaningful.
  * 4. **Measurement.** Generate tasks if the archive has none, solve the signal
  *    train set first with an empty snapshot and then with the candidates, and
- *    decide with the paper's Figure 4 rule: keep a candidate when the pass rate
- *    does not fall and either mean turns or USD per task falls by at least
- *    `EPISODIC_MEMORY_LEARN_MIN_SAVING`. That is a real decision made from
- *    measurements, so an unmeasured candidate stays a candidate.
+ *    decide with the paper's Figure 4 rule: keep a candidate when both sides
+ *    graded the same number of tasks, the pass rate does not fall, and either
+ *    mean turns or USD per task falls by at least
+ *    `EPISODIC_MEMORY_LEARN_MIN_SAVING`. An unmeasured or partially measured
+ *    candidate stays a candidate.
  *
  * A spend cap stops the run (`stopped`) and keeps everything already validated;
  * it does not throw away the bootstrapping work.
@@ -116,14 +117,18 @@ function savings(before, after) {
  * The bootstrap gain rule: keep when the signal pass rate does not fall and mean
  * turns or USD per task fall by at least `minSavingPct`.
  *
- * Both sides must have been measured. An unmeasured candidate is not "free to
- * keep": the point of bootstrapping is that it measurably cuts turns at equal
- * accuracy, so no measurement means no evidence and the candidate waits.
+ * Both sides must have been measured, and they must have graded the same number
+ * of tasks. `passRate` counts only graded attempts, so an abort shrinks one
+ * side's total. A smaller after side can be the easy tasks only; that is not
+ * evidence the candidate saved turns at equal accuracy, and the candidate waits.
  */
 export function bootstrapGain(before, after, minSavingPct) {
     const { turnSavingPct, usdSavingPct, rateFell } = savings(before, after);
     if (before.total === 0 || after.total === 0) {
         return { keep: false, turnSavingPct, usdSavingPct, reason: 'unmeasured' };
+    }
+    if (before.total !== after.total) {
+        return { keep: false, turnSavingPct, usdSavingPct, reason: 'unequal-coverage' };
     }
     if (rateFell) {
         return { keep: false, turnSavingPct, usdSavingPct, reason: 'pass-rate-fell' };
@@ -363,8 +368,9 @@ export async function runBootstrap(dbs, options) {
             try {
                 merged = mergeLines(await textModel(mergeInstructionPrompt(candidateSkills)));
             }
-            catch {
+            catch (error) {
                 merged = [];
+                reject(BOOTSTRAP_INSTRUCTION_SLUG, `merge failed: ${error instanceof Error ? error.message : String(error)}`);
             }
             if (merged.length > 0) {
                 const gated = gateEntry({
@@ -423,11 +429,8 @@ export async function runBootstrap(dbs, options) {
         // still have no verdict. Stop before that spend, keeping what was proposed.
         if (signalTasks.length * 2 > budget.remaining()) {
             status = 'stopped';
-            addRejection(dbs.learning, runId, {
-                slug: 'baseline',
-                reason: `baseline needs ${signalTasks.length * 2} subprocess calls, above the ` +
-                    `${budget.remaining()} calls left of a ${budget.max}-call budget; stopped before measuring`,
-            });
+            reject('baseline', `baseline needs ${signalTasks.length * 2} subprocess calls, above the ` +
+                `${budget.remaining()} calls left of a ${budget.max}-call budget; stopped before measuring`);
         }
         else if (signalTasks.length > 0) {
             const solveOptions = {
@@ -559,6 +562,16 @@ function stripMarks(line) {
         .replace(/\s*\[(?:#[0-9a-f]{32}|@\d+)(?:\s*,\s*(?:#[0-9a-f]{32}|@\d+))*\]\s*$/, '')
         .trim();
 }
+/** Task kinds for the attempts a reflection cites. Missing rows are omitted. */
+function taskKinds(db, taskIds) {
+    const unique = [...new Set(taskIds)];
+    if (unique.length === 0)
+        return new Map();
+    const rows = db
+        .prepare(`SELECT id, kind FROM learning_task WHERE id IN (${unique.map(() => '?').join(',')})`)
+        .all(...unique);
+    return new Map(rows.map(row => [Number(row.id), row.kind]));
+}
 /**
  * Write the run's reflection, citing the attempts and exchanges it saw.
  *
@@ -580,10 +593,12 @@ async function writeReflection(dbs, input) {
     if (sources.length === 0)
         return;
     const attempts = listAttempts(dbs.learning, { runId: input.runId });
-    const evidence = attempts.slice(0, 20).map(attempt => ({
+    const cited = attempts.slice(0, 20);
+    const kinds = taskKinds(dbs.learning, cited.map(attempt => attempt.taskId));
+    const evidence = cited.map(attempt => ({
         attemptId: attempt.id,
         taskId: attempt.taskId,
-        kind: 'locate',
+        ...(kinds.has(attempt.taskId) ? { kind: kinds.get(attempt.taskId) } : {}),
         passed: attempt.passed,
     }));
     let body = [];
@@ -599,8 +614,9 @@ async function writeReflection(dbs, input) {
             sources,
         })));
     }
-    catch {
+    catch (error) {
         body = [];
+        input.reject(BOOTSTRAP_REFLECTION_SLUG, `reflection failed: ${error instanceof Error ? error.message : String(error)}`);
     }
     if (body.length === 0)
         return;

@@ -118,7 +118,8 @@ export declare function mergeEntriesPrompt(input: KnowledgeEntry[] | MergeEntrie
 export interface ReflectEvidence {
     attemptId: number;
     taskId: number;
-    kind: LearningKind;
+    /** The task's real kind. Omitted when the attempt has no task row to read. */
+    kind?: LearningKind;
     passed: boolean;
 }
 export interface ReflectPromptInput {

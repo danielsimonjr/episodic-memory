@@ -20,10 +20,11 @@
  *    which is what makes a later `reinforce` meaningful.
  * 4. **Measurement.** Generate tasks if the archive has none, solve the signal
  *    train set first with an empty snapshot and then with the candidates, and
- *    decide with the paper's Figure 4 rule: keep a candidate when the pass rate
- *    does not fall and either mean turns or USD per task falls by at least
- *    `EPISODIC_MEMORY_LEARN_MIN_SAVING`. That is a real decision made from
- *    measurements, so an unmeasured candidate stays a candidate.
+ *    decide with the paper's Figure 4 rule: keep a candidate when both sides
+ *    graded the same number of tasks, the pass rate does not fall, and either
+ *    mean turns or USD per task falls by at least
+ *    `EPISODIC_MEMORY_LEARN_MIN_SAVING`. An unmeasured or partially measured
+ *    candidate stays a candidate.
  *
  * A spend cap stops the run (`stopped`) and keeps everything already validated;
  * it does not throw away the bootstrapping work.
@@ -99,9 +100,10 @@ export declare function indexExchangeResolver(indexDb: Database.Database): IdCit
  * The bootstrap gain rule: keep when the signal pass rate does not fall and mean
  * turns or USD per task fall by at least `minSavingPct`.
  *
- * Both sides must have been measured. An unmeasured candidate is not "free to
- * keep": the point of bootstrapping is that it measurably cuts turns at equal
- * accuracy, so no measurement means no evidence and the candidate waits.
+ * Both sides must have been measured, and they must have graded the same number
+ * of tasks. `passRate` counts only graded attempts, so an abort shrinks one
+ * side's total. A smaller after side can be the easy tasks only; that is not
+ * evidence the candidate saved turns at equal accuracy, and the candidate waits.
  */
 export declare function bootstrapGain(before: PassRate, after: PassRate, minSavingPct: number): {
     keep: boolean;

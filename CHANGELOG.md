@@ -7,6 +7,23 @@
 - **A candidate knowledge revision no longer hides the still-active previous version.** `putEntry` no longer clears the parent's `isLatest`; only `supersede` does. `listActive` and snapshots are gated on status and `supersededBy`. `getBySlug` returns the highest logical version. Reflection `generalization_confidence` uses 0.3 / 0.6 / 0.9.
 
 ### Added
+- **`learn bootstrap`: navigation skills and exploration notes from the archive (Task 7 of the Recursa
+  plan).** One bootstrapper subprocess per project with at least 20 indexed exchanges — bounded by the
+  global subprocess semaphore and by `EPISODIC_MEMORY_LEARN_CONCURRENCY` — reads the digest and samples
+  the whole time span, then proposes a `navigation` skill and an `exploration-notes` skill. Every
+  proposal passes the citation, redaction and injection gates; a rejected one is recorded on the run
+  with its reason (including `duplicate`) and nothing is retried or repaired. The two bootstrap skills'
+  cited lines are mirrored into the project context, which feeds learner prompts only and is never
+  rendered into a session, and a procedure skill's steps become a `proc:` record. One text call then
+  merges the candidates into a single global instruction in the template grammar, each of whose lines
+  is also a heuristic. Before anything is kept, the run generates self-practice tasks when the archive
+  has none, marks stale ones, and solves the signal train set twice — an empty snapshot, then the
+  candidates — so the keep decision is the paper's Figure 4 rule: keep when the signal pass rate does
+  not fall and mean turns or USD per task fall by at least `EPISODIC_MEMORY_LEARN_MIN_SAVING`. Skills
+  that pass activate; the instruction stays a candidate for `learn approve` unless the approval mode is
+  `none`. The run closes with one gated reflection citing attempt ids, `finishRun` metrics per kind and
+  tier, and a re-render of the learned block. A spend cap stops the run (`stopped`) and keeps
+  everything already validated.
 - **The `learn` CLI: `tasks`, `solve`, `status` and `report` (Task 6 of the Recursa plan).**
   `episodic-memory learn` now dispatches to `dist/learn-cli.js`, which checks the reentrancy guard,
   the flag and the fleet GPU reservation — and drops to below-normal priority — before it imports the

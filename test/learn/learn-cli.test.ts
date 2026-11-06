@@ -250,6 +250,69 @@ describe('runLearnCli', () => {
     }
   });
 
+  it('refuses to start a bootstrap whose doubled baseline exceeds the call budget', async () => {
+    const previous = process.env.EPISODIC_MEMORY_LEARN_MAX_CALLS;
+    process.env.EPISODIC_MEMORY_LEARN_MAX_CALLS = '3';
+    try {
+      const runId = createRun(learning, { phase: 'improve', seed: 1, budget: {} });
+      for (let i = 0; i < 2; i += 1) {
+        learning
+          .prepare(
+            `INSERT INTO learning_task (run_id, kind, tier, split, project, prompt, truth, status)
+             VALUES (?, 'locate', 2, 'train', 'proj-a', ?, ?, 'ok')`
+          )
+          .run(
+            runId,
+            `prompt ${i}`,
+            JSON.stringify({
+              exchanges: [
+                { id: HEX, path: '/archive/proj-a/s-0.jsonl', lineStart: 1, lineEnd: 9, sessionId: 's0' },
+              ],
+              sessionDateRange: ['2026-03-01', '2026-03-01'],
+              project: 'proj-a',
+              assistantMessage: 'x',
+            })
+          );
+      }
+
+      const cap = capture();
+      const agent = fakeRunAgent();
+      const code = await runLearnCli(['bootstrap'], { ...cap.deps, dbs, runAgent: agent.fn });
+
+      expect(code).toBe(1);
+      // 2 signal tasks × 2 solves = 4 calls, above MAX_CALLS=3.
+      expect(cap.stderr()).toMatch(/baseline/i);
+      expect(cap.stderr()).toMatch(/4/);
+      expect(cap.stderr()).toMatch(/3/);
+      // No bootstrapper ran.
+      expect(agent.calls).toHaveLength(0);
+    } finally {
+      if (previous === undefined) delete process.env.EPISODIC_MEMORY_LEARN_MAX_CALLS;
+      else process.env.EPISODIC_MEMORY_LEARN_MAX_CALLS = previous;
+    }
+  });
+
+  it('bootstrap runs under the lock, finishes a run and prints the report', async () => {
+    const cap = capture();
+    const agent = fakeRunAgent();
+    const code = await runLearnCli(['bootstrap', '--per-project', '2'], {
+      ...cap.deps,
+      dbs,
+      runAgent: agent.fn,
+      model: 'test-model',
+      generateModel: fakeGenerateModel(),
+    });
+
+    expect(code).toBe(0);
+    expect(cap.stderr()).toMatch(/bootstrap/i);
+    expect(cap.stdout()).toMatch(/run /);
+    const runs = learning.prepare("SELECT * FROM learning_run WHERE phase = 'bootstrap'").all() as any[];
+    expect(runs).toHaveLength(1);
+    expect(runs[0].status).toBe('done');
+    // Progress is on stderr, the report on stdout.
+    expect(cap.stdout()).not.toMatch(/bootstrapping with concurrency/);
+  });
+
   it('report defaults to the latest run and prints rejected entries and rates', async () => {
     const older = createRun(learning, { phase: 'improve', seed: 1, budget: {} });
     const newer = createRun(learning, { phase: 'improve', seed: 2, budget: {} });
@@ -303,7 +366,7 @@ describe('runLearnCli', () => {
     expect(text).toMatch(/improve/);
   });
 
-  it.each(['bootstrap', 'improve', 'approve', 'export', 'render'])(
+  it.each(['improve', 'approve', 'export', 'render'])(
     '%s is a stub with a clear not-implemented exit code',
     async command => {
       const cap = capture();

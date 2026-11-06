@@ -1,5 +1,5 @@
 import type Database from 'better-sqlite3';
-import { listActiveEntries, type DigestEntry } from './digest-db.js';
+import { hideCitedLines, listActiveEntries, type DigestEntry } from './digest-db.js';
 
 export const DEFAULT_DIGEST_MAX_CHARS = 6000;
 
@@ -23,23 +23,31 @@ function label(e: DigestEntry): string {
   return e.tier === 'session' ? `Session ${day}` : e.tier === 'day' ? `Day ${day}` : `Week of ${day}`;
 }
 
-function block(e: DigestEntry): string {
-  return `## ${label(e)}\n${e.text.trim()}\n\n`;
-}
-
 /**
  * The digest for one project, within maxChars. Order: handoff notes first, then newest entries first.
  * Stops before the first entry that does not fit, so the oldest entries drop first and the text ends on a
  * whole entry. Returns an empty string when nothing fits.
+ *
+ * `opts.hideExchangeIds` drops every line citing one of those ids, and then
+ * drops an entry whose lines are all gone. The learn solver passes a task's
+ * source exchange ids here so the digest cannot hand back its answer.
  */
-export function buildDigestText(db: Database.Database, project: string, maxChars: number): string {
+export function buildDigestText(
+  db: Database.Database,
+  project: string,
+  maxChars: number,
+  opts: { hideExchangeIds?: string[] } = {}
+): string {
+  const hide = opts.hideExchangeIds;
   const entries = listActiveEntries(db, project);
   const handoffs = entries.filter(e => e.handoff);
   const rest = entries.filter(e => !e.handoff).sort((a, b) => (a.periodEnd < b.periodEnd ? 1 : a.periodEnd > b.periodEnd ? -1 : b.id - a.id));
   let out = HEADER + '\n';
   let added = 0;
   for (const e of [...handoffs, ...rest]) {
-    const b = block(e);
+    const visible = hideCitedLines(e.text.trim(), hide);
+    if (!visible.trim()) continue;
+    const b = `## ${label(e)}\n${visible}\n\n`;
     if (out.length + b.length > maxChars) break;
     out += b;
     added++;

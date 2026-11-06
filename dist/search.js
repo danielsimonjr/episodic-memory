@@ -14,6 +14,10 @@ export function includeSearchSummaries() {
         return false;
     return true;
 }
+/** The env default, unless a caller set the option explicitly. */
+function summariesVisible(options) {
+    return options.includeSummaries ?? includeSearchSummaries();
+}
 export function maxSummaryDisplayChars() {
     const raw = process.env.EPISODIC_MEMORY_MAX_SUMMARY_DISPLAY_CHARS;
     if (raw === undefined)
@@ -55,13 +59,22 @@ function buildSearchFilters(options) {
         parts.push('e.git_branch = ?');
         params.push(options.git_branch);
     }
+    // Bound placeholders, one per id, so an id can never be read as SQL.
+    const excluded = (options.excludeIds ?? []).filter(id => typeof id === 'string' && id.length > 0);
+    if (excluded.length > 0) {
+        parts.push(`e.id NOT IN (${excluded.map(() => '?').join(',')})`);
+        params.push(...excluded);
+    }
     return {
         sql: parts.length ? `AND ${parts.join(' AND ')}` : '',
         params,
     };
 }
 function hasMetadataFilters(options) {
-    return Boolean(options.project || options.session_id || options.git_branch);
+    return Boolean(options.project ||
+        options.session_id ||
+        options.git_branch ||
+        (options.excludeIds && options.excludeIds.length > 0));
 }
 const EXCHANGE_SELECT_COLUMNS = `
         e.id,
@@ -245,9 +258,11 @@ export async function searchConversations(query, options = {}) {
         const exchange = exchangeFromRow(row);
         // Try to load summary if available (confined to archive like MCP read)
         let summary;
-        const summaryPath = safeArchiveSummaryPath(row.archive_path);
-        if (summaryPath) {
-            summary = maybeRedactSecrets(fs.readFileSync(summaryPath, 'utf-8').trim());
+        if (summariesVisible(options)) {
+            const summaryPath = safeArchiveSummaryPath(row.archive_path);
+            if (summaryPath) {
+                summary = maybeRedactSecrets(fs.readFileSync(summaryPath, 'utf-8').trim());
+            }
         }
         // Create snippet (first 200 chars, collapse newlines)
         const snippetText = exchange.userMessage.substring(0, 200).replace(/\s+/g, ' ').trim();

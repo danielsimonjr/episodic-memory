@@ -4,7 +4,12 @@ import { join } from 'path';
 import { tmpdir } from 'os';
 import Database from 'better-sqlite3';
 import { indexUnprocessed } from '../src/indexer.js';
-import { searchConversations } from '../src/search.js';
+import {
+  searchConversations,
+  searchMultipleConcepts,
+  formatResults,
+  type SearchOptions,
+} from '../src/search.js';
 import { suppressConsole } from './test-utils.js';
 
 /**
@@ -175,5 +180,95 @@ describe('search metadata filters', () => {
     const projects = new Set(results.map(r => r.exchange.project));
     expect(projects.has('project-a')).toBe(true);
     expect(projects.has('project-b')).toBe(true);
+  });
+
+  it('excludeIds removes a row from the vector path', async () => {
+    const all = await searchConversations('authentication', { mode: 'vector', limit: 10 });
+    expect(all.length).toBeGreaterThan(1);
+    const excluded = all[0].exchange.id;
+    const kept = await searchConversations('authentication', {
+      mode: 'vector',
+      limit: 10,
+      excludeIds: [excluded],
+    });
+    expect(kept.map(r => r.exchange.id)).not.toContain(excluded);
+    expect(kept.length).toBe(all.length - 1);
+  });
+
+  it('excludeIds removes a row from the text path', async () => {
+    const all = await searchConversations('authentication', { mode: 'text', limit: 10 });
+    const excluded = all[0].exchange.id;
+    const kept = await searchConversations('authentication', {
+      mode: 'text',
+      limit: 10,
+      excludeIds: [excluded],
+    });
+    expect(kept.map(r => r.exchange.id)).not.toContain(excluded);
+    expect(kept.length).toBe(all.length - 1);
+  });
+
+  it('excludeIds removes a row from the combined path', async () => {
+    const all = await searchConversations('authentication', { mode: 'both', limit: 10 });
+    const excluded = all.map(r => r.exchange.id).slice(0, 2);
+    const kept = await searchConversations('authentication', {
+      mode: 'both',
+      limit: 10,
+      excludeIds: excluded,
+    });
+    for (const id of excluded) expect(kept.map(r => r.exchange.id)).not.toContain(id);
+  });
+
+  it('excludeIds removes a row from multi-concept results', async () => {
+    const all = await searchMultipleConcepts(['authentication', 'authentication'], { limit: 10 });
+    expect(all.length).toBeGreaterThan(1);
+    const excluded = all[0].exchange.archivePath;
+    const kept = await searchMultipleConcepts(['authentication', 'authentication'], {
+      limit: 10,
+      excludeIds: [all[0].exchange.id],
+    });
+    expect(kept.map(r => r.exchange.archivePath)).not.toContain(excluded);
+  });
+
+  it('an empty excludeIds changes nothing', async () => {
+    const all = await searchConversations('authentication', { mode: 'text', limit: 10 });
+    const same = await searchConversations('authentication', {
+      mode: 'text',
+      limit: 10,
+      excludeIds: [],
+    });
+    expect(same.map(r => r.exchange.id)).toEqual(all.map(r => r.exchange.id));
+  });
+
+  it('includeSummaries false omits summaries even with the env default on', async () => {
+    // The summary file sits beside the archive .jsonl; write one so a
+    // summary-on run would have something to attach.
+    const all = await searchConversations('authentication', { mode: 'text', limit: 10 });
+    const target = all[0];
+    writeFileSync(target.exchange.archivePath.replace(/\.jsonl$/, '-summary.txt'), 'A stored summary.', 'utf-8');
+
+    delete process.env.EPISODIC_MEMORY_INCLUDE_SUMMARY;
+    const withSummaries = await searchConversations('authentication', { mode: 'text', limit: 1 });
+    expect(withSummaries[0].summary).toContain('A stored summary.');
+
+    const without = await searchConversations('authentication', {
+      mode: 'text',
+      limit: 1,
+      includeSummaries: false,
+    });
+    expect(without[0].summary).toBeUndefined();
+    expect(await formatResults(without)).not.toContain('A stored summary.');
+
+    // The env flag still wins when the option is absent.
+    process.env.EPISODIC_MEMORY_INCLUDE_SUMMARY = '0';
+    const envOff = await searchConversations('authentication', { mode: 'text', limit: 1 });
+    expect(envOff[0].summary).toBeUndefined();
+    // ...and an explicit true overrides the env.
+    const explicit = await searchConversations('authentication', {
+      mode: 'text',
+      limit: 1,
+      includeSummaries: true,
+    });
+    expect(explicit[0].summary).toContain('A stored summary.');
+    delete process.env.EPISODIC_MEMORY_INCLUDE_SUMMARY;
   });
 });

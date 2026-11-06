@@ -71,4 +71,36 @@ describe('buildDigestText', () => {
     add('session', '2026-10-01T09:00:00.000Z', `Big ${'y'.repeat(500)} [#e1]`);
     expect(buildDigestText(db, 'proj-a', 100)).toBe('');
   });
+
+  it('drops a line citing a hidden id and keeps the rest of the entry', () => {
+    add('session', '2026-10-01T09:00:00.000Z', 'Kept one [#e1]\nHidden one [#hh]\nKept two [#e1]');
+    const text = buildDigestText(db, 'proj-a', 6000, { hideExchangeIds: ['hh'] });
+    expect(text).toContain('Kept one [#e1]');
+    expect(text).toContain('Kept two [#e1]');
+    expect(text).not.toContain('Hidden one');
+    expect(text).not.toContain('#hh');
+  });
+
+  it('hides every line that cites a hidden id in a mixed line group', () => {
+    add('session', '2026-10-01T09:00:00.000Z', 'Both [#e1,#hh]');
+    const text = buildDigestText(db, 'proj-a', 6000, { hideExchangeIds: ['hh'] });
+    expect(text).toBe('');
+  });
+
+  it('drops an entry whose every line cites a hidden id', () => {
+    add('session', '2026-10-01T09:00:00.000Z', 'Only hidden [#hh]');
+    add('session', '2026-10-02T09:00:00.000Z', 'Visible [#e1]');
+    const text = buildDigestText(db, 'proj-a', 6000, { hideExchangeIds: ['hh'] });
+    expect(text).not.toContain('Only hidden');
+    expect(text).toContain('Visible [#e1]');
+    // The hidden entry's block (its label included) is gone too.
+    expect(text).not.toContain('Session 2026-10-01');
+  });
+
+  it('changes nothing when hideExchangeIds is empty or absent', () => {
+    add('session', '2026-10-01T09:00:00.000Z', 'Ordinary [#e1]');
+    expect(buildDigestText(db, 'proj-a', 6000, { hideExchangeIds: [] })).toBe(
+      buildDigestText(db, 'proj-a', 6000)
+    );
+  });
 });

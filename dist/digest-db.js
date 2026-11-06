@@ -87,8 +87,40 @@ function toFtsQuery(query) {
         return null;
     return terms.map(t => `"${t}"`).join(' ');
 }
+/** A citation mark group at the end of a line: `[#a,#b]` (the stored digest form). */
+const TRAILING_MARK_GROUP = /\s*\[([^\]]*)\]\s*$/;
+/** The exchange ids a digest line cites, or an empty list when it cites nothing. */
+export function citedExchangeIds(line) {
+    const match = TRAILING_MARK_GROUP.exec(line);
+    if (!match)
+        return [];
+    const ids = [];
+    for (const part of match[1].split(',')) {
+        const trimmed = part.trim();
+        if (trimmed.startsWith('#'))
+            ids.push(trimmed.slice(1));
+    }
+    return ids;
+}
+/**
+ * Drop every line that cites a hidden exchange, keeping the rest verbatim.
+ *
+ * The learn solver is handed a task's source exchange ids and must never see a
+ * digest line naming one (spec §4.4 leak rule). Whole lines go, never partial
+ * text: a line with its marks cut off is a hint with a dangling claim, and the
+ * marks are what make a line verifiable.
+ */
+export function hideCitedLines(text, hideExchangeIds) {
+    if (!hideExchangeIds || hideExchangeIds.length === 0)
+        return text;
+    const hidden = new Set(hideExchangeIds);
+    return text
+        .split('\n')
+        .filter(line => !citedExchangeIds(line).some(id => hidden.has(id)))
+        .join('\n');
+}
 /** Full-text search over active entries. Never throws on FTS syntax characters. */
-export function searchDigest(db, query, project, limit = 10) {
+export function searchDigest(db, query, project, limit = 10, opts = {}) {
     const q = toFtsQuery(query);
     if (!q)
         return [];
@@ -100,5 +132,16 @@ export function searchDigest(db, query, project, limit = 10) {
        ORDER BY rank
        LIMIT ?`)
         .all(q, project ?? null, project ?? null, limit);
-    return rows.map(fromRow);
+    const hide = opts.hideExchangeIds;
+    if (!hide || hide.length === 0)
+        return rows.map(fromRow);
+    const out = [];
+    for (const row of rows) {
+        const filtered = hideCitedLines(row.text, hide);
+        // An entry with no visible line left names nothing the solver may see.
+        if (!filtered.trim())
+            continue;
+        out.push({ ...fromRow(row), text: filtered });
+    }
+    return out;
 }

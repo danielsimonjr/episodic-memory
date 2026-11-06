@@ -227,7 +227,22 @@ function toFtsQuery(query) {
   if (terms.length === 0) return null;
   return terms.map((t) => `"${t}"`).join(" ");
 }
-function searchDigest(db, query, project, limit = 10) {
+function citedExchangeIds(line) {
+  const match = TRAILING_MARK_GROUP.exec(line);
+  if (!match) return [];
+  const ids = [];
+  for (const part of match[1].split(",")) {
+    const trimmed = part.trim();
+    if (trimmed.startsWith("#")) ids.push(trimmed.slice(1));
+  }
+  return ids;
+}
+function hideCitedLines(text, hideExchangeIds) {
+  if (!hideExchangeIds || hideExchangeIds.length === 0) return text;
+  const hidden = new Set(hideExchangeIds);
+  return text.split("\n").filter((line) => !citedExchangeIds(line).some((id) => hidden.has(id))).join("\n");
+}
+function searchDigest(db, query, project, limit = 10, opts = {}) {
   const q2 = toFtsQuery(query);
   if (!q2) return [];
   const rows = db.prepare(
@@ -238,11 +253,21 @@ function searchDigest(db, query, project, limit = 10) {
        ORDER BY rank
        LIMIT ?`
   ).all(q2, project ?? null, project ?? null, limit);
-  return rows.map(fromRow);
+  const hide2 = opts.hideExchangeIds;
+  if (!hide2 || hide2.length === 0) return rows.map(fromRow);
+  const out = [];
+  for (const row of rows) {
+    const filtered = hideCitedLines(row.text, hide2);
+    if (!filtered.trim()) continue;
+    out.push({ ...fromRow(row), text: filtered });
+  }
+  return out;
 }
+var TRAILING_MARK_GROUP;
 var init_digest_db = __esm({
   "src/digest-db.ts"() {
     "use strict";
+    TRAILING_MARK_GROUP = /\s*\[([^\]]*)\]\s*$/;
   }
 });
 
@@ -722,6 +747,9 @@ function includeSearchSummaries() {
   if (FALSY.has(normalized)) return false;
   return true;
 }
+function summariesVisible(options) {
+  return options.includeSummaries ?? includeSearchSummaries();
+}
 function maxSummaryDisplayChars() {
   const raw = process.env.EPISODIC_MEMORY_MAX_SUMMARY_DISPLAY_CHARS;
   if (raw === void 0) return 2e3;
@@ -756,13 +784,20 @@ function buildSearchFilters(options) {
     parts.push("e.git_branch = ?");
     params.push(options.git_branch);
   }
+  const excluded = (options.excludeIds ?? []).filter((id) => typeof id === "string" && id.length > 0);
+  if (excluded.length > 0) {
+    parts.push(`e.id NOT IN (${excluded.map(() => "?").join(",")})`);
+    params.push(...excluded);
+  }
   return {
     sql: parts.length ? `AND ${parts.join(" AND ")}` : "",
     params
   };
 }
 function hasMetadataFilters(options) {
-  return Boolean(options.project || options.session_id || options.git_branch);
+  return Boolean(
+    options.project || options.session_id || options.git_branch || options.excludeIds && options.excludeIds.length > 0
+  );
 }
 function exchangeFromRow(row) {
   return {
@@ -898,9 +933,11 @@ async function searchConversations(query, options = {}) {
   return results.map((row) => {
     const exchange = exchangeFromRow(row);
     let summary;
-    const summaryPath = safeArchiveSummaryPath(row.archive_path);
-    if (summaryPath) {
-      summary = maybeRedactSecrets(fs4.readFileSync(summaryPath, "utf-8").trim());
+    if (summariesVisible(options)) {
+      const summaryPath = safeArchiveSummaryPath(row.archive_path);
+      if (summaryPath) {
+        summary = maybeRedactSecrets(fs4.readFileSync(summaryPath, "utf-8").trim());
+      }
     }
     const snippetText = exchange.userMessage.substring(0, 200).replace(/\s+/g, " ").trim();
     const snippet = snippetText + (exchange.userMessage.length > 200 ? "..." : "");
@@ -2301,7 +2338,7 @@ function formatConversationAsMarkdown(jsonl, startLine, endLine) {
     const timestamp = new Date(msg.timestamp).toLocaleString();
     const messageId = msg.uuid || `msg-${i}`;
     if (msg.type === "user" && Array.isArray(msg.message.content)) {
-      const hasOnlyToolResults = msg.message.content.every((block2) => block2.type === "tool_result");
+      const hasOnlyToolResults = msg.message.content.every((block) => block.type === "tool_result");
       if (hasOnlyToolResults) {
         continue;
       }
@@ -2345,9 +2382,9 @@ function formatConversationAsMarkdown(jsonl, startLine, endLine) {
 
 `;
       } else if (Array.isArray(msg.message.content)) {
-        for (const block2 of msg.message.content) {
-          if (block2.type === "text" && block2.text) {
-            output2 += `${block2.text}
+        for (const block of msg.message.content) {
+          if (block.type === "text" && block.text) {
+            output2 += `${block.text}
 
 `;
           }
@@ -2360,16 +2397,16 @@ function formatConversationAsMarkdown(jsonl, startLine, endLine) {
 
 `;
       } else if (Array.isArray(content)) {
-        for (const block2 of content) {
-          if (block2.type === "text" && block2.text) {
-            output2 += `${block2.text}
+        for (const block of content) {
+          if (block.type === "text" && block.text) {
+            output2 += `${block.text}
 
 `;
-          } else if (block2.type === "tool_use") {
-            output2 += `**Tool Use:** \`${block2.name}\`
+          } else if (block.type === "tool_use") {
+            output2 += `**Tool Use:** \`${block.name}\`
 
 `;
-            const input2 = block2.input;
+            const input2 = block.input;
             if (input2 && typeof input2 === "object") {
               for (const [key, value] of Object.entries(input2)) {
                 if (typeof value === "string" && value.includes("\n")) {
@@ -2391,7 +2428,7 @@ ${JSON.stringify(value, null, 2)}
               }
               output2 += "\n";
             }
-            const toolUseId = block2.id;
+            const toolUseId = block.id;
             if (toolUseId) {
               let foundResult = false;
               for (let j2 = i + 1; j2 < Math.min(i + 6, messages.length) && !foundResult; j2++) {
@@ -2492,9 +2529,9 @@ function formatConversationAsHTML(jsonl) {
   const toolUseMap = /* @__PURE__ */ new Map();
   for (const msg of messages) {
     if (msg.type === "assistant" && Array.isArray(msg.message.content)) {
-      for (const block2 of msg.message.content) {
-        if (block2.type === "tool_use" && block2.id) {
-          toolUseMap.set(block2.id, { msg, block: block2 });
+      for (const block of msg.message.content) {
+        if (block.type === "tool_use" && block.id) {
+          toolUseMap.set(block.id, { msg, block });
         }
       }
     }
@@ -2505,7 +2542,7 @@ function formatConversationAsHTML(jsonl) {
     const timestamp = new Date(msg.timestamp).toLocaleString();
     const messageId = `msg-${msg.uuid || i}`;
     if (msg.type === "user" && Array.isArray(msg.message.content)) {
-      const hasOnlyToolResults = msg.message.content.every((block2) => block2.type === "tool_result");
+      const hasOnlyToolResults = msg.message.content.every((block) => block.type === "tool_result");
       if (hasOnlyToolResults) {
         continue;
       }
@@ -2545,13 +2582,13 @@ function formatConversationAsHTML(jsonl) {
       } else if (typeof msg.message.content === "string") {
         bodyContent += `<p>${escapeHtml(msg.message.content)}</p>`;
       } else if (Array.isArray(msg.message.content)) {
-        for (const block2 of msg.message.content) {
-          if (block2.type === "text" && block2.text) {
-            bodyContent += `<p>${escapeHtml(block2.text)}</p>`;
-          } else if (block2.type === "tool_result") {
+        for (const block of msg.message.content) {
+          if (block.type === "text" && block.text) {
+            bodyContent += `<p>${escapeHtml(block.text)}</p>`;
+          } else if (block.type === "tool_result") {
             bodyContent += '<div class="tool-result">';
             bodyContent += "<strong>Tool Result:</strong> ";
-            bodyContent += `<code>${escapeHtml(String(block2.content || ""))}</code>`;
+            bodyContent += `<code>${escapeHtml(String(block.content || ""))}</code>`;
             bodyContent += "</div>";
           }
         }
@@ -2561,19 +2598,19 @@ function formatConversationAsHTML(jsonl) {
       if (typeof content === "string") {
         bodyContent += `<p>${escapeHtml(content)}</p>`;
       } else if (Array.isArray(content)) {
-        for (const block2 of content) {
-          if (block2.type === "text" && block2.text) {
-            if (isMarkdown(block2.text)) {
+        for (const block of content) {
+          if (block.type === "text" && block.text) {
+            if (isMarkdown(block.text)) {
               bodyContent += '<div class="markdown-content">';
-              bodyContent += renderMarkdownSafely(block2.text);
+              bodyContent += renderMarkdownSafely(block.text);
               bodyContent += "</div>";
             } else {
-              bodyContent += `<div class="plain-content">${escapeHtml(block2.text)}</div>`;
+              bodyContent += `<div class="plain-content">${escapeHtml(block.text)}</div>`;
             }
-          } else if (block2.type === "tool_use") {
+          } else if (block.type === "tool_use") {
             bodyContent += '<div class="tool-use">';
-            bodyContent += `<div class="tool-name"><strong>Tool Use:</strong> <code>${escapeHtml(block2.name || "")}</code></div>`;
-            const input2 = block2.input;
+            bodyContent += `<div class="tool-name"><strong>Tool Use:</strong> <code>${escapeHtml(block.name || "")}</code></div>`;
+            const input2 = block.input;
             if (input2 && typeof input2 === "object") {
               bodyContent += '<div class="tool-params">';
               for (const [key, value] of Object.entries(input2)) {
@@ -2596,7 +2633,7 @@ function formatConversationAsHTML(jsonl) {
               }
               bodyContent += "</div>";
             }
-            const toolUseId = block2.id;
+            const toolUseId = block.id;
             if (toolUseId) {
               let foundResult = false;
               for (let j2 = i + 1; j2 < Math.min(i + 6, messages.length) && !foundResult; j2++) {
@@ -2953,7 +2990,7 @@ function extractCodexText(content) {
   if (!Array.isArray(content)) {
     return "";
   }
-  return content.filter((block2) => block2 && typeof block2 === "object" && typeof block2.text === "string").map((block2) => block2.text).join("\n");
+  return content.filter((block) => block && typeof block === "object" && typeof block.text === "string").map((block) => block.text).join("\n");
 }
 function safeParseJson(value) {
   try {
@@ -3221,20 +3258,20 @@ function label(e) {
   const day = e.periodStart.slice(0, 10);
   return e.tier === "session" ? `Session ${day}` : e.tier === "day" ? `Day ${day}` : `Week of ${day}`;
 }
-function block(e) {
-  return `## ${label(e)}
-${e.text.trim()}
-
-`;
-}
-function buildDigestText(db, project, maxChars) {
+function buildDigestText(db, project, maxChars, opts = {}) {
+  const hide2 = opts.hideExchangeIds;
   const entries = listActiveEntries(db, project);
   const handoffs = entries.filter((e) => e.handoff);
   const rest = entries.filter((e) => !e.handoff).sort((a, b2) => a.periodEnd < b2.periodEnd ? 1 : a.periodEnd > b2.periodEnd ? -1 : b2.id - a.id);
   let out = HEADER + "\n";
   let added = 0;
   for (const e of [...handoffs, ...rest]) {
-    const b2 = block(e);
+    const visible = hideCitedLines(e.text.trim(), hide2);
+    if (!visible.trim()) continue;
+    const b2 = `## ${label(e)}
+${visible}
+
+`;
     if (out.length + b2.length > maxChars) break;
     out += b2;
     added++;

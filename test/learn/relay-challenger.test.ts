@@ -3,9 +3,10 @@ import { parseIdCitedLines } from '../../src/learn/cited-ids.js';
 import { redactLearnedText } from '../../src/learn/knowledge-gate.js';
 
 /**
- * Relay-challenger findings for PR #21 (Task 2). These tests are expected to
- * FAIL on the current head; each one pins a defect found by adversarial
- * review. They are not part of the plan's Step-1 suite.
+ * Relay-challenger findings for PR #21 (Task 2). Each one pins a defect found
+ * by adversarial review. They are not part of the plan's Step-1 suite and must
+ * stay green: an unresolved mid-line id is not stored, and every 32-hex mark
+ * survives redaction.
  */
 
 const HEX_A = 'a'.repeat(32);

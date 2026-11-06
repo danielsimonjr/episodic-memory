@@ -111,6 +111,15 @@ const RULES: Rule[] = [
     name: 'credential-request',
     re: /\b(?:token|password|passphrase|api[- ]?key|credentials?)\b[^.]{0,40}?\b(?:ask|send|paste|provide|enter)\b/i,
   },
+  {
+    // "call the github tool", "invoke the notebook tool", "use the foo tool".
+    // Allowlisted phrases are removed first, so "use the search tool" stays.
+    name: 'tool-invocation',
+    re: /\b(?:call|calls|invoke|invokes|use|uses)\s+the\s+(?:\S+\s+){1,4}?tool\b/i,
+  },
+  // A space (or other gap) after `mcp__` is still a foreign tool name:
+  // `mcp__ github__create_issue` must not slip past the tight form below.
+  { name: 'foreign-mcp-name', re: /\bmcp__\s+\S+/i },
   { name: 'foreign-mcp-name', re: /\bmcp__(?!episodic-)[a-z0-9_-]+/i },
 ];
 
@@ -129,7 +138,10 @@ const ALLOWLISTED_TOOL_PHRASES = [
 
 function stripAllowlisted(text: string): string {
   let out = text;
-  for (const phrase of ALLOWLISTED_TOOL_PHRASES) out = out.split(phrase).join(' ');
+  for (const phrase of ALLOWLISTED_TOOL_PHRASES) {
+    const literal = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    out = out.replace(new RegExp(literal, 'gi'), ' ');
+  }
   return out;
 }
 

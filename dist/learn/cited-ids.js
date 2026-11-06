@@ -11,8 +11,16 @@
  * it imports only types. The digest's text-only `parseCitedLines` is untouched
  * and still owns the `[3,5]` mark-map form.
  */
+/** One `#`/`@` mark inside a bracket group. */
+const MARK = /#[0-9a-f]{32}|@\d+/;
 /** The mark group a line must end with. Numeric `[7]` digest marks never match. */
 const TRAILING_MARK_GROUP = /\[((?:#[0-9a-f]{32}|@\d+)(?:\s*,\s*(?:#[0-9a-f]{32}|@\d+))*)\]\s*$/;
+/**
+ * Every mark group on the line, including ones that sit before the trailing
+ * group. A mid-line group is still a citation: an id in it has to resolve or
+ * the line is dropped, so an unresolved id cannot survive in the stored body.
+ */
+const MARK_GROUP = /\[((?:#[0-9a-f]{32}|@\d+)(?:\s*,\s*(?:#[0-9a-f]{32}|@\d+))*)\]/g;
 /** A content token: four or more lowercase letters or digits. */
 const CONTENT_TOKEN = /[a-z0-9]{4,}/g;
 /**
@@ -95,6 +103,9 @@ function sharedTokenCount(a, b) {
             shared++;
     return shared;
 }
+function splitMarks(group) {
+    return group.split(',').map(mark => mark.trim()).filter(mark => MARK.test(mark));
+}
 /**
  * Split a model's answer into the lines the citation gate keeps.
  *
@@ -120,16 +131,21 @@ export function parseIdCitedLines(raw, resolve, minGrounding) {
             continue;
         }
         const body = line.slice(0, group.index).trimEnd();
-        const marks = group[1].split(',').map(mark => mark.trim());
+        const marks = splitMarks(group[1]);
         const hasExchangeMark = marks.some(mark => mark.startsWith('#'));
         if (!body || !hasExchangeMark) {
             dropped.push({ line, reason: 'no-marks' });
             continue;
         }
+        // Marks that appear before the trailing group. They are not the citation
+        // the line ends with, but an unresolved one must not be stored in the body.
+        const earlierMarks = [];
+        for (const match of body.matchAll(MARK_GROUP))
+            earlierMarks.push(...splitMarks(match[1]));
         const citedExchanges = [];
         const citedAttempts = [];
         let resolved = true;
-        for (const mark of marks) {
+        for (const mark of [...earlierMarks, ...marks]) {
             if (mark.startsWith('#')) {
                 const found = resolve.exchange(mark.slice(1));
                 if (!found) {
@@ -151,13 +167,21 @@ export function parseIdCitedLines(raw, resolve, minGrounding) {
             dropped.push({ line, reason: 'unknown-id' });
             continue;
         }
-        const bodyTokens = contentTokens(body);
+        // Drop the mid-line groups from the stored body once they have resolved.
+        // The trailing group is rewritten below; leaving an earlier group in place
+        // would keep a second citation shape, and its id is already in `sources`.
+        const storedBody = body.replace(MARK_GROUP, ' ').replace(/[ \t]{2,}/g, ' ').trim();
+        if (!storedBody) {
+            dropped.push({ line, reason: 'no-marks' });
+            continue;
+        }
+        const bodyTokens = contentTokens(storedBody);
         const grounded = citedExchanges.some(exchange => sharedTokenCount(bodyTokens, contentTokens(exchange.text)) >= minGrounding);
         if (!grounded) {
             dropped.push({ line, reason: 'ungrounded' });
             continue;
         }
-        lines.push(`${body} [${marks.join(',')}]`);
+        lines.push(`${storedBody} [${marks.join(',')}]`);
         for (const exchange of citedExchanges) {
             if (sourceIds.has(exchange.ref.id))
                 continue;

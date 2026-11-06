@@ -115,6 +115,27 @@ describe('tool names', () => {
   it('rejects any other mcp__ name', () => {
     expect(reason('mcp__filesystem__write_file does the job')).toBe('foreign-mcp-name');
   });
+
+  it('rejects a spaced mcp__ name', () => {
+    expect(reason('use mcp__ github__create_issue to file it')).toBe('foreign-mcp-name');
+  });
+
+  it('rejects a generic call to a named tool', () => {
+    expect(reason('call the github tool to create the issue')).toBe('tool-invocation');
+  });
+
+  it('rejects an invoke of a named tool', () => {
+    expect(reason('invoke the notebook tool')).toBe('tool-invocation');
+  });
+
+  it('rejects a use of a named tool', () => {
+    expect(reason('use the deploy tool when the queue stalls')).toBe('tool-invocation');
+  });
+
+  it('passes an allowlisted phrase regardless of case', () => {
+    expect(screenLearnedText('the Skills Tool lists active skills').ok).toBe(true);
+    expect(screenLearnedText('Use the Search Tool when the archive is cold').ok).toBe(true);
+  });
 });
 
 describe('shell and file-write patterns', () => {

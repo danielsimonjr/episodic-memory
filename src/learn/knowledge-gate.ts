@@ -30,6 +30,13 @@ import type { LearnConfig } from './learn-config.js';
 /** A trailing mark group, in either citation form. */
 const TRAILING_MARKS = /\[(?:#|@)[^\]]*\]\s*$/;
 
+/**
+ * Every exchange or attempt mark, wherever it sits on the line. The PII
+ * redactor's 10–19 digit runs match inside a 32-hex id, so each mark is
+ * lifted out before redaction and put back after — not only the trailing group.
+ */
+const ANY_MARK = /#[0-9a-f]{32}|@\d+/g;
+
 const CONFIDENCES: readonly Confidence[] = ['low', 'medium', 'high'];
 const STEP_ACTIONS: readonly ProcedureStepSpec['action'][] = [
   'search',
@@ -54,8 +61,28 @@ export interface GateAccepted {
 export type GateResult = GateAccepted | { rejected: string };
 
 /**
- * Redact one text field: secrets first, then PII, with the trailing mark group
- * split off so the digit-run patterns never see a 32-hex exchange mark.
+ * Lift every `#<32 hex>` and `@<digits>` mark out of `text` so a digit-run
+ * redactor cannot rewrite one. Placeholders are private-use sentinels, which
+ * neither the secret patterns nor a case-changing redactor rewrite.
+ */
+function shieldMarks(text: string): { text: string; marks: string[] } {
+  const marks: string[] = [];
+  const shielded = text.replace(ANY_MARK, mark => {
+    const token = `\uE000${marks.length}\uE001`;
+    marks.push(mark);
+    return token;
+  });
+  return { text: shielded, marks };
+}
+
+function restoreMarks(text: string, marks: string[]): string {
+  return text.replace(/\uE000(\d+)\uE001/g, (_match, index: string) => marks[Number(index)] ?? '');
+}
+
+/**
+ * Redact one text field: secrets first, then PII. The trailing mark group is
+ * split off, and every earlier `#`/`@` mark is shielded, so the digit-run
+ * patterns never see a 32-hex exchange mark.
  */
 export function redactLearnedText(
   text: string,
@@ -65,10 +92,11 @@ export function redactLearnedText(
     .split('\n')
     .map(line => {
       const group = TRAILING_MARKS.exec(line);
-      if (!group) return deps.redactPii(redactSecrets(line));
-      const body = line.slice(0, group.index);
-      const marks = line.slice(group.index);
-      return deps.redactPii(redactSecrets(body)) + marks;
+      const head = group ? line.slice(0, group.index) : line;
+      const tail = group ? line.slice(group.index) : '';
+      const shielded = shieldMarks(head);
+      const redacted = deps.redactPii(redactSecrets(shielded.text));
+      return restoreMarks(redacted, shielded.marks) + tail;
     })
     .join('\n');
 }

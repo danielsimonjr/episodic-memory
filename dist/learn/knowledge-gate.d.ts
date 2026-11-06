@@ -36,8 +36,9 @@ export type GateResult = GateAccepted | {
     rejected: string;
 };
 /**
- * Redact one text field: secrets first, then PII, with the trailing mark group
- * split off so the digit-run patterns never see a 32-hex exchange mark.
+ * Redact one text field: secrets first, then PII. The trailing mark group is
+ * split off, and every earlier `#`/`@` mark is shielded, so the digit-run
+ * patterns never see a 32-hex exchange mark.
  */
 export declare function redactLearnedText(text: string, deps: {
     redactPii: (t: string) => string;

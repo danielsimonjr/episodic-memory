@@ -34,6 +34,7 @@ import {
 import { createSnapshot } from './knowledge-db.js';
 import { latestRunId, buildReport, formatReport } from './report.js';
 import { BudgetExhausted, CallBudget, solveMany, type SolveOptions } from './solver.js';
+import { runLearn } from './learner.js';
 import { LEARN_USAGE } from './usage.js';
 import type { LearnDbs } from './types.js';
 
@@ -55,8 +56,8 @@ export interface LearnCliDeps {
 
 export { LEARN_USAGE };
 
-const STUB_COMMANDS = new Set(['improve', 'approve', 'export', 'render']);
-const IMPLEMENTED = new Set(['tasks', 'solve', 'status', 'report', 'bootstrap']);
+const STUB_COMMANDS = new Set(['approve', 'export', 'render']);
+const IMPLEMENTED = new Set(['tasks', 'solve', 'status', 'report', 'bootstrap', 'improve']);
 
 /** `--name value`, `--name=value`, or undefined when absent. A bare `--name` yields ''. */
 function optionValue(argv: string[], name: string): string | undefined {
@@ -337,6 +338,75 @@ async function commandBootstrap(dbs: LearnDbs, argv: string[], deps: LearnCliDep
   });
 }
 
+/**
+ * `learn improve`: the recursive learner over the signal train set.
+ *
+ * The baseline precheck runs first: the run solves the whole signal set before
+ * it can decide anything, so a run that cannot afford that measurement would
+ * spend a solver batch and still have no verdict (spec §7 rule 10a). A spend cap
+ * hit during the run is a stop, not a crash: the run is marked `stopped` and
+ * keeps everything it validated, and the held-out split is still evaluated.
+ */
+async function commandImprove(dbs: LearnDbs, argv: string[], deps: LearnCliDeps): Promise<number> {
+  const config = learnConfig();
+  const project = optionValue(argv, 'project') || undefined;
+  const dryRun = hasFlag(argv, 'dry-run');
+  const rounds = optionNumber(argv, 'rounds') ?? config.rounds;
+
+  return underLock(deps, async pids => {
+    const baseline = listTasks(dbs.learning, {
+      split: 'train',
+      kinds: SIGNAL_KINDS,
+      tiers: SIGNAL_TIERS,
+      ...(project === undefined ? {} : { project }),
+    }).length;
+    const refusal = baselineRefusal(baseline, config.maxCalls);
+    if (refusal) {
+      deps.stderr(`episodic-memory learn: ${refusal}\n`);
+      return 1;
+    }
+
+    deps.stderr(
+      `episodic-memory learn: improving with ${rounds} round(s), concurrency ${config.concurrency}` +
+        `${dryRun ? ', dry run (no learners)' : ''}\n`
+    );
+
+    const budget = new CallBudget(config.maxCalls);
+    let result: Awaited<ReturnType<typeof runLearn>>;
+    try {
+      result = await runLearn(dbs, {
+        runAgent: deps.runAgent,
+        model: deps.model ?? config.model,
+        judge: deps.judge,
+        textModel: deps.generateModel,
+        concurrency: config.concurrency,
+        rounds,
+        leafMax: config.leafMax,
+        ...(project === undefined ? {} : { project }),
+        ...(dryRun ? { dryRun: true } : {}),
+        budget,
+        pids,
+      });
+    } catch (error) {
+      if (error instanceof BudgetExhausted) {
+        deps.stderr(
+          `episodic-memory learn: call budget exhausted after ${error.max} subprocess calls; stopped\n`
+        );
+        return 0;
+      }
+      throw error;
+    }
+
+    deps.stderr(
+      `episodic-memory learn: improve ${result.status}: ${result.children.length} child run(s), ` +
+        `${result.kept.length} kept, ${result.merges.length} merge(s), ` +
+        `${result.rejected.length} rejected (${result.runId})\n`
+    );
+    deps.stdout(formatReport(await buildReport(dbs, result.runId), false));
+    return 0;
+  });
+}
+
 function compareForStatus(
   a: { project: string; slug: string },
   b: { project: string; slug: string }
@@ -443,6 +513,8 @@ export async function runLearnCli(argv: string[], deps: LearnCliDeps): Promise<n
         return await commandSolve(dbs, argv.slice(1), deps);
       case 'bootstrap':
         return await commandBootstrap(dbs, argv.slice(1), deps);
+      case 'improve':
+        return await commandImprove(dbs, argv.slice(1), deps);
       case 'status':
         return await commandStatus(dbs, deps);
       default:

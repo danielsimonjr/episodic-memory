@@ -313,6 +313,58 @@ describe('runLearnCli', () => {
     expect(cap.stdout()).not.toMatch(/bootstrapping with concurrency/);
   });
 
+  it('improve --dry-run solves the train split, writes attempts and no entries', async () => {
+    const gen = capture();
+    await runLearnCli(['tasks', '--per-project', '2', '--seed', '3'], {
+      ...gen.deps,
+      dbs,
+      generateModel: fakeGenerateModel(),
+    });
+    expect(listTasks(learning, { split: 'train' }).length).toBeGreaterThan(0);
+
+    const agent = fakeRunAgent();
+    const cap = capture();
+    const code = await runLearnCli(['improve', '--dry-run'], {
+      ...cap.deps,
+      dbs,
+      runAgent: agent.fn,
+      model: 'test-model',
+    });
+
+    expect(code).toBe(0);
+    expect(agent.calls.length).toBeGreaterThan(0);
+    expect(cap.stderr()).toMatch(/dry run/i);
+    expect(cap.stdout()).toMatch(/run /);
+    // Attempts exist: a dry run measures.
+    const runs = learning
+      .prepare("SELECT * FROM learning_run WHERE phase = 'improve' ORDER BY rowid DESC")
+      .all() as any[];
+    const runId = runs[0].id;
+    expect(listAttempts(learning, { runId }).length).toBeGreaterThan(0);
+    // No entries: a dry run learns nothing.
+    expect(await store.listByStatus(['candidate', 'active', 'retired'])).toEqual([]);
+  });
+
+  it('improve refuses to start when the baseline exceeds the call budget', async () => {
+    const gen = capture();
+    await runLearnCli(['tasks', '--per-project', '2', '--seed', '3'], {
+      ...gen.deps,
+      dbs,
+      generateModel: fakeGenerateModel(),
+    });
+    const saved = process.env.EPISODIC_MEMORY_LEARN_MAX_CALLS;
+    process.env.EPISODIC_MEMORY_LEARN_MAX_CALLS = '1';
+    try {
+      const cap = capture();
+      const code = await runLearnCli(['improve'], { ...cap.deps, dbs, runAgent: fakeRunAgent().fn });
+      expect(code).toBe(1);
+      expect(cap.stderr()).toMatch(/baseline needs/i);
+    } finally {
+      if (saved === undefined) delete process.env.EPISODIC_MEMORY_LEARN_MAX_CALLS;
+      else process.env.EPISODIC_MEMORY_LEARN_MAX_CALLS = saved;
+    }
+  });
+
   it('report defaults to the latest run and prints rejected entries and rates', async () => {
     const older = createRun(learning, { phase: 'improve', seed: 1, budget: {} });
     const newer = createRun(learning, { phase: 'improve', seed: 2, budget: {} });
@@ -366,7 +418,7 @@ describe('runLearnCli', () => {
     expect(text).toMatch(/improve/);
   });
 
-  it.each(['improve', 'approve', 'export', 'render'])(
+  it.each(['approve', 'export', 'render'])(
     '%s is a stub with a clear not-implemented exit code',
     async command => {
       const cap = capture();

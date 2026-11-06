@@ -46,6 +46,8 @@ export interface LeafResult {
         passed: number;
         total: number;
     }>;
+    /** The call budget ran out. Entries already in `kept` stay kept. */
+    stopped: boolean;
 }
 export interface LeafLearnerOptions {
     runId: string;

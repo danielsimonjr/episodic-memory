@@ -31,7 +31,13 @@ COMMANDS:
       exploration notes, merge them into one global instruction, then measure
       them against the signal train tasks before keeping anything.
 
-  learn improve | approve | export | render
+  learn improve [--rounds N] [--project P] [--dry-run]
+      The recursive learner: solve the signal train tasks, split the failures
+      into leaves, let each leaf learn and validate, merge duplicates across
+      leaves, reflect, then evaluate the held-out split once at the end.
+      --dry-run solves and reports without running any learner.
+
+  learn approve | export | render
       Not implemented yet.
 
 Progress goes to stderr; the report goes to stdout.`;

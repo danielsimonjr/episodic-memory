@@ -28,6 +28,15 @@ import {
 import { listActive, listCandidates } from './knowledge-db.js';
 import type { KnowledgeEntry, LearnDbs } from './types.js';
 
+/** One merged entry, as `runLearn` recorded it on the run's metrics. */
+export interface ReportMerge {
+  key: string;
+  merged: string;
+  sources: string[];
+  revertedTo: string | null;
+  regressions: number[];
+}
+
 /** One split's rate at both ends of the run, with the per-kind-and-tier cells. */
 export interface SplitReport {
   before: PassRate;
@@ -50,6 +59,8 @@ export interface ReportModel {
   budget: { maxCalls: number | null; usedCalls: number; maxUsd: number | null; usedUsd: number };
   childRuns: LearningRun[];
   reflections: KnowledgeEntry[];
+  /** Duplicate entries the run merged across children, and any revert. */
+  merges: ReportMerge[];
 }
 
 /** The run's snapshots, oldest first. */
@@ -154,7 +165,23 @@ export async function buildReport(dbs: LearnDbs, runId: string): Promise<ReportM
       .map(row => getRun(dbs.learning, row.id))
       .filter((child: LearningRun | null): child is LearningRun => child !== null),
     reflections,
+    merges: mergesOf(run),
   };
+}
+
+/** The merges a run recorded in its metrics, or an empty list. */
+function mergesOf(run: LearningRun): ReportMerge[] {
+  const raw = run.metrics?.merges;
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((value): value is Record<string, unknown> => Boolean(value) && typeof value === 'object')
+    .map(value => ({
+      key: String(value.key ?? ''),
+      merged: String(value.merged ?? ''),
+      sources: Array.isArray(value.sources) ? value.sources.map(String) : [],
+      revertedTo: value.revertedTo === null || value.revertedTo === undefined ? null : String(value.revertedTo),
+      regressions: Array.isArray(value.regressions) ? value.regressions.map(Number) : [],
+    }));
 }
 
 /** The latest run id, for a CLI that was given no `--run`. */
@@ -226,9 +253,24 @@ export function formatReport(model: ReportModel, json: boolean): string {
   lines.push('');
   lines.push(`child runs (${model.childRuns.length}):`);
   for (const child of model.childRuns) {
-    lines.push(`  ${child.id} · ${child.phase} · ${child.status}${child.project ? ` · ${child.project}` : ''}`);
+    const metrics = child.metrics ?? {};
+    const kept = metrics.kept === undefined ? '' : ` · ${String(metrics.kept)} kept`;
+    const rejected = metrics.rejected === undefined ? '' : ` · ${String(metrics.rejected)} rejected`;
+    lines.push(
+      `  ${child.id} · ${child.phase} · ${child.status}${child.project ? ` · ${child.project}` : ''}${kept}${rejected}`
+    );
   }
   if (model.childRuns.length === 0) lines.push('  none');
+
+  lines.push('');
+  lines.push(`merges (${model.merges.length}):`);
+  for (const merge of model.merges) {
+    const outcome = merge.revertedTo
+      ? `reverted to ${merge.revertedTo} after regressing ${merge.regressions.join(', ')}`
+      : 'kept';
+    lines.push(`  ${merge.merged} · ${merge.sources.length} source(s) · ${outcome}`);
+  }
+  if (model.merges.length === 0) lines.push('  none');
 
   lines.push('');
   lines.push(`reflections (${model.reflections.length}):`);

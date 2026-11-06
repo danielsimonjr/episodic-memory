@@ -184,8 +184,56 @@ describe('buildReport', () => {
     expect(model.reflections[0].body).toContain('two tasks moved');
   });
 
-  it('falls back to a single rate when a run has one snapshot', async () => {
-    const single = createRun(learning, { phase: 'improve', seed: 1, budget: {} });
+  it('reports child runs with their own metrics, the merges and the test rate', async () => {
+    // A child run of this one, with the improve metrics the learner records.
+    const childId = createRun(learning, {
+      phase: 'improve',
+      parentRunId: runId,
+      project: 'proj-b',
+      seed: 3,
+      budget: { maxCalls: 5 },
+    });
+    learning
+      .prepare('UPDATE learning_run SET metrics = ? WHERE id = ?')
+      .run(JSON.stringify({ kept: 2, rejected: 1, suspect: 0 }), childId);
+    finishRun(learning, runId, 'done', {
+      merges: [
+        {
+          key: 'skill|proj-b|release-map',
+          merged: 'learned:skill:proj-b:release-map:v3',
+          sources: [HEX],
+          revertedTo: null,
+          regressions: [],
+        },
+        {
+          key: 'skill|proj-a|release-map',
+          merged: 'learned:skill:proj-a:release-map:v3',
+          sources: [HEX],
+          revertedTo: 'learned:skill:proj-a:release-map:v2',
+          regressions: [7],
+        },
+      ],
+    });
+
+    const model = await buildReport(dbs, runId);
+    expect(model.childRuns).toHaveLength(1);
+    expect(model.childRuns[0].metrics).toMatchObject({ kept: 2, rejected: 1 });
+    expect(model.merges).toHaveLength(2);
+    expect(model.merges[0].revertedTo).toBeNull();
+    expect(model.merges[1].revertedTo).toBe('learned:skill:proj-a:release-map:v2');
+    expect(model.merges[1].regressions).toEqual([7]);
+
+    // The held-out split has its own rate, separate from train.
+    expect(model.test.after.byKindTier['when:3']).toEqual({ passed: 1, total: 1 });
+
+    const text = formatReport(model, false);
+    expect(text).toMatch(/child runs \(1\)/);
+    expect(text).toContain('2 kept');
+    expect(text).toMatch(/merges \(2\)/);
+    expect(text).toContain('reverted to learned:skill:proj-a:release-map:v2 after regressing 7');
+  });
+
+  it('falls back to a single rate when a run has one snapshot', async () => {    const single = createRun(learning, { phase: 'improve', seed: 1, budget: {} });
     const snap = await createSnapshot(learning, single, []);
     const taskId = insertTask(learning, {
       runId: single,

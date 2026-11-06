@@ -40,12 +40,19 @@ Carry these against upstream `1.4.1`. Each is a real bug; PRs filed at
 
 When upstream merges these (or equivalents), rebase/merge `upstream/main` and drop the locally-redundant patches.
 
+## Knowledge store (no memoryjs)
+
+The `learn` feature's `learned/knowledge.db` is plain better-sqlite3 as of 2026-11-06: `src/learn/knowledge-store.ts`
+owns the `entities` / `relations` layout (the one the former `@danielsimonjr/memoryjs` adapter created, so an
+existing file opens unchanged) and every read-modify-write runs under the write lock. There is no memoryjs
+dependency, no `MEMORY_*` environment handling and no per-handle cache: a write is visible to every open handle.
+
 ## Quick orientation
 
 - **TypeScript source** in `src/`, compiled to `dist/` by `tsc && esbuild`. **Both are committed.**
 - **CLI entry points** in `cli/` (Node.js wrappers — no bash).
 - **MCP server** is `dist/mcp-server.js`, launched by `cli/mcp-server-wrapper.js` from the plugin manifest.
-- **Tests** in `test/` via vitest (126 files, 1041 tests — counts verified 2026-11-06).
+- **Tests** in `test/` via vitest (126 files, 1043 tests — counts verified 2026-11-06).
 - **Generated files** in `dist/` AND `src/version.ts`. The latter is gitignored; never edit it.
 - **`bun.lock` is committed** — CI uses `bun install --frozen-lockfile` + `bun audit --audit-level=critical`. Do not commit `package-lock.json` (gitignored).
 
@@ -68,8 +75,9 @@ src/
   learn/                 # the Recursa feature; flag EPISODIC_MEMORY_LEARN, off by default
     learn-config.ts      # flag + settings; imports nothing (hook fast path)
     learned-text-screen.ts # injection screen for learned text; imports only ../redact.js
-    learn-inject.ts      # rendered block render/read/cap; memoryjs-free
-    knowledge-store.ts   # memoryjs-backed store (the only module that imports memoryjs)
+    learn-inject.ts      # rendered block render/read/cap; never opens the knowledge store
+    knowledge-store.ts   # knowledge.db on better-sqlite3 (the only module that knows the row layout)
+    pii-redactor.ts      # email/SSN/card/phone/IP redaction; imports nothing
     knowledge-db.ts      # snapshots, activation, supersede over the store
     learning-store.ts    # learned/learning.sqlite handle; hook opens it read-only
     learning-db.ts       # runs, tasks, attempts, pass rates
@@ -91,7 +99,7 @@ scripts/
 
 test/
   test-utils.ts          # createTestDb, safeRmSync (fork-added), suppressConsole, fixtures
-  *.test.ts              # 126 test files, 1041 tests
+  *.test.ts              # 126 test files, 1043 tests
   learn/                 # the Recursa suite; fakes for every model call
   fixtures/              # JSONL conversation fixtures
 
@@ -120,7 +128,7 @@ source changes that touch the MCP server or any imported module, run
 `bun run build` so `dist/` reflects source. **Commit `dist/` alongside `src/`** —
 CI doesn't rebuild for you.
 
-**Node floor: `>=22.12.0`** (memoryjs's floor; `engines` is advisory, so it is enforced at launch).
+**Node floor: `>=22.0.0`** (better-sqlite3 13's floor; `engines` is advisory, so it is enforced at launch).
 `src/node-floor.ts` holds the constant, `cli/mcp-server-wrapper.js` and `cli/episodic-memory.js learn`
 exit with one stderr line below it, and CI runs Node 24. Both of the user's machines run Node 24. This
 is a fork-only divergence from upstream, recorded in `docs/roadmap/upstream-sync.md`.
@@ -132,7 +140,7 @@ Plugin first-run dependency install in `cli/mcp-server-wrapper.js` still uses
 
 ### Current test state
 
-- **Full suite: 1041 tests in 126 files pass on Linux** (verified 2026-11-06, ~17s wall clock; Windows
+- **Full suite: 1043 tests in 126 files pass on Linux** (verified 2026-11-06, ~17s wall clock; Windows
   runs are slower — expect ~75s). The former `integration.test.ts` / `verify.test.ts` cold-embedding
   timeout flakes were fixed 2026-06-23: the embedder is pre-warmed once per worker in `beforeAll`,
   `vitest.config.ts` sets `hookTimeout: 30000`, and the repair re-index test gets 60s. If you see a fresh
@@ -155,7 +163,7 @@ stdout is reserved for JSON-RPC. **Any `console.log` reachable from the MCP serv
 
 This applies to **every module reachable from `mcp-server.ts`**. Current reachable surface: `search.ts`, `show.ts`, `db.ts`, `paths.ts`, `embeddings.ts`, `parser.ts`, `version.ts`, and — through the `skills` branch, which imports them lazily — `learn/skills-tool.ts`, `learn/knowledge-store.ts`, `learn/knowledge-db.ts`, `learn/learn-inject.ts`, `learn/learn-config.ts`, `learn/learned-text-screen.ts`, `learn/learning-store.ts`. Modules used only by CLI files (`indexer.ts`, `sync.ts`, `learn/cli-main.ts`, etc.) are safe to use `console.log` in.
 
-The lazy import is load-bearing in both directions: `mcp-tools.ts` calls `learnEnabled()` from `learn-config.ts` (which imports nothing) *before* it imports `skills-tool.ts`, so a flag-off server never loads memoryjs and a session that never asks for a skill pays nothing for the feature. Keep the eager surface at `learn-config.ts` and nothing else.
+The lazy import is load-bearing in both directions: `mcp-tools.ts` calls `learnEnabled()` from `learn-config.ts` (which imports nothing) *before* it imports `skills-tool.ts`, so a flag-off server never opens the knowledge store and a session that never asks for a skill pays nothing for the feature. Keep the eager surface at `learn-config.ts` and nothing else.
 
 ### 2. Windows path separators
 
@@ -214,7 +222,7 @@ is treated as hostile input, not as instructions:
 - Every line must cite real exchange ids and share `EPISODIC_MEMORY_LEARN_MIN_GROUNDING` content tokens
   with one of them, or it is dropped; an entry with no surviving line is not stored.
 - Redaction runs first and last: prompts, stored fields, answers and traces all pass `redactSecrets` plus
-  memoryjs's `PiiRedactor`.
+  `redactPii` (`src/learn/pii-redactor.ts`).
 - A skill activates on validation; an instruction stays a `candidate` until a human runs `learn approve`
   (default `EPISODIC_MEMORY_LEARN_APPROVE=instructions`).
 
@@ -277,7 +285,7 @@ range for `read` (`expand`), and stores a one-line note for the next session (`h
 
 Read the skills the `learn` feature derived from this project's conversations. Read-only, and it never
 writes. With `EPISODIC_MEMORY_LEARN` unset it answers that learning is off **without opening a store** (it
-checks `learnEnabled()` before importing the memoryjs-backed module), so a flag-off session pays nothing.
+checks `learnEnabled()` before importing the store-backed module), so a flag-off session pays nothing.
 
 Inputs:
 - `get`: slug of one skill, as listed — returns its frontmatter and body
@@ -290,8 +298,8 @@ frontmatter (`name`, `description`, `scope`, `sources`, `confidence`, `version`)
 
 Every field is screened for injected instructions and redacted for secrets and PII before it is returned.
 A field that fails the screen withholds the whole entry rather than printing a skill whose text cannot be
-trusted. The store is opened **per call** and closed in `finally` — memoryjs serves reads from a per-context
-cache, so a module-level context would miss a `learn` run that happened later in the same session.
+trusted. The store is opened **per call, read-only** and closed in `finally`, so the server never holds a
+handle on `knowledge.db` between calls and a read-only tool call can never create or migrate the file.
 
 ## Development workflow — the user's 12 steps
 

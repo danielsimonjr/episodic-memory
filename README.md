@@ -43,7 +43,7 @@ _Conversation ID: 216ad284-c782-45a4-b2ce-36775cdb5a6c_
 
 ## Installation
 
-**Requirements:** Node 22.12 or newer. The learning feature's knowledge store needs it. On an older Node, the MCP server wrapper and the `learn` command print one line and exit. Bun 1.4+ is only needed for development.
+**Requirements:** Node 22 or newer, the floor `better-sqlite3` 13 declares. On an older Node, the MCP server wrapper and the `learn` command print one line and exit instead of failing inside a dependency. Bun 1.4+ is only needed for development. There is no other native or model dependency beyond the ones every install already has: the learned knowledge store is a plain SQLite file.
 
 This is the fork `danielsimonjr/episodic-memory`, which carries the self-improving memory feature. The install commands below are the upstream ones. A fork install uses the `episodic-memory@local-marketplace` plugin instead.
 
@@ -152,6 +152,7 @@ episodic-memory stats
 
 # Self-improving memory (off unless EPISODIC_MEMORY_LEARN=1)
 episodic-memory learn status
+episodic-memory learn render --project my-project   # what a session in my-project will be shown
 episodic-memory learn --help
 ```
 
@@ -315,7 +316,7 @@ Learned knowledge is durable state next to the index, not inside it:
 ```
 <configDir>/
   conversation-index/   db.sqlite        disposable, rebuildable from the archive
-  learned/              knowledge.db     learned entries
+  learned/              knowledge.db     learned entries, citations and learner records (plain SQLite)
                         learning.sqlite  runs, tasks, attempts, rendered hint block
   learned-skills/                        generated SKILL.md export tree
 ```
@@ -324,6 +325,12 @@ Learned knowledge is durable state next to the index, not inside it:
 cleanup, and the `rm -rf conversation-index/` reset recipe cannot reach learned knowledge or the learning
 trace. Delete `learned/` only deliberately. `learned-skills/` is generated output and is rewritten by every
 export.
+
+Both files are ordinary `better-sqlite3` databases with no extra dependency. `knowledge.db` keeps one row per
+entry version plus the citations and the learner's own records (heuristics, decisions, failures, reflections,
+project context); the `skills` tool opens it read-only, and every `learn` write runs under the database's
+write lock, so a `learn` run in a terminal and an open MCP server never trip over each other. The layout is
+documented in [docs/SCHEMA.md](docs/SCHEMA.md).
 
 At session start the hook appends a fenced, size-capped block of learned hints to the digest — but only
 when `EPISODIC_MEMORY_LEARN=1` and `learned/learning.sqlite` already exists. With the flag off, hook
@@ -360,6 +367,7 @@ instance names the holder's PID instead of failing blankly.
 | `learn report [--run ID] [--json]` | Pass rates before and after, kept and pending entries, rejections with reasons, budget, child runs and reflections. Defaults to the latest run |
 | `learn approve <name> [--yes]` | Activate a candidate as ground truth after showing the entry, its validation record and a diff against the version it revises |
 | `learn export [--to DIR]` | Write every active skill as `<project>/<slug>/SKILL.md` under `learned-skills/`, replacing that tree. `--to DIR` copies into `DIR` instead and removes nothing there |
+| `learn render [--project P]` | Rewrite the learned-hints block the SessionStart hook injects from the entries that are active now, and list each block's size. `--project P` prints that project's block. Every run and approval renders on its own; use this after editing the store by hand or to see what a session will be shown |
 
 ### Settings
 
@@ -576,38 +584,70 @@ Search indexed conversations using semantic similarity or exact text matching.
 }
 ```
 
+**Filtered search**: narrow by project, session or branch
+```json
+{
+  "query": "flaky integration test",
+  "project": "my-app",
+  "git_branch": "main",
+  "after": "2025-09-01"
+}
+```
+
 **Parameters:**
 - `query` (string | string[]): Single string for regular search, or array of 2-5 strings for multi-concept AND search
 - `mode` ('vector' | 'text' | 'both'): Search mode for single-concept searches (default: 'both')
 - `limit` (number): Max results, 1-50 (default: 10)
 - `after` (string, optional): Only show conversations after YYYY-MM-DD
 - `before` (string, optional): Only show conversations before YYYY-MM-DD
+- `project`, `session_id`, `git_branch` (string, optional): Exact-match filters on the exchange's metadata
 - `response_format` ('markdown' | 'json'): Output format (default: 'markdown')
+- `auth_token` (string): Required only when the server runs with `EPISODIC_MEMORY_MCP_TOKEN` set (see [docs/security.md](docs/security.md))
+
+Every result carries the archive path and line range that `read` takes.
 
 #### `read`
 
-Display a full conversation in readable markdown format.
+Display a conversation, or a line range of one, in readable markdown format.
 
 ```json
 {
-  "path": "/path/to/conversation.jsonl"
+  "path": "<configDir>/conversation-archive/my-app/0f2c…​.jsonl",
+  "startLine": 120,
+  "endLine": 180
 }
 ```
 
 **Parameters:**
-- `path` (string): Absolute path to the JSONL conversation file
+- `path` (string): The `archive_path` of a `search` result. It must resolve inside the conversation archive and end in `.jsonl`; a path outside the archive, a symlink that escapes it, or any other file type is refused. Arbitrary files on disk cannot be read through this tool
+- `startLine`, `endLine` (number, optional): 1-indexed, inclusive line range. A full read is capped at 32 MB (`EPISODIC_MEMORY_MAX_READ_BYTES`); pass a range for larger conversations
+- `auth_token` (string): As for `search`
+
+With `EPISODIC_MEMORY_REDACT_SECRETS=1`, token-shaped secrets in the conversation are redacted before the text is returned.
 
 #### `digest`
 
 Show the session digest, search it (`query`), expand a `[#id]` mark into an archive path and line range
-(`expand`), or store a note for the next session (`handoff`). Requires `EPISODIC_MEMORY_DIGEST=1`. See
-[Session Digest](#session-digest).
+(`expand`), or store a note for the next session (`handoff`, one line, capped at 500 characters). The tool
+reads whatever digest has been written; the digest is only written when `sync` runs with
+`EPISODIC_MEMORY_DIGEST=1`. See [Session Digest](#session-digest).
 
 #### `skills`
 
 List, search (`query`) or load (`get`) the skills episodic-memory learned from this project's
-conversations. Read-only, and it answers that learning is off (opening nothing) unless
-`EPISODIC_MEMORY_LEARN=1`. See [Self-improving memory](#self-improving-memory-recursa).
+conversations (`project` defaults to the key for the current directory; `limit` 1-50, default 10).
+Read-only: it opens `knowledge.db` read-only for the one call and answers that learning is off, opening
+nothing, unless `EPISODIC_MEMORY_LEARN=1`. Every field is screened for injected instructions and redacted
+before it is returned. See [Self-improving memory](#self-improving-memory-recursa).
+
+### Settings the server sees
+
+A plugin-launched server only receives the environment variables the plugin manifest (`.mcp.json`)
+whitelists: the config and database paths, `CONVERSATION_SEARCH_EXCLUDE_PROJECTS`, `EPISODIC_MEMORY_LEARN`
+and `EPISODIC_MEMORY_LEARN_MAX_CHARS`, `EPISODIC_MEMORY_MCP_TOKEN`, `EPISODIC_MEMORY_REDACT_SECRETS`,
+`EPISODIC_MEMORY_MAX_READ_BYTES`, `EPISODIC_MEMORY_DIGEST_MAX_CHARS`, `EPISODIC_MEMORY_INCLUDE_SUMMARY` and
+`EPISODIC_MEMORY_MAX_SUMMARY_DISPLAY_CHARS`. Set them in the shell that starts Claude Code or Codex. A server
+you start yourself sees your whole environment.
 
 ### Using the MCP Server Directly
 

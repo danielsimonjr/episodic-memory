@@ -17,7 +17,11 @@ Search your episodic memory of past Claude Code and Codex conversations using se
 | `limit` | `number` | No | Maximum results to return, 1-50 (default: 10) |
 | `after` | `string` | No | Only return conversations after this date (YYYY-MM-DD) |
 | `before` | `string` | No | Only return conversations before this date (YYYY-MM-DD) |
+| `project` | `string` | No | Only exchanges from this project key (exact match) |
+| `session_id` | `string` | No | Only exchanges from this session (exact match) |
+| `git_branch` | `string` | No | Only exchanges recorded on this branch (exact match) |
 | `response_format` | `"markdown"` \| `"json"` | No | Output format (default: `"markdown"`) |
+| `auth_token` | `string` | Only with `EPISODIC_MEMORY_MCP_TOKEN` | The token the server was started with |
 
 ### Search Modes
 
@@ -58,6 +62,16 @@ Note: `mode` is ignored for multi-concept searches (always uses vector similarit
 }
 ```
 
+### Metadata Filtering
+
+```typescript
+{
+  query: "flaky integration test",
+  project: "my-app",
+  git_branch: "main"
+}
+```
+
 ### Response Format
 
 #### Markdown (default)
@@ -90,9 +104,12 @@ Display a full conversation from episodic memory as markdown.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `path` | `string` | Yes | Absolute path to the JSONL conversation file |
+| `path` | `string` | Yes | The `archive_path` from a `search` result. Must resolve inside the conversation archive and end in `.jsonl`; anything else (a path outside the archive, a symlink that escapes it, a non-jsonl file) is refused |
 | `startLine` | `number` | No | Starting line number (1-indexed, inclusive) |
 | `endLine` | `number` | No | Ending line number (1-indexed, inclusive) |
+| `auth_token` | `string` | Only with `EPISODIC_MEMORY_MCP_TOKEN` | The token the server was started with |
+
+A full read (no range) is capped at 32 MB (`EPISODIC_MEMORY_MAX_READ_BYTES`); pass a range for a larger file. With `EPISODIC_MEMORY_REDACT_SECRETS=1`, token-shaped secrets are redacted before the text is returned.
 
 ### Usage
 
@@ -119,6 +136,33 @@ Markdown-formatted conversation with:
 - Content (including tool uses and results)
 - Line numbers for reference
 
+## digest
+
+Show, search or annotate the short, cited digest of earlier sessions in this project. The tool reads whatever digest has been written; the digest is only written when `episodic-memory sync` runs with `EPISODIC_MEMORY_DIGEST=1`, so without that the tool has nothing to show.
+
+**Tool name:** `mcp__plugin_episodic-memory_episodic-memory__digest`
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `query` | `string` | No | Search the digest instead of showing it |
+| `project` | `string` | No | Project key (default: the key for the current working directory) |
+| `limit` | `number` | No | Maximum search hits, 1-50 (default: 10) |
+| `expand` | `string` | No | An exchange id from a `[#id]` mark. Returns the archive path and line range to pass to `read` |
+| `handoff` | `string` | No | Store a one-line note for the next session (capped at 500 characters, redacted) |
+| `auth_token` | `string` | Only with `EPISODIC_MEMORY_MCP_TOKEN` | The token the server was started with |
+
+### Usage
+
+**Show the digest for this project:** `{}`
+
+**Follow a citation:** `{ expand: "a1b2c3d4e5f60718293a4b5c6d7e8f90" }` then `read` the path and range it returns.
+
+**Leave a note for next time:** `{ handoff: "Resume at the failing migration test; the fix is in #41" }`
+
+Every line of the digest cites the exchanges it came from; treat it as a map of where to look, not as the record itself. The full index stays the place for exact text.
+
 ## skills
 
 List or load the skills episodic-memory has learned from past sessions in this project.
@@ -127,7 +171,7 @@ List or load the skills episodic-memory has learned from past sessions in this p
 
 A skill is a learned hint about where to look: a short description plus a body naming the conversations, terms, dates or search modes that answered a similar question before. When a session opens with a learned-hints block in its context, load the skill it names before searching.
 
-**Read-only.** The tool never writes, and with `EPISODIC_MEMORY_LEARN` unset it answers that learning is off without opening anything.
+**Read-only.** The tool opens the knowledge store read-only for the one call and never writes; with `EPISODIC_MEMORY_LEARN` unset it answers that learning is off without opening anything.
 
 ### Parameters
 
@@ -137,6 +181,7 @@ A skill is a learned hint about where to look: a short description plus a body n
 | `query` | `string` | No | Search the learned skills instead of listing them |
 | `project` | `string` | No | Project key (default: the key for the current working directory) |
 | `limit` | `number` | No | Maximum skills listed, 1-50 (default: 10) |
+| `auth_token` | `string` | Only with `EPISODIC_MEMORY_MCP_TOKEN` | The token the server was started with |
 
 ### Usage
 
@@ -172,9 +217,10 @@ Each line is `slug: description (confidence, vN)`. Pass a slug back as `get`.
 
 All tools return errors as text content with `isError: true`:
 - Invalid parameters (validation errors)
-- File not found
+- A `read` path outside the archive, not a `.jsonl` file, or not found
 - Date parsing errors
 - Search failures
+- A missing or wrong `auth_token` when the server runs with `EPISODIC_MEMORY_MCP_TOKEN`
 
 ## Performance Notes
 

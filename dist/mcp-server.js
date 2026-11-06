@@ -23150,7 +23150,9 @@ var SearchInputSchema = external_exports.object({
   auth_token: external_exports.string().min(1).optional().describe("Required when EPISODIC_MEMORY_MCP_TOKEN is set")
 }).strict();
 var ShowConversationInputSchema = external_exports.object({
-  path: external_exports.string().min(1, "Path is required").describe("Absolute path to the JSONL conversation file to display"),
+  path: external_exports.string().min(1, "Path is required").describe(
+    "The archive_path of a search result: a .jsonl file inside the conversation archive. Paths outside the archive are refused."
+  ),
   startLine: external_exports.number().int().min(1).optional().describe("Starting line number (1-indexed, inclusive). Omit to start from beginning."),
   endLine: external_exports.number().int().min(1).optional().describe("Ending line number (1-indexed, inclusive). Omit to read to end."),
   auth_token: external_exports.string().min(1).optional().describe("Required when EPISODIC_MEMORY_MCP_TOKEN is set")
@@ -23320,7 +23322,7 @@ function buildServer() {
     "read",
     {
       title: "Read Full Conversation",
-      description: `Read full conversations to extract detailed context after finding relevant results with search. Essential for understanding the complete rationale, evolution, and gotchas behind past decisions. Use startLine/endLine pagination for large conversations to avoid context bloat (line numbers are 1-indexed).`,
+      description: `Read full conversations to extract detailed context after finding relevant results with search. Essential for understanding the complete rationale, evolution, and gotchas behind past decisions. Pass the archive_path a search result gave you; only .jsonl files inside the conversation archive can be read. Use startLine/endLine pagination for large conversations to avoid context bloat (line numbers are 1-indexed).`,
       inputSchema: ShowConversationInputSchema,
       annotations: {
         readOnlyHint: true,

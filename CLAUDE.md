@@ -242,11 +242,17 @@ EPISODIC_MEMORY_CONFIG_DIR          PERSONAL_SUPERPOWERS_DIR
 XDG_CONFIG_HOME                     EPISODIC_MEMORY_DB_PATH
 CONVERSATION_SEARCH_EXCLUDE_PROJECTS
 EPISODIC_MEMORY_LEARN               EPISODIC_MEMORY_LEARN_MAX_CHARS
+EPISODIC_MEMORY_MCP_TOKEN           EPISODIC_MEMORY_REDACT_SECRETS
+EPISODIC_MEMORY_MAX_READ_BYTES      EPISODIC_MEMORY_DIGEST_MAX_CHARS
+EPISODIC_MEMORY_INCLUDE_SUMMARY     EPISODIC_MEMORY_MAX_SUMMARY_DISPLAY_CHARS
 ```
 
-`EPISODIC_MEMORY_LEARN` and `EPISODIC_MEMORY_LEARN_MAX_CHARS` are whitelisted explicitly: without them the
-server never sees the feature flag, and `skills` answers "learning is off" forever. Any new
-`EPISODIC_MEMORY_LEARN_*` setting that the MCP server reads at runtime needs its own line here.
+Every variable the server reads at runtime is whitelisted explicitly: without its line the plugin-launched
+server never sees it (so `skills` would answer "learning is off" forever, `auth_token` could never be
+required, and a read cap or redaction setting would be silently ignored). Any new setting that the MCP
+server reads at runtime needs its own line here and in `test/codex-plugin.test.ts`. `EPISODIC_MEMORY_DIGEST`
+is not listed on purpose: it gates *writing* the digest in `sync` and the hook, and the `digest` tool reads
+whatever has been written.
 
 ### `search`
 
@@ -255,11 +261,12 @@ Vector + text search across indexed conversations.
 Inputs (Zod-validated):
 - `query`: string (required) — natural-language search
 - `mode`: `'vector'` | `'text'` | `'both'` (default: `'both'`)
-- `limit`: number (default: 10, max: 100)
+- `limit`: number (default: 10, max: 50)
 - `project`, `session_id`, `git_branch`: optional metadata filters
 - `after`, `before`: ISO date strings `YYYY-MM-DD`
-- `responseFormat`: `'markdown'` | `'json'`
-- `concepts`: string[] — for multi-concept aggregation
+- `response_format`: `'markdown'` | `'json'`
+- `auth_token`: required only when `EPISODIC_MEMORY_MCP_TOKEN` is set (`src/mcp-auth.ts`)
+- multi-concept AND search: pass `query` as an array of 2–5 strings
 
 Output: list of `ConversationExchange` rows (id, project, timestamp, user/assistant message, archive_path, line_start, line_end, plus metadata).
 
@@ -268,8 +275,9 @@ Output: list of `ConversationExchange` rows (id, project, timestamp, user/assist
 Read a specific JSONL conversation file by path.
 
 Inputs:
-- `path`: string (required) — **must resolve inside `getArchiveDir()` and end in `.jsonl`** (fork hardening)
+- `path`: string (required) — **must resolve inside `getArchiveDir()` and end in `.jsonl`** (fork hardening, `src/archive-path.ts`; symlink escapes refused; full reads capped by `EPISODIC_MEMORY_MAX_READ_BYTES`, default 32 MB)
 - `startLine`, `endLine`: optional line range
+- `auth_token`: as for `search`
 
 Output: markdown-formatted conversation.
 

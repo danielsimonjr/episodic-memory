@@ -142,12 +142,26 @@ export declare class KnowledgeStore {
     private readonly db;
     private closed;
     private constructor();
-    /** Open (creating when absent) the store at `dbPath`. */
-    static create(dbPath: string): KnowledgeStore;
+    /**
+     * Open the store at `dbPath`, creating the file and its tables when absent.
+     *
+     * `readonly` opens an existing file without any DDL, for callers such as the
+     * `skills` tool that must never be the ones to create or migrate the store;
+     * writes through such a handle throw.
+     */
+    static create(dbPath: string, options?: {
+        readonly?: boolean;
+    }): KnowledgeStore;
     /** Release the database handle. Idempotent. */
     close(): void;
     /** PII redaction, for `knowledge-db` and the gates to reuse. */
     redactPii(text: string): string;
+    /**
+     * Run a read-modify-write under the database write lock, so a concurrent
+     * process cannot slip a write between the read and the update. Nested calls
+     * become savepoints.
+     */
+    private write;
     private readEntity;
     private entitiesOfType;
     /** Every learned entity, in insertion order. */
@@ -163,12 +177,14 @@ export declare class KnowledgeStore {
     getRawEntity(name: string): Promise<RawEntityView | null>;
     /**
      * Write one entity for one version, plus the reference entities and `cites`
-     * relations it needs, in one transaction. An entity that already exists
-     * under this name is left untouched.
+     * relations it needs, in one transaction. A learned entry that already exists
+     * under this name is left untouched; any other row under it is an error.
      */
     putEntry(entry: KnowledgeEntry, reflectionHash?: string): Promise<void>;
+    private putEntrySync;
     /** Create an `attempt:<id>` reference entity, citing it from `from`. */
     citeAttempt(from: string, attemptId: number, taskId: number, runId: string): Promise<void>;
+    private citeAttemptSync;
     /** Re-render the observations, tags and lifecycle of one entry after `mutate`. */
     private rewriteEntity;
     /** Set `supersededBy` and clear `isLatest` on the older version. */
@@ -194,6 +210,7 @@ export declare class KnowledgeStore {
     getEntry(name: string): Promise<KnowledgeEntry | null>;
     /** The latest version of a `(kind, project, slug)` chain, by logical version. */
     getBySlug(kind: KnowledgeKind, project: string, slug: string): Promise<KnowledgeEntry | null>;
+    private latestBySlug;
     /**
      * Learned entries that are still chain-visible (`isLatest`), any status. A
      * candidate revision does not clear the parent's `isLatest`, so both rows
@@ -255,6 +272,7 @@ export declare class KnowledgeStore {
     }): Promise<void>;
     /** A stored procedure, or null. */
     getProcedure(id: string): Promise<ProcedureView | null>;
+    private readProcedure;
     /**
      * Steps of a procedure the previous adapter wrote as one `procedure-step`
      * row per step, linked by `has_step` relations, ordered by `[order]`.
@@ -277,6 +295,7 @@ export declare class KnowledgeStore {
             definition: string;
         }>;
     }): Promise<void>;
+    private upsertProjectContextSync;
     /** The project's context rendered as prose, cut to `budgetChars`. */
     forContext(project: string, budgetChars?: number): Promise<string>;
     private decisionRecord;
@@ -328,6 +347,7 @@ export declare class KnowledgeStore {
      * and record. Additive only.
      */
     createReflection(input: CreateReflectionInput): Promise<CreateReflectionResult>;
+    private createReflectionSync;
     /**
      * Write the reflection record that accompanies a `learned-reflection` entry
      * written by someone else (e.g. `knowledge-db.insertKnowledgeEntry`).
@@ -354,6 +374,8 @@ export declare class KnowledgeStore {
 export interface OpenKnowledgeStoreOptions {
     /** Override the file path (tests). Defaults to `getKnowledgeDbPath()`. */
     dbPath?: string;
+    /** Open an existing file for reading only: no table creation, no migration, writes throw. */
+    readonly?: boolean;
 }
 /** Open the knowledge store. Synchronous; starts no timers. */
 export declare function openKnowledgeStore(options?: OpenKnowledgeStoreOptions): KnowledgeStore;

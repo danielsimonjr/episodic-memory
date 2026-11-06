@@ -99,6 +99,7 @@ const PROCEDURE_STEP_TYPE = 'procedure-step';
 const PROCEDURE_SUCCESS_RATE = '[success-rate]: ';
 const PROCEDURE_EXECUTION_COUNT = '[execution-count]: ';
 const PROCEDURE_STEPS = '[procedure-steps]: ';
+const PROCEDURE_META = '[procedure-meta]:';
 const STEP_ORDER = '[order]: ';
 const STEP_ACTION = '[action]: ';
 const STEP_PARAM = '[param]: ';
@@ -550,6 +551,10 @@ const SCHEMA = `
     metadata TEXT,
     PRIMARY KEY (fromEntity, toEntity, relationType)
   );
+`;
+
+/** Created after the column back-fill: two of them index back-filled columns. */
+const INDEXES = `
   CREATE INDEX IF NOT EXISTS idx_entity_type ON entities(entityType);
   CREATE INDEX IF NOT EXISTS idx_entities_projectId ON entities(projectId);
   CREATE INDEX IF NOT EXISTS idx_entities_isLatest ON entities(isLatest);
@@ -562,6 +567,7 @@ const ENTITY_COLUMNS: Array<[string, string]> = [
   ['id', 'TEXT'],
   ['tags', 'TEXT'],
   ['importance', 'INTEGER'],
+  ['parentId', 'TEXT'],
   ['projectId', 'TEXT'],
   ['version', 'INTEGER DEFAULT 1'],
   ['parentEntityName', 'TEXT'],
@@ -594,13 +600,26 @@ export class KnowledgeStore {
     this.db = db;
   }
 
-  /** Open (creating when absent) the store at `dbPath`. */
-  static create(dbPath: string): KnowledgeStore {
+  /**
+   * Open the store at `dbPath`, creating the file and its tables when absent.
+   *
+   * `readonly` opens an existing file without any DDL, for callers such as the
+   * `skills` tool that must never be the ones to create or migrate the store;
+   * writes through such a handle throw.
+   */
+  static create(dbPath: string, options: { readonly?: boolean } = {}): KnowledgeStore {
+    if (options.readonly) {
+      const ro = new Database(dbPath, { readonly: true, fileMustExist: true });
+      ro.pragma('busy_timeout = 5000');
+      return new KnowledgeStore(ro);
+    }
     fs.mkdirSync(path.dirname(dbPath), { recursive: true, mode: 0o700 });
     const db = new Database(dbPath);
     try {
-      db.pragma('journal_mode = WAL');
+      // The timeout first: every statement after it, the journal switch
+      // included, then waits for a concurrent writer instead of failing at once.
       db.pragma('busy_timeout = 5000');
+      db.pragma('journal_mode = WAL');
       db.pragma('foreign_keys = ON');
       db.exec(SCHEMA);
       const present = new Set(
@@ -609,6 +628,16 @@ export class KnowledgeStore {
       for (const [column, type] of ENTITY_COLUMNS) {
         if (!present.has(column)) db.exec(`ALTER TABLE entities ADD COLUMN ${column} ${type}`);
       }
+      db.exec(INDEXES);
+      // The previous adapter kept an FTS5 shadow of `entities` with triggers on
+      // every write. Nothing reads it any more, and a stale shadow can fail a
+      // write, so a file that still carries it is relieved of it here.
+      db.exec(`
+        DROP TRIGGER IF EXISTS entities_ai;
+        DROP TRIGGER IF EXISTS entities_au;
+        DROP TRIGGER IF EXISTS entities_ad;
+        DROP TABLE IF EXISTS entities_fts;
+      `);
     } catch (err) {
       db.close();
       throw err;
@@ -630,6 +659,15 @@ export class KnowledgeStore {
   /** PII redaction, for `knowledge-db` and the gates to reuse. */
   redactPii(text: string): string {
     return redactPii(text);
+  }
+
+  /**
+   * Run a read-modify-write under the database write lock, so a concurrent
+   * process cannot slip a write between the read and the update. Nested calls
+   * become savepoints.
+   */
+  private write<T>(fn: () => T): T {
+    return this.db.transaction(fn).immediate();
   }
 
   // ==================== Row access ====================
@@ -666,7 +704,6 @@ export class KnowledgeStore {
     `);
     const now = nowIso();
     for (const e of entities) {
-      const createdAt = e.createdAt ?? now;
       stmt.run(
         e.name,
         randomUUID(),
@@ -675,8 +712,8 @@ export class KnowledgeStore {
         e.tags ? JSON.stringify(e.tags) : null,
         e.importance ?? null,
         e.parentId ?? null,
-        createdAt,
-        createdAt,
+        e.createdAt ?? now,
+        now,
         e.projectId ?? null,
         e.parentEntityName ?? null,
         e.rootEntityName ?? null,
@@ -761,17 +798,25 @@ export class KnowledgeStore {
 
   /**
    * Write one entity for one version, plus the reference entities and `cites`
-   * relations it needs, in one transaction. An entity that already exists
-   * under this name is left untouched.
+   * relations it needs, in one transaction. A learned entry that already exists
+   * under this name is left untouched; any other row under it is an error.
    */
   async putEntry(entry: KnowledgeEntry, reflectionHash?: string): Promise<void> {
+    this.putEntrySync(entry, reflectionHash);
+  }
+
+  private putEntrySync(entry: KnowledgeEntry, reflectionHash?: string): void {
     const name = entry.id;
     const root = rootName(entry.kind, entry.project, entry.slug);
     const parent =
       entry.version > 1 ? entryName(entry.kind, entry.project, entry.slug, entry.version - 1) : undefined;
     const createdAt = entry.createdAt || nowIso();
 
-    this.db.transaction(() => {
+    this.write(() => {
+      const clash = this.readEntity(name);
+      if (clash && !clash.entityType.startsWith(ENTRY_TYPE_PREFIX)) {
+        throw new Error(`knowledge entry name is taken by a ${clash.entityType} row: ${name}`);
+      }
       this.insertEntities(
         entry.sources.map(source => ({
           name: `exchange:${source.id}`,
@@ -811,37 +856,49 @@ export class KnowledgeStore {
       this.insertRelations(
         entry.sources.map(source => ({ from: name, to: `exchange:${source.id}`, relationType: 'cites' }))
       );
-    })();
+    });
   }
 
   /** Create an `attempt:<id>` reference entity, citing it from `from`. */
   async citeAttempt(from: string, attemptId: number, taskId: number, runId: string): Promise<void> {
+    this.citeAttemptSync(from, attemptId, taskId, runId);
+  }
+
+  private citeAttemptSync(from: string, attemptId: number, taskId: number, runId: string): void {
     const refName = `attempt:${attemptId}`;
-    this.db.transaction(() => {
+    this.write(() => {
       this.insertEntities([
         { name: refName, entityType: 'attempt-ref', observations: [`task: ${taskId}`, `run: ${runId}`] },
       ]);
       this.insertRelations([{ from, to: refName, relationType: 'cites' }]);
-    })();
+    });
   }
 
   /** Re-render the observations, tags and lifecycle of one entry after `mutate`. */
   private rewriteEntity(name: string, mutate: (entry: KnowledgeEntry) => void): void {
-    const entity = this.readEntity(name);
-    if (!entity) throw new Error(`knowledge entry not found: ${name}`);
-    const parsed = parseEntity(entity);
-    if (!parsed) throw new Error(`not a learned entry: ${name}`);
-    mutate(parsed);
+    this.write(() => {
+      const entity = this.readEntity(name);
+      if (!entity) throw new Error(`knowledge entry not found: ${name}`);
+      const parsed = parseEntity(entity);
+      if (!parsed) throw new Error(`not a learned entry: ${name}`);
+      mutate(parsed);
 
-    // Carry the dedup marker across a rewrite; dropping it would make a stored
-    // reflection look new to `findReflectionByHash`.
-    const reflectionHash = observationValue(entity.observations, OBS.reflectionHash) ?? undefined;
+      // Carry the dedup marker across a rewrite; dropping it would make a stored
+      // reflection look new to `findReflectionByHash`.
+      const reflectionHash = observationValue(entity.observations, OBS.reflectionHash) ?? undefined;
+      const source = (entity.metadata.source as Record<string, unknown> | undefined) ?? {};
 
-    this.updateEntity(name, {
-      observations: buildObservations(parsed, reflectionHash),
-      tags: buildTags(parsed),
-      importance: IMPORTANCE_BY_CONFIDENCE[parsed.confidence],
-      metadata: { ...entity.metadata, lifecycleStatus: LIFECYCLE_BY_STATUS[parsed.status] },
+      this.updateEntity(name, {
+        observations: buildObservations(parsed, reflectionHash),
+        tags: buildTags(parsed),
+        importance: IMPORTANCE_BY_CONFIDENCE[parsed.confidence],
+        metadata: {
+          ...entity.metadata,
+          lifecycleStatus: LIFECYCLE_BY_STATUS[parsed.status],
+          // Provenance follows the trust the observation and tag now carry.
+          source: { ...source, reliability: RELIABILITY_BY_TRUST[parsed.trust], trustLevel: parsed.trust },
+        },
+      });
     });
   }
 
@@ -912,6 +969,10 @@ export class KnowledgeStore {
 
   /** The latest version of a `(kind, project, slug)` chain, by logical version. */
   async getBySlug(kind: KnowledgeKind, project: string, slug: string): Promise<KnowledgeEntry | null> {
+    return this.latestBySlug(kind, project, slug);
+  }
+
+  private latestBySlug(kind: KnowledgeKind, project: string, slug: string): KnowledgeEntry | null {
     const root = rootName(kind, project, slug);
     const rows = this.db
       .prepare('SELECT * FROM entities WHERE entityType LIKE ? AND COALESCE(rootEntityName, name) = ?')
@@ -1059,13 +1120,15 @@ export class KnowledgeStore {
   }
 
   private updateHeuristic(id: string, mutate: (h: HeuristicRecord) => HeuristicRecord): boolean {
-    const found = this.heuristicRecord(id);
-    if (!found) return false;
-    const updated = { ...mutate(found.record), lastUpdatedAt: nowIso() };
-    this.updateEntity(id, {
-      metadata: { ...found.entity.metadata, confidence: updated.confidence, heuristicRecord: updated },
+    return this.write(() => {
+      const found = this.heuristicRecord(id);
+      if (!found) return false;
+      const updated = { ...mutate(found.record), lastUpdatedAt: nowIso() };
+      this.updateEntity(id, {
+        metadata: { ...found.entity.metadata, confidence: updated.confidence, heuristicRecord: updated },
+      });
+      return true;
     });
-    return true;
   }
 
   /** Reinforce a heuristic after a kept validation: support up, confidence toward 1. */
@@ -1164,6 +1227,10 @@ export class KnowledgeStore {
 
   /** A stored procedure, or null. */
   async getProcedure(id: string): Promise<ProcedureView | null> {
+    return this.readProcedure(id);
+  }
+
+  private readProcedure(id: string): ProcedureView | null {
     const entity = this.readEntity(id);
     if (!entity || entity.entityType !== PROCEDURE_TYPE) return null;
     const descriptionLines: string[] = [];
@@ -1179,6 +1246,14 @@ export class KnowledgeStore {
         if (Number.isFinite(n)) executionCount = n;
       } else if (obs.startsWith(PROCEDURE_STEPS)) {
         steps = parseJson<ProcedureStep[] | null>(obs.slice(PROCEDURE_STEPS.length), null);
+      } else if (obs.startsWith(PROCEDURE_META)) {
+        // The oldest encoding kept the counters in one JSON blob.
+        const meta = parseJson<{ successRate?: number; executionCount?: number }>(
+          obs.slice(PROCEDURE_META.length).trim(),
+          {}
+        );
+        if (typeof meta.successRate === 'number') successRate = meta.successRate;
+        if (typeof meta.executionCount === 'number') executionCount = meta.executionCount;
       } else {
         descriptionLines.push(obs);
       }
@@ -1232,7 +1307,7 @@ export class KnowledgeStore {
     if (contextTokens.size === 0) return [];
     const matches: ProcedureMatchLike[] = [];
     for (const id of ids) {
-      const proc = await this.getProcedure(id);
+      const proc = this.readProcedure(id);
       if (!proc) continue;
       const procTokens = tokenize(proc.name, 2);
       for (const trigger of proc.triggers) for (const t of tokenize(trigger, 2)) procTokens.add(t);
@@ -1247,12 +1322,14 @@ export class KnowledgeStore {
 
   /** Telemetry only: fold whether a procedure skill's attempt succeeded into its success rate. */
   async refineProcedure(id: string, succeeded: boolean, _notes?: string): Promise<void> {
-    const proc = await this.getProcedure(id);
-    if (!proc) return;
-    const count = proc.executionCount ?? 0;
-    const baseline = count === 0 ? 0.5 : (proc.successRate ?? 0);
-    const rate = clamp01(baseline + PROCEDURE_SUCCESS_ALPHA * ((succeeded ? 1 : 0) - baseline));
-    this.updateEntity(id, { observations: encodeProcedure(proc.description, proc.steps, rate, count + 1) });
+    this.write(() => {
+      const proc = this.readProcedure(id);
+      if (!proc) return;
+      const count = proc.executionCount ?? 0;
+      const baseline = count === 0 ? 0.5 : (proc.successRate ?? 0);
+      const rate = clamp01(baseline + PROCEDURE_SUCCESS_ALPHA * ((succeeded ? 1 : 0) - baseline));
+      this.updateEntity(id, { observations: encodeProcedure(proc.description, proc.steps, rate, count + 1) });
+    });
   }
 
   // ==================== Project context ====================
@@ -1274,6 +1351,17 @@ export class KnowledgeStore {
     }
   ): Promise<void> {
     if (!project) throw new Error('upsertProjectContext: project is required');
+    this.write(() => this.upsertProjectContextSync(project, input));
+  }
+
+  private upsertProjectContextSync(
+    project: string,
+    input: {
+      facts?: string[];
+      conventions?: string[];
+      glossary?: Array<{ term: string; definition: string }>;
+    }
+  ): void {
     const now = nowIso();
     const existing = this.projectContext(project);
     const base: ProjectContextRecord = existing?.record ?? {
@@ -1297,8 +1385,11 @@ export class KnowledgeStore {
       lastUpdated: now,
     };
     const name = `project-context-${project}`;
-    if (existing) {
-      this.updateEntity(name, { metadata: { ...existing.entity.metadata, projectContextRecord: merged } });
+    // A row written by the previous adapter may exist without its record (that
+    // backend never persisted `projectContextRecord`); it is updated, not skipped.
+    const row = existing?.entity ?? this.readEntity(name);
+    if (row) {
+      this.updateEntity(name, { metadata: { ...row.metadata, projectContextRecord: merged } });
     } else {
       this.insertEntities([
         {
@@ -1388,18 +1479,20 @@ export class KnowledgeStore {
     to: DecisionRecord['status'],
     extra: Record<string, string>
   ): boolean {
-    const found = this.decisionRecord(id);
-    if (!found || found.record.status !== from) return false;
-    const updated: DecisionRecord = {
-      ...found.record,
-      status: to,
-      lifecycle: { status: to, ...extra },
-    };
-    this.updateEntity(id, {
-      observations: [`[decision:${to}] ${updated.context} → ${updated.decision}`],
-      metadata: { ...found.entity.metadata, decisionRecord: updated },
+    return this.write(() => {
+      const found = this.decisionRecord(id);
+      if (!found || found.record.status !== from) return false;
+      const updated: DecisionRecord = {
+        ...found.record,
+        status: to,
+        lifecycle: { status: to, ...extra },
+      };
+      this.updateEntity(id, {
+        observations: [`[decision:${to}] ${updated.context} → ${updated.decision}`],
+        metadata: { ...found.entity.metadata, decisionRecord: updated },
+      });
+      return true;
     });
-    return true;
   }
 
   /** Accept a proposed decision (a kept edit). */
@@ -1552,6 +1645,13 @@ export class KnowledgeStore {
    * and record. Additive only.
    */
   async createReflection(input: CreateReflectionInput): Promise<CreateReflectionResult> {
+    // One transaction: a failure part-way (a cited endpoint missing, say) must
+    // not leave an entry carrying the dedup hash with no citations or record,
+    // which a retry would then report as a duplicate and never complete.
+    return this.write(() => this.createReflectionSync(input));
+  }
+
+  private createReflectionSync(input: CreateReflectionInput): CreateReflectionResult {
     const hash = reflectionHash(input);
     const existing = this.findReflectionByHash(hash);
     if (existing) return { duplicate: true, id: existing };
@@ -1563,7 +1663,7 @@ export class KnowledgeStore {
     // Version the reflection entry within its own chain so a later run can
     // revise the same conclusion without touching the earlier one.
     const slug = input.slug ?? reflectionSlug(input.summary);
-    const previous = await this.getBySlug('reflection', input.project, slug);
+    const previous = this.latestBySlug('reflection', input.project, slug);
     const version = previous ? previous.version + 1 : 1;
     const id = entryName('reflection', input.project, slug, version);
 
@@ -1590,10 +1690,10 @@ export class KnowledgeStore {
       procedureId: null,
     };
 
-    await this.putEntry(entry, hash);
+    this.putEntrySync(entry, hash);
     for (const attempt of input.attempts ?? []) {
       const taskId = input.attemptTasks?.find(a => a.id === attempt)?.taskId ?? 0;
-      await this.citeAttempt(id, attempt, taskId, entry.runId);
+      this.citeAttemptSync(id, attempt, taskId, entry.runId);
     }
     this.insertReflectionRecord(input.scope, input.project, evidence, input.summary, input.confidence);
     return { duplicate: false, id };
@@ -1723,9 +1823,11 @@ function firstLine(text: string): string {
 export interface OpenKnowledgeStoreOptions {
   /** Override the file path (tests). Defaults to `getKnowledgeDbPath()`. */
   dbPath?: string;
+  /** Open an existing file for reading only: no table creation, no migration, writes throw. */
+  readonly?: boolean;
 }
 
 /** Open the knowledge store. Synchronous; starts no timers. */
 export function openKnowledgeStore(options: OpenKnowledgeStoreOptions = {}): KnowledgeStore {
-  return KnowledgeStore.create(options.dbPath ?? getKnowledgeDbPath());
+  return KnowledgeStore.create(options.dbPath ?? getKnowledgeDbPath(), { readonly: options.readonly });
 }

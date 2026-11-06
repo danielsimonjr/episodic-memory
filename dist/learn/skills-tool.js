@@ -87,7 +87,7 @@ async function activeSkills(store, project) {
  * The tool's text. Opens nothing with the flag off.
  *
  * The store file check comes before construction: an `openKnowledgeStore()`
- * would create `knowledge.db` (the store creates its tables on open), and a read-only tool
+ * would create `knowledge.db` (a writable open creates its tables), and a read-only tool
  * call must never be what creates the learned directory.
  */
 export async function skillsToolText(params) {
@@ -100,7 +100,8 @@ export async function skillsToolText(params) {
         return NO_SKILLS_MESSAGE;
     const project = params.project ?? projectKeyFromCwd(process.cwd());
     const limit = params.limit ?? 10;
-    const store = openKnowledgeStore({ dbPath });
+    // Read-only: the tool never creates tables, migrates columns or writes a row.
+    const store = openKnowledgeStore({ dbPath, readonly: true });
     try {
         const redact = text => store.redactPii(redactSecrets(text));
         if (params.get) {

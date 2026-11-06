@@ -24,7 +24,7 @@ export interface SkillsToolParams {
  * The tool's text. Opens nothing with the flag off.
  *
  * The store file check comes before construction: an `openKnowledgeStore()`
- * would create `knowledge.db` (the store creates its tables on open), and a read-only tool
+ * would create `knowledge.db` (a writable open creates its tables), and a read-only tool
  * call must never be what creates the learned directory.
  */
 export declare function skillsToolText(params: SkillsToolParams): Promise<string>;

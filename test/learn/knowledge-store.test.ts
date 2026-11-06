@@ -488,6 +488,113 @@ describe('knowledge store (native sqlite)', () => {
     for (const line of importLines) expect(line.startsWith('import type ')).toBe(true);
   });
 
+  it('a readonly open never creates the file, reads what a writable handle wrote, and refuses writes', async () => {
+    const dbPath = getKnowledgeDbPath();
+    expect(() => openKnowledgeStore({ dbPath, readonly: true })).toThrow();
+    expect(fs.existsSync(dbPath)).toBe(false);
+
+    store = openKnowledgeStore();
+    await store.putEntry(fullEntry({ status: 'active' }));
+
+    const ro = openKnowledgeStore({ dbPath, readonly: true });
+    try {
+      expect((await ro.getEntry('learned:skill:proj-a:alpha:v1'))?.title).toBe('Alpha skill');
+      expect((await ro.search('alpha', { kinds: ['skill'], project: 'proj-a' })).map(e => e.id)).toEqual([
+        'learned:skill:proj-a:alpha:v1',
+      ]);
+      await expect(ro.setStatus('learned:skill:proj-a:alpha:v1', 'retired')).rejects.toThrow(/readonly/i);
+    } finally {
+      ro.close();
+    }
+    expect((await store.getEntry('learned:skill:proj-a:alpha:v1'))?.status).toBe('active');
+  });
+
+  it('createReflection writes nothing when the entry cannot be written', async () => {
+    store = openKnowledgeStore();
+    // A non-learned row under the entry's name makes `putEntry` throw after the
+    // exchange reference rows were inserted in the same transaction.
+    await store.putProcedure({
+      id: 'learned:reflection:proj-a:already-taken:v1',
+      name: 'x',
+      description: 'occupies the entry name',
+      steps: [],
+      triggers: [],
+    });
+    await expect(
+      store.createReflection({
+        scope: 'project',
+        project: 'proj-a',
+        evidence: ['exchange:ex1'],
+        sources: [source()],
+        summary: 'already taken',
+        confidence: 'low',
+        attempts: [3],
+        slug: 'already-taken',
+      })
+    ).rejects.toThrow();
+    // The exchange reference inserted before the failure was rolled back with it.
+    expect(await store.getRawEntity('exchange:ex1')).toBeNull();
+    expect(await store.getRawEntity('attempt:3')).toBeNull();
+    expect(await store.listReflections()).toEqual([]);
+  });
+
+  it('upsertProjectContext heals a project-context row that carries no record', async () => {
+    store = openKnowledgeStore();
+    // The previous adapter wrote the row but never persisted its record.
+    const raw = new Database(getKnowledgeDbPath());
+    try {
+      raw
+        .prepare(
+          `INSERT INTO entities (name, entityType, observations, createdAt, lastModified, projectId, agentMetadata)
+           VALUES (?, 'project_context', '["[project_context] proj-a"]', ?, ?, 'proj-a', ?)`
+        )
+        .run('project-context-proj-a', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z', '{"memoryType":"project_context"}');
+    } finally {
+      raw.close();
+    }
+    expect(await store.forContext('proj-a')).toBe('');
+    await store.upsertProjectContext('proj-a', { facts: ['f1'], glossary: [{ term: 'alpha', definition: 'first' }] });
+    await store.upsertProjectContext('proj-a', { facts: ['f1', 'f2'] });
+    expect(await store.forContext('proj-a')).toBe('Facts:\n- f1\n- f2\n\nGlossary:\n- alpha: first');
+  });
+
+  it('opening a file left by the previous adapter drops its FTS shadow and adds missing columns', async () => {
+    const dbPath = getKnowledgeDbPath();
+    fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+    const old = new Database(dbPath);
+    try {
+      old.exec(`
+        CREATE TABLE entities (
+          name TEXT PRIMARY KEY, entityType TEXT NOT NULL, observations TEXT NOT NULL,
+          createdAt TEXT NOT NULL, lastModified TEXT NOT NULL
+        );
+        CREATE TABLE relations (
+          fromEntity TEXT NOT NULL, toEntity TEXT NOT NULL, relationType TEXT NOT NULL,
+          createdAt TEXT NOT NULL, lastModified TEXT NOT NULL,
+          PRIMARY KEY (fromEntity, toEntity, relationType)
+        );
+        CREATE VIRTUAL TABLE entities_fts USING fts5(name, entityType, observations, content='entities', content_rowid='rowid');
+        CREATE TRIGGER entities_ai AFTER INSERT ON entities BEGIN
+          INSERT INTO entities_fts(rowid, name, entityType, observations) VALUES (NEW.rowid, NEW.name, NEW.entityType, NEW.observations);
+        END;
+      `);
+    } finally {
+      old.close();
+    }
+    store = openKnowledgeStore();
+    await store.putEntry(fullEntry({ status: 'active' }));
+    expect((await store.getBySlug('skill', 'proj-a', 'alpha'))?.title).toBe('Alpha skill');
+    const ro = new Database(dbPath, { readonly: true });
+    try {
+      const names = (ro.prepare("SELECT name FROM sqlite_master WHERE name LIKE 'entities_%'").all() as Array<{ name: string }>).map(r => r.name);
+      expect(names.filter(n => n === 'entities_fts' || n.startsWith('entities_a'))).toEqual([]);
+      const columns = (ro.prepare('PRAGMA table_info(entities)').all() as Array<{ name: string }>).map(c => c.name);
+      expect(columns).toEqual(expect.arrayContaining(['projectId', 'isLatest', 'rootEntityName', 'agentMetadata']));
+    } finally {
+      ro.close();
+    }
+  });
+
   it('the learning trace path lives beside knowledge.db under learned/', () => {
     expect(path.normalize(getLearningDbPath())).toBe(
       path.normalize(path.join(configDir, 'learned', 'learning.sqlite'))

@@ -38,7 +38,19 @@ COMMANDS:
       leaves, reflect, then evaluate the held-out split once at the end.
       --dry-run solves and reports without running any learner.
 
-  learn approve | export | render
+  learn approve <name> [--yes]
+      Activate a candidate as ground truth after showing the entry, its
+      validation record and a diff against the version it revises. <name> is
+      learned:<kind>:<project>:<slug>:v<n> or kind/project/slug. Refuses an
+      entry with no measurement or with a recorded regression. Prompts for y on
+      a TTY; --yes approves without asking.
+
+  learn export [--to DIR]
+      Write every active skill as <project>/<slug>/SKILL.md under
+      learned-skills/, replacing that tree. --to DIR copies into DIR instead
+      and removes nothing there.
+
+  learn render
       Not implemented yet.
 
 Progress goes to stderr; the report goes to stdout.`;

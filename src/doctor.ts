@@ -16,6 +16,7 @@ import {
 } from './paths.js';
 import { getSyncErrorsLogPath, getSyncLogPath } from './logging.js';
 import { nodeModulesIsHealthy } from './deps-health.js';
+import { type LearnDoctorSection, collectLearnDoctorSection } from './doctor-learn.js';
 
 export interface CodexDoctorInputs {
   codexVersionOutput: string;
@@ -150,6 +151,8 @@ export interface DoctorInputs {
   recentSyncErrors: string[];
   nodeModulesHealthy?: boolean | 'unknown';
   pluginRoot?: string;
+  /** The Recursa `learn` section. Absent means "not collected". */
+  learn?: LearnDoctorSection;
 }
 
 export interface StructuredDoctorReport extends DoctorReport {
@@ -170,7 +173,7 @@ export function readRecentLogErrors(logPath: string, limit = 5): string[] {
   }
 }
 
-export function collectDoctorSnapshot(): DoctorInputs {
+export async function collectDoctorSnapshot(): Promise<DoctorInputs> {
   const configDir = getSuperpowersDir();
   const archiveDir = getArchiveDir();
   const indexDir = getIndexDir();
@@ -225,7 +228,70 @@ export function collectDoctorSnapshot(): DoctorInputs {
     recentSyncErrors: readRecentLogErrors(syncErrorsLogPath, 5),
     nodeModulesHealthy,
     pluginRoot,
+    learn: await collectLearnDoctorSection(),
   };
+}
+
+/** A byte count as `12.3 KB` / `4.1 MB`, or `n/a`. */
+function formatBytes(bytes: number | null): string {
+  if (bytes === null) return 'n/a';
+  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / 1024).toFixed(1)} KB`;
+}
+
+/**
+ * The learn section's text.
+ *
+ * Empty when doctor was not given the section (a caller that cannot reach the
+ * learn modules), so the report shape stays the same either way.
+ */
+function learnTextLines(learn: LearnDoctorSection | undefined): string[] {
+  if (learn === undefined) return [];
+
+  const lines: string[] = ['Learn (Recursa):'];
+  lines.push(`  learned dir: ${learn.learnedDir} (${learn.present ? 'found' : 'absent'})`);
+  if (learn.present) {
+    lines.push(`  knowledge.db: ${formatBytes(learn.knowledgeDbSizeBytes)}`);
+    lines.push(`  learning.sqlite: ${formatBytes(learn.learningDbSizeBytes)}`);
+  }
+
+  const total = Object.values(learn.entryCounts).reduce(
+    (sum, statuses) =>
+      sum + Object.values(statuses as Record<string, number>).reduce((a, b) => a + b, 0),
+    0
+  );
+  lines.push(`  entries: ${total}`);
+  for (const kind of ['instruction', 'skill', 'reflection'] as const) {
+    const counts = learn.entryCounts[kind];
+    lines.push(
+      `    ${kind}: ${counts.active} active, ${counts.candidate} candidate, ${counts.retired} retired`
+    );
+  }
+
+  lines.push(`  candidates awaiting approval: ${learn.candidatesAwaitingApproval}`);
+  lines.push(
+    learn.latestRun === null
+      ? '  latest run: none'
+      : `  latest run: ${learn.latestRun.id} (${learn.latestRun.phase}, ${learn.latestRun.status})` +
+          ` · ${learn.latestRun.metrics}`
+  );
+
+  lines.push(`  unresolved sources: ${learn.unresolvedSources.length}`);
+  for (const entry of learn.unresolvedSources) {
+    lines.push(`    ${entry.id}: ${entry.sources} missing exchange id(s)`);
+  }
+
+  lines.push(
+    `  learned-skills: ${learn.exportTree.present ? 'found' : 'absent'} (${learn.exportTree.files} file(s), ${formatBytes(learn.exportTree.bytes)})`
+  );
+  lines.push(
+    `  better-sqlite3: ${learn.betterSqlite3Shared ? 'one copy' : 'SHARED MISMATCH'}` +
+      (learn.betterSqlite3TopLevel ? ` · ${learn.betterSqlite3TopLevel}` : ' · unresolved') +
+      (learn.betterSqlite3Shared
+        ? ''
+        : ` · memoryjs resolves ${learn.betterSqlite3FromMemoryjs ?? 'unresolved'}`)
+  );
+  return lines;
 }
 
 export function buildDoctorReport(inputs: DoctorInputs): StructuredDoctorReport {
@@ -252,6 +318,20 @@ export function buildDoctorReport(inputs: DoctorInputs): StructuredDoctorReport 
     issues.push(
       `Plugin node_modules is incomplete at ${inputs.pluginRoot}; run npm install in the plugin root.`
     );
+  }
+
+  const learn = inputs.learn;
+  if (learn !== undefined && learn.present) {
+    if (!learn.betterSqlite3Shared) {
+      warnings.push(
+        'memoryjs resolves a different better-sqlite3 copy than the top-level one; run npm install so the overrides pin collapses the duplicate.'
+      );
+    }
+    if (learn.unresolvedSources.length > 0) {
+      warnings.push(
+        `${learn.unresolvedSources.length} learned entr${learn.unresolvedSources.length === 1 ? 'y cites' : 'ies cite'} exchange id(s) the index no longer has; re-run \`learn tasks --check\` or retire it.`
+      );
+    }
   }
 
   const dbSize =
@@ -285,11 +365,17 @@ export function buildDoctorReport(inputs: DoctorInputs): StructuredDoctorReport 
     }`,
   ];
 
+  const learnLines = learnTextLines(learn);
+
   if (inputs.recentSyncErrors.length > 0) {
     lines.push('', 'Recent hook errors:');
     for (const err of inputs.recentSyncErrors) {
       lines.push(`- ${err}`);
     }
+  }
+
+  if (learnLines.length > 0) {
+    lines.push('', ...learnLines);
   }
 
   if (warnings.length > 0) {
@@ -327,6 +413,7 @@ export function buildDoctorReport(inputs: DoctorInputs): StructuredDoctorReport 
     warnings,
     issues,
   };
+  if (learn !== undefined) json.learn = learn;
 
   return {
     ok: issues.length === 0,

@@ -69,7 +69,7 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const report = buildDoctorReport(collectDoctorSnapshot());
+  const report = buildDoctorReport(await collectDoctorSnapshot());
   if (json) {
     process.stdout.write(JSON.stringify(report.json, null, 2) + '\n');
   } else {

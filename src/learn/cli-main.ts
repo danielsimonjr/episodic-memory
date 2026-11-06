@@ -16,6 +16,8 @@
  */
 
 import type Database from 'better-sqlite3';
+import path from 'path';
+import { getSuperpowersDir } from '../paths.js';
 import { LearnLockHeld, withLearnLock, type PidRegistry } from './learn-lock.js';
 import { learnConfig, learnEnabled, LEARN_OFF_MESSAGE } from './learn-config.js';
 import { generateTasks, checkTasks } from './tasks.js';
@@ -31,8 +33,17 @@ import {
   passRate,
   type LearningTask,
 } from './learning-db.js';
-import { createSnapshot } from './knowledge-db.js';
+import {
+  activate,
+  createSnapshot,
+  entryName,
+  getBySlug,
+  getEntry,
+} from './knowledge-db.js';
+import { exportSkills } from './export.js';
+import { writeLearnedBlocks } from './learned-block.js';
 import { latestRunId, buildReport, formatReport } from './report.js';
+import { isValidSlug, type KnowledgeEntry, type KnowledgeKind } from './types.js';
 import { BudgetExhausted, CallBudget, solveMany, type SolveOptions } from './solver.js';
 import { runLearn } from './learner.js';
 import { LEARN_USAGE } from './usage.js';
@@ -56,8 +67,17 @@ export interface LearnCliDeps {
 
 export { LEARN_USAGE };
 
-const STUB_COMMANDS = new Set(['approve', 'export', 'render']);
-const IMPLEMENTED = new Set(['tasks', 'solve', 'status', 'report', 'bootstrap', 'improve']);
+const STUB_COMMANDS = new Set(['render']);
+const IMPLEMENTED = new Set([
+  'tasks',
+  'solve',
+  'status',
+  'report',
+  'bootstrap',
+  'improve',
+  'approve',
+  'export',
+]);
 
 /** `--name value`, `--name=value`, or undefined when absent. A bare `--name` yields ''. */
 function optionValue(argv: string[], name: string): string | undefined {
@@ -287,6 +307,29 @@ async function commandSolve(dbs: LearnDbs, argv: string[], deps: LearnCliDeps): 
  * still have no verdict, which is the one outcome the precheck exists to
  * prevent (spec §7 rule 10a).
  */
+/**
+ * Refresh the exported skill tree after a run that can change the active set.
+ *
+ * The tree is derived output, so a failure here is a warning on stderr, never a
+ * failed run: the store already holds what the run learned.
+ */
+async function exportAfterRun(dbs: LearnDbs, deps: LearnCliDeps): Promise<void> {
+  try {
+    const result = await exportSkills(dbs);
+    for (const warning of result.warnings) deps.stderr(`episodic-memory learn: export: ${warning}\n`);
+    if (result.written.length > 0 || result.removed.length > 0) {
+      deps.stderr(
+        `episodic-memory learn: exported ${result.written.length} skill file(s), ` +
+          `removed ${result.removed.length}\n`
+      );
+    }
+  } catch (error) {
+    deps.stderr(
+      `episodic-memory learn: export failed: ${error instanceof Error ? error.message : String(error)}\n`
+    );
+  }
+}
+
 async function commandBootstrap(dbs: LearnDbs, argv: string[], deps: LearnCliDeps): Promise<number> {
   const config = learnConfig();
   const seed = optionNumber(argv, 'seed') ?? 1;
@@ -333,6 +376,7 @@ async function commandBootstrap(dbs: LearnDbs, argv: string[], deps: LearnCliDep
         `${result.pending.length} pending, ${result.rejected.length} rejected ` +
         `(${result.runId})\n`
     );
+    await exportAfterRun(dbs, deps);
     deps.stdout(formatReport(await buildReport(dbs, result.runId), false));
     return 0;
   });
@@ -402,6 +446,7 @@ async function commandImprove(dbs: LearnDbs, argv: string[], deps: LearnCliDeps)
         `${result.kept.length} kept, ${result.merges.length} merge(s), ` +
         `${result.rejected.length} rejected (${result.runId})\n`
     );
+    await exportAfterRun(dbs, deps);
     deps.stdout(formatReport(await buildReport(dbs, result.runId), false));
     return 0;
   });
@@ -453,6 +498,233 @@ async function commandStatus(dbs: LearnDbs, deps: LearnCliDeps): Promise<number>
 
   deps.stdout(lines.join('\n') + '\n');
   return 0;
+}
+
+/**
+ * Resolve `learn approve`'s argument.
+ *
+ * Two accepted forms: the entity name (`learned:<kind>:<project>:<slug>:v<n>`,
+ * what `learn status` and `learn report` print) and the short
+ * `kind/project/slug`, which resolves to the latest version through
+ * `getBySlug`. A project key can hold `-` and `.` but never `/`, so the short
+ * form splits on the first two slashes only.
+ */
+async function resolveEntry(
+  dbs: LearnDbs,
+  name: string
+): Promise<{ entry: KnowledgeEntry } | { error: string }> {
+  if (name.startsWith('learned:')) {
+    const entry = await getEntry(dbs.store, name);
+    return entry ? { entry } : { error: `no such entry: ${name}` };
+  }
+
+  const parts = name.split('/');
+  if (parts.length < 3) {
+    return { error: `not an entry name: ${name} (use learned:<kind>:<project>:<slug>:v<n> or kind/project/slug)` };
+  }
+  const [kind, project, ...rest] = parts;
+  const slug = rest.join('/');
+  if (kind !== 'instruction' && kind !== 'skill' && kind !== 'reflection') {
+    return { error: `not a knowledge kind: ${kind}` };
+  }
+  if (!isValidSlug(slug)) return { error: `not a valid slug: ${slug}` };
+
+  const entry = await getBySlug(dbs.store, kind as KnowledgeKind, project, slug);
+  return entry ? { entry } : { error: `no such entry: ${name}` };
+}
+
+/** Split into lines, keeping a trailing empty line out of the diff. */
+function splitLines(text: string): string[] {
+  const lines = text.split('\n');
+  if (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
+  return lines;
+}
+
+/**
+ * A unified diff of two texts, `---`/`+++` headers and one hunk.
+ *
+ * Deliberately small: the two sides are one entry body, so a full-file hunk is
+ * what a reviewer wants to read anyway, and an LCS over a handful of lines is
+ * enough to mark the changed ones.
+ */
+export function unifiedDiff(before: string, after: string, label: string): string {
+  const a = splitLines(before);
+  const b = splitLines(after);
+  const lcs: number[][] = Array.from({ length: a.length + 1 }, () =>
+    new Array<number>(b.length + 1).fill(0)
+  );
+  for (let i = a.length - 1; i >= 0; i -= 1) {
+    for (let j = b.length - 1; j >= 0; j -= 1) {
+      lcs[i][j] = a[i] === b[j] ? lcs[i + 1][j + 1] + 1 : Math.max(lcs[i + 1][j], lcs[i][j + 1]);
+    }
+  }
+
+  const body: string[] = [];
+  let i = 0;
+  let j = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) {
+      body.push(` ${a[i]}`);
+      i += 1;
+      j += 1;
+    } else if (lcs[i + 1][j] >= lcs[i][j + 1]) {
+      body.push(`-${a[i]}`);
+      i += 1;
+    } else {
+      body.push(`+${b[j]}`);
+      j += 1;
+    }
+  }
+  while (i < a.length) body.push(`-${a[i++]}`);
+  while (j < b.length) body.push(`+${b[j++]}`);
+
+  return [`--- ${label}`, `+++ ${label} (approved)`, ...body].join('\n');
+}
+
+/** The version this entry revises, or null for a first version. */
+async function supersededVersion(
+  dbs: LearnDbs,
+  entry: KnowledgeEntry
+): Promise<KnowledgeEntry | null> {
+  if (entry.version > 1) {
+    const previous = await getEntry(dbs.store, entryName(entry.kind, entry.project, entry.slug, entry.version - 1));
+    if (previous) return previous;
+  }
+  const active = await dbs.store.listByStatus(['active'], [entry.kind]);
+  return (
+    active
+      .filter(candidate => candidate.slug === entry.slug && candidate.project === entry.project)
+      .filter(candidate => candidate.id !== entry.id && candidate.supersededBy === null)
+      .sort((left, right) => right.version - left.version)[0] ?? null
+  );
+}
+
+/** Ask `y` on a TTY. Anything else — including a bare newline — declines. */
+async function confirmOnTty(question: string): Promise<boolean> {
+  const { createInterface } = await import('node:readline/promises');
+  const rl = createInterface({ input: process.stdin, output: process.stderr });
+  try {
+    const answer = await rl.question(question);
+    return answer.trim().toLowerCase() === 'y';
+  } finally {
+    rl.close();
+  }
+}
+
+/**
+ * `learn approve <name>`: the human half of spec §7 rule 7.
+ *
+ * Instructions stay `candidate` under the default approval mode precisely
+ * because they are loaded into every session, so this command is the review:
+ * it refuses an entry with no measurement or with a recorded regression, then
+ * prints the entry, that measurement and a unified diff against the version it
+ * revises *before* it activates anything.
+ */
+async function commandApprove(dbs: LearnDbs, argv: string[], deps: LearnCliDeps): Promise<number> {
+  const name = argv.find(arg => !arg.startsWith('-'));
+  if (!name) {
+    deps.stderr('episodic-memory learn: approve needs an entry name (kind/project/slug or learned:...)\n');
+    return 2;
+  }
+
+  const resolved = await resolveEntry(dbs, name);
+  if ('error' in resolved) {
+    deps.stderr(`episodic-memory learn: ${resolved.error}\n`);
+    return 1;
+  }
+  const { entry } = resolved;
+
+  if (entry.status === 'active') {
+    deps.stderr(`episodic-memory learn: ${entry.id} is already active\n`);
+    return 0;
+  }
+  // A clean validation record is why it was active once. Retirement is a
+  // later decision; approve must not undo it. Insert a new version instead.
+  if (entry.status === 'retired') {
+    deps.stderr(
+      `episodic-memory learn: ${entry.id} is retired; refusing to re-activate it ` +
+        '(approve a new version instead)\n'
+    );
+    return 1;
+  }
+  if (!entry.validation) {
+    deps.stderr(
+      `episodic-memory learn: ${entry.id} has no validation record; a candidate is approved ` +
+        'only after a run measured it\n'
+    );
+    return 1;
+  }
+  if (entry.validation.regressions.length > 0) {
+    deps.stderr(
+      `episodic-memory learn: ${entry.id} regressed task(s) ${entry.validation.regressions.join(', ')}; ` +
+        'refusing to approve\n'
+    );
+    return 1;
+  }
+
+  const previous = await supersededVersion(dbs, entry);
+  const lines: string[] = [];
+  lines.push(`${entry.id}`);
+  lines.push(`kind ${entry.kind} · project ${entry.project} · slug ${entry.slug} · v${entry.version}`);
+  lines.push(`status ${entry.status} · trust ${entry.trust} · confidence ${entry.confidence}`);
+  lines.push(`scope ${entry.scope}`);
+  lines.push(`description ${entry.description}`);
+  lines.push('');
+  lines.push('validation:');
+  lines.push(JSON.stringify(entry.validation, null, 2));
+  lines.push('');
+  lines.push(previous ? `diff against ${previous.id}:` : 'diff against (no earlier version):');
+  lines.push(
+    unifiedDiff(
+      previous?.body ?? '',
+      entry.body,
+      previous ? `${previous.id} body` : 'empty body'
+    )
+  );
+  lines.push('');
+  deps.stdout(lines.join('\n') + '\n');
+
+  if (!hasFlag(argv, 'yes')) {
+    if (!process.stdin.isTTY) {
+      deps.stderr(
+        'episodic-memory learn: not a TTY; pass --yes to approve without an interactive prompt\n'
+      );
+      return 1;
+    }
+    const ok = await confirmOnTty(`Approve ${entry.id} as ground truth? [y/N] `);
+    if (!ok) {
+      deps.stderr(`episodic-memory learn: ${entry.id} left as ${entry.status}\n`);
+      return 1;
+    }
+  }
+
+  await activate(dbs.store, entry.id, entry.validation, 'ground-truth');
+  await writeLearnedBlocks(dbs.store, dbs.learning, learnConfig().maxChars);
+  await exportAfterRun(dbs, deps);
+
+  deps.stderr(`episodic-memory learn: approved ${entry.id} (trust ground-truth)\n`);
+  return 0;
+}
+
+/**
+ * `learn export [--to DIR]`: write the active skills out.
+ *
+ * The default root is replaced wholesale (it is generated output); `--to`
+ * copies into a project's own directory and removes nothing there, because the
+ * plugin must never delete a file it did not write (spec §5.4).
+ */
+async function commandExport(dbs: LearnDbs, argv: string[], deps: LearnCliDeps): Promise<number> {
+  const to = optionValue(argv, 'to');
+  const result = await exportSkills(dbs, to ? to : undefined, to ? { prune: false } : undefined);
+
+  for (const warning of result.warnings) deps.stderr(`episodic-memory learn: export: ${warning}\n`);
+  const where = to ?? path.join(getSuperpowersDir(), 'learned-skills');
+  deps.stdout(
+    `exported ${result.written.length} skill(s) to ${where}` +
+      (result.removed.length > 0 ? `, removed ${result.removed.length} stale director${result.removed.length === 1 ? 'y' : 'ies'}` : '') +
+      '\n'
+  );
+  return result.written.length > 0 || result.warnings.length === 0 ? 0 : 1;
 }
 
 async function commandReport(dbs: LearnDbs, argv: string[], deps: LearnCliDeps): Promise<number> {
@@ -517,6 +789,10 @@ export async function runLearnCli(argv: string[], deps: LearnCliDeps): Promise<n
         return await commandImprove(dbs, argv.slice(1), deps);
       case 'status':
         return await commandStatus(dbs, deps);
+      case 'approve':
+        return await commandApprove(dbs, argv.slice(1), deps);
+      case 'export':
+        return await commandExport(dbs, argv.slice(1), deps);
       default:
         return await commandReport(dbs, argv.slice(1), deps);
     }

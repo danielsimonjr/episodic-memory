@@ -5,7 +5,7 @@
 import { resolveArchiveJsonlPath, readJsonlLines, } from './archive-path.js';
 import { maybeRedactSecrets } from './redact.js';
 import { assertMcpAuthorized } from './mcp-auth.js';
-import { DigestInputSchema, SearchInputSchema, ShowConversationInputSchema, handleMcpError, } from './mcp-schemas.js';
+import { DigestInputSchema, SearchInputSchema, ShowConversationInputSchema, SkillsInputSchema, handleMcpError, } from './mcp-schemas.js';
 export async function handleToolCall(name, args) {
     try {
         assertMcpAuthorized(args);
@@ -82,6 +82,13 @@ export async function handleToolCall(name, args) {
             const params = DigestInputSchema.parse(args);
             const { digestToolText } = await import('./digest-tool.js');
             return { content: [{ type: 'text', text: digestToolText(params) }] };
+        }
+        if (name === 'skills') {
+            const params = SkillsInputSchema.parse(args);
+            // Lazy on purpose: `skills-tool.js` is the memoryjs half of the tool, and a
+            // server that never gets a `skills` call must never pay to load it.
+            const { skillsToolText } = await import('./learn/skills-tool.js');
+            return { content: [{ type: 'text', text: await skillsToolText(params) }] };
         }
         throw new Error(`Unknown tool: ${name}`);
     }

@@ -40,7 +40,9 @@ describe('Codex plugin packaging', () => {
             'PERSONAL_SUPERPOWERS_DIR',
             'XDG_CONFIG_HOME',
             'EPISODIC_MEMORY_DB_PATH',
-            'CONVERSATION_SEARCH_EXCLUDE_PROJECTS'
+            'CONVERSATION_SEARCH_EXCLUDE_PROJECTS',
+            'EPISODIC_MEMORY_LEARN',
+            'EPISODIC_MEMORY_LEARN_MAX_CHARS'
           ]
         }
       }

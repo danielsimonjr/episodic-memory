@@ -1,6 +1,6 @@
 # Episodic Memory MCP Tools Reference
 
-The episodic-memory plugin exposes two MCP tools for searching and displaying past Claude Code and Codex conversations.
+The episodic-memory plugin exposes four MCP tools for searching and displaying past Claude Code and Codex conversations, and for loading the skills it has learned from them.
 
 ## search
 
@@ -119,9 +119,58 @@ Markdown-formatted conversation with:
 - Content (including tool uses and results)
 - Line numbers for reference
 
+## skills
+
+List or load the skills episodic-memory has learned from past sessions in this project.
+
+**Tool name:** `mcp__plugin_episodic-memory_episodic-memory__skills`
+
+A skill is a learned hint about where to look: a short description plus a body naming the conversations, terms, dates or search modes that answered a similar question before. When a session opens with a learned-hints block in its context, load the skill it names before searching.
+
+**Read-only.** The tool never writes, and with `EPISODIC_MEMORY_LEARN` unset it answers that learning is off without opening anything.
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `get` | `string` | No | Slug of one skill, as listed. Returns its frontmatter and body |
+| `query` | `string` | No | Search the learned skills instead of listing them |
+| `project` | `string` | No | Project key (default: the key for the current working directory) |
+| `limit` | `number` | No | Maximum skills listed, 1-50 (default: 10) |
+
+### Usage
+
+**List the skills for this project:**
+
+```typescript
+{}
+```
+
+Each line is `slug: description (confidence, vN)`. Pass a slug back as `get`.
+
+**Search them:**
+
+```typescript
+{
+  query: "flaky integration test"
+}
+```
+
+**Load one:**
+
+```typescript
+{
+  get: "flaky-integration-test"
+}
+```
+
+### Response Format
+
+`get` returns YAML frontmatter (`name`, `description`, `scope`, `sources`, `confidence`, `version`) and then the body as markdown. Every field is screened for injected instructions and redacted for secrets before it is returned, so a skill whose text fails the screen is withheld rather than printed.
+
 ## Error Handling
 
-Both tools return errors as text content with `isError: true`:
+All tools return errors as text content with `isError: true`:
 - Invalid parameters (validation errors)
 - File not found
 - Date parsing errors

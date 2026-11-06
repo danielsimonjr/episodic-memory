@@ -26,16 +26,20 @@ interface JsonRpcMessage {
 }
 
 function sendLines(
-  lines: string[]
+  lines: string[],
+  envOverrides: Record<string, string | undefined> = {}
 ): Promise<{ stdout: string; stderr: string; exitCode: number | null }> {
   return new Promise((resolve, reject) => {
+    const env: NodeJS.ProcessEnv = {
+      ...process.env,
+      EPISODIC_MEMORY_CONFIG_DIR: process.env.EPISODIC_MEMORY_CONFIG_DIR ?? '/tmp/em-mcp-probe-config',
+      ...envOverrides,
+    };
+    for (const key of Object.keys(env)) if (env[key] === undefined && key in envOverrides) delete env[key];
     const child = spawn(SERVER_CMD[0], SERVER_CMD.slice(1), {
       cwd: REPO_ROOT,
       stdio: ['pipe', 'pipe', 'pipe'],
-      env: {
-        ...process.env,
-        EPISODIC_MEMORY_CONFIG_DIR: process.env.EPISODIC_MEMORY_CONFIG_DIR ?? '/tmp/em-mcp-probe-config',
-      },
+      env,
     });
 
     let stdout = '';
@@ -93,7 +97,7 @@ describe('MCP protocol compliance', () => {
 
     const tools = messages.find((m) => m.id === 2);
     const toolNames = (tools?.result as { tools: Array<{ name: string }> })?.tools.map((t) => t.name);
-    expect(toolNames).toEqual(['search', 'read', 'digest']);
+    expect(toolNames).toEqual(['search', 'read', 'digest', 'skills']);
   });
 
   it('answers server/discover for MCP 2026-07-28 with supported versions', async () => {
@@ -145,6 +149,94 @@ describe('MCP protocol compliance', () => {
     const messages = parseStdoutLines(stdout);
     const tools = messages.find((m) => m.id === 2);
     const toolNames = (tools?.result as { tools: Array<{ name: string }> })?.tools.map((t) => t.name);
-    expect(toolNames).toEqual(['search', 'read', 'digest']);
+    expect(toolNames).toEqual(['search', 'read', 'digest', 'skills']);
+  });
+
+  /**
+   * The spec's fast-path guarantee (§6.3, §7 rule 1): a session that never calls
+   * `skills` never loads memoryjs. The bundle marks `./learn/skills-tool.js`
+   * external so it stays a real runtime import, and this loader probe fails the
+   * process if memoryjs is ever resolved. ListTools and a search must still work;
+   * the `skills` call is then the one that trips the probe — which is the proof
+   * that the load is lazy rather than merely late.
+   */
+  it('does not load memoryjs until the skills tool runs', async () => {
+    const probe = 'file://' + join(REPO_ROOT, 'test/helpers/forbid-modules.mjs');
+    const { stdout } = await sendLines(
+      [
+        JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'initialize',
+          params: {
+            protocolVersion: '2025-11-25',
+            capabilities: {},
+            clientInfo: { name: 'probe', version: '0.0' },
+          },
+        }),
+        JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized', params: {} }),
+        JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} }),
+        JSON.stringify({
+          jsonrpc: '2.0',
+          id: 3,
+          method: 'tools/call',
+          params: { name: 'search', arguments: { query: 'auth flow', mode: 'text' } },
+        }),
+        JSON.stringify({
+          jsonrpc: '2.0',
+          id: 4,
+          method: 'tools/call',
+          params: { name: 'skills', arguments: {} },
+        }),
+      ],
+      {
+        EPISODIC_MEMORY_LEARN: undefined,
+        FORBID_MODULES: '@danielsimonjr/memoryjs',
+        NODE_OPTIONS: `--import=${probe}`,
+      }
+    );
+
+    const messages = parseStdoutLines(stdout);
+    // Handshake and ListTools never touch the store.
+    expect(messages.find((m) => m.id === 1)?.error).toBeUndefined();
+    const tools = messages.find((m) => m.id === 2);
+    const toolNames = (tools?.result as { tools: Array<{ name: string }> })?.tools.map((t) => t.name);
+    expect(toolNames).toEqual(['search', 'read', 'digest', 'skills']);
+
+    // A search must succeed under the probe: memoryjs is not on that path.
+    const search = messages.find((m) => m.id === 3);
+    const searchText = (search?.result as { content?: Array<{ text: string }> })?.content?.[0]?.text ?? '';
+    expect(searchText).not.toMatch(/forbidden module/);
+
+    // The skills call is the first thing that reaches memoryjs, and the probe
+    // catches it. The error is the assertion.
+    const skills = messages.find((m) => m.id === 4);
+    const skillsText = (skills?.result as { content?: Array<{ text: string }> })?.content?.[0]?.text ?? '';
+    expect(skillsText).toMatch(/forbidden module loaded: @danielsimonjr\/memoryjs/);
+  });
+
+  it('keeps stdout to JSON-RPC only with the skills tool registered', async () => {
+    const { stdout } = await sendLines([
+      JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'initialize',
+        params: {
+          protocolVersion: '2025-11-25',
+          capabilities: {},
+          clientInfo: { name: 'probe', version: '0.0' },
+        },
+      }),
+      JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized', params: {} }),
+      JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} }),
+    ]);
+
+    // Every non-empty stdout line parses as a JSON-RPC message.
+    const lines = stdout.split('\n').filter((line) => line.trim());
+    expect(lines.length).toBeGreaterThan(0);
+    for (const line of lines) {
+      const parsed = JSON.parse(line) as JsonRpcMessage;
+      expect(parsed.jsonrpc).toBe('2.0');
+    }
   });
 });

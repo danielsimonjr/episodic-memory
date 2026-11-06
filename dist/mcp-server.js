@@ -23117,6 +23117,13 @@ var DigestInputSchema = external_exports.object({
   handoff: external_exports.string().min(1).max(2e3).optional().describe("Store a one-line note for the next session (capped at 500 characters, redacted)"),
   auth_token: external_exports.string().min(1).optional().describe("Required when EPISODIC_MEMORY_MCP_TOKEN is set")
 }).strict();
+var SkillsInputSchema = external_exports.object({
+  get: external_exports.string().min(1).optional().describe("Slug of one learned skill, as listed. Returns its frontmatter and body."),
+  query: external_exports.string().min(1).optional().describe("Search the learned skills instead of listing them"),
+  project: external_exports.string().min(1).optional().describe("Project key. Defaults to the key for the current working directory."),
+  limit: external_exports.number().int().min(1).max(50).optional().describe("Max skills listed (default 10)"),
+  auth_token: external_exports.string().min(1).optional().describe("Required when EPISODIC_MEMORY_MCP_TOKEN is set")
+}).strict();
 function handleMcpError(error62) {
   if (error62 instanceof Error) {
     return `Error: ${error62.message}`;
@@ -23219,6 +23226,11 @@ async function handleToolCall(name, args) {
       const { digestToolText: digestToolText2 } = await Promise.resolve().then(() => (init_digest_tool(), digest_tool_exports));
       return { content: [{ type: "text", text: digestToolText2(params) }] };
     }
+    if (name === "skills") {
+      const params = SkillsInputSchema.parse(args);
+      const { skillsToolText } = await import("./learn/skills-tool.js");
+      return { content: [{ type: "text", text: await skillsToolText(params) }] };
+    }
     throw new Error(`Unknown tool: ${name}`);
   } catch (error62) {
     return {
@@ -23291,6 +23303,27 @@ function buildServer() {
     },
     async (args) => {
       const result = await handleToolCall("digest", args);
+      return {
+        content: result.content,
+        ...result.isError ? { isError: true } : {}
+      };
+    }
+  );
+  server.registerTool(
+    "skills",
+    {
+      title: "Learned Skills",
+      description: `Lists the skills the plugin has learned from past sessions in this project, or loads one. Skills are learned hints about where to look: call this before searching when a learned-hints block in your context names one, pass query to search them, and pass get with a slug to load its instructions. Read-only.`,
+      inputSchema: SkillsInputSchema,
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false
+      }
+    },
+    async (args) => {
+      const result = await handleToolCall("skills", args);
       return {
         content: result.content,
         ...result.isError ? { isError: true } : {}

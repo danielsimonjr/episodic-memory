@@ -147,14 +147,31 @@ Logged for `later.md`.
 ## The eval-driven approach
 
 None of the above improvements should ship without **measured impact**
-on a real query set. The eval harness from
-[focus-areas/embeddings.md § Phase 1](embeddings.md#phase-1-eval-harness-prerequisite-for-everything-else)
-serves search-quality experiments too.
+on a real query set.
 
-Suggested experiment order (each takes a few days, runs against the
-eval set):
+**Status (2026-11-06): the harness exists.** The Recursa feature
+(`EPISODIC_MEMORY_LEARN=1`, `episodic-memory learn`) turned the archive into a
+graded benchmark: `learn tasks` writes `locate` / `recall` / `when` / `multi`
+questions from deterministically sampled exchanges at three tiers, stratified
+60/40 into a `train` split and a held-out `test` split; `learn solve` grades a
+solver's answer against the exchange it was drawn from and the session's date
+range; `learn report` prints the pass rate per split and tier, turns and USD per
+task, before and after. That is the "≥50 labeled queries, recall@k against real
+addresses" line item from
+[focus-areas/embeddings.md § Phase 1](embeddings.md#phase-1-eval-harness-prerequisite-for-everything-else),
+built from the archive rather than from a hand-written query file.
 
-1. **Baseline** — current code, current model
+What it does **not** give you yet: user-intent labels. The tasks ask "which
+conversation holds this fact", which is close to but not the same as "find the
+conversation where I…". Before a rank-fusion or time-decay experiment is judged
+on it, add a set of real recall queries and score them alongside the generated
+tasks.
+
+Suggested experiment order (each runs against that eval set):
+
+1. **Baseline** — current code, current model: `learn tasks`, then
+   `learn solve --split train` and `learn solve --split test` for the two
+   numbers every later change is compared against
 2. **+ Summary visibility** — should be +3-5 points recall@5
 3. **+ FTS5 + RRF fusion** — should be +2-5 points recall@5 on
    keyword-shaped queries; might hurt semantic-shaped ones

@@ -29,10 +29,10 @@
 - **Summary-aware ranking** (upstream #74) — when a conversation has a summary, include it in the search result body. Could also weight scores using summary-level embeddings.
 - **Multi-concept aggregation tuning** — `searchMultipleConcepts` exists but the dedup + score-merge logic is heuristic. Try BM25-style reciprocal rank fusion; A/B against current behavior on a held-out query set.
 - **LEANN experiment** (upstream #46) — alternative to sqlite-vec for the vector path. Trade-offs: better recall, lower disk footprint, but adds a non-trivial dep. Feasibility study before commitment.
-- **Eval harness** — `tests/search.test.ts` covers correctness; we need a quality harness measuring recall@k and MRR against a labeled query set. The labeled set comes from the user's own "find that conversation where I..." queries.
+- **Eval harness** — shipped 2026-11-06 with Recursa: `learn tasks` / `learn solve` / `learn report` measure pass rate per split and tier against real archive addresses, with a held-out 40% `test` split. What is still missing is user-intent labels: the generated tasks ask "which conversation holds this fact", not "find the conversation where I…". Add ≥50 real recall queries on top of the same harness.
 
 **Definition of "done":**
-- Eval harness lands with ≥50 labeled queries
+- Eval harness lands with ≥50 labeled queries — **half done**: the graded harness exists (`learn`, archive-graded, held-out split); the ≥50 user-intent queries on top of it do not
 - One quality improvement (summary visibility OR rank-fusion) ships with measured improvement on the eval set
 - LEANN experiment produces a written go/no-go recommendation
 

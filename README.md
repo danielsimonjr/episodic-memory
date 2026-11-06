@@ -141,6 +141,10 @@ episodic-memory show --format html conversation.jsonl > output.html
 
 # View statistics
 episodic-memory stats
+
+# Self-improving memory (off unless EPISODIC_MEMORY_LEARN=1)
+episodic-memory learn status
+episodic-memory learn --help
 ```
 
 ### Legacy Commands
@@ -256,6 +260,154 @@ Settings:
 The `digest` MCP tool shows the digest, searches it (`query`), turns a `[#id]` mark into an archive path and
 line range for `read` (`expand`), and stores a one-line note for the next session (`handoff`).
 
+## Self-improving memory (Recursa)
+
+An optional layer that lets the archive teach the agent how to search it. It is off by default.
+
+### What it does
+
+Given your own conversations as the only source material, episodic-memory can:
+
+1. **Write itself practice tasks.** Source exchanges are sampled deterministically from a seed; a text
+   model turns each into a `locate`, `recall`, `when` and `multi` question at three difficulty tiers,
+   with the answer key held as an archive address (path plus line range) and the session's date range.
+   Prompt text is redacted and screened; the answer key never lands in a stored prompt.
+2. **Grade its own answers, deterministically.** `locate` scores 1.0 on an overlapping address and 0.5
+   for the right session; `when` needs the right project and a date inside the session's range; `multi`
+   needs every address; `recall` needs the right location *and* a judge score. 60% of tasks are `train`,
+   40% are held out as `test`, stratified per project and tier, and no learner prompt can read the
+   `test` split. The *signal* set — the only tasks that decide whether an edit is kept — is `locate`,
+   `when` and `multi` at tiers 2 and 3; tier 1 and `recall` are reported but never gate an edit.
+3. **Learn from its failures.** A leaf learner reads the graded failed attempts (addresses, not whole
+   transcripts), proposes at most a few edits through a `propose_entry` tool, and validates each one by
+   re-solving the tasks it targets plus a seeded sample of the tasks that already passed. An edit is kept
+   only when at least one targeted task now passes and nothing sampled regresses. Failures that span
+   several projects, or more than 12 tasks, are split into child runs first; duplicates and conflicting
+   instructions are merged afterwards; a held-out `test` evaluation runs once at the end.
+4. **Bootstraps a cold start.** `learn bootstrap` maps each project with at least 20 indexed exchanges
+   — reading the digest and sampling across its whole time span — and proposes a navigation skill and
+   exploration notes, then merges them into one global instruction. They are measured before anything is
+   kept: the signal train set is solved twice, with an empty snapshot and with the candidates, and a
+   candidate is kept only when the pass rate does not fall while mean turns or USD per task fall by at
+   least 10%.
+
+What it learns lands in three kinds of entry — an **instruction** (always loaded), a **skill** (loaded by
+choice through the `skills` tool) and a **reflection** (a note for later learners) — and every one of them
+is grounded in cited exchanges, redacted, and screened by an injection filter before it is stored and again
+on the way out.
+
+### Where it lives
+
+Learned knowledge is durable state next to the index, not inside it:
+
+```
+<configDir>/
+  conversation-index/   db.sqlite        disposable, rebuildable from the archive
+  learned/              knowledge.db     learned entries
+                        learning.sqlite  runs, tasks, attempts, rendered hint block
+  learned-skills/                        generated SKILL.md export tree
+```
+
+`learned/` is a **sibling** of `conversation-index/`, so `episodic-memory index --rebuild`, an index
+cleanup, and the `rm -rf conversation-index/` reset recipe cannot reach learned knowledge or the learning
+trace. Delete `learned/` only deliberately. `learned-skills/` is generated output and is rewritten by every
+export.
+
+At session start the hook appends a fenced, size-capped block of learned hints to the digest — but only
+when `EPISODIC_MEMORY_LEARN=1` and `learned/learning.sqlite` already exists. With the flag off, hook
+output is byte-identical to the digest-only output.
+
+### Turning it on
+
+```bash
+export EPISODIC_MEMORY_LEARN=1
+episodic-memory learn tasks              # build the practice set from the archive
+episodic-memory learn solve --split train   # baseline: how well does it search today?
+episodic-memory learn bootstrap          # cold-start skills + a global instruction
+episodic-memory learn improve            # the recursive learner, ending in a held-out test
+episodic-memory learn report             # what changed, what it cost, what it refused
+```
+
+Both `EPISODIC_MEMORY_LEARN` and `EPISODIC_MEMORY_LEARN_MAX_CHARS` are whitelisted in the plugin's
+`.mcp.json`, so the MCP server sees the flag and the block budget.
+
+### The `learn` commands
+
+Every command needs `EPISODIC_MEMORY_LEARN=1`; without it each exits 0 and does nothing. Progress goes to
+stderr (and to `logs/learn.log`), the report goes to stdout, so `learn report > report.txt` produces a
+readable file. One run at a time is enforced by `.learn.lock` in the index directory, and a second
+instance names the holder's PID instead of failing blankly.
+
+| Command | What it does |
+|---|---|
+| `learn tasks [--per-project N] [--seed S] [--check]` | Generate self-practice tasks from the archive. `--check` marks tasks whose source address no longer resolves as `stale` |
+| `learn solve [--split train\|test] [--limit N] [--snapshot ID]` | Solve stored tasks and record graded attempts. Default split: `train` |
+| `learn bootstrap [--per-project N] [--seed S]` | Map each eligible project, propose navigation skills and exploration notes, merge them into one global instruction, then measure them before keeping anything |
+| `learn improve [--rounds N] [--project P] [--dry-run]` | The recursive learner: solve, split failures into leaves, learn and validate per leaf, merge duplicates, reflect, then evaluate the held-out split once. `--dry-run` solves and reports without running any learner |
+| `learn status` | The flag, entries by kind and status, candidates awaiting approval, and the latest run |
+| `learn report [--run ID] [--json]` | Pass rates before and after, kept and pending entries, rejections with reasons, budget, child runs and reflections. Defaults to the latest run |
+| `learn approve <name> [--yes]` | Activate a candidate as ground truth after showing the entry, its validation record and a diff against the version it revises |
+| `learn export [--to DIR]` | Write every active skill as `<project>/<slug>/SKILL.md` under `learned-skills/`, replacing that tree. `--to DIR` copies into `DIR` instead and removes nothing there |
+
+### Settings
+
+Every setting is read at call time and ignored when absent, not a positive number, or not in an enum.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `EPISODIC_MEMORY_LEARN` | unset (off) | Set to `1` to let the feature read learned state, register a working `skills` tool and run `learn` commands |
+| `EPISODIC_MEMORY_LEARN_MODEL` | `sonnet` | Model for every learning call: solver, learner, judge and task generation. Falls back to `EPISODIC_MEMORY_API_MODEL_FALLBACK` (default `sonnet`) on error; the digest and summary models are unaffected |
+| `EPISODIC_MEMORY_LEARN_APPROVE` | `instructions` | Approval mode: `instructions` (instructions need `learn approve`; skills activate on validation), `all` (both need approval), `none` (both activate on validation) |
+| `EPISODIC_MEMORY_LEARN_MAX_CALLS` | `200` | Subprocess calls per run. The baseline is computed first; a run that cannot afford it refuses to start, and a run that spends past it stops with status `stopped` |
+| `EPISODIC_MEMORY_LEARN_MAX_USD` | `5` | USD cap recorded on each run and printed by `learn report` against what was spent. The SDK-level cap per subprocess is fixed at $1 |
+| `EPISODIC_MEMORY_LEARN_MAX_MINUTES` | `60` | Wall-clock a real run is expected to fit. Not a hard stop: it is the bound the lock's 2-hour stale timeout is reasoned from |
+| `EPISODIC_MEMORY_LEARN_MAX_TASKS` | `120` | Tasks kept when generating a practice set |
+| `EPISODIC_MEMORY_LEARN_CONCURRENCY` | `3` | One global subprocess semaphore shared by every level, so depth never multiplies processes |
+| `EPISODIC_MEMORY_LEARN_ROUNDS` | `3` | Learner rounds per leaf before the loop gives up |
+| `EPISODIC_MEMORY_LEARN_MIN_SAVING` | `10` | Percent by which mean turns or USD per task must fall for a bootstrap candidate to be kept |
+| `EPISODIC_MEMORY_LEARN_MIN_GROUNDING` | `3` | Distinct content tokens (4+ characters) a cited line must share with one of its cited exchanges |
+| `EPISODIC_MEMORY_LEARN_SOLVER_MAX_TURNS` | `12` | Agent turns per solver subprocess |
+| `EPISODIC_MEMORY_LEARN_LEARNER_MAX_TURNS` | `30` | Agent turns per learner subprocess |
+| `EPISODIC_MEMORY_LEARN_MAX_CHARS` | `2500` | Size budget of the injected learned-hints block |
+| `EPISODIC_MEMORY_LEARN_LEAF_MAX` | `12` | Failed tasks in one leaf before the learner splits by project or failure category |
+| `EPISODIC_MEMORY_LEARN_EDITS_PER_ROUND` | `3` | Entries a leaf may propose in one round |
+| `EPISODIC_MEMORY_LEARN_VALIDATE_SAMPLE` | `5` | Already-passing tasks re-solved per edit to catch regressions |
+
+### Approval
+
+Under the default `instructions` mode, a skill activates once its validation record shows a gain, while an
+instruction stays a `candidate` because instructions are loaded into every session. A human promotes it:
+
+```bash
+episodic-memory learn status             # candidates awaiting approval
+episodic-memory learn approve kind/project/slug
+```
+
+`learn approve` refuses an entry with no measurement or with a recorded regression, then prints the entry,
+its validation record and a unified diff against the version it revises, and asks for `y` on a TTY
+(`--yes` for non-interactive use). `EPISODIC_MEMORY_LEARN_APPROVE=all` holds skills back too;
+`none` activates both without review.
+
+### Cost expectations
+
+Learning is the expensive part of episodic-memory: each solved task, each validation and each merge check
+is one Agent SDK subprocess, and each one spends its own tokens. A realistic run is:
+
+- `learn tasks` — one text call per sampled source exchange (`--per-project`, default 8), and each call
+  can yield up to 12 tasks (four kinds at three tiers). Far cheaper than the solving that follows.
+- `learn solve` — one call per task solved, and the baseline precheck means a run must be able to afford
+  at least one pass over the signal train set before it starts.
+- `learn bootstrap` — one bootstrapper per eligible project, then two full signal-train solves, then one
+  merge and one reflection call.
+- `learn improve` — a signal-train solve, then per leaf up to `ROUNDS × (diagnose + propose + validate)`
+  calls, then merges, then one held-out `test` evaluation.
+
+`EPISODIC_MEMORY_LEARN_MAX_CALLS` bounds the total; a run that hits it stops with status `stopped` and
+keeps everything it already validated. `learn report` prints calls and USD spent against the caps, the pass
+rate on both splits before and after, and every rejected proposal with the gate that rejected it. Nothing
+here runs from a hook, so no session start spends money. `learn` also defers entirely while the shared GPU
+is reserved and when the summarizer reentrancy guard is set.
+
 ## Commands
 
 ### `episodic-memory sync`
@@ -351,7 +503,7 @@ open output.html
 
 - **Core package** - TypeScript library for indexing and searching conversations
 - **CLI tools** - Unified command-line interface for manual use
-- **MCP Server** - Model Context Protocol server exposing search and conversation tools
+- **MCP Server** - Model Context Protocol server exposing search, read, digest and skills tools
 - **Claude Code plugin** - Integration with Claude Code (auto-indexing, MCP tools, hooks)
 - **Codex plugin** - Integration with Codex (manifest, MCP config, hooks, skills)
 
@@ -431,6 +583,18 @@ Display a full conversation in readable markdown format.
 **Parameters:**
 - `path` (string): Absolute path to the JSONL conversation file
 
+#### `digest`
+
+Show the session digest, search it (`query`), expand a `[#id]` mark into an archive path and line range
+(`expand`), or store a note for the next session (`handoff`). Requires `EPISODIC_MEMORY_DIGEST=1`. See
+[Session Digest](#session-digest).
+
+#### `skills`
+
+List, search (`query`) or load (`get`) the skills episodic-memory learned from this project's
+conversations. Read-only, and it answers that learning is off (opening nothing) unless
+`EPISODIC_MEMORY_LEARN=1`. See [Self-improving memory](#self-improving-memory-recursa).
+
 ### Using the MCP Server Directly
 
 The MCP server can also be used outside of Claude Code with any MCP-compatible client:
@@ -443,7 +607,7 @@ episodic-memory-mcp-server
 ## Development
 
 Bun is the package manager and script driver. Node remains the production runtime
-(CLI / MCP / hooks). Requires [Bun](https://bun.sh) 1.4+ and Node 20+.
+(CLI / MCP / hooks). Requires [Bun](https://bun.sh) 1.4+ and Node 22.12+.
 
 ```bash
 # Install dependencies

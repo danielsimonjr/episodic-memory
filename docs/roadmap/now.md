@@ -11,6 +11,30 @@ section after the next cut.
 
 ## Recently shipped (last 30 days, fork-only)
 
+### 📦 Self-improving memory (Recursa) — archive-graded eval harness + learner
+**Shipped:** 2026-11-06
+
+The archive can now grade itself. `learn tasks` builds `locate` / `recall` / `when` / `multi` questions
+from deterministically sampled exchanges at three tiers, stratifies them 60/40 into `train` and a held-out
+`test` split, and stores the answer key as an archive address plus a session date range. `learn solve`
+grades answers against that address deterministically; `learn report` prints pass rate per split and tier
+before and after, calls and USD spent, kept entries, and every rejection with its gate. Everything is off
+behind `EPISODIC_MEMORY_LEARN=1`.
+
+This is the eval harness [Theme 2 of `next.md`](../next.md#theme-2-search-quality-experiments) asked for,
+and the first half of its definition of done: it measures search quality against real archive addresses
+rather than a hand-labeled query file. What it does not yet give Theme 2 is *user intent* labels — the
+tasks ask "which conversation holds this fact", not "find the conversation where I…". Labeling ≥50 real
+recall queries on top of this harness is the remaining work.
+
+Also shipped in the same series: the `skills` MCP tool, the learned-hints block injected at session start,
+bootstrapping, a leaf learner with validated edits, a recursive learner with split/merge/reflection and a
+held-out final evaluation, `learn approve` with a diff, skill export, and a `doctor` section.
+
+**Left for the owner:** the dual-machine plugin-cache install check, and a live-archive smoke run
+(`learn tasks` → `solve` → `bootstrap` → `improve` → `report` → `approve`) to decide whether to turn the
+flag on by default on this machine.
+
 ### 📦 Plugin install hardening for Windows clean machines
 **Shipped:** 2026-05-18 (commit `443db0e`)
 
@@ -114,6 +138,7 @@ would dramatically improve LLM recall behavior.
 
 | Item | Status | Notes |
 |---|---|---|
+| Self-improving memory (Recursa) | 📦 shipped | flag off; owner smoke + install check pending |
 | Plugin install hardening | 📦 shipped | `443db0e`, upstream PR pending |
 | Housekeeping audit (4 fixes) | 📦 shipped | `6cadc20`, upstream PR pending |
 | Upstream sync (post-merges) | 📋 queued | Depends on obra |

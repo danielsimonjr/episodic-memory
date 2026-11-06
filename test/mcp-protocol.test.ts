@@ -154,13 +154,13 @@ describe('MCP protocol compliance', () => {
 
   /**
    * The spec's fast-path guarantee (§6.3, §7 rule 1): a session that never calls
-   * `skills` never loads memoryjs. The bundle marks `./learn/skills-tool.js`
-   * external so it stays a real runtime import, and this loader probe fails the
-   * process if memoryjs is ever resolved. ListTools and a search must still work;
-   * the `skills` call is then the one that trips the probe — which is the proof
-   * that the load is lazy rather than merely late.
+   * `skills` never opens the knowledge store. The bundle marks
+   * `./learn/skills-tool.js` external so it stays a real runtime import, and this
+   * loader probe fails the process if that module is ever resolved. ListTools and
+   * a search must still work; the `skills` call is then the one that trips the
+   * probe — which is the proof that the load is lazy rather than merely late.
    */
-  it('does not load memoryjs until the skills tool runs', async () => {
+  it('does not load skills-tool until the skills tool runs', async () => {
     const probe = 'file://' + join(REPO_ROOT, 'test/helpers/forbid-modules.mjs');
     const { stdout } = await sendLines(
       [
@@ -191,7 +191,7 @@ describe('MCP protocol compliance', () => {
       ],
       {
         EPISODIC_MEMORY_LEARN: undefined,
-        FORBID_MODULES: '@danielsimonjr/memoryjs',
+        FORBID_MODULES: './learn/skills-tool.js',
         NODE_OPTIONS: `--import=${probe}`,
       }
     );
@@ -203,20 +203,20 @@ describe('MCP protocol compliance', () => {
     const toolNames = (tools?.result as { tools: Array<{ name: string }> })?.tools.map((t) => t.name);
     expect(toolNames).toEqual(['search', 'read', 'digest', 'skills']);
 
-    // A search must succeed under the probe: memoryjs is not on that path.
+    // A search must succeed under the probe: skills-tool is not on that path.
     const search = messages.find((m) => m.id === 3);
     const searchText = (search?.result as { content?: Array<{ text: string }> })?.content?.[0]?.text ?? '';
     expect(searchText).not.toMatch(/forbidden module/);
 
-    // Flag-off `skills` answers without importing skills-tool, so memoryjs stays
-    // unloaded. The probe would have failed the call if the import ran.
+    // Flag-off `skills` answers without importing skills-tool, so the store stays
+    // unopened. The probe would have failed the call if the import ran.
     const skills = messages.find((m) => m.id === 4);
     const skillsText = (skills?.result as { content?: Array<{ text: string }> })?.content?.[0]?.text ?? '';
     expect(skillsText).toMatch(/Learning is off/);
     expect(skillsText).not.toMatch(/forbidden module/);
   });
 
-  it('loads memoryjs on a flag-on skills call and not before', async () => {
+  it('loads skills-tool on a flag-on skills call and not before', async () => {
     const probe = 'file://' + join(REPO_ROOT, 'test/helpers/forbid-modules.mjs');
     const { stdout } = await sendLines(
       [
@@ -241,7 +241,7 @@ describe('MCP protocol compliance', () => {
       ],
       {
         EPISODIC_MEMORY_LEARN: '1',
-        FORBID_MODULES: '@danielsimonjr/memoryjs',
+        FORBID_MODULES: './learn/skills-tool.js',
         NODE_OPTIONS: `--import=${probe}`,
       }
     );
@@ -252,7 +252,7 @@ describe('MCP protocol compliance', () => {
     expect(toolNames).toEqual(['search', 'read', 'digest', 'skills']);
     const skills = messages.find((m) => m.id === 3);
     const skillsText = (skills?.result as { content?: Array<{ text: string }> })?.content?.[0]?.text ?? '';
-    expect(skillsText).toMatch(/forbidden module loaded: @danielsimonjr\/memoryjs/);
+    expect(skillsText).toMatch(/forbidden module loaded: \.\/learn\/skills-tool\.js/);
   });
 
   it('keeps stdout to JSON-RPC only with the skills tool registered', async () => {

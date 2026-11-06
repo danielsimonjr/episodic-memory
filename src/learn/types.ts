@@ -2,9 +2,9 @@
  * Shared types for the Recursa learned-knowledge store.
  *
  * Every import here is `import type`, which TypeScript erases: the compiled
- * module has no runtime imports, so it loads with no memoryjs, no transformers
- * and no database handle. `src/learn/knowledge-store.ts` is the only module that
- * imports memoryjs; every other module sees the shapes declared here.
+ * module has no runtime imports, so it loads with no transformers and no
+ * database handle. `src/learn/knowledge-store.ts` is the only module that knows
+ * how an entry is laid out on disk; every other module sees the shapes declared here.
  */
 
 import type Database from 'better-sqlite3';
@@ -17,9 +17,7 @@ export type KnowledgeStatus = 'candidate' | 'active' | 'retired';
 export type Confidence = 'low' | 'medium' | 'high';
 
 /**
- * Declared locally on purpose. memoryjs also exports a `TrustLevel` with a
- * fourth value (`inferred`); this store only ever writes the three the spec
- * names, and types.ts must stay free of memoryjs imports.
+ * The three trust levels the spec names. The store writes nothing else.
  */
 export type TrustLevel = 'unverified' | 'verified' | 'ground-truth';
 
@@ -61,7 +59,7 @@ export interface KnowledgeEntry {
   slug: string;
   /**
    * Logical version, from the name and the `version:` observation.
-   * NOT memoryjs's `Entity.version`, which auto-increments on every OCC write.
+   * NOT the row's write counter, which increments on every update.
    */
   version: number;
   title: string;

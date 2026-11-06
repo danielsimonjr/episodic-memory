@@ -2,8 +2,8 @@
  * The learning trace database: `<configDir>/learned/learning.sqlite`.
  *
  * This is the plugin's own database, opened with `better-sqlite3` directly, so
- * a SessionStart hook can read the rendered learned block without loading
- * memoryjs (§6.3 of the Recursa spec). It sits beside `knowledge.db` under
+ * a SessionStart hook can read the rendered learned block without opening the
+ * knowledge store (§6.3 of the Recursa spec). It sits beside `knowledge.db` under
  * `learned/`, a sibling of `conversation-index/`, so an index reset never
  * reaches it.
  *

@@ -120,7 +120,7 @@ function budgetNumber(budget: Record<string, unknown>, key: string): number | nu
  * Build the report for one run.
  *
  * Async because the store-backed halves (`kept`, `pending`, `reflections`) come
- * from memoryjs, whose manager methods return promises.
+ * from the knowledge store, whose methods return promises.
  */
 export async function buildReport(dbs: LearnDbs, runId: string): Promise<ReportModel> {
   const run = getRun(dbs.learning, runId);

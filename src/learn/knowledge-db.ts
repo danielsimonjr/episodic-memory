@@ -1,8 +1,8 @@
 /**
- * The `KnowledgeEntry` API over the memoryjs adapter and the learning trace.
+ * The `KnowledgeEntry` API over the knowledge store and the learning trace.
  *
  * Everything here speaks the shapes in `./types.js`; only `./knowledge-store.js`
- * imports memoryjs. Every function that touches the store is `async`.
+ * opens `knowledge.db`. Every function that touches the store is `async`.
  *
  * Additive only: nothing in this module deletes an entry. A revision inserts a
  * new version and marks the older one `supersededBy`; retirement sets `status`.
@@ -146,9 +146,8 @@ export async function insertKnowledgeEntry(
   }
 
   if (entry.kind === 'reflection') {
-    // The memoryjs reflection record is the derived overlay that its own
-    // managers read; the entry entity above stays the thing every gate and the
-    // rendered block use.
+    // The reflection record is a derived overlay for `listReflections`; the
+    // entry entity above stays the thing every gate and the rendered block use.
     await store.recordReflectionRecord({
       scope: entry.project === '*' ? 'global' : 'project',
       project: entry.project,
@@ -304,7 +303,7 @@ export async function createSnapshot(
 /**
  * Read a snapshot's entry names.
  *
- * Synchronous: this runs against `learning.sqlite`, not the memoryjs store.
+ * Synchronous: this runs against `learning.sqlite`, not the knowledge store.
  */
 export function getSnapshot(learningDb: Database.Database, id: number): string[] {
   const row = learningDb

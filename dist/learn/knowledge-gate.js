@@ -15,7 +15,7 @@
  * 5. `screenLearnedText` on every field — the injection screen.
  * 6. Shape checks — non-empty scope, `confidence` in its enum, valid `steps`.
  *
- * The module is pure. No SDK, no memoryjs and no database import lives here: the
+ * The module is pure. No SDK, no store and no database import lives here: the
  * resolvers, the PII redactor and the config all come from the caller, so this
  * file is safe to load from a test or a hook.
  */

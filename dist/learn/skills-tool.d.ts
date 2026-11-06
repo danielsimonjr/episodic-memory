@@ -1,14 +1,14 @@
 /**
  * The `skills` MCP tool: read active learned skills out of the knowledge store.
  *
- * This module holds the memoryjs-backed half of the tool on purpose.
+ * This module holds the store-backed half of the tool on purpose.
  * `mcp-tools.ts` imports it *inside* the `skills` branch, so a server with the
- * flag off never loads memoryjs — a session that never asks for a skill pays
- * nothing for the feature.
+ * flag off never opens the knowledge store — a session that never asks for a
+ * skill pays nothing for the feature.
  *
- * It opens a store per call and closes it in `finally`: memoryjs serves every
- * read from an in-memory cache loaded once per context, so a module-level
- * context would keep answering from whatever was on disk when the server
+ * It opens a store per call and closes it in `finally`, so a long-running
+ * server never holds a handle on `knowledge.db` between calls and a `learn`
+ * run in another process is never blocked by a server that
  * started and a `learn` run later in the session would be invisible.
  */
 import { LEARN_OFF_MESSAGE } from './learn-config.js';
@@ -24,7 +24,7 @@ export interface SkillsToolParams {
  * The tool's text. Opens nothing with the flag off.
  *
  * The store file check comes before construction: an `openKnowledgeStore()`
- * would create `knowledge.db` (memoryjs writes on open), and a read-only tool
+ * would create `knowledge.db` (the store creates its tables on open), and a read-only tool
  * call must never be what creates the learned directory.
  */
 export declare function skillsToolText(params: SkillsToolParams): Promise<string>;

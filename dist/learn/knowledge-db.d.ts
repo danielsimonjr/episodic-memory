@@ -1,8 +1,8 @@
 /**
- * The `KnowledgeEntry` API over the memoryjs adapter and the learning trace.
+ * The `KnowledgeEntry` API over the knowledge store and the learning trace.
  *
  * Everything here speaks the shapes in `./types.js`; only `./knowledge-store.js`
- * imports memoryjs. Every function that touches the store is `async`.
+ * opens `knowledge.db`. Every function that touches the store is `async`.
  *
  * Additive only: nothing in this module deletes an entry. A revision inserts a
  * new version and marks the older one `supersededBy`; retirement sets `status`.
@@ -75,7 +75,7 @@ export declare function createSnapshot(learningDb: Database.Database, runId: str
 /**
  * Read a snapshot's entry names.
  *
- * Synchronous: this runs against `learning.sqlite`, not the memoryjs store.
+ * Synchronous: this runs against `learning.sqlite`, not the knowledge store.
  */
 export declare function getSnapshot(learningDb: Database.Database, id: number): string[];
 /** Re-exported so callers do not need the adapter module for these names. */

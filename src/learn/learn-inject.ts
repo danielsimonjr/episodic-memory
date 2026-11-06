@@ -4,7 +4,7 @@
  * This module is on the digest hook's fast path, so its import graph is kept to
  * `./types.js` (types only, erased at compile time), `./learned-text-screen.js`
  * and `../redact.js` — never `knowledge-db.js` or `knowledge-store.js`, and
- * therefore never memoryjs. The hook reads the rendered text from
+ * therefore never `better-sqlite3`'s heavier callers. The hook reads the rendered text from
  * `learning.sqlite` and must load in a few hundred milliseconds.
  *
  * The block is data, not instructions: it names where to look in past
@@ -19,14 +19,13 @@ import { screenLearnedText } from './learned-text-screen.js';
 import { redactSecrets } from '../redact.js';
 
 /**
- * PII shapes the hook must catch without loading memoryjs.
+ * PII shapes the hook must catch.
  *
- * Spec §7 rule 3 says the hook re-applies `redactSecrets` and memoryjs's
- * `PiiRedactor` (email, phone, SSN, card, IP). `learn-inject` cannot import
- * memoryjs — it is on the digest hook's fast path — so these patterns are the
- * hook's copy of that pass. The write path still prefers the adapter's
- * `redactPii` when a store is open. Phone and card patterns include a 10–19
- * digit run, which is why citation marks are shielded before redaction.
+ * Spec §7 rule 3 says the hook re-applies `redactSecrets` and the PII pass
+ * (email, phone, SSN, card, IP). These patterns are the hook's own copy of that
+ * pass, with one replacement token, so a reader sees `[redacted]` and nothing
+ * else; the store's `redactPii` (`pii-redactor.ts`) is the write path's.
+ * Phone and card patterns include a 10–19 digit run, which is why citation marks are shielded before redaction.
  */
 const PII_PATTERNS: RegExp[] = [
   /[\w.+-]+@[\w-]+\.[A-Za-z]{2,}/g,

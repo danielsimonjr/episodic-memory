@@ -15,7 +15,7 @@ import { safeRmSync, suppressConsole } from '../test-utils.js';
 
 suppressConsole();
 
-/** A temp directory whose real path contains no `..` segment (memoryjs rejects those). */
+/** A temp directory whose real path contains no `..` segment. */
 function makeTempDir(prefix: string): string {
   return fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), prefix)));
 }
@@ -85,7 +85,7 @@ function fullEntry(over: Partial<KnowledgeEntry> = {}): KnowledgeEntry {
   } as KnowledgeEntry;
 }
 
-describe('knowledge store (memoryjs adapter)', () => {
+describe('knowledge store (native sqlite)', () => {
   let configDir: string;
   let store: KnowledgeStore | null = null;
   const savedConfigDir = process.env.EPISODIC_MEMORY_CONFIG_DIR;
@@ -123,7 +123,7 @@ describe('knowledge store (memoryjs adapter)', () => {
     expect(got?.version).toBe(1);
   });
 
-  it('MEMORY_STORAGE_TYPE=jsonl and MEMORY_OBSERVATION_DEDUP=true in the env still yield a SQLite store, two near-identical body lines both persist, semanticSearch is null, and the env is restored', async () => {
+  it('ignores MEMORY_* environment variables, keeps two near-identical body lines, and leaves the env untouched', async () => {
     const saved: Record<string, string | undefined> = {};
     const set = (key: string, value: string) => {
       saved[key] = process.env[key];
@@ -135,9 +135,6 @@ describe('knowledge store (memoryjs adapter)', () => {
 
     try {
       store = openKnowledgeStore();
-      expect(store.storageConstructorName).toBe('SQLiteStorage');
-      expect(store.semanticSearchIsNull).toBe(true);
-
       const body = [
         'alpha burrows at night and returns before dawn',
         'alpha burrows at night and returns before dawn!',
@@ -150,7 +147,7 @@ describe('knowledge store (memoryjs adapter)', () => {
       expect(got?.body.split('\n')[0]).toBe('alpha burrows at night and returns before dawn');
       expect(got?.body.split('\n')[1]).toBe('alpha burrows at night and returns before dawn!');
 
-      // The adapter scopes and restores every MEMORY_* key it touches.
+      // The store is plain SQLite: it reads no MEMORY_* key and writes none.
       expect(process.env.MEMORY_STORAGE_TYPE).toBe('jsonl');
       expect(process.env.MEMORY_OBSERVATION_DEDUP).toBe('true');
       expect(process.env.MEMORY_EMBEDDING_PROVIDER).toBe('local');
@@ -162,14 +159,12 @@ describe('knowledge store (memoryjs adapter)', () => {
     }
   });
 
-  it('a write through one context is not visible to a context opened earlier and is visible to one opened afterwards', async () => {
+  it('a write through one handle is visible at once to every other open handle', async () => {
     store = openKnowledgeStore();
     await store.putEntry(fullEntry());
 
     const earlier = openKnowledgeStore();
     try {
-      // Load `earlier`'s cache before the other context writes. memoryjs serves
-      // every read from a per-context snapshot loaded once, on first use.
       expect(await earlier.getEntry('learned:skill:proj-a:alpha:v1')).not.toBeNull();
 
       const later = openKnowledgeStore();
@@ -181,14 +176,9 @@ describe('knowledge store (memoryjs adapter)', () => {
             title: 'Beta skill',
           })
         );
-        expect(await earlier.getEntry('learned:skill:proj-a:beta:v1')).toBeNull();
-
-        const after = openKnowledgeStore();
-        try {
-          expect((await after.getEntry('learned:skill:proj-a:beta:v1'))?.title).toBe('Beta skill');
-        } finally {
-          after.close();
-        }
+        // Reads go straight to the database, so there is no per-handle snapshot to go stale.
+        expect((await earlier.getEntry('learned:skill:proj-a:beta:v1'))?.title).toBe('Beta skill');
+        expect((await store.getEntry('learned:skill:proj-a:beta:v1'))?.title).toBe('Beta skill');
       } finally {
         later.close();
       }
@@ -434,7 +424,7 @@ describe('knowledge store (memoryjs adapter)', () => {
     expect(proc?.name).toBe('proc:proj-a:alpha');
     expect(proc?.steps.map(s => s.action)).toEqual(['search', 'read']);
     expect(proc?.steps.map(s => s.order)).toEqual([1, 2]);
-    // memoryjs stores procedure triggers lower-cased.
+    // Procedure triggers are stored lower-cased.
     expect(proc?.triggers).toContain('use when the user asks about alpha');
     expect(proc?.description).toBe('Use when the user asks about alpha');
 
@@ -488,9 +478,8 @@ describe('knowledge store (memoryjs adapter)', () => {
     expect(store.redactPii('path: /archive/a.jsonl')).toBe('path: /archive/a.jsonl');
   });
 
-  it('types.ts has no import from @danielsimonjr/memoryjs', () => {
+  it('types.ts has only type imports', () => {
     const sourceText = fs.readFileSync(path.resolve(__dirname, '../../src/learn/types.ts'), 'utf-8');
-    expect(sourceText).not.toContain('@danielsimonjr/memoryjs');
     const importLines = sourceText
       .split('\n')
       .map(line => line.trim())

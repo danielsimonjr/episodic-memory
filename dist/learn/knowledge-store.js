@@ -1,50 +1,34 @@
 /**
- * The `@danielsimonjr/memoryjs` adapter.
+ * The knowledge store: learned entries, their citations and the records the
+ * learner keeps beside them (heuristics, procedures, decisions, failures,
+ * reflections, project context), on better-sqlite3 directly.
  *
- * This is the ONLY module in the repository that imports memoryjs, and it
- * imports from the package root only (the repo's `tsconfig` uses node10 module
- * resolution, which ignores the package `exports` map, so a subpath import such
- * as `@danielsimonjr/memoryjs/sqlite` does not typecheck).
+ * Every other module sees `KnowledgeEntry` from `./types.js`; this module is
+ * the only one that knows how an entry is laid out on disk.
  *
- * Every other module sees `KnowledgeEntry` from `./types.js`.
+ * On-disk layout. Two tables, `entities` and `relations`, in the shape the
+ * previous adapter (`@danielsimonjr/memoryjs` 4.x) created them, so a
+ * `knowledge.db` written before this module can be opened by it unchanged:
  *
- * Two invariants matter more than anything else here:
+ * - a learned entry is one `entities` row per version, named
+ *   `learned:<kind>:<project>:<slug>:v<n>`, with its fields as `key: value`
+ *   observation lines and `kind:` / `project:` / `trust:` / `status:` tags;
+ * - an `exchange:<id>` or `attempt:<id>` reference row is cited through a
+ *   `cites` relation;
+ * - every other record is one row whose typed payload lives in the
+ *   `agentMetadata` JSON column (`heuristicRecord`, `decisionRecord`, ...).
  *
- * 1. **Environment scoping.** memoryjs reads a large family of `MEMORY_*`
- *    variables at construction and gives them precedence over explicit
- *    options. `MEMORY_STORAGE_TYPE=jsonl` would silently turn this store into a
- *    JSONL graph; `MEMORY_OBSERVATION_DEDUP=true` would fuzzy-drop near-duplicate
- *    observation lines (which is to say, body lines that differ only in their
- *    citation marks); the default embedding provider downloads a model from the
- *    network. So construction happens inside `withScopedMemoryEnv`, which saves
- *    and removes every `^MEMORY_` key, sets exactly the two keys this store
- *    needs, constructs, and restores in `finally`.
- *
- * 2. **Nothing auto-constructing.** `ctx.hybridSearchManager` always builds a
- *    manager, so it is never touched. `ctx.semanticSearch` is read once, only to
- *    assert it is null under `MEMORY_EMBEDDING_PROVIDER=none`. The decay,
- *    consolidation, archive, compression and semantic-forget managers are never
- *    exposed.
- *
- * Every memoryjs write and search call returns a Promise in 4.5.0, so every
- * store method that touches the store is `async`.
+ * Reads go straight to SQLite, so a write through one handle is visible to
+ * every other open handle at once. Construction is synchronous and starts no
+ * timers; the methods stay `async` because callers already await them.
  */
 import fs from 'fs';
 import path from 'path';
-import { createHash } from 'node:crypto';
-// Root import only: the repo's node10 module resolution ignores the package
-// `exports` map, so a subpath such as `@danielsimonjr/memoryjs/sqlite` fails to
-// typecheck.
-import { ManagerContext, PiiRedactor, SQLiteStorage } from '@danielsimonjr/memoryjs';
+import { createHash, randomUUID } from 'node:crypto';
+import Database from 'better-sqlite3';
 import { getKnowledgeDbPath } from '../paths.js';
-/** Thrown when memoryjs does not come up the way this adapter requires. */
-export class KnowledgeStoreMisconfigured extends Error {
-    constructor(message) {
-        super(message);
-        this.name = 'KnowledgeStoreMisconfigured';
-    }
-}
-/** The exact observation key prefix for each field the adapter parses back. */
+import { redactPii } from './pii-redactor.js';
+/** The exact observation key prefix for each field the store parses back. */
 const OBS = {
     title: 'title: ',
     description: 'description: ',
@@ -78,40 +62,30 @@ const RELIABILITY_BY_TRUST = {
     verified: 0.6,
     'ground-truth': 0.9,
 };
-/** memoryjs's reflection records take a numeric confidence in [0, 1]. */
+/** Reflection records carry a numeric confidence in [0, 1]. */
 const CONFIDENCE_SCORE = { low: 0.3, medium: 0.6, high: 0.9 };
 /** The entity-type prefix every learned entry shares. */
 const ENTRY_TYPE_PREFIX = 'learned-';
 const REFLECTION_TYPE = 'learned-reflection';
-/**
- * Run `fn` synchronously with every `MEMORY_*` key removed and exactly the two
- * values this store needs in place. The caller's environment is restored in
- * `finally`, including keys that were absent before.
- */
-function withScopedMemoryEnv(fn) {
-    const saved = new Map();
-    for (const key of Object.keys(process.env)) {
-        if (key.startsWith('MEMORY_')) {
-            saved.set(key, process.env[key]);
-            delete process.env[key];
-        }
-    }
-    process.env.MEMORY_STORAGE_TYPE = 'sqlite';
-    process.env.MEMORY_EMBEDDING_PROVIDER = 'none';
-    try {
-        return fn();
-    }
-    finally {
-        delete process.env.MEMORY_STORAGE_TYPE;
-        delete process.env.MEMORY_EMBEDDING_PROVIDER;
-        for (const [key, value] of saved) {
-            if (value === undefined)
-                delete process.env[key];
-            else
-                process.env[key] = value;
-        }
-    }
-}
+const HEURISTIC_TYPE = 'heuristic';
+const DECISION_TYPE = 'decision';
+const FAILURE_TYPE = 'failure';
+const REFLECTION_RECORD_TYPE = 'reflection';
+const PROJECT_CONTEXT_TYPE = 'project_context';
+const PROCEDURE_TYPE = 'procedure';
+const PROCEDURE_STEP_TYPE = 'procedure-step';
+const PROCEDURE_SUCCESS_RATE = '[success-rate]: ';
+const PROCEDURE_EXECUTION_COUNT = '[execution-count]: ';
+const PROCEDURE_STEPS = '[procedure-steps]: ';
+const STEP_ORDER = '[order]: ';
+const STEP_ACTION = '[action]: ';
+const STEP_PARAM = '[param]: ';
+/** EWMA weight for a procedure's success rate on each `refineProcedure`. */
+const PROCEDURE_SUCCESS_ALPHA = 0.2;
+const ENGLISH_STOPWORDS = new Set([
+    'a', 'an', 'the', 'is', 'be', 'are', 'was', 'were', 'to', 'of', 'in', 'on', 'at', 'by', 'for',
+    'with', 'and', 'or', 'but', 'if', 'as', 'it', 'its', 'this', 'that', 'these', 'those',
+]);
 function observationValue(observations, prefix) {
     const hit = observations.find(o => o.startsWith(prefix));
     return hit === undefined ? null : hit.slice(prefix.length);
@@ -133,12 +107,85 @@ function tagValue(tags, prefix) {
     const hit = tags.find(t => t.startsWith(prefix));
     return hit === undefined ? null : hit.slice(prefix.length);
 }
+function nowIso() {
+    return new Date().toISOString();
+}
+function clamp01(n) {
+    if (!Number.isFinite(n))
+        return 0;
+    return Math.max(0, Math.min(1, n));
+}
+/** Lower-cased alphanumeric tokens of at least `minLength` characters. */
+function tokenize(text, minLength) {
+    return new Set(text
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, '')
+        .split(/\s+/)
+        .filter(t => t.length >= minLength));
+}
+/** Tokens split on every non-alphanumeric character, stopwords removed. */
+function conditionTokens(text) {
+    return new Set(text
+        .toLowerCase()
+        .split(/[^a-z0-9]+/)
+        .filter(t => t.length >= 2 && !ENGLISH_STOPWORDS.has(t)));
+}
+function jaccard(a, b) {
+    if (a.size === 0 && b.size === 0)
+        return 0;
+    let inter = 0;
+    for (const t of a)
+        if (b.has(t))
+            inter += 1;
+    return inter / (a.size + b.size - inter);
+}
+/** `don't X` / `do not X` / `never X` / `avoid X` against `X`. */
+function isContradiction(a, b) {
+    const an = a.toLowerCase().replace(/\s+/g, ' ').trim();
+    const bn = b.toLowerCase().replace(/\s+/g, ' ').trim();
+    for (const p of ["don't ", 'do not ', 'never ', 'avoid ']) {
+        if (an.startsWith(p) && bn === an.slice(p.length))
+            return true;
+        if (bn.startsWith(p) && an === bn.slice(p.length))
+            return true;
+    }
+    return false;
+}
+function rowToEntity(row) {
+    return {
+        name: row.name,
+        entityType: row.entityType,
+        observations: parseJson(row.observations, []),
+        tags: parseJson(row.tags, []),
+        importance: row.importance,
+        createdAt: row.createdAt,
+        lastModified: row.lastModified,
+        projectId: row.projectId,
+        version: row.version ?? 1,
+        parentEntityName: row.parentEntityName,
+        rootEntityName: row.rootEntityName,
+        isLatest: row.isLatest !== 0,
+        supersededBy: row.supersededBy,
+        metadata: parseJson(row.agentMetadata, {}),
+    };
+}
+function toRawView(entity) {
+    return {
+        name: entity.name,
+        entityType: entity.entityType,
+        observations: [...entity.observations],
+        tags: [...entity.tags],
+        isLatest: entity.isLatest,
+        parentEntityName: entity.parentEntityName,
+        supersededBy: entity.supersededBy,
+    };
+}
 /**
  * Parse an entity back into the `KnowledgeEntry` shape.
  *
  * The logical `version` comes from the `version:` observation (and, failing
- * that, from the `:v<n>` suffix of the name), never from `Entity.version`,
- * which memoryjs increments on every OCC-guarded write.
+ * that, from the `:v<n>` suffix of the name), never from the row's write
+ * counter.
  */
 export function parseEntity(entity) {
     if (!entity.entityType.startsWith(ENTRY_TYPE_PREFIX))
@@ -147,17 +194,16 @@ export function parseEntity(entity) {
     const nameMatch = /^learned:([^:]+):(.*):([^:]+):v(\d+)$/.exec(name);
     const typeKind = entity.entityType.slice(ENTRY_TYPE_PREFIX.length);
     const kind = (nameMatch?.[1] ?? typeKind);
-    const observations = entity.observations ?? [];
-    const tags = entity.tags ?? [];
+    const { observations, tags } = entity;
     const project = entity.projectId ?? nameMatch?.[2] ?? '*';
     const slug = nameMatch?.[3] ?? '';
     const versionFromName = nameMatch ? Number(nameMatch[4]) : 1;
     const versionFromObs = Number(observationValue(observations, OBS.version));
     const version = Number.isFinite(versionFromObs) && versionFromObs > 0 ? versionFromObs : versionFromName;
     const statusFromObs = observationValue(observations, OBS.status);
-    const lifecycle = entity.lifecycleStatus ?? 'published';
+    const lifecycle = entity.metadata.lifecycleStatus ?? 'published';
     const statusFromTag = tagValue(tags, 'status:');
-    const status = statusFromObs ?? statusFromTag ?? STATUS_BY_LIFECYCLE[lifecycle];
+    const status = statusFromObs ?? statusFromTag ?? STATUS_BY_LIFECYCLE[lifecycle] ?? 'active';
     const trustFromObs = observationValue(observations, OBS.trust);
     const trustFromTag = tagValue(tags, 'trust:');
     const trust = trustFromObs ?? trustFromTag ?? 'unverified';
@@ -192,10 +238,10 @@ export function parseEntity(entity) {
 /**
  * Build the observation lines for an entry.
  *
- * `reflectionHash` is passed separately from the parsed entry because it is not a
- * `KnowledgeEntry` field: it is the adapter's own dedup marker, and it must
- * survive an update, so callers that rewrite an entity re-read it from the
- * existing observations and hand it back here.
+ * `reflectionHash` is passed separately because it is not a `KnowledgeEntry`
+ * field: it is the store's own dedup marker, and it must survive an update, so
+ * callers that rewrite an entity re-read it from the existing observations and
+ * hand it back here.
  */
 function buildObservations(entry, reflectionHash) {
     const observations = [
@@ -244,241 +290,294 @@ export function rootName(kind, project, slug) {
 export function procedureIdFor(project, slug) {
     return `proc:${project}:${slug}`;
 }
+const SCHEMA = `
+  CREATE TABLE IF NOT EXISTS entities (
+    name TEXT PRIMARY KEY,
+    id TEXT,
+    entityType TEXT NOT NULL,
+    observations TEXT NOT NULL,
+    tags TEXT,
+    importance INTEGER,
+    parentId TEXT REFERENCES entities(name) ON DELETE SET NULL,
+    createdAt TEXT NOT NULL,
+    lastModified TEXT NOT NULL,
+    projectId TEXT,
+    version INTEGER DEFAULT 1,
+    parentEntityName TEXT,
+    rootEntityName TEXT,
+    isLatest INTEGER DEFAULT 1,
+    supersededBy TEXT,
+    contentHash TEXT,
+    agentMetadata TEXT
+  );
+  CREATE TABLE IF NOT EXISTS relations (
+    fromEntity TEXT NOT NULL REFERENCES entities(name) ON DELETE CASCADE,
+    toEntity TEXT NOT NULL REFERENCES entities(name) ON DELETE CASCADE,
+    relationType TEXT NOT NULL,
+    createdAt TEXT NOT NULL,
+    lastModified TEXT NOT NULL,
+    weight REAL,
+    confidence REAL,
+    properties TEXT,
+    metadata TEXT,
+    PRIMARY KEY (fromEntity, toEntity, relationType)
+  );
+  CREATE INDEX IF NOT EXISTS idx_entity_type ON entities(entityType);
+  CREATE INDEX IF NOT EXISTS idx_entities_projectId ON entities(projectId);
+  CREATE INDEX IF NOT EXISTS idx_entities_isLatest ON entities(isLatest);
+  CREATE INDEX IF NOT EXISTS idx_relation_from ON relations(fromEntity);
+  CREATE INDEX IF NOT EXISTS idx_relation_to ON relations(toEntity);
+`;
+/** Entity columns a `knowledge.db` written by an older store may lack. */
+const ENTITY_COLUMNS = [
+    ['id', 'TEXT'],
+    ['tags', 'TEXT'],
+    ['importance', 'INTEGER'],
+    ['projectId', 'TEXT'],
+    ['version', 'INTEGER DEFAULT 1'],
+    ['parentEntityName', 'TEXT'],
+    ['rootEntityName', 'TEXT'],
+    ['isLatest', 'INTEGER DEFAULT 1'],
+    ['supersededBy', 'TEXT'],
+    ['contentHash', 'TEXT'],
+    ['agentMetadata', 'TEXT'],
+];
 export class KnowledgeStore {
-    ctx;
-    pii = new PiiRedactor();
+    db;
     closed = false;
-    /** The concrete storage class memoryjs built. `SQLiteStorage` means sqlite. */
-    storageConstructorName;
-    /** Asserted once, at construction. */
-    semanticSearchIsNull;
-    constructor(ctx, storageConstructorName, semanticSearchIsNull) {
-        this.ctx = ctx;
-        this.storageConstructorName = storageConstructorName;
-        this.semanticSearchIsNull = semanticSearchIsNull;
+    constructor(db) {
+        this.db = db;
     }
-    /**
-     * Constructing is synchronous (memoryjs loads the graph lazily and the
-     * constructor starts no timers), but every method that touches the store is
-     * async.
-     */
+    /** Open (creating when absent) the store at `dbPath`. */
     static create(dbPath) {
         fs.mkdirSync(path.dirname(dbPath), { recursive: true, mode: 0o700 });
-        let storageName = '';
-        let semanticIsNull = false;
-        let builtStorage = null;
-        const ctx = withScopedMemoryEnv(() => {
-            const built = new ManagerContext({
-                storagePath: dbPath,
-                storageType: 'sqlite',
-                defaultProjectId: '*',
-            });
-            storageName = built.storage.constructor.name.replace(/^_+/, '');
-            // Read once, only to assert it is null. Never touch hybridSearchManager.
-            semanticIsNull = built.semanticSearch === null;
-            builtStorage = built.storage;
-            return built;
-        });
-        // The class is exported from the package root, so `instanceof` is exact; the
-        // name check is a cheap independent second signal (the bundler prefixes the
-        // runtime class name with an underscore).
-        if (!(builtStorage instanceof SQLiteStorage) || storageName !== 'SQLiteStorage') {
-            try {
-                ctx.close();
+        const db = new Database(dbPath);
+        try {
+            db.pragma('journal_mode = WAL');
+            db.pragma('busy_timeout = 5000');
+            db.pragma('foreign_keys = ON');
+            db.exec(SCHEMA);
+            const present = new Set(db.prepare('PRAGMA table_info(entities)').all().map(c => c.name));
+            for (const [column, type] of ENTITY_COLUMNS) {
+                if (!present.has(column))
+                    db.exec(`ALTER TABLE entities ADD COLUMN ${column} ${type}`);
             }
-            catch {
-                // best effort
-            }
-            throw new KnowledgeStoreMisconfigured(`knowledge store opened ${storageName || 'an unknown storage'} instead of SQLiteStorage`);
         }
-        if (!semanticIsNull) {
-            try {
-                ctx.close();
-            }
-            catch {
-                // best effort
-            }
-            throw new KnowledgeStoreMisconfigured('knowledge store has a semantic search backend; MEMORY_EMBEDDING_PROVIDER=none was not honoured');
+        catch (err) {
+            db.close();
+            throw err;
         }
-        return new KnowledgeStore(ctx, storageName, semanticIsNull);
+        return new KnowledgeStore(db);
     }
-    /** Release the underlying storage handle. Idempotent. */
+    /** Release the database handle. Idempotent. */
     close() {
         if (this.closed)
             return;
         this.closed = true;
         try {
-            this.ctx.close();
+            this.db.close();
         }
         catch {
-            // Closing twice, or a backend without a handle, is not an error.
+            // Closing twice is not an error.
         }
     }
     /** PII redaction, for `knowledge-db` and the gates to reuse. */
     redactPii(text) {
-        return this.pii.redact(text);
+        return redactPii(text);
     }
+    // ==================== Row access ====================
+    readEntity(name) {
+        const row = this.db.prepare('SELECT * FROM entities WHERE name = ?').get(name);
+        return row ? rowToEntity(row) : null;
+    }
+    entitiesOfType(entityType) {
+        const rows = this.db
+            .prepare('SELECT * FROM entities WHERE entityType = ? ORDER BY rowid')
+            .all(entityType);
+        return rows.map(rowToEntity);
+    }
+    /** Every learned entity, in insertion order. */
+    learnedEntities() {
+        const rows = this.db
+            .prepare('SELECT * FROM entities WHERE entityType LIKE ? ORDER BY rowid')
+            .all(`${ENTRY_TYPE_PREFIX}%`);
+        return rows.map(rowToEntity);
+    }
+    /** Insert the rows that do not exist yet. An existing name is left as it is. */
+    insertEntities(entities) {
+        const stmt = this.db.prepare(`
+      INSERT OR IGNORE INTO entities
+        (name, id, entityType, observations, tags, importance, parentId, createdAt, lastModified,
+         projectId, version, parentEntityName, rootEntityName, isLatest, supersededBy, contentHash, agentMetadata)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, 1, NULL, NULL, ?)
+    `);
+        const now = nowIso();
+        for (const e of entities) {
+            const createdAt = e.createdAt ?? now;
+            stmt.run(e.name, randomUUID(), e.entityType, JSON.stringify(e.observations), e.tags ? JSON.stringify(e.tags) : null, e.importance ?? null, e.parentId ?? null, createdAt, createdAt, e.projectId ?? null, e.parentEntityName ?? null, e.rootEntityName ?? null, e.metadata && Object.keys(e.metadata).length > 0 ? JSON.stringify(e.metadata) : null);
+        }
+    }
+    /** Overwrite the mutable columns of one row and bump its write counter. */
+    updateEntity(name, patch) {
+        const sets = ['lastModified = ?', 'version = COALESCE(version, 1) + 1'];
+        const values = [nowIso()];
+        if (patch.observations !== undefined) {
+            sets.push('observations = ?');
+            values.push(JSON.stringify(patch.observations));
+        }
+        if (patch.tags !== undefined) {
+            sets.push('tags = ?');
+            values.push(JSON.stringify(patch.tags));
+        }
+        if (patch.importance !== undefined) {
+            sets.push('importance = ?');
+            values.push(patch.importance);
+        }
+        if (patch.isLatest !== undefined) {
+            sets.push('isLatest = ?');
+            values.push(patch.isLatest ? 1 : 0);
+        }
+        if (patch.supersededBy !== undefined) {
+            sets.push('supersededBy = ?');
+            values.push(patch.supersededBy);
+        }
+        if (patch.metadata !== undefined) {
+            sets.push('agentMetadata = ?');
+            values.push(Object.keys(patch.metadata).length > 0 ? JSON.stringify(patch.metadata) : null);
+        }
+        values.push(name);
+        const info = this.db.prepare(`UPDATE entities SET ${sets.join(', ')} WHERE name = ?`).run(...values);
+        if (info.changes === 0)
+            throw new Error(`knowledge entry not found: ${name}`);
+    }
+    /** Insert the relations that do not exist yet. Both endpoints must exist. */
+    insertRelations(relations) {
+        if (relations.length === 0)
+            return;
+        const exists = this.db.prepare('SELECT 1 FROM entities WHERE name = ?');
+        const stmt = this.db.prepare(`
+      INSERT OR IGNORE INTO relations (fromEntity, toEntity, relationType, createdAt, lastModified)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+        const now = nowIso();
+        for (const r of relations) {
+            for (const endpoint of [r.from, r.to]) {
+                if (!exists.get(endpoint))
+                    throw new Error(`relation endpoint not found: ${endpoint}`);
+            }
+            stmt.run(r.from, r.to, r.relationType, now, now);
+        }
+    }
+    relationsFrom(name) {
+        return this.db
+            .prepare('SELECT fromEntity, toEntity, relationType FROM relations WHERE fromEntity = ? ORDER BY rowid')
+            .all(name);
+    }
+    // ==================== Learned entries ====================
     /** The raw entity, for tests and for `knowledge-db`'s duplicate check. */
     async getRawEntity(name) {
-        const entity = await this.ctx.entityManager.getEntity(name);
-        if (!entity)
-            return null;
-        return {
-            name: entity.name,
-            entityType: entity.entityType,
-            observations: [...(entity.observations ?? [])],
-            tags: [...(entity.tags ?? [])],
-            isLatest: entity.isLatest !== false,
-            parentEntityName: entity.parentEntityName ?? null,
-            supersededBy: entity.supersededBy ?? null,
-        };
+        const entity = this.readEntity(name);
+        return entity ? toRawView(entity) : null;
     }
     /**
      * Write one entity for one version, plus the reference entities and `cites`
-     * relations it needs. References are created first: `createRelations`
-     * validates that both endpoints exist.
+     * relations it needs, in one transaction. An entity that already exists
+     * under this name is left untouched.
      */
     async putEntry(entry, reflectionHash) {
         const name = entry.id;
-        const isRevision = entry.version > 1;
         const root = rootName(entry.kind, entry.project, entry.slug);
-        const parent = isRevision ? entryName(entry.kind, entry.project, entry.slug, entry.version - 1) : undefined;
-        await this.ensureExchangeRefs(entry.sources);
-        const entity = {
-            name,
-            entityType: `${ENTRY_TYPE_PREFIX}${entry.kind}`,
-            projectId: entry.project,
-            lifecycleStatus: LIFECYCLE_BY_STATUS[entry.status],
-            importance: IMPORTANCE_BY_CONFIDENCE[entry.confidence],
-            tags: buildTags(entry),
-            rootEntityName: root,
-            isLatest: true,
-            observations: buildObservations(entry, reflectionHash),
-            // `source` is a `MemorySource` on memoryjs's `AgentEntity`, not a field of
-            // the core `Entity` type, so this is cast. Trust is carried by the
-            // `trust:` observation and tag, which is what the gates read; `source` is
-            // provenance for memoryjs's own managers. If a future memoryjs drops it on
-            // read-back that is not an error.
-            source: {
-                agentId: 'episodic-learn',
-                timestamp: entry.createdAt || new Date().toISOString(),
-                method: 'inferred',
-                reliability: RELIABILITY_BY_TRUST[entry.trust],
-                trustLevel: entry.trust,
-            },
-        };
-        if (parent)
-            entity.parentEntityName = parent;
-        await this.ctx.entityManager.createEntities([entity]);
-        // A new revision does not clear the parent's `isLatest` or set `supersededBy`;
-        // only `supersede` (via `activate`) does. Chain head for `getBySlug` /
-        // `listEntries` is the highest logical version, not memoryjs's `isLatest`.
-        await this.ctx.relationManager.createRelations(entry.sources.map(source => ({
-            from: name,
-            to: `exchange:${source.id}`,
-            relationType: 'cites',
-        })));
-    }
-    /** Create an `exchange:<id>` reference entity when it is absent. */
-    async ensureExchangeRefs(sources) {
-        const missing = [];
-        for (const source of sources) {
-            const refName = `exchange:${source.id}`;
-            const existing = await this.ctx.entityManager.getEntity(refName);
-            if (existing)
-                continue;
-            missing.push({
-                name: refName,
+        const parent = entry.version > 1 ? entryName(entry.kind, entry.project, entry.slug, entry.version - 1) : undefined;
+        const createdAt = entry.createdAt || nowIso();
+        this.db.transaction(() => {
+            this.insertEntities(entry.sources.map(source => ({
+                name: `exchange:${source.id}`,
                 entityType: 'exchange-ref',
                 observations: [
                     `path: ${source.path}`,
                     `lines: ${source.lineStart}-${source.lineEnd}`,
                     `session: ${source.sessionId ?? ''}`,
                 ],
-            });
-        }
-        if (missing.length > 0)
-            await this.ctx.entityManager.createEntities(missing);
+            })));
+            this.insertEntities([
+                {
+                    name,
+                    entityType: `${ENTRY_TYPE_PREFIX}${entry.kind}`,
+                    projectId: entry.project,
+                    importance: IMPORTANCE_BY_CONFIDENCE[entry.confidence],
+                    tags: buildTags(entry),
+                    rootEntityName: root,
+                    parentEntityName: parent,
+                    observations: buildObservations(entry, reflectionHash),
+                    createdAt,
+                    metadata: {
+                        lifecycleStatus: LIFECYCLE_BY_STATUS[entry.status],
+                        source: {
+                            agentId: 'episodic-learn',
+                            timestamp: createdAt,
+                            method: 'inferred',
+                            reliability: RELIABILITY_BY_TRUST[entry.trust],
+                            trustLevel: entry.trust,
+                        },
+                    },
+                },
+            ]);
+            // A new revision does not clear the parent's `isLatest` or set
+            // `supersededBy`; only `supersede` (via `activate`) does.
+            this.insertRelations(entry.sources.map(source => ({ from: name, to: `exchange:${source.id}`, relationType: 'cites' })));
+        })();
     }
     /** Create an `attempt:<id>` reference entity, citing it from `from`. */
     async citeAttempt(from, attemptId, taskId, runId) {
         const refName = `attempt:${attemptId}`;
-        const existing = await this.ctx.entityManager.getEntity(refName);
-        if (!existing) {
-            await this.ctx.entityManager.createEntities([
-                {
-                    name: refName,
-                    entityType: 'attempt-ref',
-                    observations: [`task: ${taskId}`, `run: ${runId}`],
-                },
+        this.db.transaction(() => {
+            this.insertEntities([
+                { name: refName, entityType: 'attempt-ref', observations: [`task: ${taskId}`, `run: ${runId}`] },
             ]);
-        }
-        await this.ctx.relationManager.createRelations([
-            { from, to: refName, relationType: 'cites' },
-        ]);
+            this.insertRelations([{ from, to: refName, relationType: 'cites' }]);
+        })();
     }
-    /**
-     * Replace the observation set and the tags of an existing entity. The
-     * `expectedVersion` is read immediately before the write: memoryjs's
-     * `Entity.version` is unrelated to the logical entry version.
-     */
-    async rewriteEntity(name, mutate) {
-        const entity = await this.ctx.entityManager.getEntity(name);
+    /** Re-render the observations, tags and lifecycle of one entry after `mutate`. */
+    rewriteEntity(name, mutate) {
+        const entity = this.readEntity(name);
         if (!entity)
             throw new Error(`knowledge entry not found: ${name}`);
         const parsed = parseEntity(entity);
         if (!parsed)
             throw new Error(`not a learned entry: ${name}`);
-        const raw = {
-            name: entity.name,
-            entityType: entity.entityType,
-            observations: [...(entity.observations ?? [])],
-            tags: [...(entity.tags ?? [])],
-            isLatest: entity.isLatest !== false,
-            parentEntityName: entity.parentEntityName ?? null,
-            supersededBy: entity.supersededBy ?? null,
-        };
-        mutate(parsed, raw);
-        // Carry the adapter's dedup marker across a rewrite; dropping it would make
-        // a stored reflection look new to `findReflectionByHash`.
-        const reflectionHash = observationValue(raw.observations, OBS.reflectionHash) ?? undefined;
-        await this.ctx.entityManager.updateEntity(name, {
+        mutate(parsed);
+        // Carry the dedup marker across a rewrite; dropping it would make a stored
+        // reflection look new to `findReflectionByHash`.
+        const reflectionHash = observationValue(entity.observations, OBS.reflectionHash) ?? undefined;
+        this.updateEntity(name, {
             observations: buildObservations(parsed, reflectionHash),
             tags: buildTags(parsed),
             importance: IMPORTANCE_BY_CONFIDENCE[parsed.confidence],
-        }, { expectedVersion: entity.version ?? 1 });
-        // `lifecycleStatus` is a separate guarded write so the state machine sees a
-        // legal transition and a rejected one cannot leave the observations applied.
-        if (entity.lifecycleStatus !== LIFECYCLE_BY_STATUS[parsed.status]) {
-            const fresh = await this.ctx.entityManager.getEntity(name);
-            await this.ctx.entityManager.updateEntity(name, { lifecycleStatus: LIFECYCLE_BY_STATUS[parsed.status] }, { expectedVersion: fresh?.version ?? 1 });
-        }
+            metadata: { ...entity.metadata, lifecycleStatus: LIFECYCLE_BY_STATUS[parsed.status] },
+        });
     }
     /** Set `supersededBy` and clear `isLatest` on the older version. */
     async supersede(olderName, newerName) {
-        const entity = await this.ctx.entityManager.getEntity(olderName);
-        if (!entity)
-            throw new Error(`knowledge entry not found: ${olderName}`);
-        await this.ctx.entityManager.updateEntity(olderName, { supersededBy: newerName, isLatest: false }, { expectedVersion: entity.version ?? 1 });
+        this.updateEntity(olderName, { supersededBy: newerName, isLatest: false });
     }
     /** Set the status (and the `status:` observation and tag) of one entry. */
     async setStatus(name, status) {
-        await this.rewriteEntity(name, entry => {
+        this.rewriteEntity(name, entry => {
             entry.status = status;
         });
     }
     /** Set the trust level (observation and tag) of one entry. */
     async setTrust(name, trust) {
-        await this.rewriteEntity(name, entry => {
+        this.rewriteEntity(name, entry => {
             entry.trust = trust;
         });
     }
     /**
-     * Activate one entry in a single guarded write: status, trust and validation
-     * together, so a rejected write cannot leave two of the three applied.
+     * Activate one entry in a single write: status, trust and validation
+     * together, so a failed write cannot leave two of the three applied.
      */
     async promote(name, trust, validation) {
-        await this.rewriteEntity(name, entry => {
+        this.rewriteEntity(name, entry => {
             entry.trust = trust;
             entry.validation = validation;
             entry.status = 'active';
@@ -486,71 +585,56 @@ export class KnowledgeStore {
     }
     /** Record a validation record on one entry. */
     async setValidation(name, validation) {
-        await this.rewriteEntity(name, entry => {
+        this.rewriteEntity(name, entry => {
             entry.validation = validation;
         });
     }
     /** Record a decision id on one entry. */
     async setDecision(name, decisionId) {
-        await this.rewriteEntity(name, entry => {
+        this.rewriteEntity(name, entry => {
             entry.decisionId = decisionId;
         });
     }
     /** Record a procedure id on one entry. */
     async setProcedure(name, procedureId) {
-        await this.rewriteEntity(name, entry => {
+        this.rewriteEntity(name, entry => {
             entry.procedureId = procedureId;
         });
     }
     /** Record the heuristic ids of one entry. */
     async setHeuristics(name, heuristicIds) {
-        await this.rewriteEntity(name, entry => {
+        this.rewriteEntity(name, entry => {
             entry.heuristicIds = [...heuristicIds];
         });
     }
     /** Read one entry by entity name. */
     async getEntry(name) {
-        const entity = await this.ctx.entityManager.getEntity(name);
-        if (!entity)
-            return null;
-        return parseEntity(entity);
+        const entity = this.readEntity(name);
+        return entity ? parseEntity(entity) : null;
     }
-    /** The latest version of a `(kind, project, slug)` chain. */
+    /** The latest version of a `(kind, project, slug)` chain, by logical version. */
     async getBySlug(kind, project, slug) {
         const root = rootName(kind, project, slug);
-        return this.latestEntryInChain(root);
-    }
-    /** Highest logical version in a chain (by `version:` / name), not `isLatest`. */
-    async latestEntryInChain(rootEntityName) {
-        const entities = await this.allEntities();
+        const rows = this.db
+            .prepare('SELECT * FROM entities WHERE entityType LIKE ? AND COALESCE(rootEntityName, name) = ?')
+            .all(`${ENTRY_TYPE_PREFIX}%`, root);
         let best = null;
-        for (const entity of entities) {
-            const chainRoot = entity.rootEntityName ?? entity.name;
-            if (chainRoot !== rootEntityName)
-                continue;
-            const parsed = parseEntity(entity);
-            if (!parsed)
-                continue;
-            if (!best || parsed.version > best.version)
+        for (const row of rows) {
+            const parsed = parseEntity(rowToEntity(row));
+            if (parsed && (!best || parsed.version > best.version))
                 best = parsed;
         }
         return best;
     }
-    /** Every learned entity. */
-    async allEntities() {
-        const graph = await this.ctx.storage.loadGraph();
-        return graph.entities.filter((e) => e.entityType.startsWith(ENTRY_TYPE_PREFIX));
-    }
     /**
-     * Learned entries that are still chain-visible (`isLatest !== false`), any
-     * status. A candidate revision does not clear the parent's `isLatest`, so
-     * both rows are returned until `supersede`. Callers that want one row per
-     * chain use `getBySlug`; callers that want lifecycle use `listByStatus`.
+     * Learned entries that are still chain-visible (`isLatest`), any status. A
+     * candidate revision does not clear the parent's `isLatest`, so both rows
+     * are returned until `supersede`. Callers that want one row per chain use
+     * `getBySlug`; callers that want lifecycle use `listByStatus`.
      */
     async listEntries() {
-        const entities = await this.allEntities();
-        return entities
-            .filter(e => e.isLatest !== false)
+        return this.learnedEntities()
+            .filter(e => e.isLatest)
             .map(parseEntity)
             .filter((e) => e !== null);
     }
@@ -560,8 +644,7 @@ export class KnowledgeStore {
      * those rows, so this deliberately does not filter on `isLatest`.
      */
     async listByStatus(statuses, kinds, project) {
-        const entities = await this.allEntities();
-        return entities
+        return this.learnedEntities()
             .map(parseEntity)
             .filter((entry) => entry !== null)
             .filter(entry => {
@@ -575,267 +658,569 @@ export class KnowledgeStore {
         });
     }
     /**
-     * Text search over entries.
+     * Text search over active, unsuperseded, chain-visible entries.
      *
-     * `searchNodesRanked` is async; its 6th argument is an exact-match `projectId`,
-     * which cannot express "this project or `*`", so the project filter runs in
-     * code here. Draft and archived rows are dropped too.
-     *
-     * memoryjs's TF-IDF score is `tf * log(N / docsWithTerm)`, which is exactly 0
-     * when every document in a small corpus contains the query token, so a store
-     * with one or two entries would return nothing at all. The ranked pass is
-     * therefore complemented by a deterministic token-overlap pass over the same
-     * filtered set; ranked hits keep their order and token-only hits follow.
+     * Deterministic term overlap: an entry scores one point per distinct query
+     * term found in its slug, title, description, body or scope, with total
+     * occurrences and then the id as tie-breakers. There is no document
+     * frequency weighting, so a store with one or two entries still answers.
      */
     async search(query, options = {}) {
         const { kinds, project, limit = 10 } = options;
-        const allowed = (entry) => {
+        const terms = [...new Set(query.toLowerCase().split(/[^a-z0-9]+/).filter(t => t.length > 0))];
+        if (terms.length === 0 || limit <= 0)
+            return [];
+        const candidates = (await this.listEntries()).filter(entry => {
             if (kinds && kinds.length > 0 && !kinds.includes(entry.kind))
                 return false;
             if (project !== undefined && entry.project !== project && entry.project !== '*')
                 return false;
             return entry.status === 'active' && entry.supersededBy === null;
-        };
-        const tags = kinds && kinds.length > 0 ? kinds.map(kind => `kind:${kind}`) : undefined;
-        const ranked = await this.ctx.rankedSearch.searchNodesRanked(query, tags, undefined, undefined, Math.max(limit * 3, 1));
-        const seen = new Set();
-        const results = [];
-        for (const hit of ranked) {
-            if (results.length >= limit)
-                break;
-            if (hit.entity.isLatest === false)
-                continue;
-            const parsed = parseEntity(hit.entity);
-            if (!parsed || !allowed(parsed) || seen.has(parsed.id))
-                continue;
-            seen.add(parsed.id);
-            results.push(parsed);
-        }
-        if (results.length >= limit)
-            return results;
-        const terms = query
-            .toLowerCase()
-            .split(/[^a-z0-9]+/)
-            .filter(term => term.length > 0);
-        if (terms.length === 0)
-            return results;
-        const candidates = (await this.listEntries()).filter(entry => allowed(entry) && !seen.has(entry.id));
-        const scored = candidates
+        });
+        return candidates
             .map(entry => {
             const haystack = `${entry.slug} ${entry.title} ${entry.description} ${entry.body} ${entry.scope}`.toLowerCase();
-            const hits = terms.filter(term => haystack.includes(term)).length;
-            return { entry, hits };
+            let distinct = 0;
+            let occurrences = 0;
+            for (const term of terms) {
+                let at = haystack.indexOf(term);
+                if (at === -1)
+                    continue;
+                distinct += 1;
+                while (at !== -1) {
+                    occurrences += 1;
+                    at = haystack.indexOf(term, at + term.length);
+                }
+            }
+            return { entry, distinct, occurrences };
         })
-            .filter(row => row.hits > 0)
-            .sort((a, b) => b.hits - a.hits || (a.entry.id < b.entry.id ? -1 : 1));
-        for (const row of scored) {
-            if (results.length >= limit)
-                break;
-            results.push(row.entry);
-        }
-        return results;
+            .filter(row => row.distinct > 0)
+            .sort((a, b) => b.distinct - a.distinct ||
+            b.occurrences - a.occurrences ||
+            (a.entry.id < b.entry.id ? -1 : a.entry.id > b.entry.id ? 1 : 0))
+            .slice(0, limit)
+            .map(row => row.entry);
     }
-    /**
-     * Rebuild the search index.
-     *
-     * memoryjs constructs `RankedSearch` without a `storageDir`, so its
-     * `buildIndex()` throws by design and its on-the-fly scoring path is always
-     * current. This is a deliberate no-op that expresses the caller's intent
-     * ("writes happened; make search see them") without a throw.
-     */
+    /** Search reads the tables directly, so there is no index to rebuild. */
     async buildIndex() {
         return;
     }
+    // ==================== Heuristics ====================
+    heuristicRecord(id) {
+        const entity = this.readEntity(id);
+        if (!entity || entity.entityType !== HEURISTIC_TYPE)
+            return null;
+        const record = entity.metadata.heuristicRecord;
+        return record ? { entity, record } : null;
+    }
+    allHeuristics() {
+        return this.entitiesOfType(HEURISTIC_TYPE)
+            .map(e => e.metadata.heuristicRecord)
+            .filter((r) => r !== undefined);
+    }
     /** Add an instruction line as a heuristic record. Returns its id. */
     async addHeuristic(input) {
-        return this.ctx.heuristicManager.add({
+        const id = `h_${randomUUID()}`;
+        const now = nowIso();
+        const record = {
+            id,
             condition: input.condition,
             action: input.action,
-            priority: input.priority,
-            initialConfidence: input.initialConfidence,
+            ...(input.priority !== undefined ? { priority: input.priority } : {}),
+            support: 0,
+            contradictions: 0,
+            confidence: clamp01(input.initialConfidence ?? 0.5),
+            createdAt: now,
+            lastUpdatedAt: now,
+        };
+        this.insertEntities([
+            {
+                name: id,
+                entityType: HEURISTIC_TYPE,
+                observations: [`[heuristic] ${input.condition} → ${input.action}`],
+                importance: 5,
+                createdAt: now,
+                metadata: { memoryType: HEURISTIC_TYPE, confidence: record.confidence, heuristicRecord: record },
+            },
+        ]);
+        return id;
+    }
+    updateHeuristic(id, mutate) {
+        const found = this.heuristicRecord(id);
+        if (!found)
+            return false;
+        const updated = { ...mutate(found.record), lastUpdatedAt: nowIso() };
+        this.updateEntity(id, {
+            metadata: { ...found.entity.metadata, confidence: updated.confidence, heuristicRecord: updated },
         });
+        return true;
     }
-    /** Reinforce an instruction's heuristic after a kept validation. */
+    /** Reinforce a heuristic after a kept validation: support up, confidence toward 1. */
     async reinforceHeuristic(id) {
-        const result = await this.ctx.heuristicManager.reinforce(id);
-        return result === 'updated';
+        return this.updateHeuristic(id, h => ({
+            ...h,
+            support: h.support + 1,
+            confidence: clamp01(h.confidence + (1 - h.confidence) * 0.1),
+        }));
     }
-    /** Record a contradiction against an instruction's heuristic on a drop. */
+    /** Record a contradiction against a heuristic on a drop: confidence down by a fifth. */
     async contradictHeuristic(id) {
-        const result = await this.ctx.heuristicManager.recordContradiction(id);
-        return result === 'updated';
+        return this.updateHeuristic(id, h => ({
+            ...h,
+            contradictions: h.contradictions + 1,
+            confidence: clamp01(h.confidence - h.confidence * 0.2),
+        }));
     }
-    /** Every heuristic conflict, for the merge step's conflict resolution. */
+    /**
+     * Every pair of heuristics whose conditions overlap by at least half of the
+     * larger token set but whose actions differ: a `contradiction` when one
+     * action negates the other, an `overlap` otherwise.
+     */
     async detectHeuristicConflicts() {
-        const conflicts = await this.ctx.heuristicManager.detectConflicts();
-        return conflicts.map(c => ({ a: c.a.id, b: c.b.id, kind: c.kind, reason: c.reason }));
+        const all = this.allHeuristics();
+        const conflicts = [];
+        for (let i = 0; i < all.length; i++) {
+            for (let j = i + 1; j < all.length; j++) {
+                const a = all[i];
+                const b = all[j];
+                const aTokens = conditionTokens(a.condition);
+                const bTokens = conditionTokens(b.condition);
+                let intersect = 0;
+                for (const t of aTokens)
+                    if (bTokens.has(t))
+                        intersect++;
+                const overlap = intersect / Math.max(aTokens.size, bTokens.size, 1);
+                if (overlap < 0.5 || a.action === b.action)
+                    continue;
+                const kind = isContradiction(a.action, b.action) ? 'contradiction' : 'overlap';
+                conflicts.push({
+                    a: a.id,
+                    b: b.id,
+                    kind,
+                    reason: kind === 'contradiction'
+                        ? `Heuristics "${a.id}" and "${b.id}" prescribe opposing actions on overlapping conditions`
+                        : `Heuristics "${a.id}" and "${b.id}" overlap on conditions but recommend different actions`,
+                });
+            }
+        }
+        return conflicts;
     }
     /** A heuristic by id, or null. */
     getHeuristic(id) {
-        const found = this.ctx.heuristicManager.get(id);
+        const found = this.heuristicRecord(id);
         if (!found)
             return null;
+        const { record } = found;
         return {
-            id: found.id,
-            condition: found.condition,
-            action: found.action,
-            support: found.support,
-            contradictions: found.contradictions,
-            confidence: found.confidence,
+            id: record.id,
+            condition: record.condition,
+            action: record.action,
+            support: record.support,
+            contradictions: record.contradictions,
+            confidence: record.confidence,
         };
     }
-    /** Store a procedure skill's steps. Returns the procedure id. */
+    // ==================== Procedures ====================
+    /** Store a procedure skill's steps. Additive: an existing id is never rewritten. */
     async putProcedure(input) {
-        const existing = await this.ctx.procedureManager.getProcedure(input.id);
-        if (existing)
-            return; // additive: never rewrite a stored procedure here
-        await this.ctx.procedureManager.addProcedure({
-            id: input.id,
-            name: input.name,
-            description: input.description,
-            steps: input.steps.map((step, index) => ({
-                order: index + 1,
-                action: step.action,
-                parameters: step.parameters,
-            })),
-            triggers: input.triggers,
-        });
+        if (this.readEntity(input.id))
+            return;
+        const steps = input.steps.map((step, index) => ({
+            order: index + 1,
+            action: step.action,
+            parameters: step.parameters,
+        }));
+        this.insertEntities([
+            {
+                name: input.id,
+                entityType: PROCEDURE_TYPE,
+                observations: encodeProcedure(input.description, steps, 0, 0),
+                tags: [PROCEDURE_TYPE, ...input.triggers.map(t => t.toLowerCase())],
+            },
+        ]);
     }
     /** A stored procedure, or null. */
     async getProcedure(id) {
-        const found = await this.ctx.procedureManager.getProcedure(id);
-        if (!found)
+        const entity = this.readEntity(id);
+        if (!entity || entity.entityType !== PROCEDURE_TYPE)
             return null;
+        const descriptionLines = [];
+        let successRate = 0;
+        let executionCount = 0;
+        let steps = null;
+        for (const obs of entity.observations) {
+            if (obs.startsWith(PROCEDURE_SUCCESS_RATE)) {
+                const n = Number(obs.slice(PROCEDURE_SUCCESS_RATE.length));
+                if (Number.isFinite(n))
+                    successRate = n;
+            }
+            else if (obs.startsWith(PROCEDURE_EXECUTION_COUNT)) {
+                const n = Number(obs.slice(PROCEDURE_EXECUTION_COUNT.length));
+                if (Number.isFinite(n))
+                    executionCount = n;
+            }
+            else if (obs.startsWith(PROCEDURE_STEPS)) {
+                steps = parseJson(obs.slice(PROCEDURE_STEPS.length), null);
+            }
+            else {
+                descriptionLines.push(obs);
+            }
+        }
         return {
-            id: found.id,
-            name: found.name,
-            description: found.description,
-            steps: found.steps.map(s => ({ order: s.order, action: s.action, parameters: s.parameters })),
-            triggers: [...(found.triggers ?? [])],
-            successRate: found.successRate ?? null,
-            executionCount: found.executionCount ?? null,
+            id,
+            // A procedure is named by its id; `putProcedure`'s `name` is accepted for the
+            // caller's convenience and not stored.
+            name: id,
+            description: descriptionLines.join('\n'),
+            steps: steps ?? this.loadStepEntities(id),
+            triggers: entity.tags.filter(t => t !== PROCEDURE_TYPE),
+            successRate,
+            executionCount,
         };
     }
-    /** Rank stored procedures against a context description. */
-    async matchProcedures(context, ids) {
-        const procedures = [];
-        for (const id of ids) {
-            const proc = await this.ctx.procedureManager.getProcedure(id);
-            if (proc)
-                procedures.push(proc);
+    /**
+     * Steps of a procedure the previous adapter wrote as one `procedure-step`
+     * row per step, linked by `has_step` relations, ordered by `[order]`.
+     */
+    loadStepEntities(procedureId) {
+        const steps = [];
+        for (const rel of this.relationsFrom(procedureId)) {
+            if (rel.relationType !== 'has_step')
+                continue;
+            const entity = this.readEntity(rel.toEntity);
+            if (!entity || entity.entityType !== PROCEDURE_STEP_TYPE)
+                continue;
+            const step = { order: 0, action: '', parameters: {} };
+            for (const obs of entity.observations) {
+                if (obs.startsWith(STEP_ORDER)) {
+                    const n = Number(obs.slice(STEP_ORDER.length));
+                    if (Number.isFinite(n))
+                        step.order = n;
+                }
+                else if (obs.startsWith(STEP_ACTION)) {
+                    step.action = obs.slice(STEP_ACTION.length);
+                }
+                else if (obs.startsWith(STEP_PARAM)) {
+                    const kv = decodeKeyValue(obs.slice(STEP_PARAM.length));
+                    if (kv && typeof kv[1] === 'string')
+                        step.parameters[kv[0]] = kv[1];
+                }
+            }
+            steps.push(step);
         }
-        if (procedures.length === 0)
+        return steps.sort((a, b) => a.order - b.order);
+    }
+    /**
+     * Rank stored procedures against a context description by token overlap
+     * between the context and the procedure's name and triggers.
+     */
+    async matchProcedures(context, ids) {
+        const contextTokens = tokenize(context, 2);
+        if (contextTokens.size === 0)
             return [];
-        const matches = await this.ctx.procedureManager.matchProcedure(context, procedures, 0.01);
-        return matches.map(m => ({
-            procedure: {
-                id: m.procedure.id,
-                name: m.procedure.name,
-                description: m.procedure.description,
-            },
-            score: m.score,
-        }));
+        const matches = [];
+        for (const id of ids) {
+            const proc = await this.getProcedure(id);
+            if (!proc)
+                continue;
+            const procTokens = tokenize(proc.name, 2);
+            for (const trigger of proc.triggers)
+                for (const t of tokenize(trigger, 2))
+                    procTokens.add(t);
+            if (procTokens.size === 0)
+                continue;
+            const score = jaccard(contextTokens, procTokens);
+            if (score >= 0.01) {
+                matches.push({ procedure: { id: proc.id, name: proc.name, description: proc.description }, score });
+            }
+        }
+        return matches.sort((a, b) => b.score - a.score);
     }
-    /** Telemetry only: record whether a procedure skill's attempt succeeded. */
-    async refineProcedure(id, succeeded, notes) {
-        const existing = await this.ctx.procedureManager.getProcedure(id);
-        if (!existing)
+    /** Telemetry only: fold whether a procedure skill's attempt succeeded into its success rate. */
+    async refineProcedure(id, succeeded, _notes) {
+        const proc = await this.getProcedure(id);
+        if (!proc)
             return;
-        await this.ctx.procedureManager.refineProcedure(id, { succeeded, notes });
+        const count = proc.executionCount ?? 0;
+        const baseline = count === 0 ? 0.5 : (proc.successRate ?? 0);
+        const rate = clamp01(baseline + PROCEDURE_SUCCESS_ALPHA * ((succeeded ? 1 : 0) - baseline));
+        this.updateEntity(id, { observations: encodeProcedure(proc.description, proc.steps, rate, count + 1) });
     }
-    /** Upsert a project's structured context (learner prompts only). */
+    // ==================== Project context ====================
+    projectContext(project) {
+        const entity = this.readEntity(`project-context-${project}`);
+        if (!entity || entity.entityType !== PROJECT_CONTEXT_TYPE)
+            return null;
+        const record = entity.metadata.projectContextRecord;
+        return record ? { entity, record } : null;
+    }
+    /** Upsert a project's structured context (learner prompts only). Arrays append and dedup. */
     async upsertProjectContext(project, input) {
-        await this.ctx.projectContextManager.upsert(project, input);
+        if (!project)
+            throw new Error('upsertProjectContext: project is required');
+        const now = nowIso();
+        const existing = this.projectContext(project);
+        const base = existing?.record ?? {
+            id: project,
+            timestamp: now,
+            projectId: project,
+            facts: [],
+            conventions: [],
+            commands: [],
+            glossary: [],
+            lastUpdated: now,
+        };
+        const glossary = new Map();
+        for (const g of [...(base.glossary ?? []), ...(input.glossary ?? [])])
+            glossary.set(g.term, g);
+        const merged = {
+            ...base,
+            facts: [...new Set([...(base.facts ?? []), ...(input.facts ?? [])])],
+            conventions: [...new Set([...(base.conventions ?? []), ...(input.conventions ?? [])])],
+            commands: base.commands ?? [],
+            glossary: [...glossary.values()],
+            lastUpdated: now,
+        };
+        const name = `project-context-${project}`;
+        if (existing) {
+            this.updateEntity(name, { metadata: { ...existing.entity.metadata, projectContextRecord: merged } });
+        }
+        else {
+            this.insertEntities([
+                {
+                    name,
+                    entityType: PROJECT_CONTEXT_TYPE,
+                    observations: [`[project_context] ${project}`],
+                    importance: 6,
+                    projectId: project,
+                    createdAt: now,
+                    metadata: { memoryType: PROJECT_CONTEXT_TYPE, confidence: 0.9, projectContextRecord: merged },
+                },
+            ]);
+        }
     }
-    /** The project's context rendered as prose, budgeted. */
-    async forContext(project, budgetChars) {
-        return this.ctx.projectContextManager.forContext(project, { budgetChars });
+    /** The project's context rendered as prose, cut to `budgetChars`. */
+    async forContext(project, budgetChars = 1500) {
+        const found = this.projectContext(project);
+        if (!found)
+            return '';
+        const rec = found.record;
+        const sections = [];
+        if (rec.facts.length > 0)
+            sections.push(`Facts:\n${rec.facts.map(f => `- ${f}`).join('\n')}`);
+        if (rec.conventions.length > 0) {
+            sections.push(`Conventions:\n${rec.conventions.map(c => `- ${c}`).join('\n')}`);
+        }
+        if (rec.commands.length > 0) {
+            sections.push(`Commands:\n${rec.commands.map(c => `- ${c.name}: ${c.command} — ${c.purpose}`).join('\n')}`);
+        }
+        if (rec.glossary.length > 0) {
+            sections.push(`Glossary:\n${rec.glossary.map(g => `- ${g.term}: ${g.definition}`).join('\n')}`);
+        }
+        const full = sections.join('\n\n');
+        if (full.length <= budgetChars)
+            return full;
+        return `${full.slice(0, Math.max(budgetChars - 1, 0))}…`;
+    }
+    // ==================== Decisions ====================
+    decisionRecord(id) {
+        const entity = this.readEntity(id);
+        if (!entity || entity.entityType !== DECISION_TYPE)
+            return null;
+        const record = entity.metadata.decisionRecord;
+        return record ? { entity, record } : null;
     }
     /** Propose a decision for an edit. Returns the decision id. */
     async proposeDecision(input) {
-        const record = await this.ctx.decisionManager.propose({
+        if (!input.context.trim())
+            throw new Error('proposeDecision: context is required');
+        if (!input.decision.trim())
+            throw new Error('proposeDecision: decision is required');
+        const id = `decision-${randomUUID()}`;
+        const now = nowIso();
+        const record = {
+            id,
+            timestamp: now,
+            status: 'proposed',
+            lifecycle: { status: 'proposed' },
             context: input.context,
             decision: input.decision,
-            // 4.5.0 takes arrays here, not strings.
-            alternatives: input.alternatives,
-            consequences: input.consequences,
-            sourceProjectId: input.sourceProjectId,
+            alternatives: [...input.alternatives],
+            consequences: [...input.consequences],
+            ...(input.sourceProjectId !== undefined ? { sourceProjectId: input.sourceProjectId } : {}),
+        };
+        this.insertEntities([
+            {
+                name: id,
+                entityType: DECISION_TYPE,
+                observations: [`[decision:proposed] ${input.context} → ${input.decision}`],
+                importance: 8,
+                createdAt: now,
+                metadata: { memoryType: DECISION_TYPE, confidence: 0.7, decisionRecord: record },
+            },
+        ]);
+        return id;
+    }
+    transitionDecision(id, from, to, extra) {
+        const found = this.decisionRecord(id);
+        if (!found || found.record.status !== from)
+            return false;
+        const updated = {
+            ...found.record,
+            status: to,
+            lifecycle: { status: to, ...extra },
+        };
+        this.updateEntity(id, {
+            observations: [`[decision:${to}] ${updated.context} → ${updated.decision}`],
+            metadata: { ...found.entity.metadata, decisionRecord: updated },
         });
-        return record.id;
+        return true;
     }
     /** Accept a proposed decision (a kept edit). */
     async acceptDecision(id) {
-        return (await this.ctx.decisionManager.accept(id)) === 'accepted';
+        return this.transitionDecision(id, 'proposed', 'accepted', { acceptedAt: nowIso() });
     }
     /** Reject a proposed decision (a dropped edit). */
     async rejectDecision(id, reason) {
-        return (await this.ctx.decisionManager.reject(id, reason)) === 'rejected';
+        if (!reason.trim())
+            throw new Error('rejectDecision: reason is required');
+        return this.transitionDecision(id, 'proposed', 'rejected', {
+            rejectedAt: nowIso(),
+            rejectedReason: reason,
+        });
     }
     /** Supersede an accepted decision with a newer one. */
     async supersedeDecision(id, by) {
-        return ((await this.ctx.decisionManager.supersede(id, by)) === 'superseded');
+        if (!this.decisionRecord(by))
+            return false;
+        return this.transitionDecision(id, 'accepted', 'superseded', {
+            supersededAt: nowIso(),
+            supersededBy: by,
+        });
     }
     /** A decision by id, or null. */
     getDecision(id) {
-        const found = this.ctx.decisionManager.get(id);
+        const found = this.decisionRecord(id);
         if (!found)
             return null;
+        const { record } = found;
         return {
-            id: found.id,
-            status: found.status,
-            context: found.context,
-            decision: found.decision,
-            alternatives: [...found.alternatives],
-            consequences: [...found.consequences],
+            id: record.id,
+            status: record.status,
+            context: record.context,
+            decision: record.decision,
+            alternatives: [...record.alternatives],
+            consequences: [...record.consequences],
         };
     }
-    /** A decision rendered as ADR markdown. Synchronous in memoryjs. */
+    /** A decision rendered as ADR markdown. Throws when the id is unknown. */
     exportDecisionAsAdr(id) {
-        return this.ctx.decisionManager.exportAsAdrMarkdown(id);
+        const found = this.decisionRecord(id);
+        if (!found)
+            throw new Error(`exportDecisionAsAdr: decision '${id}' not found`);
+        const rec = found.record;
+        const status = rec.status.charAt(0).toUpperCase() + rec.status.slice(1);
+        const lines = [`# ${rec.id}: ${firstLine(rec.decision)}`, '', `Date: ${rec.timestamp}`, '', '## Status', '', status];
+        if (rec.supersedes)
+            lines.push('', `Supersedes: ${rec.supersedes}`);
+        lines.push('', '## Context', '', rec.context, '', '## Decision', '', rec.decision);
+        if (rec.consequences.length > 0) {
+            lines.push('', '## Consequences', '');
+            for (const c of rec.consequences)
+                lines.push(`- ${c}`);
+        }
+        if (rec.alternatives.length > 0) {
+            lines.push('', '## Alternatives', '');
+            for (const a of rec.alternatives)
+                lines.push(`- ${a}`);
+        }
+        lines.push('');
+        return lines.join('\n');
     }
+    // ==================== Failures ====================
     /** Record a structured failure for the diagnose step. */
     async recordFailure(input) {
-        await this.ctx.failureManager.record({
+        for (const field of ['context', 'attempted', 'failure_mode', 'root_cause', 'applicability_hint']) {
+            if (!input[field].trim())
+                throw new Error(`recordFailure: ${field} is required`);
+        }
+        const id = `failure-${randomUUID()}`;
+        const now = nowIso();
+        const record = {
+            id,
+            timestamp: now,
             context: input.context,
             attempted: input.attempted,
             failure_mode: input.failure_mode,
             root_cause: input.root_cause,
+            ...(input.alternative_taken !== undefined ? { alternative_taken: input.alternative_taken } : {}),
             applicability_hint: input.applicability_hint,
-            ...(input.alternative_taken !== undefined
-                ? { alternative_taken: input.alternative_taken }
-                : {}),
-        });
-    }
-    /** Failures relevant to a task description, open only. */
-    async lookupFailures(taskContext, limit = 5) {
-        const records = await this.ctx.failureManager.lookupForTask(taskContext, {
-            limit,
-            status: 'open',
-        });
-        return records.map(r => ({
-            context: r.context,
-            attempted: r.attempted,
-            failure_mode: r.failure_mode,
-            root_cause: r.root_cause,
-        }));
+            lifecycle: { status: 'open' },
+        };
+        this.insertEntities([
+            {
+                name: id,
+                entityType: FAILURE_TYPE,
+                observations: [
+                    `[failure] ${input.context}: ${input.failure_mode}`,
+                    `[root_cause] ${input.root_cause}`,
+                    `[applicability] ${input.applicability_hint}`,
+                ],
+                importance: 7,
+                createdAt: now,
+                metadata: { memoryType: FAILURE_TYPE, confidence: 0.9, failureRecord: record },
+            },
+        ]);
     }
     /**
-     * Store a reflection: a `learned-reflection` entry plus a memoryjs reflection
-     * record.
+     * Open failures relevant to a task description, best first: each
+     * whitespace-separated token of the task scores 3 in the applicability
+     * hint, 2 in the context and 1 in the attempted action.
+     */
+    async lookupFailures(taskContext, limit = 5) {
+        const tokens = taskContext.toLowerCase().split(/\s+/).filter(t => t.length > 1);
+        if (tokens.length === 0)
+            return [];
+        return this.entitiesOfType(FAILURE_TYPE)
+            .map(e => e.metadata.failureRecord)
+            .filter((r) => r !== undefined && r.lifecycle?.status !== 'resolved')
+            .map(rec => {
+            const hint = rec.applicability_hint.toLowerCase();
+            const ctx = rec.context.toLowerCase();
+            const att = rec.attempted.toLowerCase();
+            let score = 0;
+            for (const t of tokens) {
+                if (hint.includes(t))
+                    score += 3;
+                if (ctx.includes(t))
+                    score += 2;
+                if (att.includes(t))
+                    score += 1;
+            }
+            return { rec, score };
+        })
+            .filter(s => s.score > 0)
+            .sort((a, b) => b.score - a.score)
+            .slice(0, limit)
+            .map(({ rec }) => ({
+            context: rec.context,
+            attempted: rec.attempted,
+            failure_mode: rec.failure_mode,
+            root_cause: rec.root_cause,
+        }));
+    }
+    // ==================== Reflections ====================
+    /**
+     * Store a reflection: a `learned-reflection` entry plus a reflection record.
      *
-     * memoryjs's own dedup hash covers only the scope and the sorted evidence, so
-     * two different conclusions over the same evidence would collapse into one.
-     * The adapter therefore keeps its own hash over
-     * `(scope, project, sorted evidence, NFKC summary)`: an exact match is reported
-     * as `duplicate`, and a same-evidence different-summary reflection gets the
-     * entry's own name appended to the evidence so the two records stay distinct.
-     *
-     * Additive only: a duplicate returns the existing entry's name and writes
-     * nothing.
+     * The dedup hash covers `(scope, project, sorted evidence, NFKC summary)`:
+     * an exact match is reported as `duplicate` and writes nothing, while a
+     * same-evidence different-summary reflection is stored as its own entry
+     * and record. Additive only.
      */
     async createReflection(input) {
         const hash = reflectionHash(input);
-        const existing = await this.findReflectionByHash(hash);
+        const existing = this.findReflectionByHash(hash);
         if (existing)
             return { duplicate: true, id: existing };
         const evidence = [...input.evidence];
@@ -864,7 +1249,7 @@ export class KnowledgeStore {
             sources: input.sources ?? [],
             status: input.status ?? 'candidate',
             runId: input.runId ?? '',
-            createdAt: new Date().toISOString(),
+            createdAt: nowIso(),
             supersededBy: null,
             validation: null,
             heuristicIds: [],
@@ -876,69 +1261,86 @@ export class KnowledgeStore {
             const taskId = input.attemptTasks?.find(a => a.id === attempt)?.taskId ?? 0;
             await this.citeAttempt(id, attempt, taskId, entry.runId);
         }
-        // A same-evidence different-summary reflection is stored with the entry name
-        // appended to the evidence so memoryjs's content hash does not collapse it.
-        const chosenEvidence = (await this.findReflectionByEvidence(input.scope, evidence))
-            ? [...evidence, id]
-            : evidence;
-        await this.ctx.reflectionManager.create({
-            scope: input.scope,
-            evidence: chosenEvidence,
-            summary: input.summary,
-            generalization_confidence: CONFIDENCE_SCORE[input.confidence],
-            sourceProjectId: input.project,
-        });
+        this.insertReflectionRecord(input.scope, input.project, evidence, input.summary, input.confidence);
         return { duplicate: false, id };
     }
     /**
-     * Write the memoryjs reflection record that accompanies a
-     * `learned-reflection` entry written by someone else (e.g.
-     * `knowledge-db.insertKnowledgeEntry`).
-     *
-     * memoryjs's content hash covers only the scope and the sorted evidence, so a
-     * second record over the same evidence would otherwise collapse into the
-     * first. The entry id is appended to the evidence whenever an existing record
-     * already claims that set.
+     * Write the reflection record that accompanies a `learned-reflection` entry
+     * written by someone else (e.g. `knowledge-db.insertKnowledgeEntry`).
      */
     async recordReflectionRecord(input) {
         const evidence = input.evidence.length > 0 ? [...input.evidence] : [input.entryId];
-        const chosenEvidence = (await this.findReflectionByEvidence(input.scope, evidence))
-            ? [...evidence, input.entryId]
-            : evidence;
-        await this.ctx.reflectionManager.create({
-            scope: input.scope,
-            evidence: chosenEvidence,
-            summary: input.summary,
-            generalization_confidence: CONFIDENCE_SCORE[input.confidence],
-            sourceProjectId: input.project,
-        });
+        this.insertReflectionRecord(input.scope, input.project, evidence, input.summary, input.confidence);
     }
-    /** Find a learned-reflection entry carrying this adapter hash. */
-    async findReflectionByHash(hash) {
-        const graph = await this.ctx.storage.loadGraph();
-        const hit = graph.entities.find((e) => e.entityType === REFLECTION_TYPE &&
-            (e.observations ?? []).includes(`${OBS.reflectionHash}${hash}`));
+    insertReflectionRecord(scope, project, evidence, summary, confidence) {
+        const id = `reflection-${randomUUID()}`;
+        const now = nowIso();
+        const record = {
+            id,
+            timestamp: now,
+            scope,
+            summary,
+            evidence: [...evidence],
+            generalization_confidence: CONFIDENCE_SCORE[confidence],
+            sourceProjectId: project,
+        };
+        this.insertEntities([
+            {
+                name: id,
+                entityType: REFLECTION_RECORD_TYPE,
+                observations: [`[reflection:${scope}] ${summary}`],
+                importance: 5,
+                createdAt: now,
+                metadata: {
+                    memoryType: REFLECTION_RECORD_TYPE,
+                    confidence: record.generalization_confidence,
+                    reflectionRecord: record,
+                },
+            },
+        ]);
+    }
+    /** Find a learned-reflection entry carrying this dedup hash. */
+    findReflectionByHash(hash) {
+        const marker = `${OBS.reflectionHash}${hash}`;
+        const hit = this.entitiesOfType(REFLECTION_TYPE).find(e => e.observations.includes(marker));
         return hit?.name ?? null;
     }
-    /** Find a memoryjs reflection record over the same scope and evidence set. */
-    async findReflectionByEvidence(scope, evidence) {
-        const sorted = [...evidence].sort();
-        const records = await this.ctx.reflectionManager.list({ includeArchived: true });
-        const hit = records.find(r => r.scope === scope && [...r.evidence].sort().join('\u0000') === sorted.join('\u0000'));
-        return hit?.id ?? null;
-    }
-    /** Reflections currently readable, oldest first. */
+    /** Reflection records, oldest first. */
     async listReflections() {
-        const records = await this.ctx.reflectionManager.list();
-        return records.map(r => ({
-            id: r.id,
-            scope: r.scope,
-            summary: r.summary,
-            evidence: [...r.evidence],
-        }));
+        return this.entitiesOfType(REFLECTION_RECORD_TYPE)
+            .map(e => e.metadata.reflectionRecord)
+            .filter((r) => r !== undefined)
+            .map(r => ({ id: r.id, scope: r.scope, summary: r.summary, evidence: [...r.evidence] }));
     }
 }
-/** The adapter hash over `(scope, project, sorted evidence, NFKC summary)`. */
+function encodeProcedure(description, steps, successRate, executionCount) {
+    const observations = [];
+    if (description.trim() !== '')
+        observations.push(description);
+    observations.push(`${PROCEDURE_SUCCESS_RATE}${successRate}`);
+    observations.push(`${PROCEDURE_EXECUTION_COUNT}${executionCount}`);
+    observations.push(`${PROCEDURE_STEPS}${JSON.stringify(steps)}`);
+    return observations;
+}
+/** `"key"=<json>` as the previous adapter wrote step parameters. */
+function decodeKeyValue(body) {
+    if (!body.startsWith('"'))
+        return null;
+    let i = 1;
+    while (i < body.length && body[i] !== '"')
+        i += body[i] === '\\' ? 2 : 1;
+    if (i >= body.length || body[i + 1] !== '=')
+        return null;
+    try {
+        const key = JSON.parse(body.slice(0, i + 1));
+        const value = JSON.parse(body.slice(i + 2));
+        return typeof key === 'string' ? [key, value] : null;
+    }
+    catch {
+        return null;
+    }
+}
+/** The dedup hash over `(scope, project, sorted evidence, NFKC summary)`. */
 function reflectionHash(input) {
     const evidence = [...input.evidence].sort().join('|');
     const summary = input.summary.normalize('NFKC');
@@ -961,10 +1363,7 @@ function firstLine(text) {
     const line = text.split('\n')[0]?.trim() ?? '';
     return line.length > 0 ? line : text.trim().slice(0, 80);
 }
-/**
- * Open the knowledge store. Construction is synchronous; memoryjs loads the
- * graph lazily and the constructor starts no timers.
- */
+/** Open the knowledge store. Synchronous; starts no timers. */
 export function openKnowledgeStore(options = {}) {
     return KnowledgeStore.create(options.dbPath ?? getKnowledgeDbPath());
 }

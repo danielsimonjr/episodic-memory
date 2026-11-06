@@ -68,7 +68,7 @@ export interface ReportModel {
  * Build the report for one run.
  *
  * Async because the store-backed halves (`kept`, `pending`, `reflections`) come
- * from memoryjs, whose manager methods return promises.
+ * from the knowledge store, whose methods return promises.
  */
 export declare function buildReport(dbs: LearnDbs, runId: string): Promise<ReportModel>;
 /** The latest run id, for a CLI that was given no `--run`. */

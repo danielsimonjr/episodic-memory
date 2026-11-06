@@ -15,7 +15,7 @@ import { safeRmSync, suppressConsole } from '../test-utils.js';
 
 suppressConsole();
 
-/** A temp directory whose real path contains no `..` segment (memoryjs rejects those). */
+/** A temp directory whose real path contains no `..` segment. */
 function makeTempDir(prefix: string): string {
   return fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), prefix)));
 }
@@ -85,7 +85,7 @@ function fullEntry(over: Partial<KnowledgeEntry> = {}): KnowledgeEntry {
   } as KnowledgeEntry;
 }
 
-describe('knowledge store (memoryjs adapter)', () => {
+describe('knowledge store (native sqlite)', () => {
   let configDir: string;
   let store: KnowledgeStore | null = null;
   const savedConfigDir = process.env.EPISODIC_MEMORY_CONFIG_DIR;
@@ -123,7 +123,7 @@ describe('knowledge store (memoryjs adapter)', () => {
     expect(got?.version).toBe(1);
   });
 
-  it('MEMORY_STORAGE_TYPE=jsonl and MEMORY_OBSERVATION_DEDUP=true in the env still yield a SQLite store, two near-identical body lines both persist, semanticSearch is null, and the env is restored', async () => {
+  it('ignores MEMORY_* environment variables, keeps two near-identical body lines, and leaves the env untouched', async () => {
     const saved: Record<string, string | undefined> = {};
     const set = (key: string, value: string) => {
       saved[key] = process.env[key];
@@ -135,9 +135,6 @@ describe('knowledge store (memoryjs adapter)', () => {
 
     try {
       store = openKnowledgeStore();
-      expect(store.storageConstructorName).toBe('SQLiteStorage');
-      expect(store.semanticSearchIsNull).toBe(true);
-
       const body = [
         'alpha burrows at night and returns before dawn',
         'alpha burrows at night and returns before dawn!',
@@ -150,7 +147,7 @@ describe('knowledge store (memoryjs adapter)', () => {
       expect(got?.body.split('\n')[0]).toBe('alpha burrows at night and returns before dawn');
       expect(got?.body.split('\n')[1]).toBe('alpha burrows at night and returns before dawn!');
 
-      // The adapter scopes and restores every MEMORY_* key it touches.
+      // The store is plain SQLite: it reads no MEMORY_* key and writes none.
       expect(process.env.MEMORY_STORAGE_TYPE).toBe('jsonl');
       expect(process.env.MEMORY_OBSERVATION_DEDUP).toBe('true');
       expect(process.env.MEMORY_EMBEDDING_PROVIDER).toBe('local');
@@ -162,14 +159,12 @@ describe('knowledge store (memoryjs adapter)', () => {
     }
   });
 
-  it('a write through one context is not visible to a context opened earlier and is visible to one opened afterwards', async () => {
+  it('a write through one handle is visible at once to every other open handle', async () => {
     store = openKnowledgeStore();
     await store.putEntry(fullEntry());
 
     const earlier = openKnowledgeStore();
     try {
-      // Load `earlier`'s cache before the other context writes. memoryjs serves
-      // every read from a per-context snapshot loaded once, on first use.
       expect(await earlier.getEntry('learned:skill:proj-a:alpha:v1')).not.toBeNull();
 
       const later = openKnowledgeStore();
@@ -181,14 +176,9 @@ describe('knowledge store (memoryjs adapter)', () => {
             title: 'Beta skill',
           })
         );
-        expect(await earlier.getEntry('learned:skill:proj-a:beta:v1')).toBeNull();
-
-        const after = openKnowledgeStore();
-        try {
-          expect((await after.getEntry('learned:skill:proj-a:beta:v1'))?.title).toBe('Beta skill');
-        } finally {
-          after.close();
-        }
+        // Reads go straight to the database, so there is no per-handle snapshot to go stale.
+        expect((await earlier.getEntry('learned:skill:proj-a:beta:v1'))?.title).toBe('Beta skill');
+        expect((await store.getEntry('learned:skill:proj-a:beta:v1'))?.title).toBe('Beta skill');
       } finally {
         later.close();
       }
@@ -434,7 +424,7 @@ describe('knowledge store (memoryjs adapter)', () => {
     expect(proc?.name).toBe('proc:proj-a:alpha');
     expect(proc?.steps.map(s => s.action)).toEqual(['search', 'read']);
     expect(proc?.steps.map(s => s.order)).toEqual([1, 2]);
-    // memoryjs stores procedure triggers lower-cased.
+    // Procedure triggers are stored lower-cased.
     expect(proc?.triggers).toContain('use when the user asks about alpha');
     expect(proc?.description).toBe('Use when the user asks about alpha');
 
@@ -488,15 +478,121 @@ describe('knowledge store (memoryjs adapter)', () => {
     expect(store.redactPii('path: /archive/a.jsonl')).toBe('path: /archive/a.jsonl');
   });
 
-  it('types.ts has no import from @danielsimonjr/memoryjs', () => {
+  it('types.ts has only type imports', () => {
     const sourceText = fs.readFileSync(path.resolve(__dirname, '../../src/learn/types.ts'), 'utf-8');
-    expect(sourceText).not.toContain('@danielsimonjr/memoryjs');
     const importLines = sourceText
       .split('\n')
       .map(line => line.trim())
       .filter(line => /^import\b/.test(line));
     // Only type imports, so the compiled module has no runtime dependencies.
     for (const line of importLines) expect(line.startsWith('import type ')).toBe(true);
+  });
+
+  it('a readonly open never creates the file, reads what a writable handle wrote, and refuses writes', async () => {
+    const dbPath = getKnowledgeDbPath();
+    expect(() => openKnowledgeStore({ dbPath, readonly: true })).toThrow();
+    expect(fs.existsSync(dbPath)).toBe(false);
+
+    store = openKnowledgeStore();
+    await store.putEntry(fullEntry({ status: 'active' }));
+
+    const ro = openKnowledgeStore({ dbPath, readonly: true });
+    try {
+      expect((await ro.getEntry('learned:skill:proj-a:alpha:v1'))?.title).toBe('Alpha skill');
+      expect((await ro.search('alpha', { kinds: ['skill'], project: 'proj-a' })).map(e => e.id)).toEqual([
+        'learned:skill:proj-a:alpha:v1',
+      ]);
+      await expect(ro.setStatus('learned:skill:proj-a:alpha:v1', 'retired')).rejects.toThrow(/readonly/i);
+    } finally {
+      ro.close();
+    }
+    expect((await store.getEntry('learned:skill:proj-a:alpha:v1'))?.status).toBe('active');
+  });
+
+  it('createReflection writes nothing when the entry cannot be written', async () => {
+    store = openKnowledgeStore();
+    // A non-learned row under the entry's name makes `putEntry` throw after the
+    // exchange reference rows were inserted in the same transaction.
+    await store.putProcedure({
+      id: 'learned:reflection:proj-a:already-taken:v1',
+      name: 'x',
+      description: 'occupies the entry name',
+      steps: [],
+      triggers: [],
+    });
+    await expect(
+      store.createReflection({
+        scope: 'project',
+        project: 'proj-a',
+        evidence: ['exchange:ex1'],
+        sources: [source()],
+        summary: 'already taken',
+        confidence: 'low',
+        attempts: [3],
+        slug: 'already-taken',
+      })
+    ).rejects.toThrow();
+    // The exchange reference inserted before the failure was rolled back with it.
+    expect(await store.getRawEntity('exchange:ex1')).toBeNull();
+    expect(await store.getRawEntity('attempt:3')).toBeNull();
+    expect(await store.listReflections()).toEqual([]);
+  });
+
+  it('upsertProjectContext heals a project-context row that carries no record', async () => {
+    store = openKnowledgeStore();
+    // The previous adapter wrote the row but never persisted its record.
+    const raw = new Database(getKnowledgeDbPath());
+    try {
+      raw
+        .prepare(
+          `INSERT INTO entities (name, entityType, observations, createdAt, lastModified, projectId, agentMetadata)
+           VALUES (?, 'project_context', '["[project_context] proj-a"]', ?, ?, 'proj-a', ?)`
+        )
+        .run('project-context-proj-a', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z', '{"memoryType":"project_context"}');
+    } finally {
+      raw.close();
+    }
+    expect(await store.forContext('proj-a')).toBe('');
+    await store.upsertProjectContext('proj-a', { facts: ['f1'], glossary: [{ term: 'alpha', definition: 'first' }] });
+    await store.upsertProjectContext('proj-a', { facts: ['f1', 'f2'] });
+    expect(await store.forContext('proj-a')).toBe('Facts:\n- f1\n- f2\n\nGlossary:\n- alpha: first');
+  });
+
+  it('opening a file left by the previous adapter drops its FTS shadow and adds missing columns', async () => {
+    const dbPath = getKnowledgeDbPath();
+    fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+    const old = new Database(dbPath);
+    try {
+      old.exec(`
+        CREATE TABLE entities (
+          name TEXT PRIMARY KEY, entityType TEXT NOT NULL, observations TEXT NOT NULL,
+          createdAt TEXT NOT NULL, lastModified TEXT NOT NULL
+        );
+        CREATE TABLE relations (
+          fromEntity TEXT NOT NULL, toEntity TEXT NOT NULL, relationType TEXT NOT NULL,
+          createdAt TEXT NOT NULL, lastModified TEXT NOT NULL,
+          PRIMARY KEY (fromEntity, toEntity, relationType)
+        );
+        CREATE VIRTUAL TABLE entities_fts USING fts5(name, entityType, observations, content='entities', content_rowid='rowid');
+        CREATE TRIGGER entities_ai AFTER INSERT ON entities BEGIN
+          INSERT INTO entities_fts(rowid, name, entityType, observations) VALUES (NEW.rowid, NEW.name, NEW.entityType, NEW.observations);
+        END;
+      `);
+    } finally {
+      old.close();
+    }
+    store = openKnowledgeStore();
+    await store.putEntry(fullEntry({ status: 'active' }));
+    expect((await store.getBySlug('skill', 'proj-a', 'alpha'))?.title).toBe('Alpha skill');
+    const ro = new Database(dbPath, { readonly: true });
+    try {
+      const names = (ro.prepare("SELECT name FROM sqlite_master WHERE name LIKE 'entities_%'").all() as Array<{ name: string }>).map(r => r.name);
+      expect(names.filter(n => n === 'entities_fts' || n.startsWith('entities_a'))).toEqual([]);
+      const columns = (ro.prepare('PRAGMA table_info(entities)').all() as Array<{ name: string }>).map(c => c.name);
+      expect(columns).toEqual(expect.arrayContaining(['projectId', 'isLatest', 'rootEntityName', 'agentMetadata']));
+    } finally {
+      ro.close();
+    }
   });
 
   it('the learning trace path lives beside knowledge.db under learned/', () => {

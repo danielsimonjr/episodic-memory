@@ -2,7 +2,7 @@
  * The learning trace: runs, tasks and attempts, in `learning.sqlite`.
  *
  * `learning.sqlite` is the plugin's own database (spec §5.3), beside the
- * memoryjs knowledge store under `learned/`. This module owns the three
+ * knowledge store (`knowledge.db`) under `learned/`. This module owns the three
  * `learning_*` tables; `learning-store.ts` owns the file and calls
  * `ensureLearningSchema` from `migrateLearningSchema`.
  *

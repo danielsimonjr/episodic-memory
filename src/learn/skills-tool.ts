@@ -1,14 +1,14 @@
 /**
  * The `skills` MCP tool: read active learned skills out of the knowledge store.
  *
- * This module holds the memoryjs-backed half of the tool on purpose.
+ * This module holds the store-backed half of the tool on purpose.
  * `mcp-tools.ts` imports it *inside* the `skills` branch, so a server with the
- * flag off never loads memoryjs — a session that never asks for a skill pays
- * nothing for the feature.
+ * flag off never opens the knowledge store — a session that never asks for a
+ * skill pays nothing for the feature.
  *
- * It opens a store per call and closes it in `finally`: memoryjs serves every
- * read from an in-memory cache loaded once per context, so a module-level
- * context would keep answering from whatever was on disk when the server
+ * It opens a store per call and closes it in `finally`, so a long-running
+ * server never holds a handle on `knowledge.db` between calls and a `learn`
+ * run in another process is never blocked by a server that
  * started and a `learn` run later in the session would be invisible.
  */
 
@@ -103,7 +103,7 @@ async function activeSkills(store: KnowledgeStore, project: string): Promise<Kno
  * The tool's text. Opens nothing with the flag off.
  *
  * The store file check comes before construction: an `openKnowledgeStore()`
- * would create `knowledge.db` (memoryjs writes on open), and a read-only tool
+ * would create `knowledge.db` (a writable open creates its tables), and a read-only tool
  * call must never be what creates the learned directory.
  */
 export async function skillsToolText(params: SkillsToolParams): Promise<string> {
@@ -117,7 +117,8 @@ export async function skillsToolText(params: SkillsToolParams): Promise<string> 
   const project = params.project ?? projectKeyFromCwd(process.cwd());
   const limit = params.limit ?? 10;
 
-  const store = openKnowledgeStore({ dbPath });
+  // Read-only: the tool never creates tables, migrates columns or writes a row.
+  const store = openKnowledgeStore({ dbPath, readonly: true });
   try {
     const redact: RedactFn = text => store.redactPii(redactSecrets(text));
 

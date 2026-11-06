@@ -3,7 +3,7 @@
  *
  * This module imports nothing on purpose: the SessionStart hook loads it on its
  * fast path, next to `better-sqlite3` and the small `dist/` modules, and must not
- * pull in transformers, the SDK or memoryjs to read one environment variable.
+ * pull in transformers, the SDK or the knowledge store to read one environment variable.
  */
 const TRUTHY = new Set(['1', 'true', 'yes', 'on']);
 const PREFIX = 'EPISODIC_MEMORY_LEARN_';
@@ -50,7 +50,7 @@ export function learnEnabled() {
  * What the `skills` tool says with the flag off.
  *
  * Lives here, not in `skills-tool.ts`, so `mcp-tools.ts` can answer before it
- * imports that module. Importing `skills-tool` is what loads memoryjs.
+ * imports that module. Importing `skills-tool` is what opens the knowledge store.
  */
 export const LEARN_OFF_MESSAGE = 'Learning is off. Learned skills appear here once EPISODIC_MEMORY_LEARN=1 is set and the episodic-memory learn CLI has written some.';
 /**

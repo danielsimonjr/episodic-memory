@@ -2,7 +2,7 @@
  * Render and persist the learned block for every project that has active
  * entries, plus one shared `*` row.
  *
- * This module is on the `learn` CLI's slow path only: it needs the memoryjs
+ * This module is on the `learn` CLI's slow path only: it needs the knowledge
  * store to list active entries, and it writes `learning.sqlite`. The hook never
  * imports it — it reads the rows this function wrote (spec §6.3).
  */

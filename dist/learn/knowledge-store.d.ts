@@ -1,40 +1,28 @@
 /**
- * The `@danielsimonjr/memoryjs` adapter.
+ * The knowledge store: learned entries, their citations and the records the
+ * learner keeps beside them (heuristics, procedures, decisions, failures,
+ * reflections, project context), on better-sqlite3 directly.
  *
- * This is the ONLY module in the repository that imports memoryjs, and it
- * imports from the package root only (the repo's `tsconfig` uses node10 module
- * resolution, which ignores the package `exports` map, so a subpath import such
- * as `@danielsimonjr/memoryjs/sqlite` does not typecheck).
+ * Every other module sees `KnowledgeEntry` from `./types.js`; this module is
+ * the only one that knows how an entry is laid out on disk.
  *
- * Every other module sees `KnowledgeEntry` from `./types.js`.
+ * On-disk layout. Two tables, `entities` and `relations`, in the shape the
+ * previous adapter (`@danielsimonjr/memoryjs` 4.x) created them, so a
+ * `knowledge.db` written before this module can be opened by it unchanged:
  *
- * Two invariants matter more than anything else here:
+ * - a learned entry is one `entities` row per version, named
+ *   `learned:<kind>:<project>:<slug>:v<n>`, with its fields as `key: value`
+ *   observation lines and `kind:` / `project:` / `trust:` / `status:` tags;
+ * - an `exchange:<id>` or `attempt:<id>` reference row is cited through a
+ *   `cites` relation;
+ * - every other record is one row whose typed payload lives in the
+ *   `agentMetadata` JSON column (`heuristicRecord`, `decisionRecord`, ...).
  *
- * 1. **Environment scoping.** memoryjs reads a large family of `MEMORY_*`
- *    variables at construction and gives them precedence over explicit
- *    options. `MEMORY_STORAGE_TYPE=jsonl` would silently turn this store into a
- *    JSONL graph; `MEMORY_OBSERVATION_DEDUP=true` would fuzzy-drop near-duplicate
- *    observation lines (which is to say, body lines that differ only in their
- *    citation marks); the default embedding provider downloads a model from the
- *    network. So construction happens inside `withScopedMemoryEnv`, which saves
- *    and removes every `^MEMORY_` key, sets exactly the two keys this store
- *    needs, constructs, and restores in `finally`.
- *
- * 2. **Nothing auto-constructing.** `ctx.hybridSearchManager` always builds a
- *    manager, so it is never touched. `ctx.semanticSearch` is read once, only to
- *    assert it is null under `MEMORY_EMBEDDING_PROVIDER=none`. The decay,
- *    consolidation, archive, compression and semantic-forget managers are never
- *    exposed.
- *
- * Every memoryjs write and search call returns a Promise in 4.5.0, so every
- * store method that touches the store is `async`.
+ * Reads go straight to SQLite, so a write through one handle is visible to
+ * every other open handle at once. Construction is synchronous and starts no
+ * timers; the methods stay `async` because callers already await them.
  */
-import type { Entity } from '@danielsimonjr/memoryjs';
 import type { Confidence, KnowledgeEntry, KnowledgeKind, KnowledgeStatus, ProcedureStepSpec, SourceRef, TrustLevel, ValidationRecord } from './types.js';
-/** Thrown when memoryjs does not come up the way this adapter requires. */
-export declare class KnowledgeStoreMisconfigured extends Error {
-    constructor(message: string);
-}
 export interface SearchOptions {
     kinds?: KnowledgeKind[];
     /** A project key, or `*`. Rows for this project and `*` are both returned. */
@@ -104,14 +92,46 @@ export interface DecisionView {
     alternatives: string[];
     consequences: string[];
 }
+export interface ProcedureStep {
+    order: number;
+    action: string;
+    parameters: Record<string, string>;
+}
+export interface ProcedureView {
+    id: string;
+    name: string;
+    description: string;
+    steps: ProcedureStep[];
+    triggers: string[];
+    successRate: number | null;
+    executionCount: number | null;
+}
+/** One `entities` row, decoded. */
+export interface StoredEntity {
+    name: string;
+    entityType: string;
+    observations: string[];
+    tags: string[];
+    importance: number | null;
+    createdAt: string;
+    lastModified: string;
+    projectId: string | null;
+    /** Row write counter, unrelated to the logical entry version. */
+    version: number;
+    parentEntityName: string | null;
+    rootEntityName: string | null;
+    isLatest: boolean;
+    supersededBy: string | null;
+    metadata: Record<string, unknown>;
+}
 /**
  * Parse an entity back into the `KnowledgeEntry` shape.
  *
  * The logical `version` comes from the `version:` observation (and, failing
- * that, from the `:v<n>` suffix of the name), never from `Entity.version`,
- * which memoryjs increments on every OCC-guarded write.
+ * that, from the `:v<n>` suffix of the name), never from the row's write
+ * counter.
  */
-export declare function parseEntity(entity: Entity): KnowledgeEntry | null;
+export declare function parseEntity(entity: StoredEntity): KnowledgeEntry | null;
 /** `learned:<kind>:<project>:<slug>:v<n>`. */
 export declare function entryName(kind: KnowledgeKind, project: string, slug: string, version: number): string;
 /** `learned:<kind>:<project>:<slug>:v1`, the root of the version chain. */
@@ -119,41 +139,53 @@ export declare function rootName(kind: KnowledgeKind, project: string, slug: str
 /** `proc:<project>:<slug>`, the id a procedure skill's record carries. */
 export declare function procedureIdFor(project: string, slug: string): string;
 export declare class KnowledgeStore {
-    private readonly ctx;
-    private readonly pii;
+    private readonly db;
     private closed;
-    /** The concrete storage class memoryjs built. `SQLiteStorage` means sqlite. */
-    readonly storageConstructorName: string;
-    /** Asserted once, at construction. */
-    readonly semanticSearchIsNull: boolean;
     private constructor();
     /**
-     * Constructing is synchronous (memoryjs loads the graph lazily and the
-     * constructor starts no timers), but every method that touches the store is
-     * async.
+     * Open the store at `dbPath`, creating the file and its tables when absent.
+     *
+     * `readonly` opens an existing file without any DDL, for callers such as the
+     * `skills` tool that must never be the ones to create or migrate the store;
+     * writes through such a handle throw.
      */
-    static create(dbPath: string): KnowledgeStore;
-    /** Release the underlying storage handle. Idempotent. */
+    static create(dbPath: string, options?: {
+        readonly?: boolean;
+    }): KnowledgeStore;
+    /** Release the database handle. Idempotent. */
     close(): void;
     /** PII redaction, for `knowledge-db` and the gates to reuse. */
     redactPii(text: string): string;
+    /**
+     * Run a read-modify-write under the database write lock, so a concurrent
+     * process cannot slip a write between the read and the update. Nested calls
+     * become savepoints.
+     */
+    private write;
+    private readEntity;
+    private entitiesOfType;
+    /** Every learned entity, in insertion order. */
+    private learnedEntities;
+    /** Insert the rows that do not exist yet. An existing name is left as it is. */
+    private insertEntities;
+    /** Overwrite the mutable columns of one row and bump its write counter. */
+    private updateEntity;
+    /** Insert the relations that do not exist yet. Both endpoints must exist. */
+    private insertRelations;
+    private relationsFrom;
     /** The raw entity, for tests and for `knowledge-db`'s duplicate check. */
     getRawEntity(name: string): Promise<RawEntityView | null>;
     /**
      * Write one entity for one version, plus the reference entities and `cites`
-     * relations it needs. References are created first: `createRelations`
-     * validates that both endpoints exist.
+     * relations it needs, in one transaction. A learned entry that already exists
+     * under this name is left untouched; any other row under it is an error.
      */
     putEntry(entry: KnowledgeEntry, reflectionHash?: string): Promise<void>;
-    /** Create an `exchange:<id>` reference entity when it is absent. */
-    private ensureExchangeRefs;
+    private putEntrySync;
     /** Create an `attempt:<id>` reference entity, citing it from `from`. */
     citeAttempt(from: string, attemptId: number, taskId: number, runId: string): Promise<void>;
-    /**
-     * Replace the observation set and the tags of an existing entity. The
-     * `expectedVersion` is read immediately before the write: memoryjs's
-     * `Entity.version` is unrelated to the logical entry version.
-     */
+    private citeAttemptSync;
+    /** Re-render the observations, tags and lifecycle of one entry after `mutate`. */
     private rewriteEntity;
     /** Set `supersededBy` and clear `isLatest` on the older version. */
     supersede(olderName: string, newerName: string): Promise<void>;
@@ -162,8 +194,8 @@ export declare class KnowledgeStore {
     /** Set the trust level (observation and tag) of one entry. */
     setTrust(name: string, trust: TrustLevel): Promise<void>;
     /**
-     * Activate one entry in a single guarded write: status, trust and validation
-     * together, so a rejected write cannot leave two of the three applied.
+     * Activate one entry in a single write: status, trust and validation
+     * together, so a failed write cannot leave two of the three applied.
      */
     promote(name: string, trust: TrustLevel, validation: ValidationRecord | null): Promise<void>;
     /** Record a validation record on one entry. */
@@ -176,17 +208,14 @@ export declare class KnowledgeStore {
     setHeuristics(name: string, heuristicIds: string[]): Promise<void>;
     /** Read one entry by entity name. */
     getEntry(name: string): Promise<KnowledgeEntry | null>;
-    /** The latest version of a `(kind, project, slug)` chain. */
+    /** The latest version of a `(kind, project, slug)` chain, by logical version. */
     getBySlug(kind: KnowledgeKind, project: string, slug: string): Promise<KnowledgeEntry | null>;
-    /** Highest logical version in a chain (by `version:` / name), not `isLatest`. */
-    private latestEntryInChain;
-    /** Every learned entity. */
-    private allEntities;
+    private latestBySlug;
     /**
-     * Learned entries that are still chain-visible (`isLatest !== false`), any
-     * status. A candidate revision does not clear the parent's `isLatest`, so
-     * both rows are returned until `supersede`. Callers that want one row per
-     * chain use `getBySlug`; callers that want lifecycle use `listByStatus`.
+     * Learned entries that are still chain-visible (`isLatest`), any status. A
+     * candidate revision does not clear the parent's `isLatest`, so both rows
+     * are returned until `supersede`. Callers that want one row per chain use
+     * `getBySlug`; callers that want lifecycle use `listByStatus`.
      */
     listEntries(): Promise<KnowledgeEntry[]>;
     /**
@@ -196,28 +225,18 @@ export declare class KnowledgeStore {
      */
     listByStatus(statuses: KnowledgeStatus[], kinds?: KnowledgeKind[], project?: string): Promise<KnowledgeEntry[]>;
     /**
-     * Text search over entries.
+     * Text search over active, unsuperseded, chain-visible entries.
      *
-     * `searchNodesRanked` is async; its 6th argument is an exact-match `projectId`,
-     * which cannot express "this project or `*`", so the project filter runs in
-     * code here. Draft and archived rows are dropped too.
-     *
-     * memoryjs's TF-IDF score is `tf * log(N / docsWithTerm)`, which is exactly 0
-     * when every document in a small corpus contains the query token, so a store
-     * with one or two entries would return nothing at all. The ranked pass is
-     * therefore complemented by a deterministic token-overlap pass over the same
-     * filtered set; ranked hits keep their order and token-only hits follow.
+     * Deterministic term overlap: an entry scores one point per distinct query
+     * term found in its slug, title, description, body or scope, with total
+     * occurrences and then the id as tie-breakers. There is no document
+     * frequency weighting, so a store with one or two entries still answers.
      */
     search(query: string, options?: SearchOptions): Promise<KnowledgeEntry[]>;
-    /**
-     * Rebuild the search index.
-     *
-     * memoryjs constructs `RankedSearch` without a `storageDir`, so its
-     * `buildIndex()` throws by design and its on-the-fly scoring path is always
-     * current. This is a deliberate no-op that expresses the caller's intent
-     * ("writes happened; make search see them") without a throw.
-     */
+    /** Search reads the tables directly, so there is no index to rebuild. */
     buildIndex(): Promise<void>;
+    private heuristicRecord;
+    private allHeuristics;
     /** Add an instruction line as a heuristic record. Returns its id. */
     addHeuristic(input: {
         condition: string;
@@ -225,11 +244,16 @@ export declare class KnowledgeStore {
         priority?: number;
         initialConfidence?: number;
     }): Promise<string>;
-    /** Reinforce an instruction's heuristic after a kept validation. */
+    private updateHeuristic;
+    /** Reinforce a heuristic after a kept validation: support up, confidence toward 1. */
     reinforceHeuristic(id: string): Promise<boolean>;
-    /** Record a contradiction against an instruction's heuristic on a drop. */
+    /** Record a contradiction against a heuristic on a drop: confidence down by a fifth. */
     contradictHeuristic(id: string): Promise<boolean>;
-    /** Every heuristic conflict, for the merge step's conflict resolution. */
+    /**
+     * Every pair of heuristics whose conditions overlap by at least half of the
+     * larger token set but whose actions differ: a `contradiction` when one
+     * action negates the other, an `overlap` otherwise.
+     */
     detectHeuristicConflicts(): Promise<Array<{
         a: string;
         b: string;
@@ -238,7 +262,7 @@ export declare class KnowledgeStore {
     }>>;
     /** A heuristic by id, or null. */
     getHeuristic(id: string): HeuristicView | null;
-    /** Store a procedure skill's steps. Returns the procedure id. */
+    /** Store a procedure skill's steps. Additive: an existing id is never rewritten. */
     putProcedure(input: {
         id: string;
         name: string;
@@ -247,24 +271,22 @@ export declare class KnowledgeStore {
         triggers: string[];
     }): Promise<void>;
     /** A stored procedure, or null. */
-    getProcedure(id: string): Promise<{
-        id: string;
-        name: string;
-        description: string;
-        steps: Array<{
-            order: number;
-            action: string;
-            parameters: Record<string, string>;
-        }>;
-        triggers: string[];
-        successRate: number | null;
-        executionCount: number | null;
-    } | null>;
-    /** Rank stored procedures against a context description. */
+    getProcedure(id: string): Promise<ProcedureView | null>;
+    private readProcedure;
+    /**
+     * Steps of a procedure the previous adapter wrote as one `procedure-step`
+     * row per step, linked by `has_step` relations, ordered by `[order]`.
+     */
+    private loadStepEntities;
+    /**
+     * Rank stored procedures against a context description by token overlap
+     * between the context and the procedure's name and triggers.
+     */
     matchProcedures(context: string, ids: string[]): Promise<ProcedureMatchLike[]>;
-    /** Telemetry only: record whether a procedure skill's attempt succeeded. */
-    refineProcedure(id: string, succeeded: boolean, notes?: string): Promise<void>;
-    /** Upsert a project's structured context (learner prompts only). */
+    /** Telemetry only: fold whether a procedure skill's attempt succeeded into its success rate. */
+    refineProcedure(id: string, succeeded: boolean, _notes?: string): Promise<void>;
+    private projectContext;
+    /** Upsert a project's structured context (learner prompts only). Arrays append and dedup. */
     upsertProjectContext(project: string, input: {
         facts?: string[];
         conventions?: string[];
@@ -273,8 +295,10 @@ export declare class KnowledgeStore {
             definition: string;
         }>;
     }): Promise<void>;
-    /** The project's context rendered as prose, budgeted. */
+    private upsertProjectContextSync;
+    /** The project's context rendered as prose, cut to `budgetChars`. */
     forContext(project: string, budgetChars?: number): Promise<string>;
+    private decisionRecord;
     /** Propose a decision for an edit. Returns the decision id. */
     proposeDecision(input: {
         context: string;
@@ -283,6 +307,7 @@ export declare class KnowledgeStore {
         consequences: string[];
         sourceProjectId?: string;
     }): Promise<string>;
+    private transitionDecision;
     /** Accept a proposed decision (a kept edit). */
     acceptDecision(id: string): Promise<boolean>;
     /** Reject a proposed decision (a dropped edit). */
@@ -291,7 +316,7 @@ export declare class KnowledgeStore {
     supersedeDecision(id: string, by: string): Promise<boolean>;
     /** A decision by id, or null. */
     getDecision(id: string): DecisionView | null;
-    /** A decision rendered as ADR markdown. Synchronous in memoryjs. */
+    /** A decision rendered as ADR markdown. Throws when the id is unknown. */
     exportDecisionAsAdr(id: string): string;
     /** Record a structured failure for the diagnose step. */
     recordFailure(input: {
@@ -302,7 +327,11 @@ export declare class KnowledgeStore {
         applicability_hint: string;
         alternative_taken?: string;
     }): Promise<void>;
-    /** Failures relevant to a task description, open only. */
+    /**
+     * Open failures relevant to a task description, best first: each
+     * whitespace-separated token of the task scores 3 in the applicability
+     * hint, 2 in the context and 1 in the attempted action.
+     */
     lookupFailures(taskContext: string, limit?: number): Promise<Array<{
         context: string;
         attempted: string;
@@ -310,29 +339,18 @@ export declare class KnowledgeStore {
         root_cause: string;
     }>>;
     /**
-     * Store a reflection: a `learned-reflection` entry plus a memoryjs reflection
-     * record.
+     * Store a reflection: a `learned-reflection` entry plus a reflection record.
      *
-     * memoryjs's own dedup hash covers only the scope and the sorted evidence, so
-     * two different conclusions over the same evidence would collapse into one.
-     * The adapter therefore keeps its own hash over
-     * `(scope, project, sorted evidence, NFKC summary)`: an exact match is reported
-     * as `duplicate`, and a same-evidence different-summary reflection gets the
-     * entry's own name appended to the evidence so the two records stay distinct.
-     *
-     * Additive only: a duplicate returns the existing entry's name and writes
-     * nothing.
+     * The dedup hash covers `(scope, project, sorted evidence, NFKC summary)`:
+     * an exact match is reported as `duplicate` and writes nothing, while a
+     * same-evidence different-summary reflection is stored as its own entry
+     * and record. Additive only.
      */
     createReflection(input: CreateReflectionInput): Promise<CreateReflectionResult>;
+    private createReflectionSync;
     /**
-     * Write the memoryjs reflection record that accompanies a
-     * `learned-reflection` entry written by someone else (e.g.
-     * `knowledge-db.insertKnowledgeEntry`).
-     *
-     * memoryjs's content hash covers only the scope and the sorted evidence, so a
-     * second record over the same evidence would otherwise collapse into the
-     * first. The entry id is appended to the evidence whenever an existing record
-     * already claims that set.
+     * Write the reflection record that accompanies a `learned-reflection` entry
+     * written by someone else (e.g. `knowledge-db.insertKnowledgeEntry`).
      */
     recordReflectionRecord(input: {
         scope: 'project' | 'global';
@@ -342,11 +360,10 @@ export declare class KnowledgeStore {
         evidence: string[];
         confidence: Confidence;
     }): Promise<void>;
-    /** Find a learned-reflection entry carrying this adapter hash. */
+    private insertReflectionRecord;
+    /** Find a learned-reflection entry carrying this dedup hash. */
     private findReflectionByHash;
-    /** Find a memoryjs reflection record over the same scope and evidence set. */
-    private findReflectionByEvidence;
-    /** Reflections currently readable, oldest first. */
+    /** Reflection records, oldest first. */
     listReflections(): Promise<Array<{
         id: string;
         scope: string;
@@ -357,9 +374,8 @@ export declare class KnowledgeStore {
 export interface OpenKnowledgeStoreOptions {
     /** Override the file path (tests). Defaults to `getKnowledgeDbPath()`. */
     dbPath?: string;
+    /** Open an existing file for reading only: no table creation, no migration, writes throw. */
+    readonly?: boolean;
 }
-/**
- * Open the knowledge store. Construction is synchronous; memoryjs loads the
- * graph lazily and the constructor starts no timers.
- */
+/** Open the knowledge store. Synchronous; starts no timers. */
 export declare function openKnowledgeStore(options?: OpenKnowledgeStoreOptions): KnowledgeStore;

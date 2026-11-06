@@ -30,7 +30,6 @@
   ],
   "overrides": {
     "adm-zip": "^0.6.0",
-    "better-sqlite3": "13.0.3",
     "hono": "^4.12.27",
     "protobufjs": "^7.6.4",
     "sharp": "^0.35.0",

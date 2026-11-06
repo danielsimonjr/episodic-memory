@@ -29,6 +29,7 @@ a single stolen copy.
 | MCP tool call by any stdio client | Opt-in | Set `EPISODIC_MEMORY_MCP_TOKEN`; callers pass `auth_token` |
 | Secrets indexed by default | Opt-in | `EPISODIC_MEMORY_REDACT_SECRETS=1` |
 | DB / archive encryption at rest | Documented | See below — filesystem encryption, not SQLCipher |
+| Learned text injected into later sessions | Mitigated (residual risk) | Citations, grounding, redaction, injection screen on store/read/export/render, approval for instructions (see Learned text) |
 
 ## Encryption at rest
 
@@ -65,6 +66,20 @@ export EPISODIC_MEMORY_MCP_TOKEN='a-long-random-value'
 Tool calls must then include `auth_token` matching that value. Comparison is
 constant-time. Leave the env unset for the normal single-user Claude Code /
 Codex install.
+
+## Learned text
+
+Self-improving memory reads archive content, which is untrusted. A model can write text from it that gets injected into later sessions, exported to `SKILL.md` files, and read by later learners. Controls:
+
+- Every stored body line cites real exchange ids, and the line must share tokens with the cited text (grounding). Title, description, and scope are redacted and screened, not cited.
+- Secrets and PII are redacted before storage.
+- An injection screen runs before storage and again on every read, export, and hook render.
+- Instructions must follow a fixed template grammar.
+- Instructions need `learn approve` by default (`EPISODIC_MEMORY_LEARN_APPROVE=instructions`).
+- Solver and learner agents run as isolated subprocesses with no built-in tools. Their only tools come from an in-process tool server: read-only `search`, `read`, `digest`, and `skills`. Learner runs also get `propose_entry`, which writes nothing and hands the proposal to the orchestrator.
+- The SessionStart hook labels learned text as data in its output.
+
+Residual risk: the screen is a barrier, not a proof. Review `learn approve` diffs before approving instructions.
 
 ## Hook integrity
 

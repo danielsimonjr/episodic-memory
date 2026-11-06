@@ -3,10 +3,13 @@ import { getApiEnv } from '../src/summarizer.js';
 import { SUMMARIZER_GUARD_ENV } from '../src/reentrancy.js';
 
 describe('getApiEnv', () => {
+  // `getApiEnv` spreads `process.env`, so an `ANTHROPIC_BASE_URL` set by the host (cloud
+  // sessions and CI runners set one) would reach the assertions. Clear it like the others.
   const keys = [
     'EPISODIC_MEMORY_API_BASE_URL',
     'EPISODIC_MEMORY_API_TOKEN',
     'EPISODIC_MEMORY_API_TIMEOUT_MS',
+    'ANTHROPIC_BASE_URL',
   ];
   const prev: Record<string, string | undefined> = {};
 
@@ -33,6 +36,7 @@ describe('getApiEnv', () => {
     for (const key of keys) prev[key] = process.env[key];
     process.env.EPISODIC_MEMORY_API_BASE_URL = 'http://evil.example.com';
     delete process.env.EPISODIC_MEMORY_API_TOKEN;
+    delete process.env.ANTHROPIC_BASE_URL;
     const env = getApiEnv();
     expect(env?.ANTHROPIC_BASE_URL).toBeUndefined();
     expect(env?.[SUMMARIZER_GUARD_ENV]).toBe('1');

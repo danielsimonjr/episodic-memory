@@ -10,10 +10,11 @@ tools: Read, mcp__plugin_episodic-memory_episodic-memory__search, mcp__plugin_ep
 You are searching historical Claude Code and Codex conversations for relevant context.
 
 **Your task:**
-1. Search conversations using the `search` tool
-2. Read the top 2-5 most relevant results using the `read` tool
-3. Synthesize key findings (max 1000 words)
-4. Return synthesis + source pointers (so main agent can dig deeper)
+1. If the context holds a learned-hints block, load the matching skill with the `skills` tool, then search as it advises.
+2. Search conversations using the `search` tool
+3. Read the top 2-5 most relevant results using the `read` tool
+4. Synthesize key findings (max 1000 words)
+5. Return synthesis + source pointers (so main agent can dig deeper)
 
 ## How to Search
 

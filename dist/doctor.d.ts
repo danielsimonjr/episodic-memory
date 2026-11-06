@@ -1,4 +1,5 @@
 import type { CodexHookTrustState } from './codex-hook-trust.js';
+import { type LearnDoctorSection } from './doctor-learn.js';
 export interface CodexDoctorInputs {
     codexVersionOutput: string;
     featuresOutput: string;
@@ -31,10 +32,12 @@ export interface DoctorInputs {
     recentSyncErrors: string[];
     nodeModulesHealthy?: boolean | 'unknown';
     pluginRoot?: string;
+    /** The Recursa `learn` section. Absent means "not collected". */
+    learn?: LearnDoctorSection;
 }
 export interface StructuredDoctorReport extends DoctorReport {
     json: Record<string, unknown>;
 }
 export declare function readRecentLogErrors(logPath: string, limit?: number): string[];
-export declare function collectDoctorSnapshot(): DoctorInputs;
+export declare function collectDoctorSnapshot(): Promise<DoctorInputs>;
 export declare function buildDoctorReport(inputs: DoctorInputs): StructuredDoctorReport;

@@ -106,4 +106,57 @@ describe('search-agent template', () => {
     expect(content).toContain('refined query');
     expect(content).toContain('context bloat');
   });
+
+  it('agent and skill files contain the new step and all existing steps', () => {
+    const learnedStep =
+      'If the context holds a learned-hints block, load the matching skill with the `skills` tool, then search as it advises.';
+
+    const files = [
+      path.join(__dirname, '..', 'agents', 'search-conversations.md'),
+      path.join(__dirname, '..', 'skills', 'remembering-conversations', 'SKILL.md'),
+      templatePath,
+    ];
+    for (const file of files) {
+      const content = fs.readFileSync(file, 'utf-8');
+      expect(content, file).toContain(learnedStep);
+      // The step is the first one in each workflow, before the search step.
+      const stepIndex = content.indexOf(learnedStep);
+      const searchIndex = content.indexOf('Search ', stepIndex + learnedStep.length);
+      expect(stepIndex, file).toBeLessThan(searchIndex);
+    }
+
+    // Every pre-existing step survives.
+    const agent = fs.readFileSync(files[0], 'utf-8');
+    for (const step of [
+      'Search conversations using the `search` tool',
+      'Read the top 2-5 most relevant results using the `read` tool',
+      'Synthesize key findings (max 1000 words)',
+      'Return synthesis + source pointers (so main agent can dig deeper)',
+    ]) {
+      expect(agent).toContain(step);
+    }
+
+    const skill = fs.readFileSync(files[1], 'utf-8');
+    for (const step of [
+      'Search with the `search` tool',
+      'Read top 2-5 results with the `read` tool',
+      'Synthesize findings (200-1000 words)',
+      'Return actionable insights + sources',
+    ]) {
+      expect(skill).toContain(step);
+    }
+    // Both direct-MCP variants keep their steps too.
+    expect(skill).toContain('Search with the episodic-memory `search` tool');
+    expect(skill).toContain('Read the top 2-5 results with the episodic-memory `read` tool');
+
+    const prompt = fs.readFileSync(templatePath, 'utf-8');
+    for (const step of [
+      'Search conversations for: {TOPIC}',
+      'Read the top 2-5 most relevant results',
+      'Synthesize key findings (max 1000 words)',
+      'Return synthesis + source pointers (so main agent can dig deeper)',
+    ]) {
+      expect(prompt).toContain(step);
+    }
+  });
 });

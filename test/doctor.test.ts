@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import Database from 'better-sqlite3';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
@@ -7,7 +8,13 @@ import {
   readRecentLogErrors,
   collectDoctorSnapshot,
 } from '../src/doctor.js';
+import { emptyLearnSection, collectLearnDoctorSection } from '../src/doctor-learn.js';
 import { formatLogLine } from '../src/logging.js';
+import { openKnowledgeStore } from '../src/learn/knowledge-store.js';
+import { openLearningDb } from '../src/learn/learning-store.js';
+import { insertKnowledgeEntry, activate } from '../src/learn/knowledge-db.js';
+import { createRun, finishRun } from '../src/learn/learning-db.js';
+import type { NewKnowledgeEntry } from '../src/learn/types.js';
 import { safeRmSync } from './test-utils.js';
 
 const healthy = {
@@ -121,20 +128,221 @@ describe('collectDoctorSnapshot', () => {
     safeRmSync(testDir);
   });
 
-  it('reads config paths and reports missing db on a fresh config dir', () => {
-    const snap = collectDoctorSnapshot();
+  it('reads config paths and reports missing db on a fresh config dir', async () => {
+    const snap = await collectDoctorSnapshot();
     expect(snap.configDir).toBe(testDir);
     expect(snap.archiveDir).toContain('conversation-archive');
     expect(snap.dbExists).toBe(false);
     expect(snap.currentEmbeddingVersion).toBeGreaterThanOrEqual(1);
     expect(snap.nodeModulesHealthy).toBe('unknown');
+    // No `learned/` yet: the section is present but empty.
+    expect(snap.learn?.present).toBe(false);
+    expect(snap.learn?.candidatesAwaitingApproval).toBe(0);
   });
 
-  it('detects unhealthy node_modules when PLUGIN_ROOT is set', () => {
+  it('detects unhealthy node_modules when PLUGIN_ROOT is set', async () => {
     const plugin = path.join(testDir, 'plugin');
     fs.mkdirSync(path.join(plugin, 'node_modules'), { recursive: true });
     process.env.CLAUDE_PLUGIN_ROOT = plugin;
-    const snap = collectDoctorSnapshot();
+    const snap = await collectDoctorSnapshot();
     expect(snap.nodeModulesHealthy).toBe(false);
+  });
+});
+
+const HEX = 'c'.repeat(32);
+
+function nk(over: Partial<NewKnowledgeEntry> = {}): NewKnowledgeEntry {
+  return {
+    kind: 'skill',
+    project: 'proj-a',
+    slug: 'alpha',
+    title: 'Alpha skill',
+    description: 'Use when looking for the alpha service',
+    body: `alpha lives in the archive [#${HEX}]`,
+    scope: 'proj-a repository work',
+    confidence: 'medium',
+    trust: 'unverified',
+    sources: [],
+    status: 'candidate',
+    runId: 'run-1',
+    ...over,
+  };
+}
+
+describe('doctor learn section', () => {
+  let testDir: string;
+  const savedConfig = process.env.EPISODIC_MEMORY_CONFIG_DIR;
+
+  beforeEach(() => {
+    testDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'em-doctor-learn-')));
+    process.env.EPISODIC_MEMORY_CONFIG_DIR = testDir;
+    delete process.env.TEST_DB_PATH;
+    delete process.env.CLAUDE_PLUGIN_ROOT;
+    delete process.env.PLUGIN_ROOT;
+  });
+
+  afterEach(() => {
+    if (savedConfig === undefined) delete process.env.EPISODIC_MEMORY_CONFIG_DIR;
+    else process.env.EPISODIC_MEMORY_CONFIG_DIR = savedConfig;
+    delete process.env.CLAUDE_PLUGIN_ROOT;
+    safeRmSync(testDir);
+  });
+
+  /** A store with one active skill, one candidate instruction and one run. */
+  async function seed(): Promise<void> {
+    const store = openKnowledgeStore({ dbPath: path.join(testDir, 'learned', 'knowledge.db') });
+    try {
+      const skill = await insertKnowledgeEntry(store, nk());
+      await activate(store, skill, null, 'verified');
+      await insertKnowledgeEntry(
+        store,
+        nk({
+          kind: 'instruction',
+          slug: 'search-first',
+          body: `mode text for release notes [#${HEX}]`,
+        })
+      );
+    } finally {
+      store.close();
+    }
+
+    const learning = openLearningDb({ path: path.join(testDir, 'learned', 'learning.sqlite') });
+    try {
+      const runId = createRun(learning, {
+        phase: 'improve',
+        seed: 1,
+        budget: { maxCalls: 10 },
+      });
+      finishRun(learning, runId, 'done', {
+        train: { before: { passed: 1, total: 3 }, after: { passed: 2, total: 3 } },
+        kept: 1,
+        rejected: 0,
+      });
+    } finally {
+      learning.close();
+    }
+
+    // An exported tree, so the size item has something to measure.
+    fs.mkdirSync(path.join(testDir, 'learned-skills', 'proj-a', 'alpha'), { recursive: true });
+    fs.writeFileSync(
+      path.join(testDir, 'learned-skills', 'proj-a', 'alpha', 'SKILL.md'),
+      '---\nname: alpha\n---\n',
+      'utf-8'
+    );
+  }
+
+  it('doctor reports the learn section, unresolved sources and the json shape', async () => {
+    await seed();
+
+    // No exchanges table anywhere the section can see, so the skill's one cited
+    // id is unresolved.
+    const learn = await collectLearnDoctorSection();
+    expect(learn.present).toBe(true);
+    expect(learn.entryCounts.skill.active).toBe(1);
+    expect(learn.entryCounts.instruction.candidate).toBe(1);
+    expect(learn.candidatesAwaitingApproval).toBe(1);
+    expect(learn.latestRun?.status).toBe('done');
+    expect(learn.latestRun?.metrics).toContain('train 1/3 → 2/3');
+    expect(learn.exportTree.present).toBe(true);
+    expect(learn.exportTree.files).toBe(1);
+    expect(learn.unresolvedSources.map(entry => entry.id)).toEqual([
+      'learned:instruction:proj-a:search-first:v1',
+      'learned:skill:proj-a:alpha:v1',
+    ]);
+    expect(learn.betterSqlite3Shared).toBe(true);
+    expect(learn.betterSqlite3TopLevel).toMatch(/better-sqlite3/);
+
+    const report = buildDoctorReport({ ...(await collectDoctorSnapshot()), learn });
+    const text = report.text;
+    expect(text).toContain('Learn (Recursa):');
+    expect(text).toContain('learned dir:');
+    expect(text).toContain('knowledge.db:');
+    expect(text).toContain('learning.sqlite:');
+    expect(text).toContain('skill: 1 active, 0 candidate, 0 retired');
+    expect(text).toContain('instruction: 0 active, 1 candidate, 0 retired');
+    expect(text).toContain('candidates awaiting approval: 1');
+    expect(text).toContain('latest run:');
+    expect(text).toContain('unresolved sources: 2');
+    expect(text).toContain('learned-skills: found (1 file(s)');
+    expect(text).toContain('better-sqlite3: one copy');
+    expect(text).toContain('Warnings:');
+    expect(text).toMatch(/exchange id\(s\) the index no longer has/);
+
+    const json = report.json.learn as Record<string, unknown>;
+    expect(json.present).toBe(true);
+    expect((json.entryCounts as Record<string, Record<string, number>>).skill.active).toBe(1);
+    expect(json.candidatesAwaitingApproval).toBe(1);
+    expect((json.latestRun as Record<string, unknown>).id).toMatch(/^run-/);
+    expect(Array.isArray(json.unresolvedSources)).toBe(true);
+    expect(json.unresolvedSources).toHaveLength(2);
+    expect((json.exportTree as Record<string, unknown>).files).toBe(1);
+    expect(json.betterSqlite3Shared).toBe(true);
+    // No audit-chain item: memoryjs only records one under MEMORY_GOVERNANCE_ENABLED.
+    expect(report.text).not.toMatch(/audit/i);
+    expect(Object.keys(json)).not.toContain('auditChain');
+  });
+
+  it('counts a resolved citation as resolved when the index has the row', async () => {
+    await seed();
+
+    // Point the section at a real index by giving the config dir a db.sqlite
+    // with the cited exchange (initDatabase creates the schema).
+    const { initDatabase } = await import('../src/db.js');
+    const index = initDatabase();
+    try {
+      index
+        .prepare(
+          `INSERT INTO exchanges (id, project, timestamp, user_message, assistant_message,
+             archive_path, line_start, line_end, is_sidechain, harness, session_id)
+           VALUES (?, 'proj-a', '2026-03-01T10:00:00.000Z', 'q', 'a',
+             '/archive/proj-a/s-1.jsonl', 1, 9, 0, 'claude', 's1')`
+        )
+        .run(HEX);
+    } finally {
+      index.close();
+    }
+
+    const learn = await collectLearnDoctorSection();
+    expect(learn.unresolvedSources).toEqual([]);
+  });
+
+  it('is absent, not an error, on a config dir with no learned/', async () => {
+    const learn = await collectLearnDoctorSection();
+    expect(learn.present).toBe(false);
+    expect(learn.learningDbSizeBytes).toBeNull();
+    expect(learn.latestRun).toBeNull();
+    expect(learn.unresolvedSources).toEqual([]);
+    expect(learn.exportTree.present).toBe(false);
+  });
+
+  it('an empty section prints an absent dir and no warnings', () => {
+    const report = buildDoctorReport({
+      ...healthy,
+      learn: emptyLearnSection('/tmp/cfg/learned'),
+    });
+    expect(report.text).toContain('Learn (Recursa):');
+    expect(report.text).toContain('learned dir: /tmp/cfg/learned (absent)');
+    expect(report.text).toContain('latest run: none');
+    expect(report.text).not.toContain('Warnings:');
+    expect(report.ok).toBe(true);
+  });
+
+  it('warns when memoryjs resolves a different better-sqlite3 copy', () => {
+    const section = {
+      ...emptyLearnSection('/tmp/cfg/learned'),
+      present: true,
+      betterSqlite3TopLevel: '/top/better-sqlite3/lib/index.js',
+      betterSqlite3FromMemoryjs: '/nested/better-sqlite3/lib/index.js',
+      betterSqlite3Shared: false,
+    };
+    const report = buildDoctorReport({ ...healthy, learn: section });
+    expect(report.text).toContain('SHARED MISMATCH');
+    expect(report.text).toMatch(/overrides pin/);
+  });
+
+  it('omits the section entirely when doctor was given none', () => {
+    const report = buildDoctorReport(healthy);
+    expect(report.text).not.toContain('Learn (Recursa):');
+    expect(report.json.learn).toBeUndefined();
   });
 });

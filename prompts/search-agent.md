@@ -3,10 +3,11 @@
 You are searching historical Claude Code and Codex conversations for relevant context.
 
 **Your task:**
-1. Search conversations for: {TOPIC}
-2. Read the top 2-5 most relevant results
-3. Synthesize key findings (max 1000 words)
-4. Return synthesis + source pointers (so main agent can dig deeper)
+1. If the context holds a learned-hints block, load the matching skill with the `skills` tool, then search as it advises.
+2. Search conversations for: {TOPIC}
+3. Read the top 2-5 most relevant results
+4. Synthesize key findings (max 1000 words)
+5. Return synthesis + source pointers (so main agent can dig deeper)
 
 ## Search Query
 

@@ -32,4 +32,19 @@ describe('Codex-aware skills', () => {
     expect(read('README.md'))
       .toContain('~/.codex/sessions');
   });
+
+  it('tells the agent and the skill to load a learned skill before searching', () => {
+    const learnedStep =
+      'If the context holds a learned-hints block, load the matching skill with the `skills` tool, then search as it advises.';
+
+    // The agent and the prompt template that dispatches it.
+    expect(read('agents/search-conversations.md')).toContain(learnedStep);
+    expect(read('prompts/search-agent.md')).toContain(learnedStep);
+
+    // The skill, in both the agent path and the direct-MCP path.
+    const skill = read('skills/remembering-conversations/SKILL.md');
+    const occurrences = skill.split(learnedStep).length - 1;
+    expect(occurrences).toBe(2);
+    expect(skill.indexOf(learnedStep)).toBeLessThan(skill.indexOf('Search with the `search` tool'));
+  });
 });

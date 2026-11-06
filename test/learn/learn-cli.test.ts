@@ -418,7 +418,7 @@ describe('runLearnCli', () => {
     expect(text).toMatch(/improve/);
   });
 
-  it.each(['approve', 'export', 'render'])(
+  it.each(['render'])(
     '%s is a stub with a clear not-implemented exit code',
     async command => {
       const cap = capture();

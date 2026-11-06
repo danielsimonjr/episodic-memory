@@ -28,16 +28,18 @@ Task tool:
 
 If a `search-conversations` agent is available, dispatch it with the same prompt. If not, use the MCP tools directly:
 
-1. Search with the episodic-memory `search` tool
-2. Read the top 2-5 results with the episodic-memory `read` tool
-3. Synthesize findings in your response
-4. Include source pointers so the user can inspect the original conversations
+1. If the context holds a learned-hints block, load the matching skill with the `skills` tool, then search as it advises.
+2. Search with the episodic-memory `search` tool
+3. Read the top 2-5 results with the episodic-memory `read` tool
+4. Synthesize findings in your response
+5. Include source pointers so the user can inspect the original conversations
 
 The search workflow will:
-1. Search with the `search` tool
-2. Read top 2-5 results with the `read` tool
-3. Synthesize findings (200-1000 words)
-4. Return actionable insights + sources
+1. If the context holds a learned-hints block, load the matching skill with the `skills` tool, then search as it advises.
+2. Search with the `search` tool
+3. Read top 2-5 results with the `read` tool
+4. Synthesize findings (200-1000 words)
+5. Return actionable insights + sources
 
 **Saves 50-100x context vs. loading raw conversations.**
 

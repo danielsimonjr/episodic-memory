@@ -45,7 +45,7 @@ When upstream merges these (or equivalents), rebase/merge `upstream/main` and dr
 - **TypeScript source** in `src/`, compiled to `dist/` by `tsc && esbuild`. **Both are committed.**
 - **CLI entry points** in `cli/` (Node.js wrappers — no bash).
 - **MCP server** is `dist/mcp-server.js`, launched by `cli/mcp-server-wrapper.js` from the plugin manifest.
-- **Tests** in `test/` via vitest (38 files, 210 tests — counts verified 2026-08-08).
+- **Tests** in `test/` via vitest (126 files, 1041 tests — counts verified 2026-11-06).
 - **Generated files** in `dist/` AND `src/version.ts`. The latter is gitignored; never edit it.
 - **`bun.lock` is committed** — CI uses `bun install --frozen-lockfile` + `bun audit --audit-level=critical`. Do not commit `package-lock.json` (gitignored).
 
@@ -60,8 +60,24 @@ src/
   db.ts                  # schema + migrations (cascade + embedding_version)
   paths.ts               # config/index/archive directory resolution
   parser.ts              # JSONL transcript → exchanges (cross-platform path-aware as of fork)
-  mcp-server.ts          # MCP tool surface (search, read) — read is archive-confined as of fork
+  mcp-server.ts          # MCP tool surface (search, read, digest, skills)
+  mcp-schemas.ts         # Zod input schemas for the MCP tools
+  mcp-tools.ts           # tool handlers; imports learn/skills-tool.js lazily
   version.ts             # GENERATED — do not edit
+
+  learn/                 # the Recursa feature; flag EPISODIC_MEMORY_LEARN, off by default
+    learn-config.ts      # flag + settings; imports nothing (hook fast path)
+    learned-text-screen.ts # injection screen for learned text; imports only ../redact.js
+    learn-inject.ts      # rendered block render/read/cap; memoryjs-free
+    knowledge-store.ts   # memoryjs-backed store (the only module that imports memoryjs)
+    knowledge-db.ts      # snapshots, activation, supersede over the store
+    learning-store.ts    # learned/learning.sqlite handle; hook opens it read-only
+    learning-db.ts       # runs, tasks, attempts, pass rates
+    skills-tool.ts       # the `skills` MCP tool body
+    tasks.ts / grade.ts  # self-practice task generation and deterministic grading
+    solver.ts / agent-runner.ts / sdk-tools.ts / semaphore.ts / prompts.ts
+    bootstrap.ts / leaf-learner.ts / learner.ts / knowledge-gate.ts / cited-ids.ts
+    export.ts / report.ts / learn-lock.ts / usage.ts / cli-main.ts
 
 cli/
   episodic-memory.js     # umbrella CLI dispatcher
@@ -75,7 +91,8 @@ scripts/
 
 test/
   test-utils.ts          # createTestDb, safeRmSync (fork-added), suppressConsole, fixtures
-  *.test.ts              # 35 test files
+  *.test.ts              # 126 test files, 1041 tests
+  learn/                 # the Recursa suite; fakes for every model call
   fixtures/              # JSONL conversation fixtures
 
 docs/
@@ -103,6 +120,11 @@ source changes that touch the MCP server or any imported module, run
 `bun run build` so `dist/` reflects source. **Commit `dist/` alongside `src/`** —
 CI doesn't rebuild for you.
 
+**Node floor: `>=22.12.0`** (memoryjs's floor; `engines` is advisory, so it is enforced at launch).
+`src/node-floor.ts` holds the constant, `cli/mcp-server-wrapper.js` and `cli/episodic-memory.js learn`
+exit with one stderr line below it, and CI runs Node 24. Both of the user's machines run Node 24. This
+is a fork-only divergence from upstream, recorded in `docs/roadmap/upstream-sync.md`.
+
 **Toolchain vs runtime:** Bun is the package manager and script driver (CI + local
 dev). Shipped code still runs under **Node** (CLI shebangs, `.mcp.json`, hooks).
 Plugin first-run dependency install in `cli/mcp-server-wrapper.js` still uses
@@ -110,8 +132,14 @@ Plugin first-run dependency install in `cli/mcp-server-wrapper.js` still uses
 
 ### Current test state
 
-- **Full suite: 187/187 pass on Windows**, reliably. The former `integration.test.ts` / `verify.test.ts` cold-embedding timeout flakes were fixed 2026-06-23: the embedder is pre-warmed once per worker in `beforeAll`, `vitest.config.ts` sets `hookTimeout: 30000`, and the repair re-index test gets 60s. If you see a fresh timeout flake, suspect a new embedding-heavy hook without warm-up rather than the old cold-start cause.
-- Run on Windows: expect ~75s wall-clock for the full suite.
+- **Full suite: 1041 tests in 126 files pass on Linux** (verified 2026-11-06, ~17s wall clock; Windows
+  runs are slower — expect ~75s). The former `integration.test.ts` / `verify.test.ts` cold-embedding
+  timeout flakes were fixed 2026-06-23: the embedder is pre-warmed once per worker in `beforeAll`,
+  `vitest.config.ts` sets `hookTimeout: 30000`, and the repair re-index test gets 60s. If you see a fresh
+  timeout flake, suspect a new embedding-heavy hook without warm-up rather than the old cold-start cause.
+- The learn tests are the bulk of it (`test/learn/`, ~35 files). They never reach a model: every agent and
+  text call is injectable and tests pass fakes, and `vitest.config.ts` pins the Claude backend and a closed
+  ollama URL so a run cannot reach a shared GPU.
 - Run a single test: `bun run test test/<file>.test.ts`. Much faster, cleaner output.
 
 ## Critical gotchas (read before editing)
@@ -125,7 +153,9 @@ stdout is reserved for JSON-RPC. **Any `console.log` reachable from the MCP serv
 - ❌ `console.log(...)` — corrupts protocol
 - ❌ `process.stdout.write(...)` — corrupts protocol
 
-This applies to **every module reachable from `mcp-server.ts`**. Current reachable surface: `search.ts`, `show.ts`, `db.ts`, `paths.ts`, `embeddings.ts`, `parser.ts`, `version.ts`. Modules used only by CLI files (`indexer.ts`, `sync.ts`, etc.) are safe to use `console.log` in.
+This applies to **every module reachable from `mcp-server.ts`**. Current reachable surface: `search.ts`, `show.ts`, `db.ts`, `paths.ts`, `embeddings.ts`, `parser.ts`, `version.ts`, and — through the `skills` branch, which imports them lazily — `learn/skills-tool.ts`, `learn/knowledge-store.ts`, `learn/knowledge-db.ts`, `learn/learn-inject.ts`, `learn/learn-config.ts`, `learn/learned-text-screen.ts`, `learn/learning-store.ts`. Modules used only by CLI files (`indexer.ts`, `sync.ts`, `learn/cli-main.ts`, etc.) are safe to use `console.log` in.
+
+The lazy import is load-bearing in both directions: `mcp-tools.ts` calls `learnEnabled()` from `learn-config.ts` (which imports nothing) *before* it imports `skills-tool.ts`, so a flag-off server never loads memoryjs and a session that never asks for a skill pays nothing for the feature. Keep the eager surface at `learn-config.ts` and nothing else.
 
 ### 2. Windows path separators
 
@@ -170,9 +200,45 @@ Claude Code's plugin loader caches MCP failures keyed on config-hash. Once a ser
 
 The fork's plugin uses `cwd: '.'` and a fixed command — if a fresh install fails, it's the plugin bug, not the cache bug.
 
+### 8. Learned text is untrusted: gate it
+
+Everything the `learn` feature stores is written by a model that has just read archive content, and it is
+then injected into every future session, exported to `SKILL.md` files, and read by later learners. So it
+is treated as hostile input, not as instructions:
+
+- Every field of every kind (title, description, scope, body, slug, reflection text) passes
+  `screenLearnedText` (`src/learn/learned-text-screen.ts`) **before storage and again on the way out** —
+  in the hook, the `skills` tool and the export. It rejects instruction-override and authority framing,
+  unlisted tool invocations, shell commands, file writes, URLs and obfuscated URLs, emails, long base64
+  runs, and credential requests, after NFKC normalisation and removal of zero-width / bidi characters.
+- Every line must cite real exchange ids and share `EPISODIC_MEMORY_LEARN_MIN_GROUNDING` content tokens
+  with one of them, or it is dropped; an entry with no surviving line is not stored.
+- Redaction runs first and last: prompts, stored fields, answers and traces all pass `redactSecrets` plus
+  memoryjs's `PiiRedactor`.
+- A skill activates on validation; an instruction stays a `candidate` until a human runs `learn approve`
+  (default `EPISODIC_MEMORY_LEARN_APPROVE=instructions`).
+
+The screen is a **barrier, not a proof**. If you add a new place that renders learned text, route it
+through the same screen and redaction rather than trusting the store. Never `console.log` learned text
+without screening it, and never treat a learned line as an instruction in code.
+
 ## MCP tool surface
 
-The fork exposes 2 MCP tools (same as upstream, but with the fork's safety hardening on `read`):
+The fork exposes 4 MCP tools: `search` and `read` as upstream (with the fork's safety hardening on `read`),
+plus `digest` and `skills`.
+
+`.mcp.json` whitelists the environment variables the server may see:
+
+```
+EPISODIC_MEMORY_CONFIG_DIR          PERSONAL_SUPERPOWERS_DIR
+XDG_CONFIG_HOME                     EPISODIC_MEMORY_DB_PATH
+CONVERSATION_SEARCH_EXCLUDE_PROJECTS
+EPISODIC_MEMORY_LEARN               EPISODIC_MEMORY_LEARN_MAX_CHARS
+```
+
+`EPISODIC_MEMORY_LEARN` and `EPISODIC_MEMORY_LEARN_MAX_CHARS` are whitelisted explicitly: without them the
+server never sees the feature flag, and `skills` answers "learning is off" forever. Any new
+`EPISODIC_MEMORY_LEARN_*` setting that the MCP server reads at runtime needs its own line here.
 
 ### `search`
 
@@ -200,6 +266,32 @@ Inputs:
 Output: markdown-formatted conversation.
 
 **Fork security model:** the `path` parameter is intended to be filled with `archive_path` values returned by `search()`. Direct calls with arbitrary paths now error. If you need to read a JSONL outside the archive, copy it in first (or use `fs.readFileSync` from a CLI/script context).
+
+### `digest`
+
+The session digest: shows it, searches it (`query`), turns a `[#id]` mark into an archive path and line
+range for `read` (`expand`), and stores a one-line note for the next session (`handoff`). Off unless
+`EPISODIC_MEMORY_DIGEST=1`. Documented in `README.md` § Session Digest.
+
+### `skills`
+
+Read the skills the `learn` feature derived from this project's conversations. Read-only, and it never
+writes. With `EPISODIC_MEMORY_LEARN` unset it answers that learning is off **without opening a store** (it
+checks `learnEnabled()` before importing the memoryjs-backed module), so a flag-off session pays nothing.
+
+Inputs:
+- `get`: slug of one skill, as listed — returns its frontmatter and body
+- `query`: search learned skills instead of listing them
+- `project`: project key (default: the key for `process.cwd()`, same rule as `digest`)
+- `limit`: number (default: 10, max: 50)
+
+Output: one `slug: description (confidence, vN)` line per active skill, or the requested skill's
+frontmatter (`name`, `description`, `scope`, `sources`, `confidence`, `version`) plus body.
+
+Every field is screened for injected instructions and redacted for secrets and PII before it is returned.
+A field that fails the screen withholds the whole entry rather than printing a skill whose text cannot be
+trusted. The store is opened **per call** and closed in `finally` — memoryjs serves reads from a per-context
+cache, so a module-level context would miss a `learn` run that happened later in the same session.
 
 ## Development workflow — the user's 12 steps
 
@@ -284,6 +376,12 @@ node cli/episodic-memory.js sync
 ```
 
 ⚠️ Don't `rm -rf ~/.config/superpowers/conversation-archive/` — that's the source data backup. Only the index can be safely rebuilt from the archive.
+
+⚠️ `learned/` is **outside** `conversation-index/` — it is a sibling, not a child — so none of the commands
+above touch it. Do not remove it as part of an index reset: it holds learned entries (`knowledge.db`), the
+learning trace (`learning.sqlite`) and the rendered hint block, none of which can be rebuilt from the
+archive. Delete `learned/` only when you deliberately want the agent to forget everything it learned.
+(`learned-skills/`, also a sibling, *is* generated output and regenerates on the next export.)
 
 ## Upstream sync workflow
 

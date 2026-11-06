@@ -107,7 +107,7 @@ Self-improving memory (the `EPISODIC_MEMORY_LEARN` feature) keeps its state in
   conversation-index/     db.sqlite          -- disposable; rebuildable from the archive
   learned/                knowledge.db       -- learned entries (memoryjs), durable
                           learning.sqlite    -- the learning trace + rendered block
-  learned-skills/                            -- generated export tree
+  learned-skills/                            -- generated SKILL.md export tree
 ```
 
 `index rebuild`, `prune` and the `rm -rf conversation-index/` reset recipe therefore cannot reach
@@ -171,10 +171,10 @@ CREATE TABLE learning_run (
   status TEXT NOT NULL,       -- running | done | stopped | failed | deferred
   started_at TEXT NOT NULL,
   finished_at TEXT,
-  budget TEXT NOT NULL,       -- JSON: caps and use for calls, USD, wall clock, rounds
-  metrics TEXT NOT NULL,      -- JSON: pass rates before/after per split, kind and tier
+  budget TEXT NOT NULL DEFAULT '{}',    -- JSON: caps and use for calls, USD, wall clock, rounds
+  metrics TEXT NOT NULL DEFAULT '{}',   -- JSON: pass rates before/after per split, kind and tier
   seed INTEGER,               -- the split seed, recorded on the run (§7 rule 13)
-  rejections TEXT NOT NULL    -- JSON list of { slug, reason }
+  rejections TEXT NOT NULL DEFAULT '[]' -- JSON list of { slug, reason }
 );
 
 CREATE TABLE learning_task (
@@ -186,7 +186,7 @@ CREATE TABLE learning_task (
   project TEXT NOT NULL,
   prompt TEXT NOT NULL,       -- redacted and screened
   truth TEXT NOT NULL,        -- JSON TaskTruth: addresses, session date range, redacted answer
-  status TEXT NOT NULL        -- ok | stale
+  status TEXT NOT NULL DEFAULT 'ok'   -- ok | stale
 );
 
 CREATE TABLE learning_attempt (
@@ -198,8 +198,8 @@ CREATE TABLE learning_attempt (
   passed INTEGER NOT NULL,
   score REAL NOT NULL,           -- 0, 0.5 or 1 for a deterministic grade; the judge score for recall
   answer TEXT NOT NULL,          -- redacted, capped at 4000 characters
-  trace TEXT NOT NULL,           -- JSON [{ tool, args, resultAddress, resultChars }]; no result text
-  cost TEXT NOT NULL,            -- JSON { turns, inputTokens, outputTokens, usd }
+  trace TEXT NOT NULL DEFAULT '[]', -- JSON [{ tool, args, resultAddress, resultChars }]; no result text
+  cost TEXT NOT NULL DEFAULT '{}',  -- JSON { turns, inputTokens, outputTokens, usd }
   outcome TEXT NOT NULL,         -- graded | aborted | killed | error
   created_at TEXT NOT NULL
 );
@@ -209,6 +209,12 @@ CREATE INDEX idx_learning_task_run ON learning_task(run_id);
 CREATE INDEX idx_learning_attempt_run ON learning_attempt(run_id);
 CREATE INDEX idx_learning_attempt_task ON learning_attempt(task_id);
 ```
+
+`knowledge_snapshot`, `learned_block`, the `learning_*` tables and their indexes are all created by
+`migrateLearningSchema` through `ensureLearningSchema`, with `IF NOT EXISTS` throughout, so opening the
+same file twice is a no-op. `learning_task.truth` is the answer key as an archive address plus the
+session's date range; the text a `recall` task is judged on is read back from the index by address at
+grade time and never stored in the task.
 
 Two reads are constrained in code, not by convention:
 

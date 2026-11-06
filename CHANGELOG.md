@@ -9,6 +9,27 @@
 - **A candidate knowledge revision no longer hides the still-active previous version.** `putEntry` no longer clears the parent's `isLatest`; only `supersede` does. `listActive` and snapshots are gated on status and `supersededBy`. `getBySlug` returns the highest logical version. Reflection `generalization_confidence` uses 0.3 / 0.6 / 0.9.
 
 ### Added
+- **Self-improving memory: `learn`, the `skills` tool, and the learned-hints block (Tasks 1–11 of the
+  Recursa plan).** Off by default behind `EPISODIC_MEMORY_LEARN=1`; with the flag off, hook stdout is
+  byte-identical to the digest-only output, `/mcp` still lists four tools, and nothing opens a store.
+  On, the archive becomes a source of self-practice: `learn tasks` writes `locate`, `recall`, `when` and
+  `multi` questions at three tiers from deterministically sampled exchanges, stratified 60/40 into a
+  `train` split and a held-out `test` split that no learner prompt can read; `learn solve` grades answers
+  against the archive address and date range; `learn bootstrap` maps each eligible project and measures
+  navigation skills before keeping them; `learn improve` runs the recursive learner — solve, split
+  failures into leaves, propose and validate edits, merge duplicates across leaves, reflect, then evaluate
+  `test` once at the end; `learn report` prints pass rates per split and tier before and after, kept and
+  pending entries, rejections with the gate that produced them, calls and USD spent, child runs and
+  reflections. `learn approve` shows a candidate instruction, its validation record and a diff against the
+  version it revises before activating it, and refuses one with no measurement or a recorded regression.
+  `learn export` writes the active skills as a `SKILL.md` tree. Every stored entry is grounded in cited
+  exchanges, redacted for secrets and PII, and screened for injected instructions before storage and again
+  on every read, export and hook render; learned text is data, never instructions. Knowledge lives in
+  `learned/` beside `conversation-index/`, so an index rebuild or reset leaves it alone. The `skills` MCP
+  tool lists, searches and loads active skills for the current project. A new "Learn (Recursa)" section in
+  `doctor` covers entries by kind and status, the latest run, candidates awaiting approval, unresolved
+  sources, and whether `memoryjs` resolves the same `better-sqlite3` copy as the top level. The entries
+  below describe the pieces in the order they landed.
 - **`learn bootstrap`: navigation skills and exploration notes from the archive (Task 7 of the Recursa
   plan).** One bootstrapper subprocess per project with at least 20 indexed exchanges — bounded by the
   global subprocess semaphore and by `EPISODIC_MEMORY_LEARN_CONCURRENCY` — reads the digest and samples

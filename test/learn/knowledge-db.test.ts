@@ -110,6 +110,20 @@ describe('knowledge-db', () => {
     expect((await getEntry(store, id))?.version).toBe(2);
   });
 
+  it('a candidate revision does not hide the still-active previous version from listActive', async () => {
+    // Spec §7 rule 2 / plan: a version leaves `listActive` only when it is
+    // superseded (by `activate`) or retired — never because a candidate
+    // revision was inserted. `supersededBy` is `supersede`'s job alone.
+    const v1 = await insertKnowledgeEntry(store, nk());
+    await activate(store, v1, record(), 'verified');
+
+    await insertKnowledgeEntry(store, nk({ body: 'alpha actually lives in the digest' }));
+
+    const active = await listActive(store, ['skill'], 'proj-a');
+    expect(active.map(e => e.id)).toContain('learned:skill:proj-a:alpha:v1');
+    expect(active.find(e => e.id === 'learned:skill:proj-a:alpha:v1')?.supersededBy).toBeNull();
+  });
+
   it('activate supersedes the older active version and keeps it', async () => {
     await insertKnowledgeEntry(store, nk());
     await activate(store, 'learned:skill:proj-a:alpha:v1', record(), 'verified');

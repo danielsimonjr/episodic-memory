@@ -1,5 +1,13 @@
 ## [Unreleased]
 
+### Changed
+- **Docs only.** Recursa spec and implementation plan hardened after an adversarial
+  review against `@danielsimonjr/memoryjs@4.5.0` types and this repo's hook/lock/MCP
+  contracts: async adapter surfaces, trust stored on observations (core `Entity` has
+  no `source`), hook import graph stays memoryjs-free, flag-off byte identity and
+  no-migrate readonly opens, spawn-tree PID protection, priority marker sequencing,
+  and missing Review Focus tests named on Tasks 0–11. No runtime code.
+
 ## [1.7.1] - 2026-10-26
 
 ### Fixed

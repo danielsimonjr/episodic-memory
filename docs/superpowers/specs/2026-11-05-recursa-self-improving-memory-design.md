@@ -29,8 +29,10 @@ held-out exchange has a known address, so a solver's answer can be checked witho
 result is a plugin whose recall gets better with use, and whose every learned fact cites the conversations
 it came from.
 
-The plugin name, id, install path, hooks and existing tools do not change. Everything here is behind a
-feature flag that defaults to off.
+The plugin name, id, install path and SessionStart hook *list* do not change. The existing `search`,
+`read` and `digest` tools keep their contracts. A fourth MCP tool, `skills`, is registered even with
+the flag off (so ListTools stays stable) and is inert until the flag is on. Everything else here is
+behind a feature flag that defaults to off.
 
 ## 2. Scope
 
@@ -168,12 +170,22 @@ results can leak the answer. The solver may still `read` any archive file: findi
     `MEMORY_SQLITE_READ_POOL_SIZE`. The user runs `memory-mcp` on the same machine and may set any of
     them. The adapter therefore saves and removes every `process.env` key matching `^MEMORY_`, sets
     exactly `MEMORY_STORAGE_TYPE=sqlite` and `MEMORY_EMBEDDING_PROVIDER=none`, constructs the context,
-    restores the environment, and asserts that the storage is the SQLite class and that
-    `ctx.semanticSearch` is null.
-  - **No semantic or hybrid search.** The adapter never touches `hybridSearchManager` or
-    `semanticSearch`: their getters build an embedding service that imports `@huggingface/transformers`
-    and fetches a model from huggingface.co, a new network target (rule 14) and a GPU user (rule 12).
-    Text search over entries is `rankedSearch` (BM25) only.
+    restores the environment, and asserts that `ctx.storage.constructor.name === 'SQLiteStorage'`
+    (`GraphStorage` is the JSONL class; `ctx.storage` is typed as `GraphStorage` but the sqlite
+    factory returns a `SQLiteStorage` instance) and that `ctx.semanticSearch` is null.
+  - **No semantic or hybrid search.** Do not read `ctx.hybridSearchManager`: that getter always
+    constructs a `HybridSearchManager`. `ctx.semanticSearch` with `MEMORY_EMBEDDING_PROVIDER=none`
+    returns `null` and does not import transformers; the adapter may read it once for the null
+    assertion after the scoped env is applied. Text search is `await
+    ctx.rankedSearch.searchNodesRanked(...)` only (`searchNodesRanked` returns `Promise<SearchResult[]>`).
+  - **Every memoryjs write and ranked-search call is async.** `@danielsimonjr/memoryjs@4.5.0`
+    `createEntities`, `getEntity`, `updateEntity`, `getLatestVersion`, `createRelations`,
+    `heuristicManager.add` / `reinforce` / `recordContradiction` / `detectConflicts`,
+    `procedureManager.addProcedure` / `getProcedure` / `matchProcedure` / `refineProcedure`,
+    `projectContextManager.upsert` / `forContext`, `reflectionManager.create`,
+    `failureManager.record` / `lookupForTask`, `decisionManager.propose` / `accept` / `reject` /
+    `supersede`, and `rankedSearch.searchNodesRanked` / `buildIndex` all return Promises. The
+    adapter awaits them; `KnowledgeStore` methods that touch the store are `async`.
   - **In-memory cache, one context per unit of work.** memoryjs loads the whole graph into memory once
     per context and serves every read from that cache, so a long-lived context never sees another
     process's writes. The `learn` CLI holds one context for the run and closes it on every exit path.
@@ -201,15 +213,15 @@ It exposes the `KnowledgeEntry` shape below to every other module and maps it as
 | One entry (any kind) | An entity named `learned:<kind>:<project>:<slug>:v<n>`, `entityType` `learned-<kind>`, `projectId` = the project key or `*`, `lifecycleStatus` `draft` / `published` / `archived` for `candidate` / `active` / `retired`, `importance` from confidence, `tags` `kind:<kind>`, `project:<key>`, `trust:<level>`, `status:<status>`, observations: one line per field (`title:`, `description:`, `scope:`, `confidence:`, `trust:`, `status:`, `version:`, `run:`, `validation:` as JSON, `heuristic:`, `decision:`, `procedure:`, `steps:` when present, then one `body:` line per body line). The logical version `n` lives in the name and the `version:` observation; memoryjs's own `Entity.version` auto-increments on every guarded write and is never read as the logical version. Observation lines are the human-readable form the library expects; the adapter parses them back. |
 | Citation | A relation `cites` from the entry entity to a reference entity `exchange:<id>` (`entityType` `exchange-ref`, observations `path:`, `lines:`, `session:`), created before the relation because memoryjs validates both endpoints. A reflection cites `attempt:<id>` the same way. The citation graph is then queryable through `graphTraversal`. |
 | Version chain and `superseded_by` | A new version is a new entity with `parentEntityName` = the previous version and `rootEntityName` = v1. Creating it does not mark the parent, so the adapter's `supersede` explicitly sets `supersededBy` and `isLatest: false` on the older entity through `updateEntity(name, patch, { expectedVersion })`, reading `expectedVersion` fresh before each write. `getLatestVersion(root)` backs lookup by slug. |
-| `candidate` / `active` / `retired` and trust | `lifecycleStatus` plus the `status:` observation and tag; `status` is the only lifecycle field the gates read. Trust is written explicitly as the agent-memory `source` field, `{ agentId: 'episodic-learn', timestamp, method: 'inferred', reliability, trustLevel }`, with `trustLevel` `unverified` (candidate), `verified` (validated) or `ground-truth` (human-approved), mirrored in the `trust:` observation and tag; memoryjs stores it and filters on nothing. |
-| Instruction lifecycle | Each instruction line is also a `heuristicManager.add({ condition, action, priority, initialConfidence })` whose returned id is stored in the entry's `heuristic:` observation. A kept validation calls `reinforce`, a regression `recordContradiction` (both return result strings the adapter maps to booleans), and the merge step calls `detectConflicts()`. |
+| `candidate` / `active` / `retired` and trust | `lifecycleStatus` plus the `status:` observation and tag; `status` is the only lifecycle field the gates read. The core `Entity` type in 4.5.0 has no `source` field; `MemorySource` (`{ agentId, timestamp, method, reliability, trustLevel }`) lives on `AgentEntity`. The adapter writes trust on the `trust:` observation and `trust:<level>` tag (gates and `KnowledgeEntry.trust` read those). It also *attempts* to pass `source` as `MemorySource` on create (cast through `AgentEntity`); if `getEntity` read-back drops it, that is not an error. |
+| Instruction lifecycle | Each instruction line is also `await heuristicManager.add({ condition, action, priority, initialConfidence })` whose returned id is stored in the entry's `heuristic:` observation. A kept validation `await`s `reinforce`, a regression `recordContradiction` (both return `'updated' \| 'not-found' \| 'conflict' \| 'vanished-mid-update'`), and the merge step `await`s `detectConflicts()`. |
 | Navigation skill and exploration notes | `projectContextManager.upsert(project, { facts, conventions, glossary: [{ term, definition }] })` per project, each string a cited line copied verbatim with its marks, so the record stays checkable. `forContext` output is for learners' prompts only; the rendered learned block is built from entry entities, never from `forContext`, so nothing uncited can reach a session. |
 | Procedure skills | When a proposal carries `steps`, `procedureManager.addProcedure({ id: 'proc:<project>:<slug>', name, description, steps: [{ order, action, parameters }], triggers })` beside the entry entity (the id is namespaced because procedure ids are entity names). `ProcedureManager` has no list method, so the adapter enumerates `procedure` entities itself and loads each with `getProcedure` before `matchProcedure(taskPrompt, procedures)`. `refineProcedure(id, { succeeded })` after each graded attempt that loaded the skill updates an in-place success rate that is telemetry: it is not an edit, is never validated, and is never rendered. |
 | Reflections | A `learned-reflection` entity (gated, listed and cited like every entry) and a `reflectionManager.create({ scope: 'project' or 'global', evidence: [cited entity names], summary, generalization_confidence, sourceProjectId })` record. memoryjs hashes scope plus sorted evidence only, not the summary, and returns the existing record on a hit without an error, so two different conclusions over the same evidence would collapse. The adapter keeps its own hash over `(scope, project, sorted evidence, NFKC summary)` as an observation: an exact match is `duplicate`; a same-evidence different-summary reflection is stored with its attempt id appended to `evidence` so the two records stay distinct. |
 | Failure categories | `failureManager.record({ context, attempted, failure_mode, root_cause, applicability_hint })` per diagnosed failure category with the task's prompt as context; the diagnose step calls `lookupForTask(prompt, { status: 'open' })` before the model call. |
-| Edit log | `decisionManager.propose({ context, decision, alternatives, consequences, sourceProjectId })` per proposal, its id stored as the `decision:` observation; `accept` on keep, `reject(reason)` on drop, `supersede` on a newer version; `learn report` prints `exportAsAdrMarkdown`. |
+| Edit log | `await decisionManager.propose({ context, decision, alternatives: string[], consequences: string[], sourceProjectId })` (`alternatives` and `consequences` are arrays in 4.5.0, not strings); its id is stored as the `decision:` observation; `await accept` on keep, `await reject(id, reason)` on drop, `await supersede` on a newer version; `learn report` prints the synchronous `exportAsAdrMarkdown`. |
 | PII | `new PiiRedactor().redact(text)` after `redactSecrets`, applied to line bodies after the mark group is parsed off, because its phone and card patterns match any 10 to 19 digit run. |
-| Text search over entries | `rankedSearch.searchNodesRanked(query, ['kind:<kind>', ...])` (tags are an any-match prefilter) then a code-side filter on `entityType` prefix, project or `*`, and published status; memoryjs has no entity-type or "project or global" filter. |
+| Text search over entries | `await rankedSearch.searchNodesRanked(query, ['kind:<kind>', ...], undefined, undefined, limit, projectId?)` (tags are an any-match prefilter; the 6th arg is an optional exact `projectId`, which does **not** express "this project or `*`", so the adapter still post-filters) then a code-side filter on `entityType` prefix, project or `*`, and published status. After writes in the same process, `await rankedSearch.buildIndex()` before asserting search in tests. |
 | Audit | Not used: memoryjs records its hash chain only under `MEMORY_GOVERNANCE_ENABLED=true`, which this plugin does not set. |
 
 The `KnowledgeEntry` interface below is what every other module sees; the fields are the same whether
@@ -343,13 +355,16 @@ Implements Algorithm 1 with `D` = the `train` tasks of tiers 2 and 3 and `K` = t
    `instruction` lines, then a **skills index** of one line per active skill, `name: description`, with the
    sentence "Load one with the episodic-memory skills tool before searching." The block is capped by
    `EPISODIC_MEMORY_LEARN_MAX_CHARS` (default 2500), ends on a whole line, and every field passes the
-   screen and redaction again at render time. It is stored in `learned_block`. `cli/digest-hook.js`
+   screen and redaction again at render time. It is stored in `learned_block`.    `cli/digest-hook.js`
    (fast path) today returns before anything unless `EPISODIC_MEMORY_DIGEST=1`, returns when the index
    database or the digest text is missing, and writes exactly one JSON object. The learned block is
-   gated on `EPISODIC_MEMORY_LEARN` on its own, read from `learning.sqlite` by its own path with
-   `better-sqlite3` read-only, re-screened, and joined with the digest text into the one
-   `additionalContext` string; the hook emits the single object when either part is non-empty and
-   nothing when both are. The hook never loads memoryjs, the SDK, transformers or sqlite-vec.
+   gated on `EPISODIC_MEMORY_LEARN` on its own, read from `learning.sqlite` by `getLearningDbPath()`
+   (config dir, **not** `TEST_DB_PATH`) with `better-sqlite3` read-only and **no migration**,
+   project key from `projectKeyFromCwd` of the hook cwd, re-screened, and joined with the digest text
+   into the one `additionalContext` string; the hook emits the single object when either part is
+   non-empty and nothing when both are. The hook never loads memoryjs, the SDK, transformers or
+   sqlite-vec. Its import graph is `learn-inject` → `types` + `learn-config` + `learned-text-screen` +
+   `redact` only — never `knowledge-db` or `knowledge-store`.
 2. The `skills` MCP tool: `list` (default), `get` by slug, `query` by text (memoryjs ranked search over
    `learned-skill` entities). Read-only. The MCP server imports the adapter lazily inside the `skills`
    branch only, so a session with the flag off never loads memoryjs, and it opens and closes a context
@@ -364,9 +379,12 @@ Implements Algorithm 1 with `D` = the `train` tasks of tiers 2 and 3 and `K` = t
 
 ## 7. Safety rules
 
-1. **Feature flag.** `EPISODIC_MEMORY_LEARN` defaults to off. Off: the hook reads no knowledge table, the
-   `skills` tool answers "learning is off", `learn` subcommands exit with that message, and the hook output
-   is byte-identical to today. The knowledge database is created only on first use with the flag on.
+1. **Feature flag.** `EPISODIC_MEMORY_LEARN` defaults to off. Off: the hook reads no learning table and
+   does not open `knowledge.db`, the `skills` tool is still *registered* (so `/mcp` lists four tools) but
+   answers "learning is off" without opening a store, `learn` subcommands exit 0 with that message, and
+   the digest-hook stdout is byte-identical to today. `knowledge.db` and `learning.sqlite` are created
+   only on the first flag-on write path (`learn` CLI). The hook never migrates: it opens
+   `learning.sqlite` read-only when the file already exists.
 2. **Additive only.** No code path deletes a knowledge entry, a task, an attempt, a digest entry or an
    exchange. Revision inserts and sets `superseded_by`. Retirement sets `status`. The export tree under
    `learned-skills/` is generated output and is the only place files are replaced or removed.
@@ -374,11 +392,13 @@ Implements Algorithm 1 with `D` = the `train` tasks of tiers 2 and 3 and `K` = t
    answer and trace passes it again, followed by memoryjs's `PiiRedactor` (email, phone, SSN, card, IP).
    The hook, the `skills` tool and the export re-apply both on output.
 4. **Cite, ground, or drop.** Tool-using agents cite real ids: `parseIdCitedLines` keeps a body line only
-   when it ends in `[#<32 hex>,...]` marks (plus `[@<n>]` for reflections) and every id resolves against
-   `exchanges` or `learning_attempt` at gate time. A kept line must also share at least
-   `EPISODIC_MEMORY_LEARN_MIN_GROUNDING` (default 3) distinct content tokens of four or more characters with
-   the text of one cited exchange, so a real id cannot be pinned to an unrelated sentence. Text-only
-   prompts that carry a mark map keep using `parseCitedLines`. An entry with no surviving line is not stored.
+   when it ends in `[#<32 hex>,...]` marks (reflections may add `[@<n>]` in the same group) and every id
+   resolves against `exchanges` or `learning_attempt` at gate time. A line needs **at least one `#`
+   exchange mark**; a line with only `@` marks is dropped. Numeric digest-style marks (`[7]`) are not
+   accepted. A kept line must also share at least `EPISODIC_MEMORY_LEARN_MIN_GROUNDING` (default 3)
+   distinct content tokens of four or more characters with the text of one cited exchange, so a real id
+   cannot be pinned to an unrelated sentence. Text-only prompts that carry a mark map keep using
+   `parseCitedLines`. An entry with no surviving line is not stored.
 5. **Validate or drop.** A proposed instruction or skill is `candidate` until its validation record shows
    the gain its kind requires (§6.1 step 5 for bootstrap entries; at least one targeted pass and no
    regression for learned edits), or until a human runs `learn approve`.
@@ -411,8 +431,11 @@ Implements Algorithm 1 with `D` = the `train` tasks of tiers 2 and 3 and `K` = t
    off, source ids excluded, no `handoff`, project passed explicitly), `read` is the production handler,
    `skills` is read-only. `propose_entry` hands a proposal to the orchestrator and writes nothing. A test
    reads the subprocess's init message and asserts its tool list equals the served names exactly.
-10. **Priority.** The `learn` CLI lowers its own priority the way the background sync does
-    (`lowerPriorityIfBackgroundWorker`), and every subprocess inherits the marker through `getApiEnv()`.
+10. **Priority.** `lowerPriorityIfBackgroundWorker()` is a no-op unless
+    `EPISODIC_MEMORY_BACKGROUND_WORKER=1`. The `learn` CLI sets that variable on `process.env` *then*
+    calls the helper (the same sequence `sync-cli.ts` uses for the detached worker). `getApiEnv()`
+    already spreads `process.env`, so SDK children inherit the marker; on Windows and Linux the
+    lowered niceness of the parent is inherited by those children.
 10a. **Budgets and one semaphore.** Per run: `EPISODIC_MEMORY_LEARN_MAX_CALLS` (default 200 subprocesses),
     `EPISODIC_MEMORY_LEARN_MAX_USD` (default 5), `EPISODIC_MEMORY_LEARN_MAX_MINUTES` (default 60),
     `EPISODIC_MEMORY_LEARN_MAX_TASKS` (default 120), rounds (default 3), and **one** global subprocess
@@ -422,10 +445,12 @@ Implements Algorithm 1 with `D` = the `train` tasks of tiers 2 and 3 and `K` = t
     with status `stopped` and keeps everything validated so far; the baseline cost is computed first and a
     run that cannot afford it does not start.
 11. **One run at a time, and coexistence with sync.** `.learn.lock` in the index directory through
-    `lockfile.ts`. The learner writes the PIDs of its live subprocesses to `.learn.pids` beside the lock;
-    `selectOrphans` in `orphan-reaper.ts` excludes PIDs listed there, so a session start during a run does
-    not kill the run's agents. An attempt whose subprocess dies by signal is stored with outcome `killed`
-    and never enters diagnosis.
+    `lockfile.ts`.     The learner writes the PIDs of its live subprocesses **and their matching SDK spawn-tree children**
+    (the `claude --fork-session` worker, `--bg-pty-host`, and `daemon run --origin transient` shapes
+    that appear after spawn) to `.learn.pids` beside the lock; `selectOrphans` in `orphan-reaper.ts`
+    excludes every PID listed there. Registering only the Node child the SDK exposes is not enough:
+    grandchildren still match the reaper signatures. An attempt whose subprocess dies by signal is
+    stored with outcome `killed` and never enters diagnosis.
 12. **GPU reservation.** When the reservation file names a holder, `learn` exits with `deferred`, as the
     digest does, because a learning run is a heavy local process and the fleet rule is "do not compete".
 13. **Test split integrity.** `test` tasks are excluded from every learner prompt by query, never by
@@ -511,7 +536,8 @@ backend). Child-process tests of the hook, the CLI early exits and the MCP serve
   environment, the store opens as SQLite, two near-identical body lines both persist, the environment is
   restored afterwards, and `semanticSearch` is null; a store written through one context is not seen by
   a second context opened earlier, and is seen by a context opened afterwards (the per-call rule);
-  the hook with digest off and learn on prints the block, and with both on prints exactly one JSON object.
+  the hook with digest off and learn on prints the block, and with both on prints exactly one JSON object;
+  `learn-inject` / `learn-config` / `learning-store` import graphs contain no `@danielsimonjr/memoryjs`.
 - Leaf loop: with a fake solver whose pass set is a function of the active entries, an edit that fixes a
   target and regresses nothing is kept; one that regresses a sampled task is dropped; a round with no kept
   edit ends the loop; `killed` and `aborted` attempts do not enter diagnosis.

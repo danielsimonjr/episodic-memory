@@ -27,7 +27,12 @@ COMMANDS:
       Pass rates before and after, kept and pending entries, rejections with
       reasons, budget, child runs and reflections. Default: the latest run.
 
-  learn bootstrap | improve | approve | export | render
+  learn bootstrap [--per-project N] [--seed S]
+      Map each eligible project's archive, propose a navigation skill and
+      exploration notes, merge them into one global instruction, then measure
+      them against the signal train tasks before keeping anything.
+
+  learn improve | approve | export | render
       Not implemented yet.
 
 Progress goes to stderr; the report goes to stdout.`;

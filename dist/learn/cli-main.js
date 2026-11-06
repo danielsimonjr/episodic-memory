@@ -25,8 +25,8 @@ import { LEARN_USAGE } from './usage.js';
 /** Exit code for a subcommand a later task fills in. Distinct from a failure. */
 export const NOT_IMPLEMENTED_EXIT = 3;
 export { LEARN_USAGE };
-const STUB_COMMANDS = new Set(['bootstrap', 'improve', 'approve', 'export', 'render']);
-const IMPLEMENTED = new Set(['tasks', 'solve', 'status', 'report']);
+const STUB_COMMANDS = new Set(['improve', 'approve', 'export', 'render']);
+const IMPLEMENTED = new Set(['tasks', 'solve', 'status', 'report', 'bootstrap']);
 /** `--name value`, `--name=value`, or undefined when absent. A bare `--name` yields ''. */
 function optionValue(argv, name) {
     for (let i = 0; i < argv.length; i += 1) {
@@ -222,6 +222,56 @@ async function commandSolve(dbs, argv, deps) {
         }
     });
 }
+/**
+ * `learn bootstrap`: map the eligible projects, gate the proposals, measure them.
+ *
+ * The baseline precheck runs first with a `×2` multiplier because bootstrapping
+ * solves the signal train set twice — empty snapshot, then candidates. A run
+ * that cannot afford that measurement would spend a bootstrapper's cost and
+ * still have no verdict, which is the one outcome the precheck exists to
+ * prevent (spec §7 rule 10a).
+ */
+async function commandBootstrap(dbs, argv, deps) {
+    const config = learnConfig();
+    const seed = optionNumber(argv, 'seed') ?? 1;
+    return underLock(deps, async (pids) => {
+        const refusal = baselineRefusal(baselineCallCount(dbs.learning, 2), config.maxCalls);
+        if (refusal) {
+            deps.stderr(`episodic-memory learn: ${refusal}\n`);
+            return 1;
+        }
+        deps.stderr(`episodic-memory learn: bootstrapping with concurrency ${config.concurrency}\n`);
+        const { runBootstrap } = await import('./bootstrap.js');
+        const budget = new CallBudget(config.maxCalls);
+        let result;
+        try {
+            result = await runBootstrap(dbs, {
+                runAgent: deps.runAgent,
+                model: deps.model ?? config.model,
+                judge: deps.judge,
+                concurrency: config.concurrency,
+                perProject: optionNumber(argv, 'per-project'),
+                seed,
+                budget,
+                pids,
+                textModel: deps.generateModel,
+            });
+        }
+        catch (error) {
+            if (error instanceof BudgetExhausted) {
+                deps.stderr(`episodic-memory learn: call budget exhausted after ${error.max} subprocess calls\n`);
+                return 0;
+            }
+            throw error;
+        }
+        deps.stderr(`episodic-memory learn: bootstrap ${result.status}: ${result.projects} project(s), ` +
+            `${result.proposed} proposed, ${result.activated.length} activated, ` +
+            `${result.pending.length} pending, ${result.rejected.length} rejected ` +
+            `(${result.runId})\n`);
+        deps.stdout(formatReport(await buildReport(dbs, result.runId), false));
+        return 0;
+    });
+}
 function compareForStatus(a, b) {
     const aGlobal = a.project === '*' ? 1 : 0;
     const bGlobal = b.project === '*' ? 1 : 0;
@@ -314,6 +364,8 @@ export async function runLearnCli(argv, deps) {
                 return await commandTasks(dbs, argv.slice(1), deps);
             case 'solve':
                 return await commandSolve(dbs, argv.slice(1), deps);
+            case 'bootstrap':
+                return await commandBootstrap(dbs, argv.slice(1), deps);
             case 'status':
                 return await commandStatus(dbs, deps);
             default:

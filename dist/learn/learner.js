@@ -781,6 +781,11 @@ async function resolveConflicts(dbs, input) {
                 });
                 if (!('rejected' in gated)) {
                     const name = await insertKnowledgeEntry(dbs.store, gated.entry);
+                    // The revision replaces the version that was in conflict, so the pair
+                    // cannot both stay live. Under the default approval mode the revision
+                    // waits as a candidate and the old line is retired: a contradiction is
+                    // worse than a temporarily missing hint.
+                    await retire(dbs.store, kept.name);
                     if (config.approve === 'none')
                         await activate(dbs.store, name, null, 'verified');
                     resolved = true;

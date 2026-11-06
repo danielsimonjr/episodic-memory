@@ -129,16 +129,46 @@ function treeSize(root: string): { present: boolean; files: number; bytes: numbe
  * `require.resolve`'s `paths` option is the only way to ask "what would a module
  * living *here* load?"; a plain import from this module would always answer for
  * the plugin root and hide a nested duplicate.
+ *
+ * The plugin package root: env, then a walk up from this file to
+ * `package.json` named `episodic-memory`.
+ *
+ * Deliberately not `process.cwd()`. Doctor is often started from a project
+ * directory, and resolving `better-sqlite3` from there either misses the
+ * plugin copy or finds an unrelated one — then a null result used to count as
+ * "shared" and the check passed without looking at the install.
  */
+function pluginPackageRoot(): string | null {
+  const fromEnv = [process.env.CLAUDE_PLUGIN_ROOT, process.env.PLUGIN_ROOT].filter(
+    (base): base is string => typeof base === 'string' && base.length > 0
+  );
+  for (const base of fromEnv) {
+    if (fs.existsSync(path.join(base, 'package.json'))) return base;
+  }
+
+  let dir = path.dirname(fileURLToPath(import.meta.url));
+  for (let i = 0; i < 8; i += 1) {
+    const manifest = path.join(dir, 'package.json');
+    if (fs.existsSync(manifest)) {
+      try {
+        const parsed = JSON.parse(fs.readFileSync(manifest, 'utf-8')) as { name?: string };
+        if (parsed.name === 'episodic-memory') return dir;
+      } catch {
+        // Keep walking; a broken manifest is not the plugin root.
+      }
+    }
+    const parent = path.dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return null;
+}
+
 function resolveBetterSqlite3(paths: string[]): string | null {
+  if (paths.length === 0) return null;
   const bases = [
-    // The plugin root, when the wrapper / doctor CLI knows it…
-    process.env.CLAUDE_PLUGIN_ROOT,
-    process.env.PLUGIN_ROOT,
-    // …then this module's own install (dist/), which is the plugin root's child…
+    pluginPackageRoot(),
     path.dirname(fileURLToPath(import.meta.url)),
-    // …then the invocation directory.
-    process.cwd(),
   ].filter((base): base is string => typeof base === 'string' && base.length > 0);
 
   for (const base of bases) {
@@ -154,12 +184,9 @@ function resolveBetterSqlite3(paths: string[]): string | null {
 
 /** The installed directory of a package, from wherever this process resolves it. */
 function resolveModuleDir(specifier: string): string | null {
-  const bases = [
-    process.env.CLAUDE_PLUGIN_ROOT,
-    process.env.PLUGIN_ROOT,
-    path.dirname(fileURLToPath(import.meta.url)),
-    process.cwd(),
-  ].filter((base): base is string => typeof base === 'string' && base.length > 0);
+  const bases = [pluginPackageRoot(), path.dirname(fileURLToPath(import.meta.url))].filter(
+    (base): base is string => typeof base === 'string' && base.length > 0
+  );
 
   for (const base of bases) {
     try {
@@ -217,7 +244,8 @@ export async function collectLearnDoctorSection(): Promise<LearnDoctorSection> {
   // A nested better-sqlite3 under memoryjs loads a second, possibly binding-less
   // copy. The `overrides` pin exists to make these two paths identical.
   const memoryjsDir = resolveModuleDir('@danielsimonjr/memoryjs');
-  section.betterSqlite3TopLevel = resolveBetterSqlite3([process.cwd()]);
+  const pluginRoot = pluginPackageRoot();
+  section.betterSqlite3TopLevel = resolveBetterSqlite3(pluginRoot ? [pluginRoot] : []);
   section.betterSqlite3FromMemoryjs =
     memoryjsDir === null ? section.betterSqlite3TopLevel : resolveBetterSqlite3([memoryjsDir]);
   section.betterSqlite3Shared =
@@ -232,10 +260,16 @@ export async function collectLearnDoctorSection(): Promise<LearnDoctorSection> {
   let index: Database.Database | null = null;
 
   try {
-    const { openKnowledgeStore } = await import('./learn/knowledge-store.js');
-    openedStore = openKnowledgeStore({ dbPath: knowledgeDb });
+    // `openKnowledgeStore` creates `learned/` and `knowledge.db`. Doctor must
+    // not: a missing store is reported by the size fields above and skipped.
+    if (fs.existsSync(knowledgeDb)) {
+      const { openKnowledgeStore } = await import('./learn/knowledge-store.js');
+      openedStore = openKnowledgeStore({ dbPath: knowledgeDb });
+    }
 
-    const entries = await openedStore.listByStatus(['candidate', 'active', 'retired']);
+    const entries = openedStore
+      ? await openedStore.listByStatus(['candidate', 'active', 'retired'])
+      : [];
     for (const entry of entries) {
       section.entryCounts[entry.kind][entry.status] += 1;
       if (entry.status === 'candidate' && (entry.kind === 'skill' || entry.kind === 'instruction')) {
@@ -255,9 +289,10 @@ export async function collectLearnDoctorSection(): Promise<LearnDoctorSection> {
         const { getDbPath } = await import('./paths.js');
         const dbPath = getDbPath();
         if (fs.existsSync(dbPath)) {
-          // Opened only when it already exists: doctor reads, it never creates.
-          const { initDatabase } = await import('./db.js');
-          index = initDatabase();
+          // Read-only and unmigrated. `initDatabase()` would open a writer,
+          // run migrations, and (via `openDatabase`) create a missing file.
+          const Database = (await import('better-sqlite3')).default;
+          index = new Database(dbPath, { readonly: true, fileMustExist: true });
           const statement = index.prepare('SELECT id FROM exchanges WHERE id = ?');
           for (const id of ids) {
             if (statement.get(id)) known.add(id);

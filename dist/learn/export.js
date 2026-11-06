@@ -56,7 +56,21 @@ function projectDir(project) {
     }
     return safe;
 }
-/** True when `target` is inside the config dir (its nearest existing ancestor is). */
+/** True when `root` is `<config dir>/learned-skills`, the only pruned root. */
+function isDefaultExportRoot(root) {
+    const expected = path.resolve(path.join(getSuperpowersDir(), DEFAULT_ROOT_NAME));
+    if (path.resolve(root) === expected)
+        return true;
+    try {
+        if (fs.existsSync(root) && fs.existsSync(expected)) {
+            return fs.realpathSync(root) === fs.realpathSync(expected);
+        }
+    }
+    catch {
+        return false;
+    }
+    return false;
+}
 function isInsideConfigDir(target) {
     let base;
     try {
@@ -267,8 +281,11 @@ function renderSkillFile(entry, sources, redact) {
  */
 export async function exportSkills(dbs, rootDir = path.join(getSuperpowersDir(), DEFAULT_ROOT_NAME), opts = {}) {
     const result = { written: [], removed: [], warnings: [] };
-    const prune = opts.prune !== false;
     const root = path.resolve(rootDir);
+    // Prune replaces the tree. That is only the default `<config>/learned-skills`
+    // root. A custom root inside the config dir is a copy: write the active
+    // skills and leave everything else (spec: prune is default-root only).
+    const prune = opts.prune !== false && isDefaultExportRoot(root);
     const redact = (text) => dbs.store.redactPii(redactSecrets(text));
     const entries = (await dbs.store.listByStatus(['active'], ['skill']))
         .filter(entry => entry.supersededBy === null)
@@ -295,6 +312,13 @@ export async function exportSkills(dbs, rootDir = path.join(getSuperpowersDir(),
         files.push({ relative: path.join(project, entry.slug, 'SKILL.md'), text: rendered.text });
     }
     if (!prune) {
+        // `--to` (explicit `prune: false`) may write outside the config dir and
+        // removes nothing. Any other non-default root outside the config dir is
+        // still a refusal: the caller did not opt into a copy.
+        if (opts.prune !== false && !isInsideConfigDir(root)) {
+            result.warnings.push(`refusing to replace ${root}: it is outside ${getSuperpowersDir()} (use --to to copy instead)`);
+            return result;
+        }
         for (const file of files) {
             const target = path.join(root, file.relative);
             fs.mkdirSync(path.dirname(target), { recursive: true });

@@ -6,7 +6,7 @@ import path from 'path';
 import { exportSkills } from '../../src/learn/export.js';
 import { openKnowledgeStore, type KnowledgeStore } from '../../src/learn/knowledge-store.js';
 import { openLearningDb } from '../../src/learn/learning-store.js';
-import { insertKnowledgeEntry, activate } from '../../src/learn/knowledge-db.js';
+import { insertKnowledgeEntry, activate, retire } from '../../src/learn/knowledge-db.js';
 import { runLearnCli } from '../../src/learn/cli-main.js';
 import type { KnowledgeEntry, LearnDbs, NewKnowledgeEntry, ValidationRecord } from '../../src/learn/types.js';
 import { safeRmSync, suppressConsole } from '../test-utils.js';
@@ -253,6 +253,22 @@ describe('exportSkills', () => {
     }
   });
 
+  it('a custom root inside the config dir is copied and not pruned', async () => {
+    await seedActive();
+    const custom = path.join(configDir, 'custom-skills');
+    const stale = path.join(custom, 'legacy', 'old', 'SKILL.md');
+    fs.mkdirSync(path.dirname(stale), { recursive: true });
+    fs.writeFileSync(stale, '---\nname: old\n---\n', 'utf-8');
+
+    const result = await exportSkills(dbs, custom);
+    expect(result.removed).toEqual([]);
+    expect(result.warnings).toEqual([]);
+    expect(result.written).toEqual([path.join(custom, 'proj-a', 'alpha', 'SKILL.md')]);
+    expect(fs.readFileSync(stale, 'utf-8')).toContain('name: old');
+    // The default root was not the target, so it stays absent.
+    expect(fs.existsSync(root)).toBe(false);
+  });
+
   it('--to writes and removes nothing', async () => {
     await seedActive();
     const target = makeTempDir('em-learn-export-to-');
@@ -379,6 +395,17 @@ describe('learn approve', () => {
 
     // Approval exports the skill, so the tree matches the store.
     expect(fs.existsSync(path.join(configDir, 'learned-skills', 'proj-a', 'alpha', 'SKILL.md'))).toBe(true);
+  });
+
+  it('approve refuses to re-activate a retired entry with a clean validation record', async () => {
+    const id = await insertKnowledgeEntry(store, nk({ slug: 'shelved' }));
+    await store.setValidation(id, record());
+    await retire(store, id);
+
+    const cap = capture();
+    expect(await runLearnCli(['approve', id, '--yes'], { ...cap.deps, dbs })).toBe(1);
+    expect(cap.stderr()).toMatch(/retired/i);
+    expect((await store.getEntry(id))?.status).toBe('retired');
   });
 
   it('approve names an entry it cannot find', async () => {

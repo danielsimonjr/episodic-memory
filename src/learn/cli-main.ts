@@ -638,6 +638,15 @@ async function commandApprove(dbs: LearnDbs, argv: string[], deps: LearnCliDeps)
     deps.stderr(`episodic-memory learn: ${entry.id} is already active\n`);
     return 0;
   }
+  // A clean validation record is why it was active once. Retirement is a
+  // later decision; approve must not undo it. Insert a new version instead.
+  if (entry.status === 'retired') {
+    deps.stderr(
+      `episodic-memory learn: ${entry.id} is retired; refusing to re-activate it ` +
+        '(approve a new version instead)\n'
+    );
+    return 1;
+  }
   if (!entry.validation) {
     deps.stderr(
       `episodic-memory learn: ${entry.id} has no validation record; a candidate is approved ` +

@@ -18,6 +18,14 @@
 import type Database from 'better-sqlite3';
 import { type LearningRun, type PassRate } from './learning-db.js';
 import type { KnowledgeEntry, LearnDbs } from './types.js';
+/** One merged entry, as `runLearn` recorded it on the run's metrics. */
+export interface ReportMerge {
+    key: string;
+    merged: string;
+    sources: string[];
+    revertedTo: string | null;
+    regressions: number[];
+}
 /** One split's rate at both ends of the run, with the per-kind-and-tier cells. */
 export interface SplitReport {
     before: PassRate;
@@ -53,6 +61,8 @@ export interface ReportModel {
     };
     childRuns: LearningRun[];
     reflections: KnowledgeEntry[];
+    /** Duplicate entries the run merged across children, and any revert. */
+    merges: ReportMerge[];
 }
 /**
  * Build the report for one run.

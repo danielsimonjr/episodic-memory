@@ -20,6 +20,7 @@
 
 import { shouldSkipReentrantSync } from './reentrancy.js';
 import { learnEnabled, LEARN_OFF_MESSAGE } from './learn/learn-config.js';
+import { LEARN_USAGE } from './learn/usage.js';
 import { gpuReservationBlock } from './gpu-reservation.js';
 import { BACKGROUND_WORKER_ENV, lowerPriorityIfBackgroundWorker } from './priority.js';
 import { formatLogLine, getLearnLogPath } from './logging.js';
@@ -33,7 +34,8 @@ if (shouldSkipReentrantSync()) {
 }
 
 if (argv.includes('--help') || argv.includes('-h')) {
-  const { LEARN_USAGE } = await import('./learn/cli-main.js');
+  // Printed from the light module. Importing cli-main here would load the
+  // Agent SDK and memoryjs before this process has decided to do any work.
   console.log(LEARN_USAGE);
   process.exit(0);
 }

@@ -19,7 +19,7 @@ const PLUGIN_ROOT = process.env.CLAUDE_PLUGIN_ROOT || join(__dirname, '..');
 
 async function main() {
   try {
-    // memoryjs (reached by the `skills` tool) requires Node >= 22.12.0 and `engines` only warns.
+    // better-sqlite3 13 requires Node >= 22 and `engines` only warns.
     // Bail before the install check: a too-old Node would otherwise run a 200-package install and
     // then fail inside a dependency on a tool call.
     const floorError = assertNodeFloor();

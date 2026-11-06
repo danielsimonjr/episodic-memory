@@ -249,7 +249,6 @@ describe('doctor learn section', () => {
       'learned:instruction:proj-a:search-first:v1',
       'learned:skill:proj-a:alpha:v1',
     ]);
-    expect(learn.betterSqlite3Shared).toBe(true);
     expect(learn.betterSqlite3TopLevel).toMatch(/better-sqlite3/);
 
     const report = buildDoctorReport({ ...(await collectDoctorSnapshot()), learn });
@@ -264,7 +263,7 @@ describe('doctor learn section', () => {
     expect(text).toContain('latest run:');
     expect(text).toContain('unresolved sources: 2');
     expect(text).toContain('learned-skills: found (1 file(s)');
-    expect(text).toContain('better-sqlite3: one copy');
+    expect(text).toMatch(/better-sqlite3: \S*better-sqlite3/);
     expect(text).toContain('Warnings:');
     expect(text).toMatch(/exchange id\(s\) the index no longer has/);
 
@@ -276,8 +275,8 @@ describe('doctor learn section', () => {
     expect(Array.isArray(json.unresolvedSources)).toBe(true);
     expect(json.unresolvedSources).toHaveLength(2);
     expect((json.exportTree as Record<string, unknown>).files).toBe(1);
-    expect(json.betterSqlite3Shared).toBe(true);
-    // No audit-chain item: memoryjs only records one under MEMORY_GOVERNANCE_ENABLED.
+    expect(typeof json.betterSqlite3TopLevel).toBe('string');
+    // No audit-chain item: the store keeps no governance chain.
     expect(report.text).not.toMatch(/audit/i);
     expect(Object.keys(json)).not.toContain('auditChain');
   });
@@ -340,17 +339,15 @@ describe('doctor learn section', () => {
     expect(report.ok).toBe(true);
   });
 
-  it('warns when memoryjs resolves a different better-sqlite3 copy', () => {
+  it('prints the resolved better-sqlite3 path in the learn section', () => {
     const section = {
       ...emptyLearnSection('/tmp/cfg/learned'),
       present: true,
       betterSqlite3TopLevel: '/top/better-sqlite3/lib/index.js',
-      betterSqlite3FromMemoryjs: '/nested/better-sqlite3/lib/index.js',
-      betterSqlite3Shared: false,
     };
     const report = buildDoctorReport({ ...healthy, learn: section });
-    expect(report.text).toContain('SHARED MISMATCH');
-    expect(report.text).toMatch(/overrides pin/);
+    expect(report.text).toContain('better-sqlite3: /top/better-sqlite3/lib/index.js');
+    expect(report.text).not.toContain('Warnings:');
   });
 
   it('omits the section entirely when doctor was given none', () => {

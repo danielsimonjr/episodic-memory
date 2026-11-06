@@ -296,7 +296,7 @@ describe('learn-inject module graph', () => {
     expect(packages).toEqual([{ typeOnly: true, specifier: 'better-sqlite3' }]);
     // The doc comment may name a forbidden module; only imports matter.
     const specifiers = imports.map(i => i.specifier);
-    for (const forbidden of ['@danielsimonjr/memoryjs', './knowledge-db.js', './knowledge-store.js']) {
+    for (const forbidden of ['./knowledge-db.js', './knowledge-store.js']) {
       expect(specifiers).not.toContain(forbidden);
     }
   });

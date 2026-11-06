@@ -1,5 +1,8 @@
 ## [Unreleased]
 
+### Removed
+- **`@danielsimonjr/memoryjs` is no longer a dependency.** `package.json`, `bun.lock` and the esbuild externals drop it; the plugin install is about 30 packages lighter. With it go the parts of the fork that existed only to police it: the nested-`better-sqlite3` sentinel in `deps-health`, the "memoryjs resolves a different better-sqlite3" doctor warning (the learn section now prints the one resolved path), and the `overrides` pin on `better-sqlite3`, which nothing else pulls in. The Node floor is now the one `better-sqlite3` 13 declares, `>=22.0.0`, enforced at launch as before.
+
 ### Changed
 - **The knowledge store no longer depends on `@danielsimonjr/memoryjs`.** `src/learn/knowledge-store.ts` now talks to `better-sqlite3` directly, keeping the `entities` / `relations` layout memoryjs created so an existing `learned/knowledge.db` opens unchanged. Learned entries, citations, heuristics, procedures, decisions, failures, reflections and project context keep their public API; the memoryjs-specific knobs (`storageConstructorName`, `semanticSearchIsNull`, the `MEMORY_*` environment scoping) are gone because there is nothing left to scope. Reads go straight to the database, so a write through one handle is visible to every other open handle at once instead of to handles opened afterwards only. Search is a deterministic term-overlap ranking rather than TF-IDF, so a store with one or two entries still answers. PII redaction lives in `src/learn/pii-redactor.ts` with the same five shapes (email, SSN, card, phone, IPv4). The MCP protocol test now proves the lazy-load guarantee against `./learn/skills-tool.js`, the module the flag-on `skills` call imports.
 

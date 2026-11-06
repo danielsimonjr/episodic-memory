@@ -2,14 +2,10 @@
  * The `learn` section of `episodic-memory doctor`.
  *
  * Kept apart from `doctor.ts` because collecting it needs a read-only peek at
- * the learning trace and the memoryjs store, while `doctor.ts` stays importable
+ * the learning trace and the knowledge store, while `doctor.ts` stays importable
  * from a context with neither. `collectLearnDoctorSection()` is best-effort
  * throughout: a missing or half-written `learned/` is something to *report*,
  * never a reason for doctor itself to fail.
- *
- * Deliberately no audit-chain item: memoryjs records its governance chain only
- * under `MEMORY_GOVERNANCE_ENABLED=true`, which this plugin never sets, so an
- * empty chain would read as a defect when it is the normal state.
  */
 
 import fs from 'fs';
@@ -53,15 +49,8 @@ export interface LearnDoctorSection {
   unresolvedSources: Array<{ id: string; kind: KnowledgeKind; sources: number }>;
   /** `learned-skills/` presence and size of the exported tree. */
   exportTree: { present: boolean; files: number; bytes: number };
-  /** The top-level `better-sqlite3` copy the plugin would load. */
+  /** The `better-sqlite3` copy the plugin loads, or null when it does not resolve. */
   betterSqlite3TopLevel: string | null;
-  /**
-   * The copy memoryjs would resolve to. Equal to the top-level copy when the
-   * `overrides` pin did its job; a different path means a nested duplicate.
-   */
-  betterSqlite3FromMemoryjs: string | null;
-  /** True when both resolve paths agree (or neither resolves). */
-  betterSqlite3Shared: boolean;
 }
 
 function emptyCounts(): Record<KnowledgeStatus, number> {
@@ -84,8 +73,6 @@ export function emptyLearnSection(learnedDir = ''): LearnDoctorSection {
     unresolvedSources: [],
     exportTree: { present: false, files: 0, bytes: 0 },
     betterSqlite3TopLevel: null,
-    betterSqlite3FromMemoryjs: null,
-    betterSqlite3Shared: true,
   };
 }
 
@@ -182,23 +169,6 @@ function resolveBetterSqlite3(paths: string[]): string | null {
   return null;
 }
 
-/** The installed directory of a package, from wherever this process resolves it. */
-function resolveModuleDir(specifier: string): string | null {
-  const bases = [pluginPackageRoot(), path.dirname(fileURLToPath(import.meta.url))].filter(
-    (base): base is string => typeof base === 'string' && base.length > 0
-  );
-
-  for (const base of bases) {
-    try {
-      const requireFrom = createRequire(path.join(base, 'package.json'));
-      return path.dirname(requireFrom.resolve(`${specifier}/package.json`));
-    } catch {
-      // Try the next base.
-    }
-  }
-  return null;
-}
-
 function metricsSummary(metrics: Record<string, unknown>): string {
   const parts: string[] = [];
   const train = metrics.train as { before?: unknown; after?: unknown } | undefined;
@@ -241,17 +211,8 @@ export async function collectLearnDoctorSection(): Promise<LearnDoctorSection> {
 
   section.exportTree = treeSize(path.join(getSuperpowersDir(), LEARNED_SKILLS_DIR));
 
-  // A nested better-sqlite3 under memoryjs loads a second, possibly binding-less
-  // copy. The `overrides` pin exists to make these two paths identical.
-  const memoryjsDir = resolveModuleDir('@danielsimonjr/memoryjs');
   const pluginRoot = pluginPackageRoot();
   section.betterSqlite3TopLevel = resolveBetterSqlite3(pluginRoot ? [pluginRoot] : []);
-  section.betterSqlite3FromMemoryjs =
-    memoryjsDir === null ? section.betterSqlite3TopLevel : resolveBetterSqlite3([memoryjsDir]);
-  section.betterSqlite3Shared =
-    section.betterSqlite3TopLevel === null ||
-    section.betterSqlite3FromMemoryjs === null ||
-    section.betterSqlite3TopLevel === section.betterSqlite3FromMemoryjs;
 
   if (!section.present) return section;
 

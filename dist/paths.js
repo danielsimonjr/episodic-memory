@@ -152,7 +152,7 @@ export function getDbPath() {
 export function getLearnedDir() {
     return ensureDir(path.join(getSuperpowersDir(), 'learned'));
 }
-/** The memoryjs knowledge repository (`storagePath` is a FILE path). */
+/** The knowledge store (a SQLite FILE path). */
 export function getKnowledgeDbPath() {
     return path.join(getLearnedDir(), 'knowledge.db');
 }

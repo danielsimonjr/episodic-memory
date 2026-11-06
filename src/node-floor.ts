@@ -2,18 +2,19 @@
  * Node version floor, enforced at launch — dependency-free so both entry points can import it
  * before anything heavy.
  *
- * memoryjs (the knowledge store behind `learn`) declares `node >= 22.12.0`. `engines` is advisory:
- * npm warns and installs anyway, so a host on Node 20 starts the wrapper, completes a 200-package
- * install, and then fails inside memoryjs with an error that names neither the package nor the
- * version. The entry points check the floor themselves and print one line instead.
+ * better-sqlite3 13 (the database behind the index and the knowledge store) declares `node >= 22`.
+ * `engines` is advisory: npm warns and installs anyway, so a host on Node 20 starts the wrapper,
+ * completes a 200-package install, and then fails inside a dependency with an error that names
+ * neither the package nor the version. The entry points check the floor themselves and print one
+ * line instead.
  *
  * The version is an ARGUMENT rather than a read of `process.versions.node` so it can be tested
  * with an explicit string. Do not fake `process.versions.node` in a wrapper's process: that
  * proves nothing about the child process the wrapper will spawn.
  */
 
-/** The Node floor memoryjs requires. Kept in sync with `engines.node` in package.json. */
-export const NODE_FLOOR = '22.12.0';
+/** The Node floor better-sqlite3 requires. Kept in sync with `engines.node` in package.json. */
+export const NODE_FLOOR = '22.0.0';
 
 function parseVersion(version: string): [number, number, number] | null {
   const m = /^v?(\d+)\.(\d+)\.(\d+)/.exec(version.trim());

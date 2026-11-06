@@ -210,11 +210,7 @@ function learnTextLines(learn) {
         lines.push(`    ${entry.id}: ${entry.sources} missing exchange id(s)`);
     }
     lines.push(`  learned-skills: ${learn.exportTree.present ? 'found' : 'absent'} (${learn.exportTree.files} file(s), ${formatBytes(learn.exportTree.bytes)})`);
-    lines.push(`  better-sqlite3: ${learn.betterSqlite3Shared ? 'one copy' : 'SHARED MISMATCH'}` +
-        (learn.betterSqlite3TopLevel ? ` · ${learn.betterSqlite3TopLevel}` : ' · unresolved') +
-        (learn.betterSqlite3Shared
-            ? ''
-            : ` · memoryjs resolves ${learn.betterSqlite3FromMemoryjs ?? 'unresolved'}`));
+    lines.push(`  better-sqlite3: ${learn.betterSqlite3TopLevel ?? 'unresolved'}`);
     return lines;
 }
 export function buildDoctorReport(inputs) {
@@ -237,9 +233,6 @@ export function buildDoctorReport(inputs) {
     }
     const learn = inputs.learn;
     if (learn !== undefined && learn.present) {
-        if (!learn.betterSqlite3Shared) {
-            warnings.push('memoryjs resolves a different better-sqlite3 copy than the top-level one; run npm install so the overrides pin collapses the duplicate.');
-        }
         if (learn.unresolvedSources.length > 0) {
             warnings.push(`${learn.unresolvedSources.length} learned entr${learn.unresolvedSources.length === 1 ? 'y cites' : 'ies cite'} exchange id(s) the index no longer has; re-run \`learn tasks --check\` or retire it.`);
         }

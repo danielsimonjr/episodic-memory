@@ -3,7 +3,7 @@
  * SessionStart hook: print the project digest and the learned block as additional context.
  *
  * Fast path by design. It opens each database read-only and imports only better-sqlite3 plus a few small
- * modules from dist/ (no embeddings, no sqlite-vec, no memoryjs, no SDK). The digest and the learned block
+ * modules from dist/ (no embeddings, no sqlite-vec, no knowledge store, no SDK). The digest and the learned block
  * are gated independently: the digest on EPISODIC_MEMORY_DIGEST, the learned block on EPISODIC_MEMORY_LEARN.
  * With the learned block empty the output is byte-identical to the digest-only hook. It prints nothing and
  * exits 0 when the summarizer guard is set, when neither part has content, or when anything fails: a
@@ -42,7 +42,7 @@ async function buildDigest(cwd) {
  *
  * Read-only and never migrated: the hook may run against a `learning.sqlite` written by an older build, and
  * DDL on a read-only handle would throw. Its import graph (learn-inject → types, learn-config,
- * learned-text-screen, redact) holds no memoryjs.
+ * learned-text-screen, redact) never opens the knowledge store.
  */
 async function buildLearned(cwd) {
   if (process.env.EPISODIC_MEMORY_LEARN !== '1') return '';

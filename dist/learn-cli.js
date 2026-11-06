@@ -2,7 +2,7 @@
  * `episodic-memory learn` — the process entry point (`dist/learn-cli.js`).
  *
  * Everything below the four early exits is imported lazily. A learning run loads
- * memoryjs, the Agent SDK and transformers; a guarded reentrant subprocess, a
+ * the knowledge store, the Agent SDK and transformers; a guarded reentrant subprocess, a
  * flag-off invocation, a deferred GPU reservation or `--help` must pay none of
  * that (spec §7 rules 8, 10 and 12). The order is fixed and mirrors
  * `sync-cli.ts`:
@@ -31,7 +31,7 @@ if (shouldSkipReentrantSync()) {
 }
 if (argv.includes('--help') || argv.includes('-h')) {
     // Printed from the light module. Importing cli-main here would load the
-    // Agent SDK and memoryjs before this process has decided to do any work.
+    // Agent SDK and the knowledge store before this process has decided to do any work.
     console.log(LEARN_USAGE);
     process.exit(0);
 }

@@ -59,12 +59,12 @@ describe('relay task 6 findings', () => {
   // light-entry contract says `--help` needs nothing and every gate precedes the
   // heavy import; the existing child test never probes the help path with the
   // forbid-modules loader, so the SDK load slips through.
-  it('learn --help exits 0 without loading the Agent SDK or memoryjs', () => {
+  it('learn --help exits 0 without loading the Agent SDK', () => {
     const run = spawnSync(process.execPath, [LEARN_CLI, '--help'], {
       env: {
         ...process.env,
         EPISODIC_MEMORY_LEARN: '',
-        FORBID_MODULES: '@anthropic-ai/claude-agent-sdk,@danielsimonjr/memoryjs',
+        FORBID_MODULES: '@anthropic-ai/claude-agent-sdk',
         NODE_OPTIONS: `--import=file://${FORBID.replace(/\\/g, '/')}`,
       },
       encoding: 'utf-8',

@@ -116,7 +116,7 @@ describe('learning store', () => {
     }
   });
 
-  it('the index database and learning.sqlite have no memoryjs tables and the index has no learning tables', async () => {
+  it('the index database and learning.sqlite have no knowledge-store tables and the index has no learning tables', async () => {
     const store = openKnowledgeStore();
     try {
       await store.putEntry({
@@ -164,7 +164,7 @@ describe('learning store', () => {
     expect(learningNames).not.toContain('entities');
     expect(learningNames).not.toContain('relations');
 
-    // The index database carries exchanges and digest tables but no memoryjs or learning tables.
+    // The index database carries exchanges and digest tables but no knowledge-store or learning tables.
     const index = new Database(path.join(getIndexDir(), 'probe.db'));
     try {
       index.exec('CREATE TABLE exchanges (id TEXT PRIMARY KEY)');

@@ -133,13 +133,13 @@ export async function handleToolCall(name: string, args: unknown): Promise<McpTo
 
     if (name === 'skills') {
       const params = SkillsInputSchema.parse(args);
-      // Flag-off must not import `skills-tool.js`: that module loads memoryjs.
+      // Flag-off must not import `skills-tool.js`: that module opens the knowledge store.
       // The tool stays registered; it answers without opening a store.
       if (!learnEnabled()) {
         return { content: [{ type: 'text', text: LEARN_OFF_MESSAGE }] };
       }
       // Lazy on purpose: a server that never gets a flag-on `skills` call must
-      // never pay to load memoryjs.
+      // never pay to open the knowledge store.
       const { skillsToolText } = await import('./learn/skills-tool.js');
       return { content: [{ type: 'text', text: await skillsToolText(params) }] };
     }

@@ -40,14 +40,16 @@ async function buildDigest(cwd) {
 /**
  * The stored learned block for this project, or '' when learning is off or the trace database is absent.
  *
- * Read-only and never migrated: the hook may run against a `learning.sqlite` written by an older build, and
- * DDL on a read-only handle would throw. Its import graph (learn-inject → types, learn-config,
- * learned-text-screen, redact) never opens the knowledge store.
+ * The function opens the database read-only and never migrates it.
+ * The hook may run against a `learning.sqlite` from an older build.
+ * DDL on a read-only handle would throw.
+ * Its import graph (learn-inject → types, learned-text-screen, redact; the hook → learn-config) never opens the
+ * knowledge store.
  */
 async function buildLearned(cwd) {
-  if (process.env.EPISODIC_MEMORY_LEARN !== '1') return '';
+  const { learnConfig, learnEnabled } = await import('../dist/learn/learn-config.js');
+  if (!learnEnabled()) return '';
 
-  const { learnConfig } = await import('../dist/learn/learn-config.js');
   const { openLearningDb } = await import('../dist/learn/learning-store.js');
   const { readLearnedBlockCapped } = await import('../dist/learn/learn-inject.js');
   const { projectKeyFromCwd } = await import('../dist/digest-inject.js');

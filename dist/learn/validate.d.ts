@@ -44,17 +44,18 @@ export type ValidationResult = ValidationRecord & {
 /**
  * A seeded sample of `ids`, without replacement, in a stable order.
  *
- * Sorting first makes the sample a function of `(ids, size, seed)` alone, so a
- * rerun with the same seed validates the same tasks.
+ * Sorting first makes the sample a function of `(ids, size, seed)` alone.
+ * So a rerun with the same seed validates the same tasks.
  */
 export declare function sampleIds(ids: number[], size: number, seed: number): number[];
 /**
  * Validate one candidate and act on the verdict.
  *
- * On a keep the entry is activated (`verified`) when its kind can activate
- * itself — a skill, or an instruction under `approve: none` — and left a
- * candidate otherwise, with its record. On a drop the record is written, the
- * instruction's heuristics take a contradiction, a procedure's success rate
- * falls, and the edit's decision is rejected with the reason.
+ * On a keep, the entry is activated (`verified`) when its kind can activate itself.
+ * A skill can activate itself, and so can an instruction under `approve: none`.
+ * Otherwise, the entry stays a candidate, with its record.
+ * On a drop, the record is written.
+ * The instruction's heuristics take a contradiction.
+ * A procedure's success rate falls, and the edit's decision is rejected with the reason.
  */
 export declare function validateCandidate(dbs: LearnDbs, candidateName: string, opts: ValidateOptions): Promise<ValidationResult>;

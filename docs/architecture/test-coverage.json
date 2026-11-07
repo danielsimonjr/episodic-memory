@@ -1,7 +1,7 @@
 {
   "metadata": {
     "totalSourceFiles": 91,
-    "totalTestFiles": 126,
+    "totalTestFiles": 127,
     "testedCount": 72,
     "untestedCount": 19,
     "coveragePercent": "79.1",
@@ -287,6 +287,7 @@
       "test/learn/bootstrap.test.ts",
       "test/learn/export.test.ts",
       "test/learn/knowledge-db.test.ts",
+      "test/learn/knowledge-store-write-lock.test.ts",
       "test/learn/knowledge-store.test.ts",
       "test/learn/leaf-learner.test.ts",
       "test/learn/learn-cli.test.ts",
@@ -766,6 +767,9 @@
       "src/learn/knowledge-gate.ts",
       "src/learn/learn-config.ts",
       "src/learn/types.ts"
+    ],
+    "test/learn/knowledge-store-write-lock.test.ts": [
+      "src/learn/knowledge-store.ts"
     ],
     "test/learn/knowledge-store.test.ts": [
       "src/paths.ts",

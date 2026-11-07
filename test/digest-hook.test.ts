@@ -194,6 +194,18 @@ describe('digest-hook', () => {
       expect(out.hookSpecificOutput.additionalContext).toBe(block());
     });
 
+    it.each(['true', 'yes', 'on', 'TRUE'])('prints the block when the learn flag is %s', value => {
+      seedLearned(block());
+      const r = runHook({
+        EPISODIC_MEMORY_DIGEST: undefined,
+        TEST_DB_PATH: dbPath,
+        EPISODIC_MEMORY_LEARN: value,
+        EPISODIC_MEMORY_CONFIG_DIR: configDir,
+      });
+      expect(r.status).toBe(0);
+      expect(JSON.parse(r.stdout).hookSpecificOutput.additionalContext).toBe(block());
+    });
+
     it('emits exactly one JSON object holding both parts when both are on', () => {
       seedLearned(block());
       const r = runHook({
@@ -322,9 +334,9 @@ describe('hook module graph', () => {
   /**
    * Walk the built module graph from a `dist/` entry point.
    *
-   * A source-text scan only catches the file itself; the hook's guarantee is
-   * about the whole graph a three-module-deep import would create. This reads
-   * the compiled files, so a new transitive edge shows up here.
+   * A source-text scan only catches the file itself.
+   * The hook's guarantee is about the whole graph that a three-module-deep import would create.
+   * This reads the compiled files, so a new transitive edge shows up here.
    */
   function staticImportsOf(file: string): string[] {
     const source = readFileSync(file, 'utf-8');

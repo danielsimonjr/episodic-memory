@@ -40,9 +40,8 @@ const STEP_ACTIONS = [
     'check',
 ];
 /**
- * Lift every `#<32 hex>` and `@<digits>` mark out of `text` so a digit-run
- * redactor cannot rewrite one. Placeholders are private-use sentinels, which
- * neither the secret patterns nor a case-changing redactor rewrite.
+ * Lift every `#<32 hex>` and `@<digits>` mark out of `text` so a digit-run redactor cannot rewrite one.
+ * Placeholders are private-use sentinels, which neither the secret patterns nor a case-changing redactor rewrite.
  */
 function shieldMarks(text) {
     const marks = [];
@@ -57,8 +56,8 @@ function restoreMarks(text, marks) {
     return text.replace(/\uE000(\d+)\uE001/g, (_match, index) => marks[Number(index)] ?? '');
 }
 /**
- * Redact one text field: secrets first, then PII. The trailing mark group is
- * split off, and every earlier `#`/`@` mark is shielded, so the digit-run
+ * Redact one text field: secrets first, then PII.
+ * The trailing mark group is split off. Every earlier `#`/`@` mark is shielded, so the digit-run
  * patterns never see a 32-hex exchange mark.
  */
 export function redactLearnedText(text, deps) {
@@ -90,8 +89,8 @@ function isValidSteps(steps) {
     });
 }
 /**
- * Gate one proposal. Returns the entry to store, or the reason it was rejected
- * (the reason string is what `learn report` prints).
+ * Gate one proposal. Returns the entry to store, or the reason it was rejected.
+ * The reason string is what `learn report` prints.
  */
 export function gateEntry(proposal, deps) {
     if (!isValidSlug(proposal.slug))

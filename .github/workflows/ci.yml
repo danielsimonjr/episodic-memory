@@ -34,6 +34,15 @@ jobs:
       - run: bun run --if-present test
       - run: bun run --if-present build
 
+      # The two doc gates read the source, so they run after the final build.
+      # repo-tools is pinned to the version the gates were verified with.
+      - name: Install repo-tools
+        run: npm install -g @danielsimonjr/repo-tools@2.3.0
+      - name: Architecture docs gate (no drift from the recorded counts)
+        run: repo-tools check . --docs=docs/architecture
+      - name: Code docs gate (every exported symbol documented)
+        run: repo-tools docs check .
+
       # Production runtime is NODE; Bun is the package manager + script driver.
       # Every install/test/build step above runs under Bun, so without this the
       # shipped artifact is never executed by the runtime that actually runs it.

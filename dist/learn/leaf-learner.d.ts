@@ -71,17 +71,16 @@ export interface LeafLearnerOptions {
 /**
  * Tasks whose solvers disagreed about where the answer lives.
  *
- * Two failed `graded` attempts from this round, each committing to one address,
- * with different addresses: the task's truth is unreliable for this round, so
- * it cannot be part of a validation set. A passing attempt is evidence the
- * ground is reliable. One attempt that names two paths is one solver hedging,
- * not two solvers disagreeing. Two attempts naming the same file stay in.
+ * Two failed `graded` attempts from this round each commit to one address, and the addresses differ.
+ * The task's truth is unreliable for this round. So the task cannot be part of a validation set.
+ * A passing attempt is evidence the ground is reliable. One attempt that names two paths is one
+ * solver hedging, not two solvers disagreeing. Two attempts naming the same file stay in.
  */
 export declare function suspectTaskIds(attempts: AttemptRow[]): number[];
 /**
  * Run one leaf learner over a subset of the train signal tasks.
  *
- * Everything a model or a subprocess would touch is injected, so a test drives
- * the whole loop with fakes and never reaches a model, a GPU or a subprocess.
+ * Everything a model or a subprocess would touch is injected.
+ * So a test drives the whole loop with fakes and never reaches a model, a GPU or a subprocess.
  */
 export declare function runLeafLearner(dbs: LearnDbs, options: LeafLearnerOptions): Promise<LeafResult>;

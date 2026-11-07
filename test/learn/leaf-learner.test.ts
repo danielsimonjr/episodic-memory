@@ -211,8 +211,9 @@ interface LearnerCall {
 }
 
 /**
- * A fake learner agent: it proposes `proposals` (optionally per round) through
- * the server's own `propose_entry` handler, exactly as a subprocess would.
+ * A fake learner agent that proposes `proposals` (optionally per round).
+ *
+ * The fake passes each proposal to the server's own `propose_entry` handler, exactly as a subprocess would.
  */
 function fakeLearner(proposals: ProposedEntry[] | ((round: number) => ProposedEntry[])) {
   const calls: LearnerCall[] = [];

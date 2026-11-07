@@ -174,8 +174,8 @@ async function addSkill(
 }
 
 /**
- * A fake solver: `pass` decides the grade from the evaluation snapshot's entry
- * names, which is the only thing a candidate can change.
+ * A fake solver: `pass` decides the grade from the evaluation snapshot's entry names.
+ * The entry names are the only thing a candidate can change.
  */
 function fakeSolve(pass: (names: string[], task: LearningTask, role: string) => boolean) {
   const calls: Array<{ taskId: number; role: string; names: string[] }> = [];

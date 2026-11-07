@@ -28,9 +28,10 @@ function normalizeForCompare(p) {
     return process.platform === 'win32' ? resolved.toLowerCase() : resolved;
 }
 /**
- * Resolve a candidate path to a real path that is guaranteed to lie inside
- * the conversation archive and end in `.jsonl`. Rejects path traversal,
- * symlink escapes, non-jsonl files, and missing targets.
+ * Resolve a candidate path to a real path that is guaranteed to lie inside the conversation archive.
+ *
+ * The returned path also ends in `.jsonl`. The function rejects path traversal, symlink escapes,
+ * non-jsonl files, and missing targets.
  */
 export function resolveArchiveJsonlPath(candidatePath) {
     if (!candidatePath || typeof candidatePath !== 'string') {
@@ -83,8 +84,9 @@ export function resolveArchiveJsonlPath(candidatePath) {
     return realPath;
 }
 /**
- * Resolve a summary sidecar path only when the candidate JSONL path is
- * lexically inside the archive and the summary file exists without symlink escape.
+ * Resolve a summary sidecar path only when the candidate JSONL path is lexically inside the archive.
+ *
+ * The summary file must exist and must not escape the archive through a symlink.
  * Returns null when the path is outside the archive or the summary is missing.
  */
 export function safeArchiveSummaryPath(candidateJsonlPath) {

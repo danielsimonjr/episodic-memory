@@ -119,12 +119,11 @@ interface Failure {
     kind: LearningTask['kind'];
 }
 /**
- * The category each failed task was assigned, or null when the answer is not a
- * partition.
+ * The category each failed task was assigned, or null when the answer is not a partition.
  *
- * A partition means every failed id appears exactly once and no id the run did
- * not fail on appears at all. A duplicate assignment is not a partition either:
- * a task in two subsets would be solved and edited twice.
+ * A partition means every failed id appears exactly once. No id that the run did not fail on
+ * appears at all. A duplicate assignment is not a partition either: a task in two subsets
+ * would be solved and edited twice.
  */
 export declare function parseAssignment(raw: string, failedIds: number[]): Map<number, string> | null;
 /**
@@ -132,15 +131,15 @@ export declare function parseAssignment(raw: string, failedIds: number[]): Map<n
  *
  * By project first, because a project's vocabulary is what an instruction is
  * scoped to. A project over the leaf cap is then cut by failure category, which
- * needs one model call; when that answer is not a partition the project stays
- * whole, because a bad split is worse than a big subset.
+ * needs one model call. If that answer is not a partition, the project stays whole.
+ * The reason: a bad split is worse than a big subset.
  */
 export declare function splitFailures(failures: Failure[], leafMax: number, textModel: (prompt: string) => Promise<string>): Promise<LearnSubset[]>;
 /**
  * Run one `learn improve`.
  *
- * Everything that would reach a model, a subprocess or a GPU is injected, so a
- * test drives the whole recursion with fakes and never leaves the process.
+ * Everything that would reach a model, a subprocess or a GPU is injected.
+ * So a test drives the whole recursion with fakes and never leaves the process.
  */
 export declare function runLearn(dbs: LearnDbs, options: LearnOptions): Promise<LearnResult>;
 export {};

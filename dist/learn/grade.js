@@ -11,9 +11,8 @@
 import path from 'path';
 import { redactSecrets } from '../redact.js';
 /**
- * Strip markdown decoration from a value: backticks, bold markers, list bullets
- * and a trailing period. Paths keep their backslashes, which is the whole point
- * of doing this in one place.
+ * Strip markdown decoration from a value: backticks, bold markers, list bullets and a trailing period.
+ * Paths keep their backslashes. Stripping in one place preserves that property.
  */
 function cleanValue(raw) {
     let value = raw.trim();
@@ -46,10 +45,10 @@ function parseRange(value) {
 /**
  * Read the answer's address lines.
  *
- * Tolerant on purpose: the solver is a model, and a fenced markdown block with
- * bold labels and Windows backslash paths is a normal shape. A label line
- * supplies a value for the location most recently opened by a `path:` line, so
- * both `path:` then `lines:` and `- path: x` / `- lines: 1-5` pairs work.
+ * The function is tolerant on purpose. The solver is a model.
+ * A fenced markdown block with bold labels and Windows backslash paths is a normal shape.
+ * A label line supplies a value for the location most recently opened by a `path:` line.
+ * So both `path:` then `lines:` and `- path: x` / `- lines: 1-5` pairs work.
  */
 export function parseSolverAnswer(text) {
     const answer = { locations: [] };
@@ -92,10 +91,10 @@ function isWindowsShaped(candidate) {
     return /^[A-Za-z]:[\\/]/.test(candidate) || /^\\\\/.test(candidate);
 }
 /**
- * Fold separators, `.` / `..` segments and (on Windows) case, without touching
- * the disk. `path.win32.normalize` is the lexical equivalent of `path.resolve`
- * for a drive-letter path, and it folds `..` on every host. `path.resolve`
- * itself would anchor a Windows path to the Linux cwd.
+ * Fold separators, `.` / `..` segments and (on Windows) case, without touching the disk.
+ * `path.win32.normalize` is the lexical equivalent of `path.resolve` for a drive-letter path,
+ * and it folds `..` on every host. `path.resolve` itself would anchor a Windows path to the
+ * Linux cwd.
  */
 function normalizeWindowsPath(candidate) {
     const folded = path.win32.normalize(candidate.replace(/\//g, '\\'));
@@ -105,10 +104,10 @@ function normalizeWindowsPath(candidate) {
  * True when two paths name the same file, tolerating separators and Windows case.
  *
  * A solver answers with whatever shape it read: `C:\x\y.jsonl`, `c:/x/y.jsonl`,
- * or a POSIX path. `path.resolve` on its own is not enough, because a Windows
- * path is not absolute on Linux — and a task's truth may have been generated on
- * one platform and graded on the other. So a drive-letter path is normalised
- * lexically (separators, repeats, case) and never resolved against the cwd.
+ * or a POSIX path. `path.resolve` on its own is not enough, because a Windows path is not
+ * absolute on Linux. A task's truth may have been generated on one platform and graded on the
+ * other. So a drive-letter path is normalised lexically (separators, repeats, case) and never
+ * resolved against the cwd.
  */
 export function samePath(a, b) {
     if (!a || !b)
@@ -142,10 +141,11 @@ function locates(ref, location) {
 /**
  * The `locate` grade.
  *
- * 1.0 when the path matches and the ranges overlap; 0.5 when the path matches
- * but the range does not, or when the answer names the right session by another
- * path (a session can be archived under a different relative name after a move);
- * 0 otherwise.
+ * The grade is 1.0 when the path matches and the ranges overlap.
+ * The grade is 0.5 when the path matches but the range does not.
+ * The grade is also 0.5 when the answer names the right session by another path.
+ * A session can be archived under a different relative name after a move.
+ * In all other cases, the grade is 0.
  */
 export function gradeLocate(truth, answer) {
     const refs = refsOf(truth);
@@ -182,9 +182,9 @@ function shiftDate(date, days) {
     return parsed.toISOString().slice(0, 10);
 }
 /**
- * The `when` grade: the project must match, and the answered UTC date must land
- * inside the session's date range widened by one day on each side. The widening
- * absorbs a session that spans midnight and an answer given in local time.
+ * The `when` grade: the project must match.
+ * The answered UTC date must fall inside the session's date range, widened by one day on each side.
+ * The widening absorbs a session that spans midnight and an answer given in local time.
  */
 export function gradeWhen(truth, answer) {
     const range = truth?.sessionDateRange;
@@ -255,8 +255,8 @@ export function parseJudgeScore(raw) {
 /**
  * The `recall` grade: the location first, then the judge.
  *
- * Location is a precondition: once a solver has found the range it can read it,
- * so a high judge score on an unlocated answer would measure transcription.
+ * Location is a precondition. Once a solver has found the range, the solver can read that range.
+ * So a high judge score on an unlocated answer would measure transcription.
  * Reported per run; never used to keep or drop an edit.
  */
 export async function gradeRecall(truth, answer, judge, threshold = 0.7) {

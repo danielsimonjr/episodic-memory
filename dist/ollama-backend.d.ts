@@ -15,8 +15,9 @@
  * - EPISODIC_MEMORY_API_TIMEOUT_MS  per-call timeout, shared with the Claude backend (default 120 s).
  */
 /**
- * Another agent reserves the shared GPU. The function therefore does not load a model now. This is not a
- * failure of the summary: callers leave the work queued and do not count an attempt.
+ * Another agent reserves the shared GPU.
+ * `callOllama` therefore does not load a model now.
+ * A reservation is not a summary failure: callers leave the work queued and do not count an attempt.
  */
 export declare class GpuReservedError extends Error {
     /** The reservation message: who holds the GPU. */

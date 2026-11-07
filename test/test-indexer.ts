@@ -10,9 +10,10 @@ import { parseConversationFile } from '../src/parser.js';
 import { suppressConsole } from './test-utils.js';
 
 /**
- * Index a list of conversation files directly (for testing)
- * Unlike the main indexConversations(), this doesn't expect .claude/projects structure
- * Suppresses console output for clean test runs
+ * Index a list of conversation files directly (for testing).
+ *
+ * Unlike the main indexConversations(), this function does not expect .claude/projects structure.
+ * The function suppresses console output for clean test runs.
  */
 export async function indexTestFiles(filePaths: string[]): Promise<void> {
   const restore = suppressConsole();

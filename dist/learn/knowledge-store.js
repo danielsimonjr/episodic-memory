@@ -184,9 +184,9 @@ function toRawView(entity) {
 /**
  * Parse an entity back into the `KnowledgeEntry` shape.
  *
- * The logical `version` comes from the `version:` observation (and, failing
- * that, from the `:v<n>` suffix of the name), never from the row's write
- * counter.
+ * The logical `version` comes from the `version:` observation. When that observation is
+ * missing or not a positive, finite number, the `:v<n>` suffix of the name supplies the
+ * version. The row's write counter never supplies the version.
  */
 export function parseEntity(entity) {
     if (!entity.entityType.startsWith(ENTRY_TYPE_PREFIX))
@@ -239,10 +239,10 @@ export function parseEntity(entity) {
 /**
  * Build the observation lines for an entry.
  *
- * `reflectionHash` is passed separately because it is not a `KnowledgeEntry`
- * field: it is the store's own dedup marker, and it must survive an update, so
- * callers that rewrite an entity re-read it from the existing observations and
- * hand it back here.
+ * The caller passes `reflectionHash` separately, because `reflectionHash` is not a
+ * `KnowledgeEntry` field. The store uses `reflectionHash` as its own dedup marker, and the
+ * marker must survive an update. Callers that rewrite an entity re-read `reflectionHash` from
+ * the existing observations and pass the same value back here.
  */
 function buildObservations(entry, reflectionHash) {
     const observations = [
@@ -363,9 +363,9 @@ export class KnowledgeStore {
     /**
      * Open the store at `dbPath`, creating the file and its tables when absent.
      *
-     * `readonly` opens an existing file without any DDL, for callers such as the
-     * `skills` tool that must never be the ones to create or migrate the store;
-     * writes through such a handle throw.
+     * `readonly` opens an existing file without any DDL.
+     * Callers such as the `skills` tool use `readonly`, because they must never create or migrate
+     * the store. A write through a `readonly` handle throws.
      */
     static create(dbPath, options = {}) {
         if (options.readonly) {
@@ -421,9 +421,9 @@ export class KnowledgeStore {
         return redactPii(text);
     }
     /**
-     * Run a read-modify-write under the database write lock, so a concurrent
-     * process cannot slip a write between the read and the update. Nested calls
-     * become savepoints.
+     * Run a read-modify-write under the database write lock.
+     * The lock stops a concurrent process from writing between the read and the update.
+     * Nested calls become savepoints.
      */
     write(fn) {
         return this.db.transaction(fn).immediate();
@@ -522,9 +522,9 @@ export class KnowledgeStore {
         return entity ? toRawView(entity) : null;
     }
     /**
-     * Write one entity for one version, plus the reference entities and `cites`
-     * relations it needs, in one transaction. A learned entry that already exists
-     * under this name is left untouched; any other row under it is an error.
+     * Write one entity for one version, with the reference entities and `cites` relations that entity needs.
+     * The write runs in one transaction. An existing learned entry under this name stays untouched.
+     * Any other row under this name is an error.
      */
     async putEntry(entry, reflectionHash) {
         this.putEntrySync(entry, reflectionHash);
@@ -618,7 +618,7 @@ export class KnowledgeStore {
     }
     /** Set `supersededBy` and clear `isLatest` on the older version. */
     async supersede(olderName, newerName) {
-        this.updateEntity(olderName, { supersededBy: newerName, isLatest: false });
+        this.write(() => this.updateEntity(olderName, { supersededBy: newerName, isLatest: false }));
     }
     /** Set the status (and the `status:` observation and tag) of one entry. */
     async setStatus(name, status) {
@@ -633,8 +633,9 @@ export class KnowledgeStore {
         });
     }
     /**
-     * Activate one entry in a single write: status, trust and validation
-     * together, so a failed write cannot leave two of the three applied.
+     * Activate one entry in a single write.
+     * The write sets the status, trust and validation together.
+     * A failed write cannot leave two of the three changes applied.
      */
     async promote(name, trust, validation) {
         this.rewriteEntity(name, entry => {
@@ -690,8 +691,8 @@ export class KnowledgeStore {
         return best;
     }
     /**
-     * Learned entries that are still chain-visible (`isLatest`), any status. A
-     * candidate revision does not clear the parent's `isLatest`, so both rows
+     * Learned entries that are still chain-visible (`isLatest`), any status.
+     * A candidate revision does not clear the parent's `isLatest`, so both rows
      * are returned until `supersede`. Callers that want one row per chain use
      * `getBySlug`; callers that want lifecycle use `listByStatus`.
      */
@@ -702,8 +703,8 @@ export class KnowledgeStore {
             .filter((e) => e !== null);
     }
     /**
-     * Every learned entry with a given status, including superseded and older
-     * versions. Lifecycle bookkeeping (`activate`'s supersede sweep) must see
+     * Every learned entry with a given status, including superseded and older versions.
+     * Lifecycle bookkeeping (`activate`'s supersede sweep) must see
      * those rows, so this deliberately does not filter on `isLatest`.
      */
     async listByStatus(statuses, kinds, project) {
@@ -723,10 +724,10 @@ export class KnowledgeStore {
     /**
      * Text search over active, unsuperseded, chain-visible entries.
      *
-     * Deterministic term overlap: an entry scores one point per distinct query
-     * term found in its slug, title, description, body or scope, with total
-     * occurrences and then the id as tie-breakers. There is no document
-     * frequency weighting, so a store with one or two entries still answers.
+     * The search uses deterministic term overlap. Each entry scores one point per distinct query
+     * term found in its slug, title, description, body or scope. Total occurrences break a tie,
+     * and the id breaks any tie that remains. The store has no document frequency weighting.
+     * So a store with one or two entries still answers.
      */
     async search(query, options = {}) {
         const { kinds, project, limit = 10 } = options;
@@ -796,7 +797,7 @@ export class KnowledgeStore {
             createdAt: now,
             lastUpdatedAt: now,
         };
-        this.insertEntities([
+        this.write(() => this.insertEntities([
             {
                 name: id,
                 entityType: HEURISTIC_TYPE,
@@ -805,7 +806,7 @@ export class KnowledgeStore {
                 createdAt: now,
                 metadata: { memoryType: HEURISTIC_TYPE, confidence: record.confidence, heuristicRecord: record },
             },
-        ]);
+        ]));
         return id;
     }
     updateHeuristic(id, mutate) {
@@ -837,9 +838,9 @@ export class KnowledgeStore {
         }));
     }
     /**
-     * Every pair of heuristics whose conditions overlap by at least half of the
-     * larger token set but whose actions differ: a `contradiction` when one
-     * action negates the other, an `overlap` otherwise.
+     * Detect every pair of heuristics whose conditions overlap by at least half of the larger token set.
+     * The pair conflicts when the two actions differ.
+     * The kind is `contradiction` when one action negates the other. Otherwise, the kind is `overlap`.
      */
     async detectHeuristicConflicts() {
         const all = this.allHeuristics();
@@ -895,14 +896,14 @@ export class KnowledgeStore {
             action: step.action,
             parameters: step.parameters,
         }));
-        this.insertEntities([
+        this.write(() => this.insertEntities([
             {
                 name: input.id,
                 entityType: PROCEDURE_TYPE,
                 observations: encodeProcedure(input.description, steps, 0, 0),
                 tags: [PROCEDURE_TYPE, ...input.triggers.map(t => t.toLowerCase())],
             },
-        ]);
+        ]));
     }
     /** A stored procedure, or null. */
     async getProcedure(id) {
@@ -955,8 +956,9 @@ export class KnowledgeStore {
         };
     }
     /**
-     * Steps of a procedure the previous adapter wrote as one `procedure-step`
-     * row per step, linked by `has_step` relations, ordered by `[order]`.
+     * Load the steps of a procedure, which the previous adapter wrote as one `procedure-step` row per step.
+     * The `has_step` relations link the procedure to its steps.
+     * The `[order]` observation of each step sets its place in the sequence.
      */
     loadStepEntities(procedureId) {
         const steps = [];
@@ -987,8 +989,8 @@ export class KnowledgeStore {
         return steps.sort((a, b) => a.order - b.order);
     }
     /**
-     * Rank stored procedures against a context description by token overlap
-     * between the context and the procedure's name and triggers.
+     * Rank stored procedures against a context description.
+     * Each procedure scores by token overlap between the context and the procedure's name and triggers.
      */
     async matchProcedures(context, ids) {
         const contextTokens = tokenize(context, 2);
@@ -1133,7 +1135,7 @@ export class KnowledgeStore {
             consequences: [...input.consequences],
             ...(input.sourceProjectId !== undefined ? { sourceProjectId: input.sourceProjectId } : {}),
         };
-        this.insertEntities([
+        this.write(() => this.insertEntities([
             {
                 name: id,
                 entityType: DECISION_TYPE,
@@ -1142,7 +1144,7 @@ export class KnowledgeStore {
                 createdAt: now,
                 metadata: { memoryType: DECISION_TYPE, confidence: 0.7, decisionRecord: record },
             },
-        ]);
+        ]));
         return id;
     }
     transitionDecision(id, from, to, extra) {
@@ -1243,7 +1245,7 @@ export class KnowledgeStore {
             applicability_hint: input.applicability_hint,
             lifecycle: { status: 'open' },
         };
-        this.insertEntities([
+        this.write(() => this.insertEntities([
             {
                 name: id,
                 entityType: FAILURE_TYPE,
@@ -1256,12 +1258,12 @@ export class KnowledgeStore {
                 createdAt: now,
                 metadata: { memoryType: FAILURE_TYPE, confidence: 0.9, failureRecord: record },
             },
-        ]);
+        ]));
     }
     /**
-     * Open failures relevant to a task description, best first: each
-     * whitespace-separated token of the task scores 3 in the applicability
-     * hint, 2 in the context and 1 in the attempted action.
+     * Open failures relevant to a task description, best first.
+     * Each whitespace-separated token of the task scores 3 in the applicability hint.
+     * The same token scores 2 in the context and 1 in the attempted action.
      */
     async lookupFailures(taskContext, limit = 5) {
         const tokens = taskContext.toLowerCase().split(/\s+/).filter(t => t.length > 1);
@@ -1299,10 +1301,10 @@ export class KnowledgeStore {
     /**
      * Store a reflection: a `learned-reflection` entry plus a reflection record.
      *
-     * The dedup hash covers `(scope, project, sorted evidence, NFKC summary)`:
-     * an exact match is reported as `duplicate` and writes nothing, while a
-     * same-evidence different-summary reflection is stored as its own entry
-     * and record. Additive only.
+     * The dedup hash covers `(scope, project, sorted evidence, NFKC summary)`.
+     * The store reports an exact match as `duplicate` and writes nothing.
+     * The store saves a same-evidence reflection with a different summary as its own entry and record.
+     * Additive only.
      */
     async createReflection(input) {
         // One transaction: a failure part-way (a cited endpoint missing, say) must
@@ -1357,8 +1359,8 @@ export class KnowledgeStore {
         return { duplicate: false, id };
     }
     /**
-     * Write the reflection record that accompanies a `learned-reflection` entry
-     * written by someone else (e.g. `knowledge-db.insertKnowledgeEntry`).
+     * Write the reflection record that accompanies a `learned-reflection` entry written by someone else.
+     * One such writer is `knowledge-db.insertKnowledgeEntry`.
      */
     async recordReflectionRecord(input) {
         const evidence = input.evidence.length > 0 ? [...input.evidence] : [input.entryId];
@@ -1376,7 +1378,7 @@ export class KnowledgeStore {
             generalization_confidence: CONFIDENCE_SCORE[confidence],
             sourceProjectId: project,
         };
-        this.insertEntities([
+        this.write(() => this.insertEntities([
             {
                 name: id,
                 entityType: REFLECTION_RECORD_TYPE,
@@ -1389,7 +1391,7 @@ export class KnowledgeStore {
                     reflectionRecord: record,
                 },
             },
-        ]);
+        ]));
     }
     /** Find a learned-reflection entry carrying this dedup hash. */
     findReflectionByHash(hash) {

@@ -26,8 +26,10 @@ export declare const MAX_INDEXED_MESSAGE_BYTES: number;
 /** Suffix appended to a truncated message, recording what was dropped. */
 export declare function truncationNoticeFor(originalLength: number): string;
 /**
- * Cap a message for indexing, keeping the head so it stays searchable and the
- * source remains identifiable. Idempotent: re-truncating an already-truncated
- * string is a no-op, so re-indexing never stacks notices.
+ * Cap a message for indexing.
+ *
+ * Keep the head, so the message stays searchable and the source remains identifiable.
+ * Idempotent: re-truncating an already-truncated string is a no-op, so re-indexing
+ * never stacks notices.
  */
 export declare function truncateForIndex(message: string): string;

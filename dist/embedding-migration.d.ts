@@ -27,7 +27,8 @@ export type MigrationLockHandle = LockHandle;
  *
  * The function returns a handle, or null when a live process holds a fresh lock. The function does not wait.
  * The function creates the lock folder when the folder is missing.
- * The function takes over a stale lock. A lock is stale when its file is older than one hour, or when the file does not name a live process.
+ * The function takes over a stale lock. A lock is stale when its file is older than one hour.
+ * A lock is also stale when the file does not name a live process.
  *
  * @param lockPath the lock file path. Use getMigrationLockPath to build it.
  */
@@ -53,9 +54,9 @@ export interface StaleRow {
     tools: string | null;
 }
 /**
- * The function returns up to `limit` rows whose embedding_version is older than
- * EMBEDDING_VERSION. Each row carries its tool names, so the caller can
- * reproduce the production exchange-text format.
+ * The function returns up to `limit` rows whose embedding_version is older than EMBEDDING_VERSION.
+ *
+ * Each row carries its tool names, so the caller can reproduce the production exchange-text format.
  */
 export declare function pickStaleBatch(db: Database.Database, limit: number): StaleRow[];
 /**

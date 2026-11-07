@@ -8,8 +8,8 @@ import { suppressConsole } from './test-utils.js';
 
 /**
  * Synthesize one user/assistant exchange's worth of JSONL lines.
- * Matches the shape produced by Claude Code transcripts well enough for
- * the parser, but with a unique sessionId/text per call so embeddings differ.
+ * The lines have the shape of Claude Code transcripts, which is enough for the parser.
+ * The text includes `seq`, so calls with different `seq` values give different text and different embeddings.
  */
 function makeExchangeLines(seq: number, sessionId: string): string {
   const userUuid = `user-${seq}-${sessionId}`;

@@ -48,8 +48,10 @@ export declare function getLearnLockPath(indexDir: string): string;
  */
 export declare function getLearnPidsPath(indexDir: string): string;
 /**
- * The PIDs listed in `.learn.pids`, or an empty set when the file is absent or
- * unreadable. Used by the orphan reaper on its fast path, so the function never throws.
+ * Read the PIDs listed in `.learn.pids`.
+ *
+ * The function returns an empty set when the file is absent or unreadable.
+ * The orphan reaper calls this function at reap time, so the function never throws.
  */
 export declare function readLearnPids(indexDir: string): Set<number>;
 /**

@@ -17,7 +17,8 @@ const TRAILING_MARKS = /\s*\[(\d+(?:\s*,\s*\d+)*)\]\s*$/;
  *
  * A kept line ends in a mark group such as `[3,5]`. Each number in the group must be a key of `marks`.
  * The function removes a leading bullet marker from each line and skips blank lines without counting them.
- * The function drops a line that has no mark group, that cites an unknown number, or that has no text before the group.
+ * The function drops a line with no mark group.
+ * The function also drops a line that cites an unknown number, and a line with no text before the group.
  * The function rewrites the mark group of a kept line to `[#<exchangeId>,#<exchangeId>]`.
  *
  * @param raw the model output. Each line holds one statement.

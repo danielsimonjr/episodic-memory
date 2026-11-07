@@ -71,24 +71,27 @@ export declare const HIDDEN_EXPAND_MESSAGE = "That exchange is not available in 
 /**
  * `search` as a solver sees it.
  *
- * The exclusion lives in SQL (`e.id NOT IN (…)`), so it applies to the vector,
- * text and multi-concept paths alike — filtering the results afterwards would
- * still admit the hidden row into the candidate set a vector query ranked.
+ * The exclusion lives in SQL (`e.id NOT IN (…)`).
+ * The SQL exclusion applies to the vector, text and multi-concept paths alike.
+ * Filtering the results afterwards would still admit the hidden row into the candidate set that
+ * a vector query ranked.
  */
 export declare function learnSearch(args: LearnSearchArgs, ctx: LearnContext): Promise<string>;
 /**
  * `read`, through the production handler.
  *
- * The token is injected here because the host's `EPISODIC_MEMORY_MCP_TOKEN`
- * check runs inside `handleToolCall`; an in-process call from a subprocess has
- * no way to present it and must not be locked out of its own archive.
+ * The function injects the token here, because the host's `EPISODIC_MEMORY_MCP_TOKEN`
+ * check runs inside `handleToolCall`.
+ * An in-process call from a subprocess has no way to present the token.
+ * Such a call must not be locked out of its own archive.
  */
 export declare function learnRead(args: LearnReadArgs): Promise<string>;
 /**
  * `digest` as a solver sees it: the read-only view and the query, both filtered.
  *
- * Refusing to expand a hidden id is the point of the filter, not a courtesy: the
- * id is the task's answer, and the expansion is its path and line range.
+ * Refusing to expand a hidden id is the point of the filter, not a courtesy.
+ * The id is the task's answer.
+ * The expansion is the path and line range of that answer.
  */
 export declare function learnDigest(args: LearnDigestArgs, ctx: LearnDigestContext): Promise<string>;
 /** `skills`, read-only, through the same implementation the MCP tool uses. */

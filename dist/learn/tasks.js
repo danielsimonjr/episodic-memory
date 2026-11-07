@@ -81,10 +81,11 @@ function exchangeFromRow(row) {
 /**
  * Select the exchanges that the module may build tasks from.
  *
- * Deterministic from the seed. The function excludes sidechains, exchanges whose
- * user or assistant message is below the floor, and projects with fewer than
- * `minPerProject` indexed exchanges. A one-line exchange has nothing to locate,
- * and a project with a dozen exchanges makes a task trivially findable.
+ * Deterministic from the seed. The function excludes sidechains and exchanges whose user or
+ * assistant message is below the floor.
+ * The function also excludes projects with fewer than `minPerProject` indexed exchanges.
+ * A one-line exchange has nothing to locate, and a project with a dozen exchanges makes a task
+ * trivially findable.
  */
 export function selectSourceExchanges(indexDb, options) {
     const minPerProject = options.minPerProject ?? MIN_PER_PROJECT;
@@ -154,9 +155,9 @@ function sessionSiblings(indexDb, exchange) {
 /**
  * The paraphrase prompt.
  *
- * One call per source exchange returns all three tiers; the tiers differ only in
- * how much of the source user message's vocabulary survives. Tier 3 deliberately adds a
- * wrong-but-plausible detail the solver has to reject.
+ * One call per source exchange returns all three tiers.
+ * The tiers differ only in how much of the source user message's vocabulary survives.
+ * Tier 3 deliberately adds a wrong-but-plausible detail the solver has to reject.
  */
 export function paraphrasePrompt(exchange) {
     const user = redactSecrets(exchange.userMessage).slice(0, 2000);
@@ -198,12 +199,16 @@ export function paraphrasePrompt(exchange) {
 }
 const TIER_TAG = /<tier([123])>([\s\S]*?)<\/tier\1>/g;
 /**
- * A stored prompt is the solver's only view of the task. The archive path and
- * the session id are the answer key (spec §4.4). The function returns true for a
- * paraphrase that echoes either of them, and the caller then drops that paraphrase.
+ * A stored prompt is the solver's only view of the task.
  *
- * The check is lexical: a `.jsonl` path (POSIX or Windows), the source
- * exchange's own path or session id, or a bare `session-<id>` token. The word
+ * The archive path and the session id are the answer key (spec §4.4).
+ * The function returns true for a paraphrase that echoes either of them.
+ * The caller then drops that paraphrase.
+ *
+ * The check is lexical.
+ * The check flags a `.jsonl` path (POSIX or Windows).
+ * The check also flags the source exchange's own path or session id, and a bare `session-<id>` token.
+ * The word
  * "session" on its own is a legitimate question, so the check does not flag it.
  */
 export function promptLeaksAnswerKey(prompt, exchange) {
@@ -389,9 +394,8 @@ function overlaps(aStart, aEnd, bStart, bEnd) {
  *
  * A re-indexed session keeps its path but moves its lines. The last exchange of a
  * growing session grows. Later inserts shift nothing, but a repair can renumber
- * lines. A pruned project loses the path entirely. The function marks both cases
- * `stale`, which excludes the task from reads and metrics rather than scoring it
- * as a failure.
+ * lines. A pruned project loses the path entirely. The function marks both cases `stale`.
+ * The `stale` mark excludes the task from reads and metrics, rather than scoring it as a failure.
  */
 export function checkTasks(learningDb, indexDb) {
     const rows = learningDb

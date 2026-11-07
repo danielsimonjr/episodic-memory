@@ -18,8 +18,9 @@ import type { AttemptOutcome, Cost, TraceStep } from './types.js';
 /** The tool names an isolated agent may never reach. */
 export declare const DISALLOWED_TOOLS: string[];
 /**
- * Where a run records the PIDs it owns. Task 6 supplies the real one, which also
- * writes `.learn.pids` so the orphan reaper leaves a live run alone.
+ * Where a run records the PIDs it owns.
+ * The learn lock supplies the real registry. The registry also writes `.learn.pids`, so the orphan
+ * reaper leaves a live run alone.
  */
 export interface PidRegistry {
     add(pid: number): void;
@@ -40,10 +41,10 @@ export interface BuildAgentQueryOptionsArgs {
 /**
  * The options object handed to the SDK's `query()`.
  *
- * `tools: []` is the actual isolation (nothing built in is even offered); the
- * `disallowedTools` list is belt-and-suspenders so a future SDK default cannot
- * reintroduce one. `canUseTool` denies anything that is not a served name, which
- * covers a same-named tool from another server.
+ * `tools: []` is the actual isolation. No built-in tool is even offered.
+ * The `disallowedTools` list is a second safeguard, so a future SDK default cannot
+ * reintroduce a built-in tool. `canUseTool` denies anything that is not a served name.
+ * That rule also covers a same-named tool from another server.
  */
 export declare function buildAgentQueryOptions(args: BuildAgentQueryOptionsArgs): Record<string, unknown>;
 /**
@@ -59,8 +60,8 @@ export declare function isAgentSpawnTree(commandLine: string): boolean;
 /**
  * The machine's `claude` processes, or null when enumeration fails.
  *
- * Null means "register nothing this poll": a run that cannot see its children is
- * better off with a short `.learn.pids` than with a wrong one.
+ * Null means that the run registers nothing during this poll.
+ * A run that cannot see its children is better off with a short `.learn.pids` than with a wrong one.
  */
 export declare function listAgentProcesses(): ProcSnapshot[] | null;
 /**
@@ -100,19 +101,19 @@ export interface AgentRunResult {
 /** The address a tool result names, or null. Text is never stored. */
 export declare function addressFromResultText(text: string): string | null;
 /**
- * True when the failure was the subprocess dying by a signal rather than
- * returning an error result. The SDK surfaces this as an error whose message (or
- * `signal` field) names a signal, and `killed` is the outcome that keeps such an
- * attempt out of diagnosis (spec §7 rule 11).
+ * True when the failure was the subprocess dying by a signal rather than returning an error result.
+ * The SDK surfaces a signal death as an error whose message (or `signal` field) names a signal.
+ * `killed` is the outcome that keeps such an attempt out of diagnosis (spec §7 rule 11).
  */
 export declare function looksKilled(error: unknown): boolean;
 /**
  * Run one agent to completion.
  *
- * The timeout aborts the SDK call the way `callClaude` does; the spawn-tree poll
- * registers the SDK's own children so a background reaper leaves them alone while
- * the run is live. Result text is deliberately not stored: a trace records the
- * address a tool returned and how much text it was, which is what the diagnose
- * step needs and nothing a later prompt could leak.
+ * The timeout aborts the SDK call the way `callClaude` does.
+ * The spawn-tree poll registers the SDK's own children. A background reaper leaves those
+ * children alone while the run is live.
+ * Result text is deliberately not stored. A trace records the address that a tool returned,
+ * and the amount of text in that result.
+ * The diagnose step needs that information and nothing that a later prompt could leak.
  */
 export declare function runAgent(options: AgentRunOptions): Promise<AgentRunResult>;

@@ -38,9 +38,9 @@ export type ScreenResult = {
     reason: string;
 };
 /**
- * Normalise text before any pattern runs. NFKC folds fullwidth and other
- * compatibility forms into ASCII. The function then removes the invisible characters
- * that an attacker uses to split a keyword.
+ * Normalise text before any pattern runs.
+ * NFKC folds fullwidth and other compatibility forms into their standard equivalents.
+ * The function then removes the invisible characters that an attacker uses to split a keyword.
  */
 export declare function normalizeForScreen(text: string): string;
 /**

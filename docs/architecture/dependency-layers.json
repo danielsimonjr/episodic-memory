@@ -62,7 +62,7 @@
         ]
       },
       "cli/episodic-memory.js": {
-        "description": "`learn` opens the knowledge store on better-sqlite3 13, which requires Node >= 22; `engines` only warns. Checked before ",
+        "description": "`learn` opens the knowledge store on better-sqlite3 13, which requires Node >= 22; `engines` only warns.",
         "externalDependencies": [],
         "nodeDependencies": [
           {
@@ -255,7 +255,7 @@
     },
     "root": {
       "src/api-endpoint.ts": {
-        "description": "Validate custom summarizer API base URLs so a compromised / mis-set env",
+        "description": "Validate custom summarizer API base URLs.",
         "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [],
@@ -864,7 +864,7 @@
         ]
       },
       "src/digest-phase.ts": {
-        "description": "The digest step of a sync run. Never throws and never blocks the sync: with the flag off it does nothing,",
+        "description": "The digest step of a sync run.",
         "externalDependencies": [
           {
             "package": "better-sqlite3",
@@ -1373,18 +1373,6 @@
             "module": "fs",
             "imports": [
               "readFileSync"
-            ]
-          },
-          {
-            "module": "os",
-            "imports": [
-              "homedir"
-            ]
-          },
-          {
-            "module": "path",
-            "imports": [
-              "join"
             ]
           }
         ],
@@ -2047,7 +2035,7 @@
         ]
       },
       "src/priority.ts": {
-        "description": "Drop this process to below-normal priority if it is the background sync",
+        "description": "Drop this process to below-normal priority if it is the background sync worker.",
         "externalDependencies": [],
         "nodeDependencies": [
           {

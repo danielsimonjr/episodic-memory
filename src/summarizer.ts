@@ -151,8 +151,7 @@ ${conversationText}`;
 }
 
 /**
- * Build the options object passed to the Claude Agent SDK's query() for a
- * summarization call.
+ * Build the options object passed to the Claude Agent SDK's query() for a summarization call.
  *
  * persistSession: false stops the SDK from saving the session to ~/.claude/projects/.
  * No later call can resume the session. Without this option, each summary adds
@@ -236,8 +235,8 @@ export function buildCodexSummarizerCommand(args: {
 }
 
 /**
- * Timeout (ms) for a single summarizer SDK call. Configurable via
- * EPISODIC_MEMORY_API_TIMEOUT_MS (also forwarded to the SDK env as API_TIMEOUT_MS).
+ * Timeout (ms) for a single summarizer SDK call.
+ * Configurable via EPISODIC_MEMORY_API_TIMEOUT_MS (also forwarded to the SDK env as API_TIMEOUT_MS).
  * Default 120s.
  */
 function summarizerTimeoutMs(): number {
@@ -451,10 +450,10 @@ function requireTurnId(result: any, method: string): string {
  *
  * The returned promise rejects in these cases:
  *
- * - the turn does not complete;
- * - the server answers a request with an error;
- * - the server exits early;
- * - the server writes a line that is not valid JSON;
+ * - the turn does not complete.
+ * - the server answers a request with an error.
+ * - the server exits early.
+ * - the server writes a line that is not valid JSON.
  * - a process error occurs.
  * The promise also rejects when the run lasts longer than EPISODIC_MEMORY_CODEX_SUMMARY_TIMEOUT_MS milliseconds (default 120000). The version check uses the same timeout. After the server starts, the function sends SIGTERM to the server before the promise settles.
  */
@@ -668,7 +667,7 @@ function getCodexModel(exchanges: ConversationExchange[]): string | undefined {
  *
  * The transcript path makes one model call for up to 15 exchanges. Any model error rejects the promise in this case.
  *
- * For more than 15 exchanges, the function summarizes each chunk of exchanges, and then synthesizes the chunk summaries into one summary. The chunk size is 8 exchanges. A larger chunk size keeps the chunk count at 20 or less. The function logs a failed chunk and skips it. A failed synthesis returns the chunk summaries joined with a space. When no chunk succeeds, the function returns `Error: Unable to summarize conversation.`
+ * For more than 15 exchanges, the function summarizes each chunk of exchanges. The function then synthesizes the chunk summaries into one summary. The chunk size is 8 exchanges. A larger chunk size keeps the chunk count at 20 or less. The function logs a failed chunk and skips it. A failed synthesis returns the chunk summaries joined with a space. When no chunk succeeds, the function returns `Error: Unable to summarize conversation.` as the result.
  *
  * A GpuReservedError from a model call rejects the promise.
  *

@@ -42,8 +42,8 @@ export function formatSummaryForDisplay(summary) {
     return summary.slice(0, cap) + '…';
 }
 /**
- * Build the AND-clause and bound-parameter list that constrains a search
- * by the optional time and metadata filters. Bound parameters keep us
+ * Build the AND-clause and bound-parameter list that constrains a search by the optional time and metadata filters.
+ * Bound parameters keep us
  * safe from SQL injection without regex-based input scrubbing.
  */
 function buildSearchFilters(options) {
@@ -134,14 +134,13 @@ function exchangeFromRow(row) {
     };
 }
 /**
- * Convert an L2 (Euclidean) distance between two unit-normalized vectors
- * into a cosine similarity in [-1, 1].
+ * Convert an L2 (Euclidean) distance between two unit-normalized vectors into a cosine similarity in [-1, 1].
  *
- * For unit vectors u, v:  ||u - v||^2 = 2 - 2 * cos(u, v)
- * Therefore:               cos(u, v) = 1 - d^2 / 2
+ * For unit vectors u, v:  ||u - v||^2 = 2 - 2 * cos(u, v).
+ * Therefore:               cos(u, v) = 1 - d^2 / 2.
  *
- * `src/embeddings.ts` normalizes embeddings at write time, so
- * the L2 distance returned by sqlite-vec satisfies the unit-vector identity.
+ * `src/embeddings.ts` passes `normalize: true` to its one pipeline call, so every vector that the module returns has unit length.
+ * The `vec_exchanges` table declares no `distance_metric`, so sqlite-vec returns the L2 distance that the identity applies to.
  */
 export function l2DistanceToCosineSimilarity(distance) {
     const similarity = 1 - (distance * distance) / 2;
@@ -160,8 +159,8 @@ function validateISODate(dateStr, paramName) {
 }
 /**
  * Prepare an FTS5 MATCH query from user input.
- * Quote the whole string so punctuation / AND/OR tokens in the user query
- * don't become FTS operators; fall back to LIKE if FTS is unavailable.
+ * Quote the whole string, so punctuation / AND/OR tokens in the user query do not become FTS operators.
+ * The caller falls back to LIKE when FTS is unavailable.
  */
 export function buildFtsMatchQuery(query) {
     // Escape embedded double-quotes for FTS5 phrase syntax

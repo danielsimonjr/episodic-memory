@@ -305,11 +305,10 @@ export function attemptsExist(db, ids) {
 /**
  * The pass rate of one snapshot of one run.
  *
- * Counts the **newest graded attempt per task**, so a task re-solved later in the
- * round supersedes its own earlier attempt rather than double-counting. Tasks
- * from the other split and stale tasks never contribute. `signalOnly` restricts
- * the count to `locate`/`when`/`multi` at tiers 2 and 3 — the metric that
- * decides whether to keep an edit (spec §7 rule 5).
+ * Counts the **newest graded attempt per task**. So a task re-solved later in the round
+ * supersedes its own earlier attempt rather than double-counting. Tasks from the other split and
+ * stale tasks never contribute. `signalOnly` restricts the count to `locate`/`when`/`multi` at
+ * tiers 2 and 3. The metric decides whether to keep an edit (spec §7 rule 5).
  */
 export function passRate(db, runId, snapshotId, options) {
     const where = ['a.run_id = ?', 'a.snapshot_id = ?', "a.outcome = 'graded'", 't.split = ?', "t.status = 'ok'"];

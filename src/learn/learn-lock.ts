@@ -82,8 +82,10 @@ function readHolderPid(lockPath: string): number | null {
 }
 
 /**
- * The PIDs listed in `.learn.pids`, or an empty set when the file is absent or
- * unreadable. Used by the orphan reaper on its fast path, so the function never throws.
+ * Read the PIDs listed in `.learn.pids`.
+ *
+ * The function returns an empty set when the file is absent or unreadable.
+ * The orphan reaper calls this function at reap time, so the function never throws.
  */
 export function readLearnPids(indexDir: string): Set<number> {
   const pids = new Set<number>();

@@ -9,7 +9,7 @@
 | Metric | Count |
 |--------|-------|
 | Total Source Files | 91 |
-| Total Test Files | 126 |
+| Total Test Files | 127 |
 | Source Files with Tests | 72 |
 | Source Files without Tests | 19 |
 | Coverage (raw, direct-import) | **79.1%** |
@@ -80,7 +80,7 @@ The following 19 source files are not directly imported by any test file:
 | `learn/grade.ts` | `grade.test.ts`, `relay-task4-findings.test.ts` |
 | `learn/knowledge-db.ts` | `doctor.test.ts`, `export.test.ts`, `knowledge-db.test.ts`, `knowledge-store.test.ts`, `leaf-learner.test.ts`, `learn-cli.test.ts`, `learned-block.test.ts`, `learner.test.ts`, `relay-task8-challenger.test.ts`, `relay-task9-findings.test.ts`, `report.test.ts`, `skills-tool.test.ts`, `solver.test.ts`, `validate.test.ts` |
 | `learn/knowledge-gate.ts` | `knowledge-gate.test.ts`, `relay-challenger.test.ts` |
-| `learn/knowledge-store.ts` | `doctor.test.ts`, `bootstrap.test.ts`, `export.test.ts`, `knowledge-db.test.ts`, `knowledge-store.test.ts`, `leaf-learner.test.ts`, `learn-cli.test.ts`, `learned-block.test.ts`, `learner.test.ts`, `learning-store.test.ts`, `relay-task6-findings.test.ts`, `relay-task8-challenger.test.ts`, `relay-task9-findings.test.ts`, `report.test.ts`, `skills-tool.test.ts`, `solver.test.ts`, `validate.test.ts` |
+| `learn/knowledge-store.ts` | `doctor.test.ts`, `bootstrap.test.ts`, `export.test.ts`, `knowledge-db.test.ts`, `knowledge-store-write-lock.test.ts`, `knowledge-store.test.ts`, `leaf-learner.test.ts`, `learn-cli.test.ts`, `learned-block.test.ts`, `learner.test.ts`, `learning-store.test.ts`, `relay-task6-findings.test.ts`, `relay-task8-challenger.test.ts`, `relay-task9-findings.test.ts`, `report.test.ts`, `skills-tool.test.ts`, `solver.test.ts`, `validate.test.ts` |
 | `learn/leaf-learner.ts` | `leaf-learner.test.ts`, `relay-task8-challenger.test.ts` |
 | `learn/learn-config.ts` | `knowledge-gate.test.ts`, `learn-config.test.ts`, `learn-handlers.test.ts` |
 | `learn/learn-handlers.ts` | `learn-handlers.test.ts` |
@@ -176,6 +176,7 @@ The following 19 source files are not directly imported by any test file:
 | `learn/grade.test.ts` | 2 files |
 | `learn/knowledge-db.test.ts` | 5 files |
 | `learn/knowledge-gate.test.ts` | 3 files |
+| `learn/knowledge-store-write-lock.test.ts` | 1 files |
 | `learn/knowledge-store.test.ts` | 4 files |
 | `learn/leaf-learner.test.ts` | 7 files |
 | `learn/learn-cli.test.ts` | 9 files |

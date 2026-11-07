@@ -65,7 +65,7 @@ const NATIVE = ['better-sqlite3'];
 /** npm is a shell script on POSIX and a .cmd shim on Windows; spawn needs to know. */
 const NPM = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
-/** The only question that matters: can this package load the module? */
+/** The only question that matters is whether this package can load the module. */
 function loads(pkg) {
   try {
     const Database = require(pkg);

@@ -71,8 +71,8 @@ function mulberry32(seed: number): () => number {
 /**
  * A seeded sample of `ids`, without replacement, in a stable order.
  *
- * Sorting first makes the sample a function of `(ids, size, seed)` alone, so a
- * rerun with the same seed validates the same tasks.
+ * Sorting first makes the sample a function of `(ids, size, seed)` alone.
+ * So a rerun with the same seed validates the same tasks.
  */
 export function sampleIds(ids: number[], size: number, seed: number): number[] {
   const unique = [...new Set(ids)].sort((a, b) => a - b);
@@ -124,10 +124,10 @@ async function activeNames(dbs: LearnDbs): Promise<string[]> {
 /**
  * The snapshot the candidate is scored in.
  *
- * Active entries, with the version this candidate supersedes removed: for a
- * revision that is the previous version of the same key (the chain head before
- * the candidate was inserted). Comparing against a snapshot that still held the
- * old version would measure both at once.
+ * The snapshot holds the active entries, minus the version that this candidate supersedes.
+ * For a revision, the superseded version is the previous version of the same key.
+ * That version is the chain head before the candidate was inserted.
+ * Comparing against a snapshot that still held the old version would measure both at once.
  */
 async function evaluationSnapshot(
   dbs: LearnDbs,
@@ -204,11 +204,12 @@ async function reSolve(
 /**
  * Validate one candidate and act on the verdict.
  *
- * On a keep the entry is activated (`verified`) when its kind can activate
- * itself — a skill, or an instruction under `approve: none` — and left a
- * candidate otherwise, with its record. On a drop the record is written, the
- * instruction's heuristics take a contradiction, a procedure's success rate
- * falls, and the edit's decision is rejected with the reason.
+ * On a keep, the entry is activated (`verified`) when its kind can activate itself.
+ * A skill can activate itself, and so can an instruction under `approve: none`.
+ * Otherwise, the entry stays a candidate, with its record.
+ * On a drop, the record is written.
+ * The instruction's heuristics take a contradiction.
+ * A procedure's success rate falls, and the edit's decision is rejected with the reason.
  */
 export async function validateCandidate(
   dbs: LearnDbs,

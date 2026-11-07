@@ -153,7 +153,8 @@ interface SolveCall {
  * A fake solver whose pass set is a function of the snapshot's entries.
  *
  * The only thing a candidate, a merge or a revert can change is which entries
- * the evaluation snapshot holds, so the entries are the fake's whole input.
+ * the evaluation snapshot holds.
+ * So the entries are the fake's whole input.
  */
 function fakeSolve(
   pass: (entries: Array<{ name: string; body: string; slug: string }>, task: LearningTask) => boolean,

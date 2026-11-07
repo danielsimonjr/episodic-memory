@@ -43,9 +43,9 @@ function tryCreate(lockPath) {
     }
 }
 /**
- * Decide whether an existing lock can be stolen, re-reading current file state so
- * a fresh lock created by a racing process between our EEXIST and this check is not
- * stolen out from under it (F5).
+ * Decide whether an existing lock can be stolen.
+ * The function re-reads the current file state. A racing process can create a fresh lock
+ * between our EEXIST and the check. The function does not steal such a lock (F5).
  */
 function isLockStealable(lockPath, staleMs) {
     // Age-based staleness first — covers PID reuse.
@@ -70,8 +70,8 @@ function isLockStealable(lockPath, staleMs) {
     return !isProcessAlive(holderPid);
 }
 /**
- * Acquire an exclusive lock at `lockPath`. Returns a handle, or null if a live,
- * non-stale holder exists.
+ * Acquire an exclusive lock at `lockPath`.
+ * Returns a handle, or null if a live, non-stale holder exists.
  */
 export function acquireLock(lockPath, staleMs = DEFAULT_STALE_MS) {
     fs.mkdirSync(path.dirname(lockPath), { recursive: true });
@@ -109,7 +109,9 @@ export function acquireLock(lockPath, staleMs = DEFAULT_STALE_MS) {
 /**
  * Release a lock that `acquireLock` returned.
  *
- * The function closes the file descriptor, then deletes the lock file only when the file still holds the PID of this process. A lock that another process took over stays on disk. Errors are ignored.
+ * The function closes the file descriptor. The function then deletes the lock file only when
+ * the file still holds the PID of this process. A lock that another process took over stays on
+ * disk. Errors are ignored.
  */
 export function releaseLock(handle) {
     try {

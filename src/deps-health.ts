@@ -21,14 +21,12 @@ export const NATIVE_ADDON = 'better-sqlite3/build/Release/better_sqlite3.node';
  * creates `build/Release/`. Checking only the legacy path therefore reports a perfectly healthy v13
  * tree as "binding missing", and `repairPlan` answers 'rebuild' every single time.
  *
- * MEASURED 2026-09-20, and the symptom was three layers away from the cause: the MCP server shelled
- * out to `npm rebuild better-sqlite3` on EVERY start, printed "Building the better-sqlite3 native
- * binding..." to stderr, and broke `test/mcp-protocol.test.ts`, which asserts on the server's first
- * stderr line. Nothing about the failure pointed at a path constant.
+ * A wrong path here shows up far from its cause. The MCP server would run `npm rebuild
+ * better-sqlite3` on every start and print "Building the better-sqlite3 native binding..." to
+ * stderr. That line breaks `test/mcp-protocol.test.ts`, which asserts on the first stderr line.
  *
- * The lesson is the same one the sync wrapper learned the same day: a check keyed to a vendor's
- * INTERNAL FILE LAYOUT fails silently the moment the vendor rearranges it, and it fails CLOSED -
- * indistinguishable from a genuinely broken install. This module is deliberately fs/path-only so it
+ * A check keyed to the INTERNAL FILE LAYOUT of a vendor fails silently when the vendor rearranges
+ * it, and it fails CLOSED - indistinguishable from a genuinely broken install. This module is deliberately fs/path-only so it
  * can be imported before `npm install`, so it cannot load the package to test it functionally;
  * accepting BOTH layouts is the honest fix available under that constraint.
  */
@@ -64,8 +62,10 @@ export function nodeModulesIsHealthy(nodeModulesPath: string): boolean {
 }
 
 /**
- * What a caller must run to make node_modules usable. `npm install` on a tree that already lists
- * better-sqlite3 does not rebuild its binding, so a missing binding alone needs `npm rebuild`.
+ * What a caller must run to make node_modules usable.
+ *
+ * `npm install` on a tree that already lists better-sqlite3 does not rebuild its binding.
+ * So a missing binding alone needs `npm rebuild`.
 
  */
 export function repairPlan(nodeModulesPath: string): 'none' | 'install' | 'rebuild' {

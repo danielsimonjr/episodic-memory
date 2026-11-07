@@ -160,11 +160,10 @@ export declare function attemptsExist(db: Database.Database, ids: number[]): boo
 /**
  * The pass rate of one snapshot of one run.
  *
- * Counts the **newest graded attempt per task**, so a task re-solved later in the
- * round supersedes its own earlier attempt rather than double-counting. Tasks
- * from the other split and stale tasks never contribute. `signalOnly` restricts
- * the count to `locate`/`when`/`multi` at tiers 2 and 3 — the metric that
- * decides whether to keep an edit (spec §7 rule 5).
+ * Counts the **newest graded attempt per task**. So a task re-solved later in the round
+ * supersedes its own earlier attempt rather than double-counting. Tasks from the other split and
+ * stale tasks never contribute. `signalOnly` restricts the count to `locate`/`when`/`multi` at
+ * tiers 2 and 3. The metric decides whether to keep an edit (spec §7 rule 5).
  */
 export declare function passRate(db: Database.Database, runId: string, snapshotId: number, options: {
     split: 'train' | 'test';

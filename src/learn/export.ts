@@ -64,8 +64,8 @@ function sleep(ms: number): void {
 /**
  * A portable directory name for a project key.
  *
- * A project key comes from a cwd by replacing each character outside `[A-Za-z0-9]` with `-`, so the rewrite is
- * normally the identity. The rewrite only defends against a hand-written key and
+ * A project key comes from a cwd by replacing each character outside `[A-Za-z0-9]` with `-`.
+ * So the rewrite is normally the identity. The rewrite only defends against a hand-written key and
  * against `.`/`..`, which `path.join` would resolve as a traversal.
  */
 function projectDir(project: string): string | null {

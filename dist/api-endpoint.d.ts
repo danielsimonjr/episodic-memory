@@ -1,6 +1,6 @@
 /**
- * Validate custom summarizer API base URLs so a compromised / mis-set env
- * cannot silently ship transcripts to an attacker-controlled HTTP proxy.
+ * Validate custom summarizer API base URLs.
+ * The check stops a compromised or mis-set env from silently shipping transcripts to an attacker-controlled HTTP proxy.
  */
 export type ApiBaseUrlValidation = {
     ok: true;

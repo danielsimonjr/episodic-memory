@@ -17,10 +17,10 @@ export declare const SOLVER_ANSWER_FORMAT: string[];
 /**
  * The solver's system prompt.
  *
- * `instructions` are the active instruction entries (project rows then global),
- * and `skillsIndex` is the one-line-per-skill index the rendered block also
- * shows. Both are inserted as data: the prompt says so, because learned text was
- * written by a model reading untrusted archive content.
+ * `instructions` are the active instruction entries (project rows then global).
+ * `skillsIndex` is the one-line-per-skill index that the rendered block also shows.
+ * The prompt labels both as data, because a model that read untrusted archive content
+ * wrote the learned text.
  */
 export declare function solverSystemPrompt(instructions: KnowledgeEntry[], skillsIndex: string): string;
 /** The slugs of the two skills that the bootstrap brief asks for (spec §6.1 step 2). */
@@ -48,9 +48,9 @@ export declare function bootstrapperBrief(project: string, stats: BootstrapStats
 /**
  * Ask for the one global instruction the bootstrapped candidates support.
  *
- * The candidates are evidence, not text to concatenate. The answer must be a
- * small set of template lines that hold across projects, because an instruction
- * rides in every session's context.
+ * The candidates are evidence, not text to concatenate.
+ * The answer must be a small set of template lines that hold across projects.
+ * Each instruction rides in every session's context, so the answer stays small.
  */
 export declare function mergeInstructionPrompt(candidates: KnowledgeEntry[]): string;
 /** One failed attempt as the diagnose prompt sees it: addresses, never transcripts. */
@@ -85,8 +85,8 @@ export interface DiagnosePromptInput {
 /**
  * The diagnose turn: what failed, by address, and what is already known.
  *
- * The failed traces carry tool names and addresses, not result text, so the
- * learner reasons about the search path rather than re-reading the archive.
+ * The failed traces carry tool names and addresses, not result text.
+ * So the learner reasons about the search path rather than re-reading the archive.
  */
 export declare function diagnosePrompt(input: DiagnosePromptInput): string;
 /** The input of editBrief. */
@@ -169,9 +169,8 @@ export interface ReflectPromptInput {
 /**
  * The reflect turn: what the round changed, with the ids to cite.
  *
- * The prompt quotes attempts as `[@n]` and exchanges as `[#id]`, so the model
- * copies an
- * exact mark group instead of inventing one.
+ * The prompt quotes attempts as `[@n]` and exchanges as `[#id]`.
+ * So the model copies an exact mark group instead of inventing one.
  */
 export declare function reflectPrompt(input: ReflectPromptInput): string;
 /** Re-exported so a caller can build a proposal without importing types directly. */

@@ -1,21 +1,22 @@
 /**
  * Reaps the process tree the summariser's SDK call leaves behind.
  *
- * WHY THIS EXISTS. `callClaude` bounds its SDK call with an AbortController and a 120 s timeout.
- * That bound is real but it cannot reach the thing it is meant to bound: aborting stops the
- * PARENT iterating, while the `claude.exe --fork-session` child the SDK spawned — and the
- * transient daemon supervising it — keep running. Measured 2026-09-02: two such workers lived
- * 3 h 45 m against that 120 s timeout, accumulating CPU at ~1.2% with perfectly flat working
- * sets (an idle poll loop), and together accounted for 47 processes and ~5 GB.
+ * WHY THE REAPER EXISTS. `callClaude` bounds its SDK call with an AbortController and a 120 s timeout.
+ * That bound is real. But the bound cannot reach the processes that the timeout is meant to bound.
+ * Aborting stops the PARENT iterating. The `claude.exe --fork-session` child the SDK spawned
+ * keeps running, and so does the transient daemon supervising the child. Such workers outlive
+ * the 120 s timeout by hours. They poll while idle, and together they hold dozens of processes
+ * and gigabytes of memory.
  *
- * ORDER MATTERS, and this is not obvious: killing the workers alone is NOT enough. The transient
+ * ORDER MATTERS, and the ordering is not obvious: killing the workers alone is NOT enough. The transient
  * daemon RESPAWNS its pty-hosts within seconds — verified on a live machine. The daemon must die
  * first, then the workers.
  *
- * SAFETY. This kills only processes that (a) did not exist when the sync started, AND (b) match
- * one of the three SDK-plumbing signatures below. A human's session matches none of them: an
- * interactive session is `claude.exe --resume <name>` with no --fork-session, no `daemon run`,
- * and no --bg-pty-host. The baseline is what makes it safe to be wrong about the signature.
+ * SAFETY. The reaper kills only processes that (a) did not exist when the sync started. Such a
+ * process must also (b) match one of the three SDK-plumbing signatures below. A human's session
+ * matches none of them. The reason: an interactive session is `claude.exe --resume <name>` with
+ * no --fork-session, no `daemon run`, and no --bg-pty-host. The baseline is what makes the
+ * reaper safe to be wrong about the signature.
  */
 /** The three shapes the SDK's plumbing takes. Ordered: daemon first — it is the respawner. */
 const DAEMON = /\bdaemon\s+run\b[\s\S]*--origin\s+transient/;
@@ -23,14 +24,14 @@ const PTYHOST = /--bg-pty-host\b/;
 const FORK = /--fork-session\b/;
 /**
  * Pure selection: which processes are ours to reap, in the order they must be killed.
- * Everything present in `baselinePids` is left alone no matter what it looks like — a process
- * that predates our sync is not our orphan, and that rule is what keeps a mis-tuned signature
+ * Everything present in `baselinePids` is left alone, no matter what it looks like.
+ * A process that predates our sync is not our orphan. That rule keeps a mis-tuned signature
  * from reaching a real session.
  *
- * `protectedPids` is the same rule for a different owner: a `learn` run lists the subprocesses
- * it is still using in `.learn.pids`, and those are young, signature-matching and NOT ours. The
- * baseline cannot cover them — they are born after the hook starts the sync — so the run's own
- * registry is the only thing that knows.
+ * `protectedPids` is the same rule for a different owner. A `learn` run lists the subprocesses
+ * that the run still uses in `.learn.pids`. The listed subprocesses are young, signature-matching,
+ * and NOT ours. The baseline cannot cover the listed subprocesses. The subprocesses are born
+ * after the hook starts the sync. So the run's own registry is the only thing that knows.
  */
 export function selectOrphans(procs, baselinePids, protectedPids = new Set()) {
     const fresh = procs.filter((p) => !baselinePids.has(p.pid) && !protectedPids.has(p.pid));

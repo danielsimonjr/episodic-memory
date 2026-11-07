@@ -9,7 +9,7 @@ export declare function indexConversations(limitToProject?: string, maxConversat
 /**
  * Archive and index the first conversation file whose path contains the session id.
  *
- * The function searches every source folder. The function writes a summary for the file when the file has exchanges, has no summary, and `noSummaries` is not set. When no file matches, the function logs a message and returns without an error.
+ * The function searches every source folder. The function writes a summary for the file when the file has exchanges and no summary. The function writes no summary when `noSummaries` is set. When no file matches, the function logs a message and returns without an error.
  *
  * @param sessionId Text that the file path must contain.
  * @param concurrency Has no effect. The function handles one file.

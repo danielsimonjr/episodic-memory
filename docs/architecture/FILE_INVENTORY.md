@@ -8,7 +8,7 @@ This report lists each source file that the map census finds, with a disposition
 
 **Language**: typescript
 
-**Total files**: 225
+**Total files**: 226
 
 ## Disposition counts
 
@@ -18,12 +18,12 @@ This report lists each source file that the map census finds, with a disposition
 | `build-entry` | 4 | A `src`-area file that is an entry root. |
 | `test-only` | 38 | A `src`-area file that only a test reaches. |
 | `orphan` | 14 | A `src`-area file that nothing reaches. Delete it, or wire it to a root. |
-| `test` | 129 | A file in a `test/` or `tests/` folder, or a `*.test.ts` or `*.spec.ts` file. |
+| `test` | 130 | A file in a `test/` or `tests/` folder, or a `*.test.ts` or `*.spec.ts` file. |
 | `tool` | 4 | A file in a `tools/` or `scripts/` folder outside `src/`. |
 | `config` | 1 | A `*.config.*` file of TypeScript or JavaScript. |
 | `example` | 0 | A file in `examples/` or `docs/`. |
 | `bench` | 0 | A file in `bench/` or `benchmarks/`, or a `*.bench.*` file. |
-| **Total** | **225** | |
+| **Total** | **226** | |
 
 ## Per-area counts
 
@@ -31,113 +31,113 @@ This report lists each source file that the map census finds, with a disposition
 | --- | --: |
 | `config` | 1 |
 | `src` | 91 |
-| `tests` | 129 |
+| `tests` | 130 |
 | `tools` | 4 |
 
 ## Per-package counts
 
 | Package | Files |
 | --- | --: |
-| `(root)` | 141 |
+| `(root)` | 142 |
 | `episodic-memory` | 84 |
 
 ## All files
 
 | File | Package | Area | Disposition | Lines |
 | --- | --- | --- | --- | --: |
-| `cli/digest-hook.js` | (root) | src | orphan | 94 |
+| `cli/digest-hook.js` | (root) | src | orphan | 96 |
 | `cli/ensure-deps.js` | (root) | src | orphan | 48 |
-| `cli/episodic-memory.js` | (root) | src | orphan | 139 |
+| `cli/episodic-memory.js` | (root) | src | orphan | 140 |
 | `cli/index-conversations.js` | (root) | src | orphan | 150 |
 | `cli/mcp-server-wrapper.js` | (root) | src | orphan | 106 |
 | `cli/search-conversations.js` | (root) | src | orphan | 14 |
-| `cli/sync-hook.js` | (root) | src | orphan | 199 |
+| `cli/sync-hook.js` | (root) | src | orphan | 198 |
 | `scripts/claude-e2e.js` | (root) | tools | tool | 253 |
 | `scripts/codex-e2e.js` | (root) | tools | tool | 367 |
 | `scripts/generate-version.js` | (root) | tools | tool | 16 |
 | `scripts/rebuild-native.mjs` | (root) | tools | tool | 120 |
 | `src/api-endpoint.ts` | episodic-memory | src | reachable | 60 |
-| `src/archive-path.ts` | episodic-memory | src | reachable | 210 |
+| `src/archive-path.ts` | episodic-memory | src | reachable | 212 |
 | `src/backfill-cli.ts` | episodic-memory | src | orphan | 106 |
-| `src/backfill.ts` | episodic-memory | src | test-only | 163 |
+| `src/backfill.ts` | episodic-memory | src | test-only | 164 |
 | `src/codex-hook-trust.ts` | episodic-memory | src | test-only | 157 |
 | `src/codex-support.ts` | episodic-memory | src | reachable | 66 |
-| `src/constants.ts` | episodic-memory | src | reachable | 49 |
-| `src/db.ts` | episodic-memory | src | reachable | 534 |
+| `src/constants.ts` | episodic-memory | src | reachable | 51 |
+| `src/db.ts` | episodic-memory | src | reachable | 533 |
 | `src/deps-health.ts` | episodic-memory | src | test-only | 76 |
-| `src/digest-compress.ts` | episodic-memory | src | test-only | 135 |
+| `src/digest-compress.ts` | episodic-memory | src | test-only | 136 |
 | `src/digest-db.ts` | episodic-memory | src | reachable | 262 |
 | `src/digest-inject.ts` | episodic-memory | src | reachable | 62 |
 | `src/digest-job.ts` | episodic-memory | src | test-only | 189 |
-| `src/digest-phase.ts` | episodic-memory | src | test-only | 26 |
-| `src/digest-prompts.ts` | episodic-memory | src | test-only | 91 |
+| `src/digest-phase.ts` | episodic-memory | src | test-only | 28 |
+| `src/digest-prompts.ts` | episodic-memory | src | test-only | 93 |
 | `src/digest-tool.ts` | episodic-memory | src | reachable | 59 |
-| `src/digest-validate.ts` | episodic-memory | src | reachable | 73 |
+| `src/digest-validate.ts` | episodic-memory | src | reachable | 74 |
 | `src/doctor-cli.ts` | episodic-memory | src | orphan | 84 |
-| `src/doctor-learn.ts` | episodic-memory | src | test-only | 345 |
-| `src/doctor.ts` | episodic-memory | src | test-only | 454 |
-| `src/embedding-migration.ts` | episodic-memory | src | reachable | 196 |
+| `src/doctor-learn.ts` | episodic-memory | src | test-only | 346 |
+| `src/doctor.ts` | episodic-memory | src | test-only | 455 |
+| `src/embedding-migration.ts` | episodic-memory | src | reachable | 197 |
 | `src/embeddings.ts` | episodic-memory | src | reachable | 168 |
-| `src/gpu-reservation.ts` | episodic-memory | src | reachable | 95 |
+| `src/gpu-reservation.ts` | episodic-memory | src | reachable | 98 |
 | `src/index-cli.ts` | episodic-memory | src | build-entry | 204 |
 | `src/index.ts` | episodic-memory | src | build-entry | 9 |
 | `src/indexer.ts` | episodic-memory | src | reachable | 417 |
 | `src/learn-cli.ts` | episodic-memory | src | orphan | 94 |
-| `src/learn/agent-runner.ts` | episodic-memory | src | test-only | 445 |
-| `src/learn/bootstrap.ts` | episodic-memory | src | test-only | 847 |
-| `src/learn/cited-ids.ts` | episodic-memory | src | test-only | 266 |
-| `src/learn/cli-main.ts` | episodic-memory | src | test-only | 823 |
+| `src/learn/agent-runner.ts` | episodic-memory | src | test-only | 446 |
+| `src/learn/bootstrap.ts` | episodic-memory | src | test-only | 846 |
+| `src/learn/cited-ids.ts` | episodic-memory | src | test-only | 267 |
+| `src/learn/cli-main.ts` | episodic-memory | src | test-only | 833 |
 | `src/learn/export.ts` | episodic-memory | src | test-only | 440 |
 | `src/learn/grade.ts` | episodic-memory | src | test-only | 318 |
-| `src/learn/knowledge-db.ts` | episodic-memory | src | test-only | 355 |
-| `src/learn/knowledge-gate.ts` | episodic-memory | src | test-only | 192 |
-| `src/learn/knowledge-store.ts` | episodic-memory | src | reachable | 1881 |
-| `src/learn/leaf-learner.ts` | episodic-memory | src | test-only | 497 |
-| `src/learn/learn-config.ts` | episodic-memory | src | reachable | 123 |
-| `src/learn/learn-handlers.ts` | episodic-memory | src | test-only | 222 |
-| `src/learn/learn-inject.ts` | episodic-memory | src | reachable | 282 |
-| `src/learn/learn-lock.ts` | episodic-memory | src | test-only | 154 |
+| `src/learn/knowledge-db.ts` | episodic-memory | src | test-only | 356 |
+| `src/learn/knowledge-gate.ts` | episodic-memory | src | test-only | 191 |
+| `src/learn/knowledge-store.ts` | episodic-memory | src | reachable | 1893 |
+| `src/learn/leaf-learner.ts` | episodic-memory | src | test-only | 496 |
+| `src/learn/learn-config.ts` | episodic-memory | src | reachable | 128 |
+| `src/learn/learn-handlers.ts` | episodic-memory | src | test-only | 225 |
+| `src/learn/learn-inject.ts` | episodic-memory | src | reachable | 291 |
+| `src/learn/learn-lock.ts` | episodic-memory | src | test-only | 156 |
 | `src/learn/learned-block.ts` | episodic-memory | src | test-only | 89 |
 | `src/learn/learned-text-screen.ts` | episodic-memory | src | reachable | 206 |
-| `src/learn/learner.ts` | episodic-memory | src | test-only | 1328 |
-| `src/learn/learning-db.ts` | episodic-memory | src | test-only | 537 |
+| `src/learn/learner.ts` | episodic-memory | src | test-only | 1327 |
+| `src/learn/learning-db.ts` | episodic-memory | src | test-only | 536 |
 | `src/learn/learning-store.ts` | episodic-memory | src | test-only | 123 |
-| `src/learn/pii-redactor.ts` | episodic-memory | src | reachable | 59 |
-| `src/learn/prompts.ts` | episodic-memory | src | test-only | 505 |
+| `src/learn/pii-redactor.ts` | episodic-memory | src | reachable | 60 |
+| `src/learn/prompts.ts` | episodic-memory | src | test-only | 504 |
 | `src/learn/report.ts` | episodic-memory | src | test-only | 288 |
 | `src/learn/sdk-tools.ts` | episodic-memory | src | test-only | 248 |
 | `src/learn/semaphore.ts` | episodic-memory | src | test-only | 163 |
 | `src/learn/skills-tool.ts` | episodic-memory | src | reachable | 168 |
-| `src/learn/solver.ts` | episodic-memory | src | test-only | 301 |
-| `src/learn/tasks.ts` | episodic-memory | src | test-only | 529 |
+| `src/learn/solver.ts` | episodic-memory | src | test-only | 300 |
+| `src/learn/tasks.ts` | episodic-memory | src | test-only | 533 |
 | `src/learn/types.ts` | episodic-memory | src | reachable | 216 |
 | `src/learn/usage.ts` | episodic-memory | src | test-only | 60 |
-| `src/learn/validate.ts` | episodic-memory | src | test-only | 357 |
-| `src/lockfile.ts` | episodic-memory | src | reachable | 127 |
+| `src/learn/validate.ts` | episodic-memory | src | test-only | 358 |
+| `src/lockfile.ts` | episodic-memory | src | reachable | 129 |
 | `src/logging.ts` | episodic-memory | src | test-only | 86 |
 | `src/mcp-auth.ts` | episodic-memory | src | reachable | 68 |
 | `src/mcp-schemas.ts` | episodic-memory | src | reachable | 207 |
 | `src/mcp-server.ts` | episodic-memory | src | build-entry | 140 |
 | `src/mcp-tools.ts` | episodic-memory | src | reachable | 166 |
 | `src/node-floor.ts` | episodic-memory | src | build-entry | 43 |
-| `src/ollama-backend.ts` | episodic-memory | src | reachable | 134 |
-| `src/orphan-reaper.ts` | episodic-memory | src | test-only | 54 |
+| `src/ollama-backend.ts` | episodic-memory | src | reachable | 135 |
+| `src/orphan-reaper.ts` | episodic-memory | src | test-only | 56 |
 | `src/parser.ts` | episodic-memory | src | reachable | 574 |
-| `src/paths.ts` | episodic-memory | src | reachable | 200 |
+| `src/paths.ts` | episodic-memory | src | reachable | 199 |
 | `src/priority.ts` | episodic-memory | src | test-only | 46 |
-| `src/prune.ts` | episodic-memory | src | reachable | 113 |
+| `src/prune.ts` | episodic-memory | src | reachable | 110 |
 | `src/redact.ts` | episodic-memory | src | reachable | 83 |
-| `src/reentrancy.ts` | episodic-memory | src | reachable | 26 |
+| `src/reentrancy.ts` | episodic-memory | src | reachable | 25 |
 | `src/search-cli.ts` | episodic-memory | src | orphan | 122 |
-| `src/search.ts` | episodic-memory | src | reachable | 566 |
+| `src/search.ts` | episodic-memory | src | reachable | 565 |
 | `src/show-cli.ts` | episodic-memory | src | orphan | 59 |
 | `src/show.ts` | episodic-memory | src | reachable | 1047 |
 | `src/stats-cli.ts` | episodic-memory | src | orphan | 32 |
 | `src/stats.ts` | episodic-memory | src | test-only | 172 |
-| `src/summarizer.ts` | episodic-memory | src | reachable | 773 |
-| `src/sync-banner.ts` | episodic-memory | src | test-only | 32 |
+| `src/summarizer.ts` | episodic-memory | src | reachable | 772 |
+| `src/sync-banner.ts` | episodic-memory | src | test-only | 33 |
 | `src/sync-cli.ts` | episodic-memory | src | orphan | 238 |
-| `src/sync.ts` | episodic-memory | src | test-only | 532 |
+| `src/sync.ts` | episodic-memory | src | test-only | 533 |
 | `src/types.ts` | episodic-memory | src | reachable | 82 |
 | `src/verify.ts` | episodic-memory | src | reachable | 226 |
 | `test/agent-sdk-floor.test.ts` | (root) | tests | test | 39 |
@@ -165,7 +165,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/digest-compress.test.ts` | (root) | tests | test | 142 |
 | `test/digest-db.test.ts` | (root) | tests | test | 139 |
 | `test/digest-gpu-reservation.test.ts` | (root) | tests | test | 223 |
-| `test/digest-hook.test.ts` | (root) | tests | test | 399 |
+| `test/digest-hook.test.ts` | (root) | tests | test | 411 |
 | `test/digest-inject.test.ts` | (root) | tests | test | 106 |
 | `test/digest-job.test.ts` | (root) | tests | test | 133 |
 | `test/digest-mcp.test.ts` | (root) | tests | test | 127 |
@@ -176,7 +176,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/embedding-migration.test.ts` | (root) | tests | test | 221 |
 | `test/embeddings-format.test.ts` | (root) | tests | test | 35 |
 | `test/exclude-nested.test.ts` | (root) | tests | test | 124 |
-| `test/gpu-reservation.test.ts` | (root) | tests | test | 149 |
+| `test/gpu-reservation.test.ts` | (root) | tests | test | 155 |
 | `test/helpers/forbid-modules.mjs` | (root) | tests | test | 40 |
 | `test/hooks.test.ts` | (root) | tests | test | 41 |
 | `test/incremental-indexing.test.ts` | (root) | tests | test | 108 |
@@ -188,8 +188,9 @@ This report lists each source file that the map census finds, with a disposition
 | `test/learn/grade.test.ts` | (root) | tests | test | 237 |
 | `test/learn/knowledge-db.test.ts` | (root) | tests | test | 314 |
 | `test/learn/knowledge-gate.test.ts` | (root) | tests | test | 370 |
+| `test/learn/knowledge-store-write-lock.test.ts` | (root) | tests | test | 88 |
 | `test/learn/knowledge-store.test.ts` | (root) | tests | test | 604 |
-| `test/learn/leaf-learner.test.ts` | (root) | tests | test | 589 |
+| `test/learn/leaf-learner.test.ts` | (root) | tests | test | 590 |
 | `test/learn/learn-cli.test.ts` | (root) | tests | test | 587 |
 | `test/learn/learn-config.test.ts` | (root) | tests | test | 155 |
 | `test/learn/learn-handlers.test.ts` | (root) | tests | test | 258 |
@@ -197,7 +198,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/learn/learn-lock.test.ts` | (root) | tests | test | 102 |
 | `test/learn/learned-block.test.ts` | (root) | tests | test | 146 |
 | `test/learn/learned-text-screen.test.ts` | (root) | tests | test | 368 |
-| `test/learn/learner.test.ts` | (root) | tests | test | 669 |
+| `test/learn/learner.test.ts` | (root) | tests | test | 670 |
 | `test/learn/learning-db.test.ts` | (root) | tests | test | 290 |
 | `test/learn/learning-store.test.ts` | (root) | tests | test | 271 |
 | `test/learn/prompts.test.ts` | (root) | tests | test | 261 |
@@ -233,13 +234,13 @@ This report lists each source file that the map census finds, with a disposition
 | `test/parser.test.ts` | (root) | tests | test | 141 |
 | `test/paths.test.ts` | (root) | tests | test | 120 |
 | `test/priority.test.ts` | (root) | tests | test | 48 |
-| `test/prune.test.ts` | (root) | tests | test | 163 |
+| `test/prune.test.ts` | (root) | tests | test | 174 |
 | `test/query-prefix.test.ts` | (root) | tests | test | 19 |
 | `test/rebuild-native.test.ts` | (root) | tests | test | 48 |
 | `test/redact-patterns.test.ts` | (root) | tests | test | 34 |
 | `test/reentrancy.test.ts` | (root) | tests | test | 42 |
 | `test/search-agent-template.test.ts` | (root) | tests | test | 162 |
-| `test/search-metadata-filters.test.ts` | (root) | tests | test | 274 |
+| `test/search-metadata-filters.test.ts` | (root) | tests | test | 273 |
 | `test/search-with-summary.test.ts` | (root) | tests | test | 107 |
 | `test/security-speed-helpers.test.ts` | (root) | tests | test | 69 |
 | `test/show.test.ts` | (root) | tests | test | 353 |
@@ -264,7 +265,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/sync-session-id.test.ts` | (root) | tests | test | 14 |
 | `test/sync-summary-retry.test.ts` | (root) | tests | test | 110 |
 | `test/sync.test.ts` | (root) | tests | test | 250 |
-| `test/test-indexer.ts` | (root) | tests | test | 44 |
+| `test/test-indexer.ts` | (root) | tests | test | 45 |
 | `test/test-utils.ts` | (root) | tests | test | 100 |
 | `test/tool-calls-cascade.test.ts` | (root) | tests | test | 125 |
 | `test/verify.test.ts` | (root) | tests | test | 320 |

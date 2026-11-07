@@ -93,8 +93,8 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 }
 
 /**
- * Prepend the BGE retrieval prefix to a query string. Idempotent: returns
- * the input unchanged if the prefix is already present.
+ * Prepend the BGE retrieval prefix to a query string.
+ * Idempotent: returns the input unchanged if the prefix is already present.
  */
 export function withQueryPrefix(query: string): string {
   if (query.startsWith(BGE_QUERY_PREFIX)) return query;

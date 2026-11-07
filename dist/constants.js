@@ -34,9 +34,11 @@ export function truncationNoticeFor(originalLength) {
     return `\n\n[truncated by episodic-memory: ${originalLength} chars exceeded the ${MAX_INDEXED_MESSAGE_BYTES}-char index cap]`;
 }
 /**
- * Cap a message for indexing, keeping the head so it stays searchable and the
- * source remains identifiable. Idempotent: re-truncating an already-truncated
- * string is a no-op, so re-indexing never stacks notices.
+ * Cap a message for indexing.
+ *
+ * Keep the head, so the message stays searchable and the source remains identifiable.
+ * Idempotent: re-truncating an already-truncated string is a no-op, so re-indexing
+ * never stacks notices.
  */
 export function truncateForIndex(message) {
     if (!message || MAX_INDEXED_MESSAGE_BYTES <= 0)

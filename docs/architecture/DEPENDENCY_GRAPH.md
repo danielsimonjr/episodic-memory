@@ -64,7 +64,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `cli/episodic-memory.js` - `learn` opens the knowledge store on better-sqlite3 13, which requires Node >= 22; `engines` only warns. Checked before 
+### `cli/episodic-memory.js` - `learn` opens the knowledge store on better-sqlite3 13, which requires Node >= 22; `engines` only warns.
 
 **Node.js Built-in Dependencies:**
 | Module | Import |
@@ -139,7 +139,7 @@ The codebase is organized into the following modules:
 
 ## Root Dependencies
 
-### `src/api-endpoint.ts` - Validate custom summarizer API base URLs so a compromised / mis-set env
+### `src/api-endpoint.ts` - Validate custom summarizer API base URLs.
 
 **Exports:**
 - Types: `ApiBaseUrlValidation`
@@ -365,7 +365,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/digest-phase.ts` - The digest step of a sync run. Never throws and never blocks the sync: with the flag off it does nothing,
+### `src/digest-phase.ts` - The digest step of a sync run.
 
 **External Dependencies:**
 | Package | Import |
@@ -553,8 +553,6 @@ The codebase is organized into the following modules:
 | Module | Import |
 |--------|--------|
 | `fs` | `readFileSync` |
-| `os` | `homedir` |
-| `path` | `join` |
 
 **Exports:**
 - Interfaces: `GpuReservation`
@@ -795,7 +793,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/priority.ts` - Drop this process to below-normal priority if it is the background sync
+### `src/priority.ts` - Drop this process to below-normal priority if it is the background sync worker.
 
 **Node.js Built-in Dependencies:**
 | Module | Import |
@@ -1915,9 +1913,9 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 225 |
+| Total Source Files | 226 |
 | Subsystems | 4 |
-| Total Lines of Code | 45109 |
+| Total Lines of Code | 45289 |
 | Total Exports | 492 |
 | Total Re-exports | 8 |
 | Total Classes | 7 |

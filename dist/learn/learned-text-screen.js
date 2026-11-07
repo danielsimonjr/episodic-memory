@@ -19,9 +19,9 @@ const BIDI_OVERRIDES = /[\u202a-\u202e\u2066-\u2069\u061c]/g;
 // checked line by line.
 const CONTROL = /[\u0000-\u0008\u000b-\u001f\u007f-\u009f]/g;
 /**
- * Normalise text before any pattern runs. NFKC folds fullwidth and other
- * compatibility forms into ASCII. The function then removes the invisible characters
- * that an attacker uses to split a keyword.
+ * Normalise text before any pattern runs.
+ * NFKC folds fullwidth and other compatibility forms into their standard equivalents.
+ * The function then removes the invisible characters that an attacker uses to split a keyword.
  */
 export function normalizeForScreen(text) {
     if (!text)

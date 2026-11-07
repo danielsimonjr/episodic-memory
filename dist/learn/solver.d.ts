@@ -23,9 +23,9 @@ import { runAgent, type PidRegistry } from './agent-runner.js';
 /**
  * Where a run records the PIDs it owns.
  *
- * Task 6 supplies the real implementation, which also writes `.learn.pids` so the
- * SessionStart orphan reaper leaves a live run's subprocesses alone. Declared
- * here because the solver is the first consumer.
+ * The learn lock supplies the real registry (`pidFileRegistry` in `learn-lock.ts`).
+ * It also writes `.learn.pids`, so the SessionStart orphan reaper leaves the subprocesses
+ * of a live run alone. The solver re-exports the type because it is the first consumer.
  */
 export type { PidRegistry };
 /** The call budget is spent: the run stops and keeps everything validated so far. */
@@ -73,9 +73,8 @@ export declare function promptInputsForSnapshot(dbs: LearnDbs, snapshotId: numbe
 /**
  * Answer and grade one task.
  *
- * The server hides exactly `task.truth.exchanges` — the sources this task was
- * built from — and nothing else: the solver is meant to search the rest of the
- * archive, which is what makes finding the right file the task.
+ * The server hides exactly `task.truth.exchanges`, the sources this task was built from, and nothing else.
+ * The solver is meant to search the rest of the archive. That search is what makes the task a search for the right file.
  */
 export declare function solveTask(dbs: LearnDbs, task: LearningTask, options: SolveOptions): Promise<AttemptRow>;
 /**
@@ -93,9 +92,9 @@ export interface SolveManyOptions extends Omit<SolveOptions, 'snapshotId'> {
 /**
  * Solve a batch of tasks.
  *
- * Every task goes through the single global semaphore, so the batch's own
- * parallelism is bounded by `learnConfig().concurrency` no matter how many tasks
- * the caller hands over. The budget is shared, so a batch stops with
- * `BudgetExhausted` at the cap and the caller keeps the attempts already stored.
+ * Every task passes through the single global semaphore. The semaphore bounds the batch's own
+ * parallelism at `learnConfig().concurrency`, no matter how many tasks the caller hands over.
+ * The budget is shared, so a batch stops with `BudgetExhausted` at the cap.
+ * The caller keeps the attempts already stored.
  */
 export declare function solveMany(dbs: LearnDbs, tasks: LearningTask[], options: SolveManyOptions): Promise<AttemptRow[]>;

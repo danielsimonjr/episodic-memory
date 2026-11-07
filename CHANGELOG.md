@@ -1,5 +1,19 @@
 ## [Unreleased]
 
+## [1.7.3] - 2026-11-06
+
+### Added
+- **CI runs both doc gates.** After the build, `ci.yml` installs `repo-tools` (pinned to 2.3.0) and runs `repo-tools check . --docs=docs/architecture` and `repo-tools docs check .`. A change that moves a recorded count or leaves an exported symbol undocumented now fails the job.
+
+### Fixed
+- **Six `KnowledgeStore` write methods run under the write lock.** `supersede`, `addHeuristic`, `putProcedure`, `proposeDecision`, `recordFailure` and `recordReflectionRecord` now go through `write`, like every other write. `test/learn/knowledge-store-write-lock.test.ts` fails on the old code.
+- **`pruneProjects` works on a database that has no `exchanges_fts` table.** The function used to prepare the FTS delete before its guard, so a missing table threw before any row was deleted. It now checks `sqlite_master` first and skips that delete.
+- **The package holds no GPU reservation path.** `reservationPath()` returns the value of `FLEET_GPU_RESERVATION` or `null`. The built-in `~/Dropbox/_fleet/gpu-reserved.json` default is gone, so an unset variable means the GPU is free. A deployment that shares a GPU sets the variable.
+- **`CLAUDE.md` names the right SessionStart hook.** `hooks/hooks.json` runs `cli/sync-hook.js`, which spawns `sync --background`; the file said the hook ran the dispatcher directly.
+
+### Changed
+- **Comments describe the design, not the history.** The dated incident notes in `deps-health.ts`, `sync.ts` and `cli/sync-hook.js` are rewritten as standing reasons. The remaining style findings in doc comments (sentence length, voice, ambiguous pronouns, missing full stops) are fixed, so `repo-tools docs check .` reports no SHOULD issues.
+
 ## [1.7.2] - 2026-11-06
 
 ### Added

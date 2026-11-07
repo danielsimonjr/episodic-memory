@@ -63,8 +63,8 @@ const proposalShape = {
 /**
  * Build the server.
  *
- * `tool()` takes a raw Zod shape (`{ query: z.string() }`), not a `z.object`, so
- * the schemas below are plain shape objects.
+ * `tool()` takes a raw Zod shape (`{ query: z.string() }`), not a `z.object`.
+ * So the schemas below are plain shape objects.
  */
 export function buildLearnToolServer(options) {
     const searchCtx = { hideExchangeIds: options.hideExchangeIds };
@@ -152,9 +152,9 @@ export function buildLearnToolServer(options) {
     return server;
 }
 /**
- * `allowedTools` is a wildcard (`mcp__episodic-learn__*`). A tool registered
- * here but missing from {@link SERVED_TOOL_NAMES} would be granted by that
- * wildcard wherever `canUseTool` is not the only gate. Fail at build time
+ * `allowedTools` is a wildcard (`mcp__episodic-learn__*`).
+ * The wildcard would grant a tool registered here but missing from {@link SERVED_TOOL_NAMES}.
+ * The grant applies wherever `canUseTool` is not the only gate. Fail at build time
  * instead of discovering the drift from a solver transcript.
  */
 function assertRegisteredToolsMatchServedList(server, allowPropose) {

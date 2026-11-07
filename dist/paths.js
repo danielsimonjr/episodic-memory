@@ -61,9 +61,8 @@ export function getConversationSourceDirs() {
  * Returns paths relative to the given directory.
  *
  * `excludedDirNames` skips any subdirectory whose name matches an entry in
- * the set, at any depth. Top-level project skipping at the caller is the
- * usual case; this parameter handles nested directories like `subagents/`
- * inside session UUIDs (#80).
+ * the set, at any depth. The indexer passes the excluded project names.
+ * A listed name such as `subagents` also skips the `subagents/` directories inside session UUIDs (#80).
  */
 export function findJsonlFiles(dir, excludedDirNames) {
     const results = [];
@@ -89,7 +88,7 @@ export function findJsonlFiles(dir, excludedDirNames) {
     return results;
 }
 /**
- * Get the personal superpowers directory
+ * Get the personal superpowers directory.
  *
  * Precedence:
  * 1. EPISODIC_MEMORY_CONFIG_DIR env var (if set, for testing)
@@ -117,7 +116,7 @@ export function getSuperpowersDir() {
     return ensureDir(dir);
 }
 /**
- * Get conversation archive directory
+ * Get conversation archive directory.
  */
 export function getArchiveDir() {
     // Allow test override
@@ -127,13 +126,13 @@ export function getArchiveDir() {
     return ensureDir(path.join(getSuperpowersDir(), 'conversation-archive'));
 }
 /**
- * Get conversation index directory
+ * Get conversation index directory.
  */
 export function getIndexDir() {
     return ensureDir(path.join(getSuperpowersDir(), 'conversation-index'));
 }
 /**
- * Get database path
+ * Get database path.
  */
 export function getDbPath() {
     // Allow test override with direct DB path
@@ -143,11 +142,11 @@ export function getDbPath() {
     return path.join(getIndexDir(), 'db.sqlite');
 }
 /**
- * Get the learned-knowledge directory
+ * Get the learned-knowledge directory.
  *
- * A sibling of `conversation-index/`, not a child of it, so `index rebuild` and
- * the `rm -rf conversation-index/` reset recipe cannot reach learned knowledge
- * or the learning trace.
+ * The learned-knowledge directory is a sibling of `conversation-index/`, not a child.
+ * So `index rebuild` and the `rm -rf conversation-index/` reset recipe cannot reach
+ * learned knowledge or the learning trace.
  */
 export function getLearnedDir() {
     return ensureDir(path.join(getSuperpowersDir(), 'learned'));
@@ -161,14 +160,14 @@ export function getLearningDbPath() {
     return path.join(getLearnedDir(), 'learning.sqlite');
 }
 /**
- * Get exclude config path
+ * Get exclude config path.
  */
 export function getExcludeConfigPath() {
     return path.join(getIndexDir(), 'exclude.txt');
 }
 /**
- * Get list of projects to exclude from indexing
- * Configurable via env var or config file
+ * Get list of projects to exclude from indexing.
+ * Configurable via env var or config file.
  */
 export function getExcludedProjects() {
     // Check env variable first

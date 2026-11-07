@@ -11,8 +11,8 @@ export declare function projectKeyFromCwd(cwd: string): string;
 export declare function digestMaxChars(): number;
 /**
  * The digest for one project, within maxChars. Order: handoff notes first, then newest entries first.
- * Stops before the first entry that does not fit, so the oldest entries drop first and the text ends on a
- * whole entry. Returns an empty string when nothing fits.
+ * The function stops before the first entry that does not fit.
+ * So the oldest entries drop first, and the text ends on a whole entry. Returns an empty string when nothing fits.
  *
  * `opts.hideExchangeIds` drops every line citing one of those ids, and then
  * drops an entry whose lines are all gone. The learn solver passes a task's

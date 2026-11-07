@@ -13,9 +13,8 @@ import {
 import { suppressConsole } from './test-utils.js';
 
 /**
- * Build one user/assistant exchange with controllable metadata fields so we
- * can verify filtering on them later. The exchange's text content embeds the
- * `topic` so semantic queries can find it.
+ * Build one user/assistant exchange with controllable metadata fields so we can verify filtering on them later.
+ * The exchange's text content embeds the `topic` so semantic queries can find it.
  */
 function makeExchangeLines(opts: {
   seq: number;

@@ -1,8 +1,9 @@
 import type { ConversationExchange } from './types.js';
 /**
  * True when the conversation should be excluded from indexing / summarization.
- * Only scans the first SKIP_MARKER_SCAN_BYTES — markers are emitted early in
- * agent prompts, so a head scan is sufficient and vastly cheaper on huge JSONL.
+ * The scan reads only the first SKIP_MARKER_SCAN_BYTES bytes.
+ * Markers are emitted early in agent prompts, so a head scan is sufficient.
+ * A head scan is vastly cheaper on huge JSONL.
  */
 export declare function shouldSkipConversation(filePath: string): boolean;
 /**
@@ -24,12 +25,11 @@ export interface SyncResult {
      *
      * WHY THIS EXISTS. An empty summary is written on three legitimate paths (oversized skip,
      * zero-exchange conversation, give-up after N attempts) and the needs-summary gate is a bare
-     * existsSync - so an empty file reads as DONE forever. Until 1.5.2 the give-up path also
-     * DELETED its failure record, making a permanently-failed summary byte-identical to a
-     * legitimately-empty one. Measured on one machine 2026-09-02: 2,919 zero-byte summaries of
-     * 6,762 (43%) and ZERO failure markers. pendingSummaries counts only files with no summary at
-     * all, so it read 0 and the 1.5.1 honest banner - shipped precisely to catch a silent
-     * summariser - could never fire for this mode.
+     * existsSync - so an empty file reads as DONE forever. A give-up path that deleted its
+     * failure record would make a permanently-failed summary byte-identical to a
+     * legitimately-empty one. pendingSummaries counts only files with no summary at
+     * all, so it reads 0 for this mode and the banner that catches a silent summariser
+     * cannot fire.
      *
      * unexplainedEmptySummaries is therefore the honest number: empty, and nothing says why.
      */
@@ -51,9 +51,10 @@ export interface SyncOptions {
     summaryLimit?: number;
 }
 /**
- * A failure record is TERMINAL when it explains an empty summary for good: a recorded reason
- * (e.g. no-exchanges), a give-up, or an oversize skip. A bare {attempts, lastError} is a retry in
- * progress. Unreadable records count as terminal, so corruption never causes a retry storm.
+ * A failure record is TERMINAL when it explains an empty summary for good.
+ * The record holds a recorded reason (for example no-exchanges), a give-up, or an oversize skip.
+ * A bare {attempts, lastError} is a retry in progress.
+ * Unreadable records count as terminal, so corruption never causes a retry storm.
  */
 export declare function isTerminalFailRecord(filePath: string): boolean;
 /**
@@ -71,12 +72,16 @@ export declare function extractSessionIdFromPath(filePath: string): string | nul
  */
 export declare function syncConversations(sourceDir: string, destDir: string, options?: SyncOptions): Promise<SyncResult>;
 /**
- * Summarize ONE archived conversation and record the outcome on disk: a summary, a no-exchanges
- * sentinel, an oversized skip, a retry record, or a give-up. Shared by sync and the archive backfill
- * so both leave identical evidence. Never throws; failures are recorded in result.errors.
+ * Summarize ONE archived conversation and record the outcome on disk.
+ * The outcome is one of: a summary, a no-exchanges sentinel, an oversized skip,
+ * a retry record, or a give-up.
+ * Sync and the archive backfill both call this function, so they leave identical evidence.
+ * Never throws; failures are recorded in result.errors.
  *
- * Returns the reservation message when another agent holds the shared GPU. That is a wait, not a
- * failure: nothing is recorded on disk, the attempt is not counted, and the caller should stop
- * asking for summaries. Returns `undefined` in every other case.
+ * Returns the reservation message when another agent holds the shared GPU. The hold is a wait,
+ * not a failure.
+ * Nothing is recorded on disk, the attempt is not counted, and the caller should stop asking for
+ * summaries.
+ * Returns `undefined` in every other case.
  */
 export declare function summarizeOneFile(filePath: string, sessionId: string, result: Pick<SyncResult, 'errors' | 'summaryAttempts' | 'summarized'>, summarize: (exchanges: ConversationExchange[], sessionId: string) => Promise<string>): Promise<string | undefined>;

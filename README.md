@@ -219,7 +219,7 @@ export EPISODIC_MEMORY_OLLAMA_URL=http://localhost:11434 # default
 - The model is required. A shared Ollama host holds one model, so a default would evict another client's model.
 - Plain `http` is accepted only for localhost. To use a model on another machine, tunnel it: `ssh -N -L 11434:localhost:11434 <host>`.
 - Prompts are cut to `EPISODIC_MEMORY_OLLAMA_MAX_PROMPT_CHARS` (default 24000).
-- The backend waits while another agent holds the shared GPU. The fleet reservation file names the holder. Its path is `~/Dropbox/_fleet/gpu-reserved.json`, or the value of `FLEET_GPU_RESERVATION`. While the file names a holder, four things happen. The SessionStart hook skips the sync. A running sync asks for no summary. The archive backfill pauses. The digest writes nothing. The queue stays as it is and no attempt counts. A missing file means the GPU is free. The GPU counts as reserved when the file cannot be read, is not valid JSON, or holds the text `null`. The message then names the cause and the path.
+- The backend waits while another agent holds the shared GPU. The fleet reservation file names the holder. The `FLEET_GPU_RESERVATION` variable sets its path. The package has no default path. When the variable is unset, the GPU counts as free. While the file names a holder, four things happen. The SessionStart hook skips the sync. A running sync asks for no summary. The archive backfill pauses. The digest writes nothing. The queue stays as it is and no attempt counts. A missing file means the GPU is free. The GPU counts as reserved when the file cannot be read, is not valid JSON, or holds the text `null`. The message then names the cause and the path.
 
 ### Backfilling the archive
 

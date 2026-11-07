@@ -52,7 +52,7 @@ dependency, no `MEMORY_*` environment handling and no per-handle cache: a write 
 - **TypeScript source** in `src/`, compiled to `dist/` by `tsc && esbuild`. **Both are committed.**
 - **CLI entry points** in `cli/` (Node.js wrappers — no bash).
 - **MCP server** is `dist/mcp-server.js`, launched by `cli/mcp-server-wrapper.js` from the plugin manifest.
-- **Tests** in `test/` via vitest (126 files, 1043 tests — counts verified 2026-11-06).
+- **Tests** in `test/` via vitest (127 files, 1056 tests — counts verified 2026-11-06).
 - **Generated files** in `dist/` AND `src/version.ts`. The latter is gitignored; never edit it.
 - **`bun.lock` is committed** — CI uses `bun install --frozen-lockfile` + `bun audit --audit-level=critical`. Do not commit `package-lock.json` (gitignored).
 
@@ -99,7 +99,7 @@ scripts/
 
 test/
   test-utils.ts          # createTestDb, safeRmSync (fork-added), suppressConsole, fixtures
-  *.test.ts              # 126 test files, 1043 tests
+  *.test.ts              # 127 test files, 1056 tests
   learn/                 # the Recursa suite; fakes for every model call
   fixtures/              # JSONL conversation fixtures
 
@@ -107,7 +107,7 @@ docs/
   roadmap/               # see docs/roadmap/README.md
   ...
 
-hooks/hooks.json         # SessionStart: command "node ${PLUGIN_ROOT}/cli/episodic-memory.js sync --background"
+hooks/hooks.json         # SessionStart: cli/sync-hook.js (spawns `sync --background` detached) then cli/digest-hook.js
 agents/                  # agents/search-conversations.md
 skills/                  # skills/remembering-conversations/{SKILL.md,MCP-TOOLS.md}
 prompts/                 # prompts/search-agent.md
@@ -140,8 +140,8 @@ Plugin first-run dependency install in `cli/mcp-server-wrapper.js` still uses
 
 ### Current test state
 
-- **Full suite: 1043 tests in 126 files pass on Linux** (verified 2026-11-06, ~17s wall clock; Windows
-  runs are slower — expect ~75s). The former `integration.test.ts` / `verify.test.ts` cold-embedding
+- **Full suite: 1056 tests in 127 files pass** (verified 2026-11-06; ~17s wall clock on Linux,
+  and Windows runs are slower — expect ~75s). The former `integration.test.ts` / `verify.test.ts` cold-embedding
   timeout flakes were fixed 2026-06-23: the embedder is pre-warmed once per worker in `beforeAll`,
   `vitest.config.ts` sets `hookTimeout: 30000`, and the repair re-index test gets 60s. If you see a fresh
   timeout flake, suspect a new embedding-heavy hook without warm-up rather than the old cold-start cause.
@@ -182,7 +182,7 @@ When committing dist/, **only stage files with real content changes** — `tsc` 
 
 ### 4. The summarizer recursion guard (#87)
 
-`summarizer.ts` calls the Claude Agent SDK's `query()`, which spawns a Claude subprocess that fires `SessionStart` hooks. Our `SessionStart` hook runs `sync --background`, which calls the summarizer. That loop fans out hundreds of processes within seconds.
+`summarizer.ts` calls the Claude Agent SDK's `query()`, which spawns a Claude subprocess that fires `SessionStart` hooks. Our `SessionStart` hook (`cli/sync-hook.js`) spawns `sync --background`, which calls the summarizer. That loop fans out hundreds of processes within seconds.
 
 The fix:
 - `getApiEnv()` always sets `EPISODIC_MEMORY_SUMMARIZER_GUARD=1` in the env it returns to the SDK

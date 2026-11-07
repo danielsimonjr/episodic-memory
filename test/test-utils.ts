@@ -4,7 +4,7 @@ import os from 'os';
 import Database from 'better-sqlite3';
 
 /**
- * Suppress console output during test execution
+ * Suppress console output during test execution.
  */
 export function suppressConsole(): () => void {
   const originalLog = console.log;
@@ -23,7 +23,7 @@ export function suppressConsole(): () => void {
 }
 
 /**
- * Create a temporary test database that will be cleaned up automatically
+ * Create a temporary test database that will be cleaned up automatically.
  */
 export function createTestDb(): { db: Database.Database; cleanup: () => void } {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'episodic-memory-test-'));
@@ -46,9 +46,9 @@ export function createTestDb(): { db: Database.Database; cleanup: () => void } {
 /**
  * Recursively remove a directory, tolerating transient Windows file-locking.
  *
- * On Windows, fs.rmSync({recursive:true, force:true}) can throw EPERM/EBUSY
- * when SQLite WAL files (.db-wal, .db-shm) or just-closed handles are still
- * being released by the OS. Short retries with backoff hide the race without
+ * On Windows, fs.rmSync({recursive:true, force:true}) can throw EPERM/EBUSY.
+ * The EPERM/EBUSY error occurs while the OS has not finished releasing SQLite WAL files
+ * (.db-wal, .db-shm) or just-closed handles. Short retries with backoff hide the race without
  * leaking handles or test temp dirs. Use this in afterEach in place of a
  * bare fs.rmSync when the test touches a real on-disk SQLite database.
  */
@@ -78,21 +78,21 @@ export function safeRmSync(dirPath: string, maxRetries = 5): void {
 }
 
 /**
- * Get path to test fixture file
+ * Get path to test fixture file.
  */
 export function getFixturePath(filename: string): string {
   return path.join(__dirname, 'fixtures', filename);
 }
 
 /**
- * Read a test fixture file
+ * Read a test fixture file.
  */
 export function readFixture(filename: string): string {
   return fs.readFileSync(getFixturePath(filename), 'utf-8');
 }
 
 /**
- * Count lines in a file
+ * Count lines in a file.
  */
 export function countLines(filePath: string): number {
   const content = fs.readFileSync(filePath, 'utf-8');

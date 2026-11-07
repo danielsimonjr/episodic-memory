@@ -11,10 +11,11 @@ const command = process.argv[2];
 const args = process.argv.slice(3);
 
 /**
- * `learn` opens the knowledge store on better-sqlite3 13, which requires Node >= 22; `engines` only warns. Checked before the
- * learn entry point is spawned, so a too-old Node gets one readable line instead of a failure deep
- * inside a dependency. Imported lazily: every other command works on a tree whose dist/ is not built
- * yet, and only `learn` has a floor of its own. Returns true when the process should exit.
+ * `learn` opens the knowledge store on better-sqlite3 13, which requires Node >= 22; `engines` only warns.
+ * The function runs the check before the learn entry point is spawned.
+ * A too-old Node then gets one readable line, not a failure deep inside a dependency.
+ * The node-floor module is imported lazily, so every other command works on a tree whose dist/ is not built yet.
+ * Only `learn` has a floor of its own. Returns true when the process should exit.
  */
 async function blockedByNodeFloor() {
   if (command !== 'learn') return false;

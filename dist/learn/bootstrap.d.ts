@@ -97,21 +97,21 @@ export interface ProjectStats {
 /**
  * Projects with at least `MIN_PER_PROJECT` indexed exchanges (spec §6.1 step 2).
  *
- * Deterministic order, and sidechains excluded: a project with a dozen
- * exchanges makes every one of its tasks trivially findable, and a sidechain is
- * not a conversation a user would search for.
+ * The order is deterministic, and sidechains are excluded. A project with a dozen
+ * exchanges makes every one of its tasks trivially findable. A sidechain is not a
+ * conversation a user would search for.
  */
 export declare function eligibleProjects(indexDb: Database.Database, minPerProject?: number): ProjectStats[];
 /** An exchange resolver over the index database, for the citation gate. */
 export declare function indexExchangeResolver(indexDb: Database.Database): IdCitationResolver['exchange'];
 /**
- * The bootstrap gain rule: keep when the signal pass rate does not fall and mean
- * turns or USD per task fall by at least `minSavingPct`.
+ * The bootstrap gain rule: keep when the signal pass rate does not fall.
+ * Mean turns or USD per task must also fall by at least `minSavingPct`.
  *
  * Both sides must have been measured, and they must have graded the same number
  * of tasks. `passRate` counts only graded attempts, so an abort shrinks one
- * side's total. A smaller after side can be the easy tasks only; that is not
- * evidence the candidate saved turns at equal accuracy, and the candidate waits.
+ * side's total. A smaller after side can contain only the easy tasks. Such a side is not
+ * evidence that the candidate saved turns at equal accuracy, so the candidate waits.
  */
 export declare function bootstrapGain(before: PassRate, after: PassRate, minSavingPct: number): {
     keep: boolean;
@@ -122,7 +122,7 @@ export declare function bootstrapGain(before: PassRate, after: PassRate, minSavi
 /**
  * Run the bootstrap.
  *
- * Everything the run needs is injected — `runAgent`, the text model, the budget
- * and the PID registry — so a test never reaches a model, a GPU or a subprocess.
+ * Everything the run needs is injected: `runAgent`, the text model, the budget and the PID
+ * registry. So a test never reaches a model, a GPU or a subprocess.
  */
 export declare function runBootstrap(dbs: LearnDbs, options: BootstrapOptions): Promise<BootstrapResult>;

@@ -65,10 +65,10 @@ const ANY_MARK = /#[0-9a-f]{32}|@\d+/g;
 /**
  * Redact without letting a digit-run pattern rewrite a citation mark.
  *
- * The PII redactor's phone and card patterns match any 10 to 19 digit run, and
- * a 32-hex exchange id can hold one. Marks are swapped for private-use
- * sentinels first and restored after, so a rendered hint line keeps the exact
- * ids its entry was stored with.
+ * The PII redactor's phone and card patterns match any 10 to 19 digit run.
+ * A 32-hex exchange id can hold such a run.
+ * The function swaps citation marks for private-use sentinels first and restores the citation marks after.
+ * So a rendered hint line keeps the exact ids its entry was stored with.
  */
 export function redactKeepingMarks(text, redact) {
     const marks = [];
@@ -91,15 +91,20 @@ function preparedLine(line, opts, screen, redact) {
 /**
  * Render the learned block for a project.
  *
- * Empty when nothing is active. Otherwise a fenced block: a label, a notice
- * that the lines are data, the active instruction lines (project rows before
- * global ones, as `listActive` orders them), then a skills index. The block
- * never exceeds `maxChars`: it stops before the first line that does not fit
- * and always keeps the closing fence, so the model never sees a truncated or
- * unterminated block. Ends with a single `\n`.
+ * Empty when nothing is active.
+ * Otherwise the function renders a fenced block.
+ * The block holds a label, then a notice that the lines are data.
+ * Next come the active instruction lines, in the order the caller supplies them.
+ * `writeLearnedBlocks` puts project rows before global ones.
+ * A skills index follows.
+ * The block never exceeds `maxChars`.
+ * The function stops before the first line that does not fit.
+ * The function always keeps the closing fence, so the model never sees a truncated or unterminated block.
+ * The output ends with a single `\n`.
  *
- * Any field that fails the screen (or would be changed by redaction) is
- * skipped, not repaired: a blocked line is one the plugin must not emit.
+ * A line that fails the screen after redaction is skipped.
+ * A line that redaction changes is emitted in its redacted form.
+ * A blocked line is one the plugin must not emit.
  */
 export function renderLearnedBlock(entries, maxChars, screen = screenLearnedText, redact = redactSecrets) {
     const instructions = entries.filter(entry => entry.kind === 'instruction');
@@ -154,12 +159,13 @@ export function renderLearnedBlock(entries, maxChars, screen = screenLearnedText
     return out + LEARNED_FENCE_CLOSE + '\n';
 }
 /**
- * Re-screen a stored block and cap it at `maxChars`.
+ * Cap a stored block at `maxChars`.
  *
- * The renderer already caps what it writes, but a row can be edited on disk or
- * written by an older build. The cap therefore drops whole trailing lines rather
- * than slicing mid-line, and always restores the closing fence, so the model
- * never sees an unterminated block. Empty when not even the header fits.
+ * The renderer already caps what it writes.
+ * A row can still be edited on disk or written by an older build.
+ * The cap therefore drops whole trailing lines rather than slicing mid-line.
+ * The function always restores the closing fence, so the model never sees an unterminated block.
+ * Empty when not even the header fits.
  */
 export function capLearnedBlock(text, maxChars) {
     const lines = text.split('\n').filter(line => line.length > 0);
@@ -193,8 +199,9 @@ function storedBlock(learningDb, project) {
 /**
  * The stored block for a project, falling back to the `*` row.
  *
- * Re-screened line by line on read: a row written by an older build, or edited
- * on disk, still cannot inject a line the screen rejects. Empty when absent or
+ * The function re-screens each line on read.
+ * A row from an older build, or one edited on disk, still cannot inject a line the screen rejects.
+ * Empty when absent or
  * when every line is dropped.
  */
 export function readLearnedBlock(learningDb, project) {
@@ -241,9 +248,11 @@ export function readLearnedBlock(learningDb, project) {
     return result.replace(/\n*$/, '\n');
 }
 /**
- * `readLearnedBlock` plus the character budget, which is the form the hook
- * wants: the cap runs on the screened text, so a drop can never leave a
- * half-line or an unclosed fence behind.
+ * Read the stored block for a project and cap it at `maxChars`.
+ *
+ * This function is `readLearnedBlock` plus the character budget, which is the form the hook wants.
+ * The cap runs on the screened text.
+ * So a drop can never leave a half-line or an unclosed fence behind.
  */
 export function readLearnedBlockCapped(learningDb, project, maxChars) {
     return capLearnedBlock(readLearnedBlock(learningDb, project), maxChars);

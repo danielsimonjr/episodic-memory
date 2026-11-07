@@ -5,8 +5,7 @@
  *
  * An empty list returns at once and changes nothing. With `dryRun`, the function counts the rows and deletes nothing.
  * Otherwise, the function deletes the rows in one transaction from four tables: `tool_calls`, `vec_exchanges`, `exchanges_fts` and `exchanges`.
- * The function prepares the `exchanges_fts` delete before the loop. Without `dryRun` and with matching rows, a missing table makes the function throw before the function deletes any row.
- * Inside the loop, the function ignores a run error from the `exchanges_fts` delete.
+ * A database without an `exchanges_fts` table is pruned too. The function then skips that delete.
  * The connection must load the sqlite-vec extension, as `openDatabase` does.
  *
  * @param db The open database connection to change.
@@ -54,19 +53,16 @@ export function pruneProjects(db, projects, options = {}) {
     // initDatabase() does that. A client without it (e.g. Python's stock sqlite3) silently
     // skips the vec table and leaves orphaned vectors behind.
     const delVec = db.prepare('DELETE FROM vec_exchanges WHERE id = ?');
-    const delFts = db.prepare('DELETE FROM exchanges_fts WHERE id = ?');
+    // Very old databases opened without migrate have no FTS table. Skip that delete then.
+    const hasFts = db.prepare("SELECT 1 FROM sqlite_master WHERE name = 'exchanges_fts'").get() !== undefined;
+    const delFts = hasFts ? db.prepare('DELETE FROM exchanges_fts WHERE id = ?') : null;
     const delExchanges = db.prepare(`DELETE FROM exchanges WHERE project IN (${placeholders})`);
     // tool_calls first: it carries an FK to exchanges (see #81).
     const run = db.transaction(() => {
         delTools.run(...projects);
         for (const id of ids) {
             delVec.run(id);
-            try {
-                delFts.run(id);
-            }
-            catch {
-                // FTS table may not exist on very old DBs opened without migrate
-            }
+            delFts?.run(id);
         }
         delExchanges.run(...projects);
     });

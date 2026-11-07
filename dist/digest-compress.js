@@ -66,8 +66,9 @@ async function mergeGroup(db, model, group, tier, periodStart, result) {
     result.created++;
 }
 /**
- * Merge many session entries of a past day into one day entry, and many day entries of a finished
- * week into one week entry. The compression step marks the originals as superseded and never deletes them.
+ * Merge many session entries of a past day into one day entry.
+ * Merge many day entries of a finished week into one week entry.
+ * The compression step marks the originals as superseded and never deletes them.
  */
 export async function compressDigest(db, opts = {}) {
     const result = { created: 0, failed: 0 };

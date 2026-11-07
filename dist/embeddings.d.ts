@@ -22,8 +22,8 @@ export declare function generateEmbeddings(texts: string[]): Promise<number[][]>
  */
 export declare function generateEmbedding(text: string): Promise<number[]>;
 /**
- * Prepend the BGE retrieval prefix to a query string. Idempotent: returns
- * the input unchanged if the prefix is already present.
+ * Prepend the BGE retrieval prefix to a query string.
+ * Idempotent: returns the input unchanged if the prefix is already present.
  */
 export declare function withQueryPrefix(query: string): string;
 /**

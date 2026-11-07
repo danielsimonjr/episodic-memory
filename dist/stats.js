@@ -95,7 +95,7 @@ export async function getIndexStats(dbPath) {
  *
  * The report always shows the conversation and exchange counts.
  * The function adds the share of conversations without summaries when that share is above zero.
- * The function adds the date range when `stats` has one, and the top projects when `stats` has at least one project.
+ * The function adds the date range when `stats` has one. The function also adds the top projects when `stats` has at least one project.
  * Dates use the locale of the host.
  *
  * @param stats the statistics to format, as getIndexStats returns them

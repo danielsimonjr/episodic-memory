@@ -165,9 +165,9 @@ export interface StoredEntity {
 /**
  * Parse an entity back into the `KnowledgeEntry` shape.
  *
- * The logical `version` comes from the `version:` observation (and, failing
- * that, from the `:v<n>` suffix of the name), never from the row's write
- * counter.
+ * The logical `version` comes from the `version:` observation. When that observation is
+ * missing or not a positive, finite number, the `:v<n>` suffix of the name supplies the
+ * version. The row's write counter never supplies the version.
  */
 export declare function parseEntity(entity: StoredEntity): KnowledgeEntry | null;
 /** `learned:<kind>:<project>:<slug>:v<n>`. */
@@ -190,9 +190,9 @@ export declare class KnowledgeStore {
     /**
      * Open the store at `dbPath`, creating the file and its tables when absent.
      *
-     * `readonly` opens an existing file without any DDL, for callers such as the
-     * `skills` tool that must never be the ones to create or migrate the store;
-     * writes through such a handle throw.
+     * `readonly` opens an existing file without any DDL.
+     * Callers such as the `skills` tool use `readonly`, because they must never create or migrate
+     * the store. A write through a `readonly` handle throws.
      */
     static create(dbPath: string, options?: {
         readonly?: boolean;
@@ -202,9 +202,9 @@ export declare class KnowledgeStore {
     /** PII redaction, for `knowledge-db` and the gates to reuse. */
     redactPii(text: string): string;
     /**
-     * Run a read-modify-write under the database write lock, so a concurrent
-     * process cannot slip a write between the read and the update. Nested calls
-     * become savepoints.
+     * Run a read-modify-write under the database write lock.
+     * The lock stops a concurrent process from writing between the read and the update.
+     * Nested calls become savepoints.
      */
     private write;
     private readEntity;
@@ -221,9 +221,9 @@ export declare class KnowledgeStore {
     /** The raw entity, for tests and for `knowledge-db`'s duplicate check. */
     getRawEntity(name: string): Promise<RawEntityView | null>;
     /**
-     * Write one entity for one version, plus the reference entities and `cites`
-     * relations it needs, in one transaction. A learned entry that already exists
-     * under this name is left untouched; any other row under it is an error.
+     * Write one entity for one version, with the reference entities and `cites` relations that entity needs.
+     * The write runs in one transaction. An existing learned entry under this name stays untouched.
+     * Any other row under this name is an error.
      */
     putEntry(entry: KnowledgeEntry, reflectionHash?: string): Promise<void>;
     private putEntrySync;
@@ -239,8 +239,9 @@ export declare class KnowledgeStore {
     /** Set the trust level (observation and tag) of one entry. */
     setTrust(name: string, trust: TrustLevel): Promise<void>;
     /**
-     * Activate one entry in a single write: status, trust and validation
-     * together, so a failed write cannot leave two of the three applied.
+     * Activate one entry in a single write.
+     * The write sets the status, trust and validation together.
+     * A failed write cannot leave two of the three changes applied.
      */
     promote(name: string, trust: TrustLevel, validation: ValidationRecord | null): Promise<void>;
     /** Record a validation record on one entry. */
@@ -257,25 +258,25 @@ export declare class KnowledgeStore {
     getBySlug(kind: KnowledgeKind, project: string, slug: string): Promise<KnowledgeEntry | null>;
     private latestBySlug;
     /**
-     * Learned entries that are still chain-visible (`isLatest`), any status. A
-     * candidate revision does not clear the parent's `isLatest`, so both rows
+     * Learned entries that are still chain-visible (`isLatest`), any status.
+     * A candidate revision does not clear the parent's `isLatest`, so both rows
      * are returned until `supersede`. Callers that want one row per chain use
      * `getBySlug`; callers that want lifecycle use `listByStatus`.
      */
     listEntries(): Promise<KnowledgeEntry[]>;
     /**
-     * Every learned entry with a given status, including superseded and older
-     * versions. Lifecycle bookkeeping (`activate`'s supersede sweep) must see
+     * Every learned entry with a given status, including superseded and older versions.
+     * Lifecycle bookkeeping (`activate`'s supersede sweep) must see
      * those rows, so this deliberately does not filter on `isLatest`.
      */
     listByStatus(statuses: KnowledgeStatus[], kinds?: KnowledgeKind[], project?: string): Promise<KnowledgeEntry[]>;
     /**
      * Text search over active, unsuperseded, chain-visible entries.
      *
-     * Deterministic term overlap: an entry scores one point per distinct query
-     * term found in its slug, title, description, body or scope, with total
-     * occurrences and then the id as tie-breakers. There is no document
-     * frequency weighting, so a store with one or two entries still answers.
+     * The search uses deterministic term overlap. Each entry scores one point per distinct query
+     * term found in its slug, title, description, body or scope. Total occurrences break a tie,
+     * and the id breaks any tie that remains. The store has no document frequency weighting.
+     * So a store with one or two entries still answers.
      */
     search(query: string, options?: SearchOptions): Promise<KnowledgeEntry[]>;
     /** Search reads the tables directly, so there is no index to rebuild. */
@@ -295,9 +296,9 @@ export declare class KnowledgeStore {
     /** Record a contradiction against a heuristic on a drop: confidence down by a fifth. */
     contradictHeuristic(id: string): Promise<boolean>;
     /**
-     * Every pair of heuristics whose conditions overlap by at least half of the
-     * larger token set but whose actions differ: a `contradiction` when one
-     * action negates the other, an `overlap` otherwise.
+     * Detect every pair of heuristics whose conditions overlap by at least half of the larger token set.
+     * The pair conflicts when the two actions differ.
+     * The kind is `contradiction` when one action negates the other. Otherwise, the kind is `overlap`.
      */
     detectHeuristicConflicts(): Promise<Array<{
         a: string;
@@ -319,13 +320,14 @@ export declare class KnowledgeStore {
     getProcedure(id: string): Promise<ProcedureView | null>;
     private readProcedure;
     /**
-     * Steps of a procedure the previous adapter wrote as one `procedure-step`
-     * row per step, linked by `has_step` relations, ordered by `[order]`.
+     * Load the steps of a procedure, which the previous adapter wrote as one `procedure-step` row per step.
+     * The `has_step` relations link the procedure to its steps.
+     * The `[order]` observation of each step sets its place in the sequence.
      */
     private loadStepEntities;
     /**
-     * Rank stored procedures against a context description by token overlap
-     * between the context and the procedure's name and triggers.
+     * Rank stored procedures against a context description.
+     * Each procedure scores by token overlap between the context and the procedure's name and triggers.
      */
     matchProcedures(context: string, ids: string[]): Promise<ProcedureMatchLike[]>;
     /** Telemetry only: fold whether a procedure skill's attempt succeeded into its success rate. */
@@ -373,9 +375,9 @@ export declare class KnowledgeStore {
         alternative_taken?: string;
     }): Promise<void>;
     /**
-     * Open failures relevant to a task description, best first: each
-     * whitespace-separated token of the task scores 3 in the applicability
-     * hint, 2 in the context and 1 in the attempted action.
+     * Open failures relevant to a task description, best first.
+     * Each whitespace-separated token of the task scores 3 in the applicability hint.
+     * The same token scores 2 in the context and 1 in the attempted action.
      */
     lookupFailures(taskContext: string, limit?: number): Promise<Array<{
         context: string;
@@ -386,16 +388,16 @@ export declare class KnowledgeStore {
     /**
      * Store a reflection: a `learned-reflection` entry plus a reflection record.
      *
-     * The dedup hash covers `(scope, project, sorted evidence, NFKC summary)`:
-     * an exact match is reported as `duplicate` and writes nothing, while a
-     * same-evidence different-summary reflection is stored as its own entry
-     * and record. Additive only.
+     * The dedup hash covers `(scope, project, sorted evidence, NFKC summary)`.
+     * The store reports an exact match as `duplicate` and writes nothing.
+     * The store saves a same-evidence reflection with a different summary as its own entry and record.
+     * Additive only.
      */
     createReflection(input: CreateReflectionInput): Promise<CreateReflectionResult>;
     private createReflectionSync;
     /**
-     * Write the reflection record that accompanies a `learned-reflection` entry
-     * written by someone else (e.g. `knowledge-db.insertKnowledgeEntry`).
+     * Write the reflection record that accompanies a `learned-reflection` entry written by someone else.
+     * One such writer is `knowledge-db.insertKnowledgeEntry`.
      */
     recordReflectionRecord(input: {
         scope: 'project' | 'global';

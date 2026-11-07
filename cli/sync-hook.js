@@ -20,8 +20,8 @@ const episodicMemory = path.join(__dirname, 'episodic-memory.js');
 // --- orphan reaping ------------------------------------------------------------------------
 // The summariser's SDK call is bounded by a 120 s AbortController, but aborting stops the PARENT
 // iterating and does NOT terminate the claude.exe --fork-session child or the transient daemon
-// supervising it. Measured 2026-09-02: two workers lived 3 h 45 m against that 120 s bound,
-// ~47 processes and ~5 GB between them. So: snapshot before, sweep after.
+// supervising it. Workers can outlive the bound by hours and leave dozens of processes and
+// gigabytes of memory behind. So: snapshot before, sweep after.
 async function listClaudeProcs() {
   // A test seam, and the only way to exercise the reaper inside a hook run without touching the
   // machine's real processes: an absolute path to an ESM module exporting `listClaudeProcs`.
@@ -57,9 +57,8 @@ async function listClaudeProcs() {
 async function reapOrphans(baselinePids, logPath, formatLogLine) {
   // EVERY PATH LOGS, INCLUDING THE QUIET ONE. This function used to `return` silently on three
   // separate paths - enumeration failure, an empty victim list, and all-kills-failing - so
-  // "ran and found nothing" was INDISTINGUISHABLE from "never ran". On 2026-09-02 five orphans
-  // survived a run and the log held zero Reaped lines; that fact carried NO information and I
-  // could not tell which had happened. A reaper that speaks only when it kills is unfalsifiable.
+  // "ran and found nothing" was INDISTINGUISHABLE from "never ran". A reaper that speaks only
+  // when it kills is unfalsifiable, so every path writes a log line.
   const note = (level, msg) => {
     try { fs.appendFileSync(logPath, formatLogLine(level, `orphan-reaper: ${msg}`), 'utf-8'); } catch {}
   };

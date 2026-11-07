@@ -50,9 +50,9 @@ export const BOOTSTRAP_REFLECTION_SLUG = 'bootstrap-reflection';
 /**
  * Projects with at least `MIN_PER_PROJECT` indexed exchanges (spec §6.1 step 2).
  *
- * Deterministic order, and sidechains excluded: a project with a dozen
- * exchanges makes every one of its tasks trivially findable, and a sidechain is
- * not a conversation a user would search for.
+ * The order is deterministic, and sidechains are excluded. A project with a dozen
+ * exchanges makes every one of its tasks trivially findable. A sidechain is not a
+ * conversation a user would search for.
  */
 export function eligibleProjects(indexDb, minPerProject = MIN_PER_PROJECT) {
     const rows = indexDb
@@ -114,13 +114,13 @@ function savings(before, after) {
     return { turnSavingPct, usdSavingPct, rateFell };
 }
 /**
- * The bootstrap gain rule: keep when the signal pass rate does not fall and mean
- * turns or USD per task fall by at least `minSavingPct`.
+ * The bootstrap gain rule: keep when the signal pass rate does not fall.
+ * Mean turns or USD per task must also fall by at least `minSavingPct`.
  *
  * Both sides must have been measured, and they must have graded the same number
  * of tasks. `passRate` counts only graded attempts, so an abort shrinks one
- * side's total. A smaller after side can be the easy tasks only; that is not
- * evidence the candidate saved turns at equal accuracy, and the candidate waits.
+ * side's total. A smaller after side can contain only the easy tasks. Such a side is not
+ * evidence that the candidate saved turns at equal accuracy, so the candidate waits.
  */
 export function bootstrapGain(before, after, minSavingPct) {
     const { turnSavingPct, usdSavingPct, rateFell } = savings(before, after);
@@ -148,9 +148,8 @@ function citedLines(entry) {
 /**
  * Mirror the two bootstrap skills' cited lines into the project context.
  *
- * This copy is for learner prompts only: `forContext` is never rendered into a
- * session, which is why the lines keep their marks here rather than being
- * flattened into prose.
+ * The mirrored copy is for learner prompts only. `forContext` is never rendered into a session.
+ * Therefore the lines keep their marks here, rather than being flattened into prose.
  */
 async function mirrorProjectContext(store, project, entries) {
     const navigation = entries.find(entry => entry.slug === BOOTSTRAP_SKILL_SLUGS[0]);
@@ -188,8 +187,8 @@ function validationFor(before, after, sample) {
 /**
  * The signal tasks the measurement solves twice.
  *
- * `listTasks` is the only read path and the split predicate is mandatory, so the
- * held-out rows cannot enter this set even by a caller's mistake.
+ * `listTasks` is the only read path. The split predicate is mandatory, so the held-out rows
+ * cannot enter the returned list even by a caller's mistake.
  */
 function signalTrainTasks(db) {
     return listTasks(db, { split: 'train', kinds: SIGNAL_KINDS, tiers: SIGNAL_TIERS });
@@ -217,8 +216,8 @@ function mergeLines(raw) {
 /**
  * Run the bootstrap.
  *
- * Everything the run needs is injected — `runAgent`, the text model, the budget
- * and the PID registry — so a test never reaches a model, a GPU or a subprocess.
+ * Everything the run needs is injected: `runAgent`, the text model, the budget and the PID
+ * registry. So a test never reaches a model, a GPU or a subprocess.
  */
 export async function runBootstrap(dbs, options) {
     const config = learnConfig();
@@ -575,9 +574,9 @@ function taskKinds(db, taskIds) {
 /**
  * Write the run's reflection, citing the attempts and exchanges it saw.
  *
- * A reflection with no cited exchange cannot pass the gate (a line with only
- * `@` marks is dropped), so a run whose candidates cited nothing simply records
- * no reflection rather than storing an uncited one.
+ * A reflection with no cited exchange cannot pass the gate. The gate drops a line that has
+ * only `@` marks. So a run whose candidates cited nothing simply records no reflection rather
+ * than storing an uncited one.
  */
 async function writeReflection(dbs, input) {
     const sources = [];

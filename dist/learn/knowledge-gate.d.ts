@@ -50,15 +50,15 @@ export type GateResult = GateAccepted | {
     rejected: string;
 };
 /**
- * Redact one text field: secrets first, then PII. The trailing mark group is
- * split off, and every earlier `#`/`@` mark is shielded, so the digit-run
+ * Redact one text field: secrets first, then PII.
+ * The trailing mark group is split off. Every earlier `#`/`@` mark is shielded, so the digit-run
  * patterns never see a 32-hex exchange mark.
  */
 export declare function redactLearnedText(text: string, deps: {
     redactPii: (t: string) => string;
 }): string;
 /**
- * Gate one proposal. Returns the entry to store, or the reason it was rejected
- * (the reason string is what `learn report` prints).
+ * Gate one proposal. Returns the entry to store, or the reason it was rejected.
+ * The reason string is what `learn report` prints.
  */
 export declare function gateEntry(proposal: ProposedEntry, deps: GateDeps): GateResult;

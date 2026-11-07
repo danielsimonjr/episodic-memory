@@ -86,12 +86,11 @@ function parseLines(raw) {
         .filter(line => line.length > 0);
 }
 /**
- * The category each failed task was assigned, or null when the answer is not a
- * partition.
+ * The category each failed task was assigned, or null when the answer is not a partition.
  *
- * A partition means every failed id appears exactly once and no id the run did
- * not fail on appears at all. A duplicate assignment is not a partition either:
- * a task in two subsets would be solved and edited twice.
+ * A partition means every failed id appears exactly once. No id that the run did not fail on
+ * appears at all. A duplicate assignment is not a partition either: a task in two subsets
+ * would be solved and edited twice.
  */
 export function parseAssignment(raw, failedIds) {
     const wanted = new Set(failedIds);
@@ -125,8 +124,8 @@ export function parseAssignment(raw, failedIds) {
  *
  * By project first, because a project's vocabulary is what an instruction is
  * scoped to. A project over the leaf cap is then cut by failure category, which
- * needs one model call; when that answer is not a partition the project stays
- * whole, because a bad split is worse than a big subset.
+ * needs one model call. If that answer is not a partition, the project stays whole.
+ * The reason: a bad split is worse than a big subset.
  */
 export async function splitFailures(failures, leafMax, textModel) {
     const byProject = new Map();
@@ -182,8 +181,8 @@ function mergeKey(entry) {
  * The exchanges an entry cites, read back from its body's marks.
  *
  * The adapter stores citations as relations and does not parse them back into
- * `sources`, so this resolves the marks against the index database — the same
- * resolver the gate used when it accepted the body.
+ * `sources`. The function resolves the marks against the index database. The gate
+ * used the same resolver to accept the body.
  */
 function sourcesFromBody(dbs, body) {
     const resolve = indexExchangeResolver(dbs.index);
@@ -218,10 +217,10 @@ function resolveFor(dbs) {
 /**
  * The tasks one child's own work passed, from its newest graded attempt.
  *
- * Both roles count: a child's *gain* on a task is usually the `validate`
- * attempt that proved the candidate, not the `solve` attempt that failed before
- * it. Taking the newest attempt per task is what makes "the child's gains" a
- * property of the child rather than of one round of its loop.
+ * Both roles count. A child's *gain* on a task is usually the `validate` attempt that proved
+ * the candidate. The earlier `solve` attempt, which failed, is not the gain. Taking the newest
+ * attempt per task makes "the child's gains" a property of the child. The gains are not a
+ * property of one round of its loop.
  */
 function childPassSet(dbs, childRunId, taskIds) {
     const latest = new Map();
@@ -246,11 +245,11 @@ function childPassSet(dbs, childRunId, taskIds) {
 /**
  * The tasks still failing in one snapshot, from the newest graded attempt.
  *
- * Scoped to the snapshot: an earlier round's pass on the same task must not
- * hide a failure the current knowledge causes, and an earlier round's failure
- * must not survive a fix that has since landed. `aborted`, `killed` and `error`
- * attempts are excluded by the `graded` predicate — they are evidence the run
- * was cut short, not that the solver missed.
+ * The function considers only attempts from the snapshot. An earlier round's pass on the same
+ * task must not hide a failure that the current knowledge causes. An earlier round's failure
+ * must not survive a fix that has since landed. The `graded` predicate excludes `aborted`,
+ * `killed` and `error` attempts. The excluded attempts are evidence that the run was cut short,
+ * not that the solver missed the task.
  */
 function failingTaskIds(dbs, runId, snapshotId, taskIds) {
     const latest = new Map();
@@ -283,8 +282,8 @@ function newestAttempt(dbs, runId, snapshotId, taskId) {
 /**
  * Run one `learn improve`.
  *
- * Everything that would reach a model, a subprocess or a GPU is injected, so a
- * test drives the whole recursion with fakes and never leaves the process.
+ * Everything that would reach a model, a subprocess or a GPU is injected.
+ * So a test drives the whole recursion with fakes and never leaves the process.
  */
 export async function runLearn(dbs, options) {
     const config = learnConfig();
@@ -612,9 +611,9 @@ async function collectKept(dbs, names, childRunId) {
 /**
  * Merge the duplicates this round's children kept, then prove the merge.
  *
- * A merge that regresses a child is undone by retiring the merged version and
- * writing the child's body again as the next version, which is what makes the
- * chain head the child's own text again. Nothing is deleted.
+ * A merge that regresses a child is undone by retiring the merged version. The function then
+ * writes the child's body again as the next version. So the chain head is the child's own
+ * text again. Nothing is deleted.
  */
 async function mergeRound(dbs, input) {
     const byKey = new Map();
@@ -960,8 +959,8 @@ function mergeCheckEvidence(kept, attemptsByChild, passedBeforeByChild) {
 /**
  * How many signal tasks pass after this round's leaves.
  *
- * The newest graded solve or validate attempt wins, so a leaf's validation
- * pass replaces the baseline failure and an untouched task keeps the baseline.
+ * The newest graded solve or validate attempt wins. So a leaf's validation
+ * pass replaces the baseline failure, and an untouched task keeps the baseline.
  */
 function postLeafPassed(dbs, runIds, taskIds) {
     if (taskIds.length === 0)
@@ -990,10 +989,10 @@ function postLeafPassed(dbs, runIds, taskIds) {
 /**
  * Put a child's version back after a merge regressed it.
  *
- * The merged version is retired (kept, readable) and the child's body is written
- * again as the next version and activated, so the key's live text is the
- * child's own and the chain did not have to un-supersede anything. Returns the
- * restored name, or null when the body could not be written.
+ * The function retires the merged version (kept, readable). The function then writes the
+ * child's body again as the next version and activates the version. So the key's live text is
+ * the child's own text. The chain does not have to un-supersede anything. Returns the restored
+ * name, or null when the body could not be written.
  */
 async function restoreChildVersion(dbs, mergedName, kept, childRunId) {
     await retire(dbs.store, mergedName);

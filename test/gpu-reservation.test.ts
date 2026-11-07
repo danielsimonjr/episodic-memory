@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync } from 'fs';
-import { homedir, tmpdir } from 'os';
+import { tmpdir } from 'os';
 import { join } from 'path';
 import { gpuReservationBlock, readGpuReservation, reservationPath } from '../src/gpu-reservation.js';
 import { GpuReservedError, callOllama } from '../src/ollama-backend.js';
@@ -31,9 +31,15 @@ describe('reservationPath', () => {
     expect(reservationPath()).toBe(file);
   });
 
-  it('defaults to the fleet file under the home directory', () => {
+  it('returns null when FLEET_GPU_RESERVATION is unset, with no built-in path', () => {
     delete process.env.FLEET_GPU_RESERVATION;
-    expect(reservationPath()).toBe(join(homedir(), 'Dropbox', '_fleet', 'gpu-reserved.json'));
+    expect(reservationPath()).toBeNull();
+  });
+
+  it('reports the GPU as free and names no path when the variable is unset', () => {
+    delete process.env.FLEET_GPU_RESERVATION;
+    expect(readGpuReservation()).toBeNull();
+    expect(gpuReservationBlock()).toBeNull();
   });
 });
 

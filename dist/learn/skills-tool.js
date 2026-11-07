@@ -39,9 +39,9 @@ function sourcesText(entry) {
         .join('; ');
 }
 /**
- * One skill as frontmatter plus body. The function redacts and screens every
- * field. A field that the screen rejects withholds the whole entry, rather than
- * printing a skill with untrusted metadata or body.
+ * One skill as frontmatter plus body.
+ * The function redacts and screens every field. A field that the screen rejects withholds the whole
+ * entry, rather than printing a skill with untrusted metadata or body.
  */
 function renderSkill(entry, redact) {
     const fields = [

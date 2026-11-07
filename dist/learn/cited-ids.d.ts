@@ -57,8 +57,9 @@ export interface IdCitedLines {
 /**
  * Split a model's answer into the lines the citation gate keeps.
  *
- * A kept line keeps its body and gets its marks rewritten to the canonical
- * form, so a downstream writer stores one citation shape. The function skips blank lines without counting them as drops.
+ * A kept line keeps its body.
+ * The function rewrites its marks to the canonical form, so a downstream writer stores one citation shape.
+ * The function skips blank lines without counting them as drops.
  * The function reports every other rejected line with its reason.
  *
  * @param raw the model answer, one statement for each line

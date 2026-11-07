@@ -1,14 +1,14 @@
 {
   "summary": {
-    "files_scanned": 225,
-    "files_parsed": 225,
+    "files_scanned": 226,
+    "files_parsed": 226,
     "files_unparsed": 0,
     "symbols": 1105,
     "exported_symbols": 431,
     "exported_documented": 431,
     "exported_documented_pct": 100,
     "must_issues": 0,
-    "should_issues": 233,
+    "should_issues": 0,
     "files_mixed_dialect": 0
   },
   "provenance": "git ls-files",
@@ -49,7 +49,7 @@
         },
         {
           "file": "cli/digest-hook.js",
-          "line": 47,
+          "line": 49,
           "name": "buildLearned",
           "kind": "function",
           "exported": false,
@@ -60,17 +60,11 @@
           "doc_params": [],
           "summary": "The stored learned block for this project, or '' when learning is off or the trace database is absent.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 24 words (limit 20): 'Read-only and never migrated: the hook may run against a `l…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "cli/digest-hook.js",
-          "line": 69,
+          "line": 71,
           "name": "main",
           "kind": "function",
           "exported": false,
@@ -130,36 +124,20 @@
       "symbols": [
         {
           "file": "cli/episodic-memory.js",
-          "line": 19,
+          "line": 20,
           "name": "blockedByNodeFloor",
           "kind": "function",
           "exported": false,
           "has_doc": true,
           "params": [],
           "doc_params": [],
-          "summary": "`learn` opens the knowledge store on better-sqlite3 13, which requires Node >= 22; `engines` only warns. Checked before the",
+          "summary": "`learn` opens the knowledge store on better-sqlite3 13, which requires Node >= 22; `engines` only warns.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 24 words (limit 20): 'Checked before the learn entry point is spawned, so a too-o…'"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 24 words (limit 20): 'Imported lazily: every other command works on a tree whose …'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "cli/episodic-memory.js",
-          "line": 28,
+          "line": 29,
           "name": "runScript",
           "kind": "function",
           "exported": false,
@@ -175,7 +153,7 @@
         },
         {
           "file": "cli/episodic-memory.js",
-          "line": 48,
+          "line": 49,
           "name": "showHelp",
           "kind": "function",
           "exported": false,
@@ -188,7 +166,7 @@
         },
         {
           "file": "cli/episodic-memory.js",
-          "line": 80,
+          "line": 81,
           "name": "main",
           "kind": "function",
           "exported": false,
@@ -332,7 +310,7 @@
         },
         {
           "file": "cli/sync-hook.js",
-          "line": 109,
+          "line": 108,
           "name": "main",
           "kind": "function",
           "exported": false,
@@ -345,7 +323,7 @@
         },
         {
           "file": "cli/sync-hook.js",
-          "line": 167,
+          "line": 166,
           "name": "reportExit",
           "kind": "function",
           "exported": false,
@@ -941,15 +919,9 @@
             "pkg"
           ],
           "doc_params": [],
-          "summary": "The only question that matters: can this package load the module?",
+          "summary": "The only question that matters is whether this package can load the module.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -968,20 +940,9 @@
           "has_doc": true,
           "params": [],
           "doc_params": [],
-          "summary": "Validate custom summarizer API base URLs so a compromised / mis-set env",
+          "summary": "Validate custom summarizer API base URLs.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 21 words (limit 20): 'Validate custom summarizer API base URLs so a compromised /…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/api-endpoint.ts",
@@ -1036,7 +997,7 @@
         },
         {
           "file": "src/archive-path.ts",
-          "line": 39,
+          "line": 40,
           "name": "resolveArchiveJsonlPath",
           "kind": "function",
           "exported": true,
@@ -1045,24 +1006,13 @@
             "candidatePath"
           ],
           "doc_params": [],
-          "summary": "Resolve a candidate path to a real path that is guaranteed to lie inside",
+          "summary": "Resolve a candidate path to a real path that is guaranteed to lie inside the conversation archive.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 21 words (limit 20): 'Resolve a candidate path to a real path that is guaranteed …'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/archive-path.ts",
-          "line": 112,
+          "line": 114,
           "name": "safeArchiveSummaryPath",
           "kind": "function",
           "exported": true,
@@ -1071,24 +1021,13 @@
             "candidateJsonlPath"
           ],
           "doc_params": [],
-          "summary": "Resolve a summary sidecar path only when the candidate JSONL path is",
+          "summary": "Resolve a summary sidecar path only when the candidate JSONL path is lexically inside the archive.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 24 words (limit 20): 'Resolve a summary sidecar path only when the candidate JSON…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/archive-path.ts",
-          "line": 159,
+          "line": 161,
           "name": "readJsonlLines",
           "kind": "function",
           "exported": true,
@@ -1228,7 +1167,7 @@
         },
         {
           "file": "src/backfill.ts",
-          "line": 151,
+          "line": 152,
           "name": "batchVerdict",
           "kind": "function",
           "exported": true,
@@ -1238,15 +1177,9 @@
             "r"
           ],
           "doc_params": [],
-          "summary": "Decide what the batch loop does next. `prevRemaining` is the remainder that the previous batch left",
+          "summary": "Decide what the batch loop does next.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -1448,7 +1381,7 @@
         },
         {
           "file": "src/constants.ts",
-          "line": 44,
+          "line": 46,
           "name": "truncateForIndex",
           "kind": "function",
           "exported": true,
@@ -1457,15 +1390,9 @@
             "message"
           ],
           "doc_params": [],
-          "summary": "Cap a message for indexing, keeping the head so it stays searchable and the",
+          "summary": "Cap a message for indexing.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -1505,7 +1432,7 @@
         },
         {
           "file": "src/db.ts",
-          "line": 80,
+          "line": 79,
           "name": "migrateToolCallsCascade",
           "kind": "function",
           "exported": true,
@@ -1514,19 +1441,13 @@
             "db"
           ],
           "doc_params": [],
-          "summary": "Earlier versions created `tool_calls` with a plain",
+          "summary": "Earlier versions created `tool_calls` with a plain `FOREIGN KEY (exchange_id) REFERENCES exchanges(id)`.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/db.ts",
-          "line": 134,
+          "line": 133,
           "name": "ensureFts",
           "kind": "function",
           "exported": true,
@@ -1541,7 +1462,7 @@
         },
         {
           "file": "src/db.ts",
-          "line": 161,
+          "line": 160,
           "name": "upsertExchangeFts",
           "kind": "function",
           "exported": true,
@@ -1559,7 +1480,7 @@
         },
         {
           "file": "src/db.ts",
-          "line": 178,
+          "line": 177,
           "name": "deleteExchangeFts",
           "kind": "function",
           "exported": true,
@@ -1575,7 +1496,7 @@
         },
         {
           "file": "src/db.ts",
-          "line": 182,
+          "line": 181,
           "name": "applySecureDbFileMode",
           "kind": "function",
           "exported": false,
@@ -1590,7 +1511,7 @@
         },
         {
           "file": "src/db.ts",
-          "line": 200,
+          "line": 199,
           "name": "openDatabase",
           "kind": "function",
           "exported": true,
@@ -1607,7 +1528,7 @@
         },
         {
           "file": "src/db.ts",
-          "line": 332,
+          "line": 331,
           "name": "initDatabase",
           "kind": "function",
           "exported": true,
@@ -1620,7 +1541,7 @@
         },
         {
           "file": "src/db.ts",
-          "line": 348,
+          "line": 347,
           "name": "getSharedReaderDatabase",
           "kind": "function",
           "exported": true,
@@ -1633,7 +1554,7 @@
         },
         {
           "file": "src/db.ts",
-          "line": 367,
+          "line": 366,
           "name": "closeSharedReaderDatabase",
           "kind": "function",
           "exported": true,
@@ -1646,7 +1567,7 @@
         },
         {
           "file": "src/db.ts",
-          "line": 390,
+          "line": 389,
           "name": "insertExchange",
           "kind": "function",
           "exported": true,
@@ -1669,7 +1590,7 @@
         },
         {
           "file": "src/db.ts",
-          "line": 475,
+          "line": 474,
           "name": "getAllExchanges",
           "kind": "function",
           "exported": true,
@@ -1684,7 +1605,7 @@
         },
         {
           "file": "src/db.ts",
-          "line": 485,
+          "line": 484,
           "name": "getFileLastIndexed",
           "kind": "function",
           "exported": true,
@@ -1700,7 +1621,7 @@
         },
         {
           "file": "src/db.ts",
-          "line": 496,
+          "line": 495,
           "name": "getMaxIndexedLine",
           "kind": "function",
           "exported": true,
@@ -1716,7 +1637,7 @@
         },
         {
           "file": "src/db.ts",
-          "line": 508,
+          "line": 507,
           "name": "getFreelistInfo",
           "kind": "function",
           "exported": true,
@@ -1731,7 +1652,7 @@
         },
         {
           "file": "src/db.ts",
-          "line": 518,
+          "line": 517,
           "name": "vacuumDatabase",
           "kind": "function",
           "exported": true,
@@ -1746,7 +1667,7 @@
         },
         {
           "file": "src/db.ts",
-          "line": 527,
+          "line": 526,
           "name": "deleteExchange",
           "kind": "function",
           "exported": true,
@@ -1770,7 +1691,7 @@
       "symbols": [
         {
           "file": "src/deps-health.ts",
-          "line": 38,
+          "line": 36,
           "name": "nativeAddonPresent",
           "kind": "function",
           "exported": true,
@@ -1785,7 +1706,7 @@
         },
         {
           "file": "src/deps-health.ts",
-          "line": 60,
+          "line": 58,
           "name": "nodeModulesIsHealthy",
           "kind": "function",
           "exported": true,
@@ -1809,20 +1730,9 @@
             "nodeModulesPath"
           ],
           "doc_params": [],
-          "summary": "What a caller must run to make node_modules usable. `npm install` on a tree that already lists",
+          "summary": "What a caller must run to make node_modules usable.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 22 words (limit 20): '`npm install` on a tree that already lists better-sqlite3 d…'"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -1942,7 +1852,7 @@
         },
         {
           "file": "src/digest-compress.ts",
-          "line": 112,
+          "line": 113,
           "name": "compressDigest",
           "kind": "function",
           "exported": true,
@@ -1952,20 +1862,9 @@
             "opts"
           ],
           "doc_params": [],
-          "summary": "Merge many session entries of a past day into one day entry, and many day entries of a finished",
+          "summary": "Merge many session entries of a past day into one day entry.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 24 words (limit 20): 'Merge many session entries of a past day into one day entry…'"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -2268,13 +2167,7 @@
           "doc_params": [],
           "summary": "The digest for one project, within maxChars. Order: handoff notes first, then newest entries first.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 23 words (limit 20): 'Stops before the first entry that does not fit, so the olde…'"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -2439,7 +2332,7 @@
       "symbols": [
         {
           "file": "src/digest-phase.ts",
-          "line": 9,
+          "line": 11,
           "name": "runDigestPhase",
           "kind": "function",
           "exported": true,
@@ -2448,20 +2341,9 @@
             "opts"
           ],
           "doc_params": [],
-          "summary": "The digest step of a sync run. Never throws and never blocks the sync: with the flag off it does nothing,",
+          "summary": "The digest step of a sync run.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 26 words (limit 20): 'Never throws and never blocks the sync: with the flag off i…'"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -2517,7 +2399,7 @@
         },
         {
           "file": "src/digest-prompts.ts",
-          "line": 62,
+          "line": 64,
           "name": "buildCompressPrompt",
           "kind": "function",
           "exported": true,
@@ -2529,13 +2411,7 @@
           "doc_params": [],
           "summary": "Build the summarizer prompt that merges the digest notes of one day or one week.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 21 words (limit 20): 'A source mark at the end of a note, such as `[#id,#id]`, is…'"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -2598,7 +2474,7 @@
         },
         {
           "file": "src/digest-validate.ts",
-          "line": 26,
+          "line": 27,
           "name": "parseCitedLines",
           "kind": "function",
           "exported": true,
@@ -2613,22 +2489,11 @@
           ],
           "summary": "Keep the model lines that cite only known exchanges, and rewrite their marks.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 23 words (limit 20): 'The function drops a line that has no mark group, that cite…'"
-            },
-            {
-              "rule": "S6/STE-REF",
-              "tier": "SHOULD",
-              "detail": "ambiguous 'that' -- name the thing it refers to"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/digest-validate.ts",
-          "line": 71,
+          "line": 72,
           "name": "redactEntryText",
           "kind": "function",
           "exported": true,
@@ -2800,46 +2665,35 @@
         },
         {
           "file": "src/doctor-learn.ts",
-          "line": 143,
+          "line": 138,
           "name": "pluginPackageRoot",
           "kind": "function",
           "exported": false,
           "has_doc": true,
           "params": [],
           "doc_params": [],
-          "summary": "Where `better-sqlite3` resolves from a given base directory.",
-          "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 34 words (limit 20): '`require.resolve`'s `paths` option is the only way to ask \"…'"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 42 words (limit 20): 'Doctor is often started from a project directory, and resol…'"
-            }
-          ]
-        },
-        {
-          "file": "src/doctor-learn.ts",
-          "line": 169,
-          "name": "resolveBetterSqlite3",
-          "kind": "function",
-          "exported": false,
-          "has_doc": false,
-          "params": [
-            "paths"
-          ],
-          "doc_params": [],
-          "summary": "",
+          "summary": "Return the plugin package root, or `null` when none is found.",
           "dialect": "",
           "issues": []
         },
         {
           "file": "src/doctor-learn.ts",
-          "line": 187,
+          "line": 170,
+          "name": "resolveBetterSqlite3",
+          "kind": "function",
+          "exported": false,
+          "has_doc": true,
+          "params": [
+            "paths"
+          ],
+          "doc_params": [],
+          "summary": "Where `better-sqlite3` resolves from a given base directory.",
+          "dialect": "",
+          "issues": []
+        },
+        {
+          "file": "src/doctor-learn.ts",
+          "line": 188,
           "name": "metricsSummary",
           "kind": "function",
           "exported": false,
@@ -2854,7 +2708,7 @@
         },
         {
           "file": "src/doctor-learn.ts",
-          "line": 203,
+          "line": 204,
           "name": "knownExchangeIds",
           "kind": "function",
           "exported": false,
@@ -2870,7 +2724,7 @@
         },
         {
           "file": "src/doctor-learn.ts",
-          "line": 214,
+          "line": 215,
           "name": "collectLearnDoctorSection",
           "kind": "function",
           "exported": true,
@@ -3048,7 +2902,7 @@
         },
         {
           "file": "src/doctor.ts",
-          "line": 285,
+          "line": 286,
           "name": "learnTextLines",
           "kind": "function",
           "exported": false,
@@ -3059,17 +2913,11 @@
           "doc_params": [],
           "summary": "The learn section's text.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 25 words (limit 20): 'Empty when doctor was not given the section (a caller that …'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/doctor.ts",
-          "line": 333,
+          "line": 334,
           "name": "buildDoctorReport",
           "kind": "function",
           "exported": true,
@@ -3105,7 +2953,7 @@
         },
         {
           "file": "src/embedding-migration.ts",
-          "line": 39,
+          "line": 40,
           "name": "acquireMigrationLock",
           "kind": "function",
           "exported": true,
@@ -3118,17 +2966,11 @@
           ],
           "summary": "Try to take the migration lock at `lockPath`.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 22 words (limit 20): 'A lock is stale when its file is older than one hour, or wh…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/embedding-migration.ts",
-          "line": 51,
+          "line": 52,
           "name": "releaseMigrationLock",
           "kind": "function",
           "exported": true,
@@ -3145,7 +2987,7 @@
         },
         {
           "file": "src/embedding-migration.ts",
-          "line": 60,
+          "line": 61,
           "name": "StaleRow",
           "kind": "interface",
           "exported": true,
@@ -3158,7 +3000,7 @@
         },
         {
           "file": "src/embedding-migration.ts",
-          "line": 72,
+          "line": 73,
           "name": "pickStaleBatch",
           "kind": "function",
           "exported": true,
@@ -3168,19 +3010,13 @@
             "limit"
           ],
           "doc_params": [],
-          "summary": "The function returns up to `limit` rows whose embedding_version is older than",
+          "summary": "The function returns up to `limit` rows whose embedding_version is older than EMBEDDING_VERSION.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/embedding-migration.ts",
-          "line": 97,
+          "line": 98,
           "name": "recordReembedded",
           "kind": "function",
           "exported": true,
@@ -3201,7 +3037,7 @@
         },
         {
           "file": "src/embedding-migration.ts",
-          "line": 113,
+          "line": 114,
           "name": "countStale",
           "kind": "function",
           "exported": true,
@@ -3216,7 +3052,7 @@
         },
         {
           "file": "src/embedding-migration.ts",
-          "line": 121,
+          "line": 122,
           "name": "getMigrationLockPath",
           "kind": "function",
           "exported": true,
@@ -3231,7 +3067,7 @@
         },
         {
           "file": "src/embedding-migration.ts",
-          "line": 142,
+          "line": 143,
           "name": "runMigrationBatch",
           "kind": "function",
           "exported": true,
@@ -3329,15 +3165,9 @@
             "query"
           ],
           "doc_params": [],
-          "summary": "Prepend the BGE retrieval prefix to a query string. Idempotent: returns",
+          "summary": "Prepend the BGE retrieval prefix to a query string.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/embeddings.ts",
@@ -3415,7 +3245,7 @@
       "symbols": [
         {
           "file": "src/gpu-reservation.ts",
-          "line": 32,
+          "line": 30,
           "name": "GpuReservation",
           "kind": "interface",
           "exported": true,
@@ -3428,7 +3258,7 @@
         },
         {
           "file": "src/gpu-reservation.ts",
-          "line": 50,
+          "line": 48,
           "name": "reservationPath",
           "kind": "function",
           "exported": true,
@@ -3437,17 +3267,11 @@
           "doc_params": [],
           "summary": "Return the path of the fleet GPU reservation file.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 23 words (limit 20): 'When that variable is empty or unset, the path is `gpu-rese…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/gpu-reservation.ts",
-          "line": 59,
+          "line": 60,
           "name": "readGpuReservation",
           "kind": "function",
           "exported": true,
@@ -3456,17 +3280,11 @@
           "doc_params": [],
           "summary": "Return the current GPU reservation, or `null` when the GPU is free.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 24 words (limit 20): 'The function returns a reservation with `holder` set to `un…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/gpu-reservation.ts",
-          "line": 89,
+          "line": 92,
           "name": "gpuReservationBlock",
           "kind": "function",
           "exported": true,
@@ -3475,13 +3293,7 @@
           "doc_params": [],
           "summary": "A message that says who holds the GPU while it is reserved, or `null` when it is free.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 25 words (limit 20): 'When the file could not be read, the message also names the…'"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -3627,13 +3439,7 @@
           ],
           "summary": "Archive and index the first conversation file whose path contains the session id.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 21 words (limit 20): 'The function writes a summary for the file when the file ha…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/indexer.ts",
@@ -3695,26 +3501,20 @@
       "symbols": [
         {
           "file": "src/learn/agent-runner.ts",
-          "line": 45,
+          "line": 46,
           "name": "PidRegistry",
           "kind": "interface",
           "exported": true,
           "has_doc": true,
           "params": [],
           "doc_params": [],
-          "summary": "Where a run records the PIDs it owns. Task 6 supplies the real one, which also",
+          "summary": "Where a run records the PIDs it owns.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/agent-runner.ts",
-          "line": 53,
+          "line": 54,
           "name": "BuildAgentQueryOptionsArgs",
           "kind": "interface",
           "exported": true,
@@ -3727,7 +3527,7 @@
         },
         {
           "file": "src/learn/agent-runner.ts",
-          "line": 71,
+          "line": 72,
           "name": "buildAgentQueryOptions",
           "kind": "function",
           "exported": true,
@@ -3738,17 +3538,11 @@
           "doc_params": [],
           "summary": "The options object handed to the SDK's `query()`.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 25 words (limit 20): '`tools: []` is the actual isolation (nothing built in is ev…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/agent-runner.ts",
-          "line": 107,
+          "line": 108,
           "name": "ProcSnapshot",
           "kind": "interface",
           "exported": true,
@@ -3761,7 +3555,7 @@
         },
         {
           "file": "src/learn/agent-runner.ts",
-          "line": 121,
+          "line": 122,
           "name": "isAgentSpawnTree",
           "kind": "function",
           "exported": true,
@@ -3776,7 +3570,7 @@
         },
         {
           "file": "src/learn/agent-runner.ts",
-          "line": 131,
+          "line": 132,
           "name": "listAgentProcesses",
           "kind": "function",
           "exported": true,
@@ -3785,17 +3579,11 @@
           "doc_params": [],
           "summary": "The machine's `claude` processes, or null when enumeration fails.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 25 words (limit 20): 'Null means \"register nothing this poll\": a run that cannot …'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/agent-runner.ts",
-          "line": 181,
+          "line": 182,
           "name": "AgentRunOptions",
           "kind": "interface",
           "exported": true,
@@ -3808,7 +3596,7 @@
         },
         {
           "file": "src/learn/agent-runner.ts",
-          "line": 202,
+          "line": 203,
           "name": "AgentRunResult",
           "kind": "interface",
           "exported": true,
@@ -3821,7 +3609,7 @@
         },
         {
           "file": "src/learn/agent-runner.ts",
-          "line": 214,
+          "line": 215,
           "name": "emptyCost",
           "kind": "function",
           "exported": false,
@@ -3834,7 +3622,7 @@
         },
         {
           "file": "src/learn/agent-runner.ts",
-          "line": 219,
+          "line": 220,
           "name": "AbortMarker",
           "kind": "class",
           "exported": false,
@@ -3847,7 +3635,7 @@
         },
         {
           "file": "src/learn/agent-runner.ts",
-          "line": 220,
+          "line": 221,
           "name": "constructor",
           "kind": "method",
           "exported": false,
@@ -3860,7 +3648,7 @@
         },
         {
           "file": "src/learn/agent-runner.ts",
-          "line": 227,
+          "line": 228,
           "name": "addressFromResultText",
           "kind": "function",
           "exported": true,
@@ -3875,7 +3663,7 @@
         },
         {
           "file": "src/learn/agent-runner.ts",
-          "line": 241,
+          "line": 242,
           "name": "resultTextOf",
           "kind": "function",
           "exported": false,
@@ -3890,7 +3678,7 @@
         },
         {
           "file": "src/learn/agent-runner.ts",
-          "line": 252,
+          "line": 253,
           "name": "costFromResult",
           "kind": "function",
           "exported": false,
@@ -3914,24 +3702,13 @@
             "error"
           ],
           "doc_params": [],
-          "summary": "True when the failure was the subprocess dying by a signal rather than",
+          "summary": "True when the failure was the subprocess dying by a signal rather than returning an error result.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 32 words (limit 20): 'The SDK surfaces this as an error whose message (or `signal…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/agent-runner.ts",
-          "line": 289,
+          "line": 290,
           "name": "runAgent",
           "kind": "function",
           "exported": true,
@@ -3942,18 +3719,7 @@
           "doc_params": [],
           "summary": "Run one agent to completion.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 30 words (limit 20): 'The timeout aborts the SDK call the way `callClaude` does; …'"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 34 words (limit 20): 'Result text is deliberately not stored: a trace records the…'"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -4016,13 +3782,7 @@
           "doc_params": [],
           "summary": "Projects with at least `MIN_PER_PROJECT` indexed exchanges (spec §6.1 step 2).",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 31 words (limit 20): 'Deterministic order, and sidechains excluded: a project wit…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/bootstrap.ts",
@@ -4113,30 +3873,9 @@
             "minSavingPct"
           ],
           "doc_params": [],
-          "summary": "The bootstrap gain rule: keep when the signal pass rate does not fall and mean",
+          "summary": "The bootstrap gain rule: keep when the signal pass rate does not fall.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 25 words (limit 20): 'The bootstrap gain rule: keep when the signal pass rate doe…'"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 25 words (limit 20): 'A smaller after side can be the easy tasks only; that is no…'"
-            },
-            {
-              "rule": "S6/STE-REF",
-              "tier": "SHOULD",
-              "detail": "ambiguous 'that' -- name the thing it refers to"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/bootstrap.ts",
@@ -4155,7 +3894,7 @@
         },
         {
           "file": "src/learn/bootstrap.ts",
-          "line": 297,
+          "line": 296,
           "name": "mirrorProjectContext",
           "kind": "function",
           "exported": false,
@@ -4168,17 +3907,11 @@
           "doc_params": [],
           "summary": "Mirror the two bootstrap skills' cited lines into the project context.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 29 words (limit 20): 'This copy is for learner prompts only: `forContext` is neve…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/bootstrap.ts",
-          "line": 317,
+          "line": 316,
           "name": "emptyRate",
           "kind": "function",
           "exported": false,
@@ -4191,7 +3924,7 @@
         },
         {
           "file": "src/learn/bootstrap.ts",
-          "line": 322,
+          "line": 321,
           "name": "validationFor",
           "kind": "function",
           "exported": false,
@@ -4208,7 +3941,7 @@
         },
         {
           "file": "src/learn/bootstrap.ts",
-          "line": 347,
+          "line": 346,
           "name": "signalTrainTasks",
           "kind": "function",
           "exported": false,
@@ -4219,17 +3952,11 @@
           "doc_params": [],
           "summary": "The signal tasks the measurement solves twice.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 25 words (limit 20): '`listTasks` is the only read path and the split predicate i…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/bootstrap.ts",
-          "line": 351,
+          "line": 350,
           "name": "countTasks",
           "kind": "function",
           "exported": false,
@@ -4244,7 +3971,7 @@
         },
         {
           "file": "src/learn/bootstrap.ts",
-          "line": 357,
+          "line": 356,
           "name": "kindTierTotals",
           "kind": "function",
           "exported": false,
@@ -4259,7 +3986,7 @@
         },
         {
           "file": "src/learn/bootstrap.ts",
-          "line": 367,
+          "line": 366,
           "name": "mergeLines",
           "kind": "function",
           "exported": false,
@@ -4274,7 +4001,7 @@
         },
         {
           "file": "src/learn/bootstrap.ts",
-          "line": 380,
+          "line": 379,
           "name": "runBootstrap",
           "kind": "function",
           "exported": true,
@@ -4286,17 +4013,11 @@
           "doc_params": [],
           "summary": "Run the bootstrap.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 30 words (limit 20): 'Everything the run needs is injected — `runAgent`, the text…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/bootstrap.ts",
-          "line": 608,
+          "line": 607,
           "name": "add",
           "kind": "method",
           "exported": false,
@@ -4309,7 +4030,7 @@
         },
         {
           "file": "src/learn/bootstrap.ts",
-          "line": 608,
+          "line": 607,
           "name": "remove",
           "kind": "method",
           "exported": false,
@@ -4322,7 +4043,7 @@
         },
         {
           "file": "src/learn/bootstrap.ts",
-          "line": 733,
+          "line": 732,
           "name": "stripMarks",
           "kind": "function",
           "exported": false,
@@ -4337,7 +4058,7 @@
         },
         {
           "file": "src/learn/bootstrap.ts",
-          "line": 739,
+          "line": 738,
           "name": "ReflectionInput",
           "kind": "interface",
           "exported": false,
@@ -4350,7 +4071,7 @@
         },
         {
           "file": "src/learn/bootstrap.ts",
-          "line": 752,
+          "line": 751,
           "name": "taskKinds",
           "kind": "function",
           "exported": false,
@@ -4366,7 +4087,7 @@
         },
         {
           "file": "src/learn/bootstrap.ts",
-          "line": 768,
+          "line": 767,
           "name": "writeReflection",
           "kind": "function",
           "exported": false,
@@ -4378,13 +4099,7 @@
           "doc_params": [],
           "summary": "Write the run's reflection, citing the attempts and exchanges it saw.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 35 words (limit 20): 'A reflection with no cited exchange cannot pass the gate (a…'"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -4494,7 +4209,7 @@
         },
         {
           "file": "src/learn/cited-ids.ts",
-          "line": 174,
+          "line": 175,
           "name": "parseIdCitedLines",
           "kind": "function",
           "exported": true,
@@ -4511,13 +4226,7 @@
           ],
           "summary": "Split a model's answer into the lines the citation gate keeps.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 23 words (limit 20): 'A kept line keeps its body and gets its marks rewritten to …'"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -4618,7 +4327,7 @@
         },
         {
           "file": "src/learn/cli-main.ts",
-          "line": 136,
+          "line": 137,
           "name": "baselineCallCount",
           "kind": "function",
           "exported": true,
@@ -4630,17 +4339,11 @@
           "doc_params": [],
           "summary": "The subprocess count a baseline needs: the signal tasks of the train split.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 23 words (limit 20): '`solve` spends one call per task; bootstrap solves the same…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/cli-main.ts",
-          "line": 148,
+          "line": 150,
           "name": "runIdForSolve",
           "kind": "function",
           "exported": false,
@@ -4653,17 +4356,11 @@
           "doc_params": [],
           "summary": "The run a solve should record against.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 31 words (limit 20): 'A still-running run that owns every task in this batch is t…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/cli-main.ts",
-          "line": 162,
+          "line": 164,
           "name": "baselineRefusal",
           "kind": "function",
           "exported": true,
@@ -4679,7 +4376,7 @@
         },
         {
           "file": "src/learn/cli-main.ts",
-          "line": 171,
+          "line": 173,
           "name": "underLock",
           "kind": "function",
           "exported": false,
@@ -4695,7 +4392,7 @@
         },
         {
           "file": "src/learn/cli-main.ts",
-          "line": 186,
+          "line": 188,
           "name": "commandTasks",
           "kind": "function",
           "exported": false,
@@ -4712,7 +4409,7 @@
         },
         {
           "file": "src/learn/cli-main.ts",
-          "line": 220,
+          "line": 222,
           "name": "commandSolve",
           "kind": "function",
           "exported": false,
@@ -4729,7 +4426,7 @@
         },
         {
           "file": "src/learn/cli-main.ts",
-          "line": 315,
+          "line": 309,
           "name": "exportAfterRun",
           "kind": "function",
           "exported": false,
@@ -4741,34 +4438,28 @@
           "doc_params": [],
           "summary": "Refresh the exported skill tree after a run that can change the active set.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 26 words (limit 20): 'The tree is derived output, so a failure here is a warning …'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/cli-main.ts",
-          "line": 332,
+          "line": 334,
           "name": "commandBootstrap",
           "kind": "function",
           "exported": false,
-          "has_doc": false,
+          "has_doc": true,
           "params": [
             "dbs",
             "argv",
             "deps"
           ],
           "doc_params": [],
-          "summary": "",
+          "summary": "`learn bootstrap`: map the eligible projects, gate the proposals, measure them.",
           "dialect": "",
           "issues": []
         },
         {
           "file": "src/learn/cli-main.ts",
-          "line": 393,
+          "line": 396,
           "name": "commandImprove",
           "kind": "function",
           "exported": false,
@@ -4781,22 +4472,11 @@
           "doc_params": [],
           "summary": "`learn improve`: the recursive learner over the signal train set.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 39 words (limit 20): 'The baseline precheck runs first: the run solves the whole …'"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 30 words (limit 20): 'A spend cap hit during the run is a stop, not a crash: the …'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/cli-main.ts",
-          "line": 454,
+          "line": 457,
           "name": "compareForStatus",
           "kind": "function",
           "exported": false,
@@ -4812,7 +4492,7 @@
         },
         {
           "file": "src/learn/cli-main.ts",
-          "line": 465,
+          "line": 468,
           "name": "commandStatus",
           "kind": "function",
           "exported": false,
@@ -4828,7 +4508,7 @@
         },
         {
           "file": "src/learn/cli-main.ts",
-          "line": 511,
+          "line": 514,
           "name": "resolveEntry",
           "kind": "function",
           "exported": false,
@@ -4840,22 +4520,11 @@
           "doc_params": [],
           "summary": "Resolve `learn approve`'s argument.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 26 words (limit 20): 'Two accepted forms: the entity name (`learned:<kind>:<proje…'"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 22 words (limit 20): 'A project key can hold `-` and `.` but never `/`, so the sh…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/cli-main.ts",
-          "line": 536,
+          "line": 539,
           "name": "splitLines",
           "kind": "function",
           "exported": false,
@@ -4870,7 +4539,7 @@
         },
         {
           "file": "src/learn/cli-main.ts",
-          "line": 549,
+          "line": 552,
           "name": "unifiedDiff",
           "kind": "function",
           "exported": true,
@@ -4883,17 +4552,11 @@
           "doc_params": [],
           "summary": "A unified diff of two texts, `---`/`+++` headers and one hunk.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 36 words (limit 20): 'Deliberately small: the two sides are one entry body, so a …'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/cli-main.ts",
-          "line": 584,
+          "line": 587,
           "name": "supersededVersion",
           "kind": "function",
           "exported": false,
@@ -4909,7 +4572,7 @@
         },
         {
           "file": "src/learn/cli-main.ts",
-          "line": 602,
+          "line": 605,
           "name": "confirmOnTty",
           "kind": "function",
           "exported": false,
@@ -4924,7 +4587,7 @@
         },
         {
           "file": "src/learn/cli-main.ts",
-          "line": 622,
+          "line": 627,
           "name": "commandApprove",
           "kind": "function",
           "exported": false,
@@ -4937,17 +4600,11 @@
           "doc_params": [],
           "summary": "`learn approve <name>`: the human half of spec §7 rule 7.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 53 words (limit 20): 'Instructions stay `candidate` under the default approval mo…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/cli-main.ts",
-          "line": 715,
+          "line": 720,
           "name": "commandExport",
           "kind": "function",
           "exported": false,
@@ -4960,17 +4617,11 @@
           "doc_params": [],
           "summary": "`learn export [--to DIR]`: write the active skills out.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 35 words (limit 20): 'The default root is replaced wholesale (it is generated out…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/cli-main.ts",
-          "line": 735,
+          "line": 745,
           "name": "commandRender",
           "kind": "function",
           "exported": false,
@@ -4981,24 +4632,13 @@
             "deps"
           ],
           "doc_params": [],
-          "summary": "`learn render [--project P]`: rewrite the learned-hints blocks from the",
+          "summary": "`learn render [--project P]`: rewrite the learned-hints blocks from the active entries.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 27 words (limit 20): 'Every run and approval does this on its own; the command ex…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/cli-main.ts",
-          "line": 757,
+          "line": 767,
           "name": "commandReport",
           "kind": "function",
           "exported": false,
@@ -5015,7 +4655,7 @@
         },
         {
           "file": "src/learn/cli-main.ts",
-          "line": 777,
+          "line": 787,
           "name": "runLearnCli",
           "kind": "function",
           "exported": true,
@@ -5091,13 +4731,7 @@
           "doc_params": [],
           "summary": "A portable directory name for a project key.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 22 words (limit 20): 'A project key comes from a cwd by replacing each character …'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/export.ts",
@@ -5320,7 +4954,7 @@
         },
         {
           "file": "src/learn/grade.ts",
-          "line": 49,
+          "line": 48,
           "name": "cleanValue",
           "kind": "function",
           "exported": false,
@@ -5329,19 +4963,13 @@
             "raw"
           ],
           "doc_params": [],
-          "summary": "Strip markdown decoration from a value: backticks, bold markers, list bullets",
+          "summary": "Strip markdown decoration from a value: backticks, bold markers, list bullets and a trailing period.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/grade.ts",
-          "line": 56,
+          "line": 55,
           "name": "labelledValues",
           "kind": "function",
           "exported": false,
@@ -5357,7 +4985,7 @@
         },
         {
           "file": "src/learn/grade.ts",
-          "line": 71,
+          "line": 70,
           "name": "parseRange",
           "kind": "function",
           "exported": false,
@@ -5372,7 +5000,7 @@
         },
         {
           "file": "src/learn/grade.ts",
-          "line": 88,
+          "line": 87,
           "name": "parseSolverAnswer",
           "kind": "function",
           "exported": true,
@@ -5383,22 +5011,11 @@
           "doc_params": [],
           "summary": "Read the answer's address lines.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 24 words (limit 20): 'Tolerant on purpose: the solver is a model, and a fenced ma…'"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 31 words (limit 20): 'A label line supplies a value for the location most recentl…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/grade.ts",
-          "line": 128,
+          "line": 127,
           "name": "isWindowsShaped",
           "kind": "function",
           "exported": false,
@@ -5413,7 +5030,7 @@
         },
         {
           "file": "src/learn/grade.ts",
-          "line": 138,
+          "line": 137,
           "name": "normalizeWindowsPath",
           "kind": "function",
           "exported": false,
@@ -5422,19 +5039,13 @@
             "candidate"
           ],
           "doc_params": [],
-          "summary": "Fold separators, `.` / `..` segments and (on Windows) case, without touching",
+          "summary": "Fold separators, `.` / `..` segments and (on Windows) case, without touching the disk.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/grade.ts",
-          "line": 152,
+          "line": 151,
           "name": "samePath",
           "kind": "function",
           "exported": true,
@@ -5446,17 +5057,11 @@
           "doc_params": [],
           "summary": "True when two paths name the same file, tolerating separators and Windows case.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 33 words (limit 20): '`path.resolve` on its own is not enough, because a Windows …'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/grade.ts",
-          "line": 166,
+          "line": 165,
           "name": "sessionOf",
           "kind": "function",
           "exported": false,
@@ -5471,7 +5076,7 @@
         },
         {
           "file": "src/learn/grade.ts",
-          "line": 170,
+          "line": 169,
           "name": "refsOf",
           "kind": "function",
           "exported": false,
@@ -5486,7 +5091,7 @@
         },
         {
           "file": "src/learn/grade.ts",
-          "line": 175,
+          "line": 174,
           "name": "locates",
           "kind": "function",
           "exported": false,
@@ -5514,13 +5119,7 @@
           "doc_params": [],
           "summary": "The `locate` grade.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 45 words (limit 20): '1.0 when the path matches and the ranges overlap; 0.5 when …'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/grade.ts",
@@ -5565,20 +5164,9 @@
             "answer"
           ],
           "doc_params": [],
-          "summary": "The `when` grade: the project must match, and the answered UTC date must land",
+          "summary": "The `when` grade: the project must match.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 26 words (limit 20): 'The `when` grade: the project must match, and the answered …'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/grade.ts",
@@ -5643,13 +5231,7 @@
           "doc_params": [],
           "summary": "The `recall` grade: the location first, then the judge.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 27 words (limit 20): 'Location is a precondition: once a solver has found the ran…'"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -5720,7 +5302,7 @@
         },
         {
           "file": "src/learn/knowledge-db.ts",
-          "line": 64,
+          "line": 65,
           "name": "insertKnowledgeEntry",
           "kind": "function",
           "exported": true,
@@ -5732,22 +5314,11 @@
           "doc_params": [],
           "summary": "Insert a new candidate entry.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 24 words (limit 20): 'Rejects an invalid or reserved slug, and an identical body …'"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 47 words (limit 20): 'Side effects beyond the entry itself, all of them additive:…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/knowledge-db.ts",
-          "line": 173,
+          "line": 174,
           "name": "activate",
           "kind": "function",
           "exported": true,
@@ -5759,24 +5330,13 @@
             "trust"
           ],
           "doc_params": [],
-          "summary": "Activate an entry: status `active` / `published`, the given trust level,",
+          "summary": "Activate an entry.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 33 words (limit 20): 'Activate an entry: status `active` / `published`, the given…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/knowledge-db.ts",
-          "line": 209,
+          "line": 210,
           "name": "retire",
           "kind": "function",
           "exported": true,
@@ -5792,7 +5352,7 @@
         },
         {
           "file": "src/learn/knowledge-db.ts",
-          "line": 221,
+          "line": 222,
           "name": "listActive",
           "kind": "function",
           "exported": true,
@@ -5809,7 +5369,7 @@
         },
         {
           "file": "src/learn/knowledge-db.ts",
-          "line": 239,
+          "line": 240,
           "name": "listCandidates",
           "kind": "function",
           "exported": true,
@@ -5825,7 +5385,7 @@
         },
         {
           "file": "src/learn/knowledge-db.ts",
-          "line": 248,
+          "line": 249,
           "name": "getEntry",
           "kind": "function",
           "exported": true,
@@ -5841,7 +5401,7 @@
         },
         {
           "file": "src/learn/knowledge-db.ts",
-          "line": 253,
+          "line": 254,
           "name": "getBySlug",
           "kind": "function",
           "exported": true,
@@ -5859,7 +5419,7 @@
         },
         {
           "file": "src/learn/knowledge-db.ts",
-          "line": 263,
+          "line": 264,
           "name": "searchKnowledge",
           "kind": "function",
           "exported": true,
@@ -5877,7 +5437,7 @@
         },
         {
           "file": "src/learn/knowledge-db.ts",
-          "line": 280,
+          "line": 281,
           "name": "createSnapshot",
           "kind": "function",
           "exported": true,
@@ -5895,7 +5455,7 @@
         },
         {
           "file": "src/learn/knowledge-db.ts",
-          "line": 308,
+          "line": 309,
           "name": "getSnapshot",
           "kind": "function",
           "exported": true,
@@ -5911,7 +5471,7 @@
         },
         {
           "file": "src/learn/knowledge-db.ts",
-          "line": 325,
+          "line": 326,
           "name": "compareEntries",
           "kind": "function",
           "exported": false,
@@ -5927,7 +5487,7 @@
         },
         {
           "file": "src/learn/knowledge-db.ts",
-          "line": 338,
+          "line": 339,
           "name": "confidencePriority",
           "kind": "function",
           "exported": false,
@@ -5942,7 +5502,7 @@
         },
         {
           "file": "src/learn/knowledge-db.ts",
-          "line": 342,
+          "line": 343,
           "name": "confidenceScore",
           "kind": "function",
           "exported": false,
@@ -5957,7 +5517,7 @@
         },
         {
           "file": "src/learn/knowledge-db.ts",
-          "line": 347,
+          "line": 348,
           "name": "stripMarks",
           "kind": "function",
           "exported": false,
@@ -6019,7 +5579,7 @@
         },
         {
           "file": "src/learn/knowledge-gate.ts",
-          "line": 82,
+          "line": 81,
           "name": "shieldMarks",
           "kind": "function",
           "exported": false,
@@ -6028,19 +5588,13 @@
             "text"
           ],
           "doc_params": [],
-          "summary": "Lift every `#<32 hex>` and `@<digits>` mark out of `text` so a digit-run",
+          "summary": "Lift every `#<32 hex>` and `@<digits>` mark out of `text` so a digit-run redactor cannot rewrite one.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/knowledge-gate.ts",
-          "line": 92,
+          "line": 91,
           "name": "restoreMarks",
           "kind": "function",
           "exported": false,
@@ -6056,7 +5610,7 @@
         },
         {
           "file": "src/learn/knowledge-gate.ts",
-          "line": 101,
+          "line": 100,
           "name": "redactLearnedText",
           "kind": "function",
           "exported": true,
@@ -6066,24 +5620,13 @@
             "deps"
           ],
           "doc_params": [],
-          "summary": "Redact one text field: secrets first, then PII. The trailing mark group is",
+          "summary": "Redact one text field: secrets first, then PII.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 24 words (limit 20): 'The trailing mark group is split off, and every earlier `#`…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/knowledge-gate.ts",
-          "line": 118,
+          "line": 117,
           "name": "isValidSteps",
           "kind": "function",
           "exported": false,
@@ -6098,7 +5641,7 @@
         },
         {
           "file": "src/learn/knowledge-gate.ts",
-          "line": 134,
+          "line": 133,
           "name": "gateEntry",
           "kind": "function",
           "exported": true,
@@ -6108,15 +5651,9 @@
             "deps"
           ],
           "doc_params": [],
-          "summary": "Gate one proposal. Returns the entry to store, or the reason it was rejected",
+          "summary": "Gate one proposal. Returns the entry to store, or the reason it was rejected.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -6558,13 +6095,7 @@
           "doc_params": [],
           "summary": "Parse an entity back into the `KnowledgeEntry` shape.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 24 words (limit 20): 'The logical `version` comes from the `version:` observation…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/knowledge-store.ts",
@@ -6580,18 +6111,7 @@
           "doc_params": [],
           "summary": "Build the observation lines for an entry.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 41 words (limit 20): '`reflectionHash` is passed separately because it is not a `…'"
-            },
-            {
-              "rule": "S6/STE-REF",
-              "tier": "SHOULD",
-              "detail": "ambiguous 'it' -- name the thing it refers to"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/knowledge-store.ts",
@@ -6714,13 +6234,7 @@
           "doc_params": [],
           "summary": "Open the store at `dbPath`, creating the file and its tables when absent.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 33 words (limit 20): '`readonly` opens an existing file without any DDL, for call…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/knowledge-store.ts",
@@ -6761,20 +6275,9 @@
             "fn"
           ],
           "doc_params": [],
-          "summary": "Run a read-modify-write under the database write lock, so a concurrent",
+          "summary": "Run a read-modify-write under the database write lock.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 22 words (limit 20): 'Run a read-modify-write under the database write lock, so a…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/knowledge-store.ts",
@@ -6907,15 +6410,9 @@
             "reflectionHash"
           ],
           "doc_params": [],
-          "summary": "Write one entity for one version, plus the reference entities and `cites`",
+          "summary": "Write one entity for one version, with the reference entities and `cites` relations that entity needs.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/knowledge-store.ts",
@@ -7035,7 +6532,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 973,
+          "line": 974,
           "name": "promote",
           "kind": "method",
           "exported": false,
@@ -7046,24 +6543,13 @@
             "validation"
           ],
           "doc_params": [],
-          "summary": "Activate one entry in a single write: status, trust and validation",
+          "summary": "Activate one entry in a single write.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 23 words (limit 20): 'Activate one entry in a single write: status, trust and val…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 982,
+          "line": 983,
           "name": "setValidation",
           "kind": "method",
           "exported": false,
@@ -7079,7 +6565,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 989,
+          "line": 990,
           "name": "setDecision",
           "kind": "method",
           "exported": false,
@@ -7095,7 +6581,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 996,
+          "line": 997,
           "name": "setProcedure",
           "kind": "method",
           "exported": false,
@@ -7111,7 +6597,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1003,
+          "line": 1004,
           "name": "setHeuristics",
           "kind": "method",
           "exported": false,
@@ -7127,7 +6613,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1010,
+          "line": 1011,
           "name": "getEntry",
           "kind": "method",
           "exported": false,
@@ -7142,7 +6628,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1016,
+          "line": 1017,
           "name": "getBySlug",
           "kind": "method",
           "exported": false,
@@ -7159,7 +6645,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1020,
+          "line": 1021,
           "name": "latestBySlug",
           "kind": "method",
           "exported": false,
@@ -7176,26 +6662,20 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1039,
+          "line": 1040,
           "name": "listEntries",
           "kind": "method",
           "exported": false,
           "has_doc": true,
           "params": [],
           "doc_params": [],
-          "summary": "Learned entries that are still chain-visible (`isLatest`), any status. A",
+          "summary": "Learned entries that are still chain-visible (`isLatest`), any status.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1051,
+          "line": 1052,
           "name": "listByStatus",
           "kind": "method",
           "exported": false,
@@ -7206,19 +6686,13 @@
             "project"
           ],
           "doc_params": [],
-          "summary": "Every learned entry with a given status, including superseded and older",
+          "summary": "Every learned entry with a given status, including superseded and older versions.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1075,
+          "line": 1076,
           "name": "search",
           "kind": "method",
           "exported": false,
@@ -7230,17 +6704,11 @@
           "doc_params": [],
           "summary": "Text search over active, unsuperseded, chain-visible entries.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 30 words (limit 20): 'Deterministic term overlap: an entry scores one point per d…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1115,
+          "line": 1116,
           "name": "buildIndex",
           "kind": "method",
           "exported": false,
@@ -7253,7 +6721,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1121,
+          "line": 1122,
           "name": "heuristicRecord",
           "kind": "method",
           "exported": false,
@@ -7268,7 +6736,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1128,
+          "line": 1129,
           "name": "allHeuristics",
           "kind": "method",
           "exported": false,
@@ -7281,7 +6749,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1135,
+          "line": 1136,
           "name": "addHeuristic",
           "kind": "method",
           "exported": false,
@@ -7296,7 +6764,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1167,
+          "line": 1170,
           "name": "updateHeuristic",
           "kind": "method",
           "exported": false,
@@ -7312,7 +6780,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1180,
+          "line": 1183,
           "name": "reinforceHeuristic",
           "kind": "method",
           "exported": false,
@@ -7327,7 +6795,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1189,
+          "line": 1192,
           "name": "contradictHeuristic",
           "kind": "method",
           "exported": false,
@@ -7342,31 +6810,20 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1202,
+          "line": 1205,
           "name": "detectHeuristicConflicts",
           "kind": "method",
           "exported": false,
           "has_doc": true,
           "params": [],
           "doc_params": [],
-          "summary": "Every pair of heuristics whose conditions overlap by at least half of the",
+          "summary": "Detect every pair of heuristics whose conditions overlap by at least half of the larger token set.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 31 words (limit 20): 'Every pair of heuristics whose conditions overlap by at lea…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1233,
+          "line": 1236,
           "name": "getHeuristic",
           "kind": "method",
           "exported": false,
@@ -7381,7 +6838,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1250,
+          "line": 1253,
           "name": "putProcedure",
           "kind": "method",
           "exported": false,
@@ -7396,7 +6853,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1274,
+          "line": 1279,
           "name": "getProcedure",
           "kind": "method",
           "exported": false,
@@ -7411,7 +6868,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1278,
+          "line": 1283,
           "name": "readProcedure",
           "kind": "method",
           "exported": false,
@@ -7426,7 +6883,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1323,
+          "line": 1329,
           "name": "loadStepEntities",
           "kind": "method",
           "exported": false,
@@ -7435,24 +6892,13 @@
             "procedureId"
           ],
           "doc_params": [],
-          "summary": "Steps of a procedure the previous adapter wrote as one `procedure-step`",
+          "summary": "Load the steps of a procedure, which the previous adapter wrote as one `procedure-step` row per step.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 21 words (limit 20): 'Steps of a procedure the previous adapter wrote as one `pro…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1350,
+          "line": 1356,
           "name": "matchProcedures",
           "kind": "method",
           "exported": false,
@@ -7462,19 +6908,13 @@
             "ids"
           ],
           "doc_params": [],
-          "summary": "Rank stored procedures against a context description by token overlap",
+          "summary": "Rank stored procedures against a context description.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1369,
+          "line": 1375,
           "name": "refineProcedure",
           "kind": "method",
           "exported": false,
@@ -7491,7 +6931,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1382,
+          "line": 1388,
           "name": "projectContext",
           "kind": "method",
           "exported": false,
@@ -7506,7 +6946,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1390,
+          "line": 1396,
           "name": "upsertProjectContext",
           "kind": "method",
           "exported": false,
@@ -7522,7 +6962,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1402,
+          "line": 1408,
           "name": "upsertProjectContextSync",
           "kind": "method",
           "exported": false,
@@ -7538,7 +6978,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1454,
+          "line": 1460,
           "name": "forContext",
           "kind": "method",
           "exported": false,
@@ -7554,7 +6994,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1478,
+          "line": 1484,
           "name": "decisionRecord",
           "kind": "method",
           "exported": false,
@@ -7569,7 +7009,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1486,
+          "line": 1492,
           "name": "proposeDecision",
           "kind": "method",
           "exported": false,
@@ -7584,7 +7024,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1521,
+          "line": 1529,
           "name": "transitionDecision",
           "kind": "method",
           "exported": false,
@@ -7602,7 +7042,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1544,
+          "line": 1552,
           "name": "acceptDecision",
           "kind": "method",
           "exported": false,
@@ -7617,7 +7057,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1549,
+          "line": 1557,
           "name": "rejectDecision",
           "kind": "method",
           "exported": false,
@@ -7633,7 +7073,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1558,
+          "line": 1566,
           "name": "supersedeDecision",
           "kind": "method",
           "exported": false,
@@ -7649,7 +7089,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1567,
+          "line": 1575,
           "name": "getDecision",
           "kind": "method",
           "exported": false,
@@ -7664,7 +7104,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1582,
+          "line": 1590,
           "name": "exportDecisionAsAdr",
           "kind": "method",
           "exported": false,
@@ -7679,7 +7119,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1605,
+          "line": 1613,
           "name": "recordFailure",
           "kind": "method",
           "exported": false,
@@ -7694,7 +7134,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1650,
+          "line": 1660,
           "name": "lookupFailures",
           "kind": "method",
           "exported": false,
@@ -7704,24 +7144,13 @@
             "limit"
           ],
           "doc_params": [],
-          "summary": "Open failures relevant to a task description, best first: each",
+          "summary": "Open failures relevant to a task description, best first.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 31 words (limit 20): 'Open failures relevant to a task description, best first: e…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1692,
+          "line": 1702,
           "name": "createReflection",
           "kind": "method",
           "exported": false,
@@ -7732,17 +7161,11 @@
           "doc_params": [],
           "summary": "Store a reflection: a `learned-reflection` entry plus a reflection record.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 33 words (limit 20): 'The dedup hash covers `(scope, project, sorted evidence, NF…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1699,
+          "line": 1709,
           "name": "createReflectionSync",
           "kind": "method",
           "exported": false,
@@ -7757,7 +7180,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1751,
+          "line": 1761,
           "name": "recordReflectionRecord",
           "kind": "method",
           "exported": false,
@@ -7766,19 +7189,13 @@
             "input"
           ],
           "doc_params": [],
-          "summary": "Write the reflection record that accompanies a `learned-reflection` entry",
+          "summary": "Write the reflection record that accompanies a `learned-reflection` entry written by someone else.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1763,
+          "line": 1773,
           "name": "insertReflectionRecord",
           "kind": "method",
           "exported": false,
@@ -7797,7 +7214,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1798,
+          "line": 1810,
           "name": "findReflectionByHash",
           "kind": "method",
           "exported": false,
@@ -7812,7 +7229,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1805,
+          "line": 1817,
           "name": "listReflections",
           "kind": "method",
           "exported": false,
@@ -7825,7 +7242,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1813,
+          "line": 1825,
           "name": "encodeProcedure",
           "kind": "function",
           "exported": false,
@@ -7843,7 +7260,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1828,
+          "line": 1840,
           "name": "decodeKeyValue",
           "kind": "function",
           "exported": false,
@@ -7858,7 +7275,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1843,
+          "line": 1855,
           "name": "reflectionHash",
           "kind": "function",
           "exported": false,
@@ -7873,7 +7290,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1852,
+          "line": 1864,
           "name": "reflectionSlug",
           "kind": "function",
           "exported": false,
@@ -7888,7 +7305,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1863,
+          "line": 1875,
           "name": "firstLine",
           "kind": "function",
           "exported": false,
@@ -7903,7 +7320,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1871,
+          "line": 1883,
           "name": "OpenKnowledgeStoreOptions",
           "kind": "interface",
           "exported": true,
@@ -7916,7 +7333,7 @@
         },
         {
           "file": "src/learn/knowledge-store.ts",
-          "line": 1879,
+          "line": 1891,
           "name": "openKnowledgeStore",
           "kind": "function",
           "exported": true,
@@ -8022,7 +7439,7 @@
         },
         {
           "file": "src/learn/leaf-learner.ts",
-          "line": 131,
+          "line": 130,
           "name": "suspectTaskIds",
           "kind": "function",
           "exported": true,
@@ -8033,17 +7450,11 @@
           "doc_params": [],
           "summary": "Tasks whose solvers disagreed about where the answer lives.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 32 words (limit 20): 'Two failed `graded` attempts from this round, each committi…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/leaf-learner.ts",
-          "line": 154,
+          "line": 153,
           "name": "failureMode",
           "kind": "function",
           "exported": false,
@@ -8059,7 +7470,7 @@
         },
         {
           "file": "src/learn/leaf-learner.ts",
-          "line": 162,
+          "line": 161,
           "name": "attemptedText",
           "kind": "function",
           "exported": false,
@@ -8074,7 +7485,7 @@
         },
         {
           "file": "src/learn/leaf-learner.ts",
-          "line": 167,
+          "line": 166,
           "name": "addressTrace",
           "kind": "function",
           "exported": false,
@@ -8089,7 +7500,7 @@
         },
         {
           "file": "src/learn/leaf-learner.ts",
-          "line": 180,
+          "line": 179,
           "name": "skillsForPrompt",
           "kind": "function",
           "exported": false,
@@ -8100,19 +7511,13 @@
             "prompts"
           ],
           "doc_params": [],
-          "summary": "The skills a learner should see: every navigation skill plus the procedures",
+          "summary": "The skills a learner should see.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/leaf-learner.ts",
-          "line": 205,
+          "line": 204,
           "name": "storeProposal",
           "kind": "function",
           "exported": false,
@@ -8130,7 +7535,7 @@
         },
         {
           "file": "src/learn/leaf-learner.ts",
-          "line": 243,
+          "line": 242,
           "name": "runLeafLearner",
           "kind": "function",
           "exported": true,
@@ -8142,13 +7547,7 @@
           "doc_params": [],
           "summary": "Run one leaf learner over a subset of the train signal tasks.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 29 words (limit 20): 'Everything a model or a subprocess would touch is injected,…'"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -8233,51 +7632,29 @@
         },
         {
           "file": "src/learn/learn-config.ts",
-          "line": 76,
+          "line": 77,
           "name": "learnEnabled",
           "kind": "function",
           "exported": true,
           "has_doc": true,
           "params": [],
           "doc_params": [],
-          "summary": "True when `EPISODIC_MEMORY_LEARN` names an affirmative value. Everything is",
+          "summary": "True when `EPISODIC_MEMORY_LEARN` names an affirmative value.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 21 words (limit 20): 'Everything is off by default: with the flag off the hook ou…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/learn-config.ts",
-          "line": 96,
+          "line": 101,
           "name": "learnConfig",
           "kind": "function",
           "exported": true,
           "has_doc": true,
           "params": [],
           "doc_params": [],
-          "summary": "The run's settings. Every value comes from its own `EPISODIC_MEMORY_LEARN_*`",
+          "summary": "The run's settings.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 36 words (limit 20): 'Every value comes from its own `EPISODIC_MEMORY_LEARN_*` va…'"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -8369,7 +7746,7 @@
         },
         {
           "file": "src/learn/learn-handlers.ts",
-          "line": 96,
+          "line": 97,
           "name": "learnSearch",
           "kind": "function",
           "exported": true,
@@ -8381,22 +7758,11 @@
           "doc_params": [],
           "summary": "`search` as a solver sees it.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 39 words (limit 20): 'The exclusion lives in SQL (`e.id NOT IN (…)`), so it appli…'"
-            },
-            {
-              "rule": "S6/STE-REF",
-              "tier": "SHOULD",
-              "detail": "ambiguous 'it' -- name the thing it refers to"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/learn-handlers.ts",
-          "line": 143,
+          "line": 145,
           "name": "learnRead",
           "kind": "function",
           "exported": true,
@@ -8407,17 +7773,11 @@
           "doc_params": [],
           "summary": "`read`, through the production handler.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 35 words (limit 20): 'The token is injected here because the host's `EPISODIC_MEM…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/learn-handlers.ts",
-          "line": 161,
+          "line": 163,
           "name": "digestView",
           "kind": "function",
           "exported": false,
@@ -8433,7 +7793,7 @@
         },
         {
           "file": "src/learn/learn-handlers.ts",
-          "line": 176,
+          "line": 179,
           "name": "learnDigest",
           "kind": "function",
           "exported": true,
@@ -8445,17 +7805,11 @@
           "doc_params": [],
           "summary": "`digest` as a solver sees it: the read-only view and the query, both filtered.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 30 words (limit 20): 'Refusing to expand a hidden id is the point of the filter, …'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/learn-handlers.ts",
-          "line": 220,
+          "line": 223,
           "name": "learnSkills",
           "kind": "function",
           "exported": true,
@@ -8546,18 +7900,7 @@
           "doc_params": [],
           "summary": "Redact without letting a digit-run pattern rewrite a citation mark.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 22 words (limit 20): 'The PII redactor's phone and card patterns match any 10 to …'"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 24 words (limit 20): 'Marks are swapped for private-use sentinels first and resto…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/learn-inject.ts",
@@ -8594,7 +7937,7 @@
         },
         {
           "file": "src/learn/learn-inject.ts",
-          "line": 132,
+          "line": 137,
           "name": "renderLearnedBlock",
           "kind": "function",
           "exported": true,
@@ -8608,27 +7951,11 @@
           "doc_params": [],
           "summary": "Render the learned block for a project.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 30 words (limit 20): 'Otherwise a fenced block: a label, a notice that the lines …'"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 31 words (limit 20): 'The block never exceeds `maxChars`: it stops before the fir…'"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 26 words (limit 20): 'Any field that fails the screen (or would be changed by red…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/learn-inject.ts",
-          "line": 196,
+          "line": 202,
           "name": "capLearnedBlock",
           "kind": "function",
           "exported": true,
@@ -8638,24 +7965,13 @@
             "maxChars"
           ],
           "doc_params": [],
-          "summary": "Re-screen a stored block and cap it at `maxChars`.",
+          "summary": "Cap a stored block at `maxChars`.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 21 words (limit 20): 'The renderer already caps what it writes, but a row can be …'"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 25 words (limit 20): 'The cap therefore drops whole trailing lines rather than sl…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/learn-inject.ts",
-          "line": 217,
+          "line": 223,
           "name": "storedBlock",
           "kind": "function",
           "exported": false,
@@ -8671,7 +7987,7 @@
         },
         {
           "file": "src/learn/learn-inject.ts",
-          "line": 231,
+          "line": 238,
           "name": "readLearnedBlock",
           "kind": "function",
           "exported": true,
@@ -8683,17 +7999,11 @@
           "doc_params": [],
           "summary": "The stored block for a project, falling back to the `*` row.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 25 words (limit 20): 'Re-screened line by line on read: a row written by an older…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/learn-inject.ts",
-          "line": 276,
+          "line": 285,
           "name": "readLearnedBlockCapped",
           "kind": "function",
           "exported": true,
@@ -8704,20 +8014,9 @@
             "maxChars"
           ],
           "doc_params": [],
-          "summary": "`readLearnedBlock` plus the character budget, which is the form the hook",
+          "summary": "Read the stored block for a project and cap it at `maxChars`.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 32 words (limit 20): '`readLearnedBlock` plus the character budget, which is the …'"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -8820,7 +8119,7 @@
         },
         {
           "file": "src/learn/learn-lock.ts",
-          "line": 88,
+          "line": 90,
           "name": "readLearnPids",
           "kind": "function",
           "exported": true,
@@ -8829,19 +8128,13 @@
             "indexDir"
           ],
           "doc_params": [],
-          "summary": "The PIDs listed in `.learn.pids`, or an empty set when the file is absent or",
+          "summary": "Read the PIDs listed in `.learn.pids`.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/learn-lock.ts",
-          "line": 104,
+          "line": 106,
           "name": "pidFileRegistry",
           "kind": "function",
           "exported": false,
@@ -8856,7 +8149,7 @@
         },
         {
           "file": "src/learn/learn-lock.ts",
-          "line": 119,
+          "line": 121,
           "name": "add",
           "kind": "method",
           "exported": false,
@@ -8871,7 +8164,7 @@
         },
         {
           "file": "src/learn/learn-lock.ts",
-          "line": 124,
+          "line": 126,
           "name": "remove",
           "kind": "method",
           "exported": false,
@@ -8886,7 +8179,7 @@
         },
         {
           "file": "src/learn/learn-lock.ts",
-          "line": 136,
+          "line": 138,
           "name": "withLearnLock",
           "kind": "function",
           "exported": true,
@@ -8999,15 +8292,9 @@
             "text"
           ],
           "doc_params": [],
-          "summary": "Normalise text before any pattern runs. NFKC folds fullwidth and other",
+          "summary": "Normalise text before any pattern runs.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/learned-text-screen.ts",
@@ -9273,7 +8560,7 @@
         },
         {
           "file": "src/learn/learner.ts",
-          "line": 213,
+          "line": 212,
           "name": "parseAssignment",
           "kind": "function",
           "exported": true,
@@ -9283,24 +8570,13 @@
             "failedIds"
           ],
           "doc_params": [],
-          "summary": "The category each failed task was assigned, or null when the answer is not a",
+          "summary": "The category each failed task was assigned, or null when the answer is not a partition.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 21 words (limit 20): 'A partition means every failed id appears exactly once and …'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/learner.ts",
-          "line": 244,
+          "line": 243,
           "name": "splitFailures",
           "kind": "function",
           "exported": true,
@@ -9313,17 +8589,11 @@
           "doc_params": [],
           "summary": "Cut the round's failures into leaf subsets.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 38 words (limit 20): 'A project over the leaf cap is then cut by failure category…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/learner.ts",
-          "line": 303,
+          "line": 302,
           "name": "KeptEntry",
           "kind": "interface",
           "exported": false,
@@ -9336,7 +8606,7 @@
         },
         {
           "file": "src/learn/learner.ts",
-          "line": 311,
+          "line": 310,
           "name": "mergeKey",
           "kind": "function",
           "exported": false,
@@ -9351,7 +8621,7 @@
         },
         {
           "file": "src/learn/learner.ts",
-          "line": 322,
+          "line": 321,
           "name": "sourcesFromBody",
           "kind": "function",
           "exported": false,
@@ -9363,17 +8633,11 @@
           "doc_params": [],
           "summary": "The exchanges an entry cites, read back from its body's marks.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 35 words (limit 20): 'The adapter stores citations as relations and does not pars…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/learner.ts",
-          "line": 335,
+          "line": 334,
           "name": "unionSources",
           "kind": "function",
           "exported": false,
@@ -9388,7 +8652,7 @@
         },
         {
           "file": "src/learn/learner.ts",
-          "line": 345,
+          "line": 344,
           "name": "resolveFor",
           "kind": "function",
           "exported": false,
@@ -9403,7 +8667,7 @@
         },
         {
           "file": "src/learn/learner.ts",
-          "line": 360,
+          "line": 359,
           "name": "childPassSet",
           "kind": "function",
           "exported": false,
@@ -9416,22 +8680,11 @@
           "doc_params": [],
           "summary": "The tasks one child's own work passed, from its newest graded attempt.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 26 words (limit 20): 'Both roles count: a child's *gain* on a task is usually the…'"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 25 words (limit 20): 'Taking the newest attempt per task is what makes \"the child…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/learner.ts",
-          "line": 387,
+          "line": 386,
           "name": "failingTaskIds",
           "kind": "function",
           "exported": false,
@@ -9445,27 +8698,11 @@
           "doc_params": [],
           "summary": "The tasks still failing in one snapshot, from the newest graded attempt.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 35 words (limit 20): 'Scoped to the snapshot: an earlier round's pass on the same…'"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 25 words (limit 20): '`aborted`, `killed` and `error` attempts are excluded by th…'"
-            },
-            {
-              "rule": "S6/STE-VOICE",
-              "tier": "SHOULD",
-              "detail": "possible passive voice 'are excluded by the' -- prefer active"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/learner.ts",
-          "line": 412,
+          "line": 411,
           "name": "newestAttempt",
           "kind": "function",
           "exported": false,
@@ -9483,7 +8720,7 @@
         },
         {
           "file": "src/learn/learner.ts",
-          "line": 424,
+          "line": 423,
           "name": "runLearn",
           "kind": "function",
           "exported": true,
@@ -9495,17 +8732,11 @@
           "doc_params": [],
           "summary": "Run one `learn improve`.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 27 words (limit 20): 'Everything that would reach a model, a subprocess or a GPU …'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/learner.ts",
-          "line": 752,
+          "line": 751,
           "name": "collectKept",
           "kind": "function",
           "exported": false,
@@ -9522,7 +8753,7 @@
         },
         {
           "file": "src/learn/learner.ts",
-          "line": 766,
+          "line": 765,
           "name": "MergeRoundInput",
           "kind": "interface",
           "exported": false,
@@ -9535,7 +8766,7 @@
         },
         {
           "file": "src/learn/learner.ts",
-          "line": 794,
+          "line": 793,
           "name": "mergeRound",
           "kind": "function",
           "exported": false,
@@ -9547,17 +8778,11 @@
           "doc_params": [],
           "summary": "Merge the duplicates this round's children kept, then prove the merge.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 35 words (limit 20): 'A merge that regresses a child is undone by retiring the me…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/learner.ts",
-          "line": 1015,
+          "line": 1014,
           "name": "resolveConflicts",
           "kind": "function",
           "exported": false,
@@ -9573,7 +8798,7 @@
         },
         {
           "file": "src/learn/learner.ts",
-          "line": 1141,
+          "line": 1140,
           "name": "mergeCheckEvidence",
           "kind": "function",
           "exported": false,
@@ -9590,7 +8815,7 @@
         },
         {
           "file": "src/learn/learner.ts",
-          "line": 1180,
+          "line": 1179,
           "name": "postLeafPassed",
           "kind": "function",
           "exported": false,
@@ -9603,17 +8828,11 @@
           "doc_params": [],
           "summary": "How many signal tasks pass after this round's leaves.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 24 words (limit 20): 'The newest graded solve or validate attempt wins, so a leaf…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/learner.ts",
-          "line": 1209,
+          "line": 1208,
           "name": "restoreChildVersion",
           "kind": "function",
           "exported": false,
@@ -9627,17 +8846,11 @@
           "doc_params": [],
           "summary": "Put a child's version back after a merge regressed it.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 38 words (limit 20): 'The merged version is retired (kept, readable) and the chil…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/learner.ts",
-          "line": 1244,
+          "line": 1243,
           "name": "ReflectRoundInput",
           "kind": "interface",
           "exported": false,
@@ -9650,7 +8863,7 @@
         },
         {
           "file": "src/learn/learner.ts",
-          "line": 1258,
+          "line": 1257,
           "name": "reflectRound",
           "kind": "function",
           "exported": false,
@@ -10034,7 +9247,7 @@
         },
         {
           "file": "src/learn/learning-db.ts",
-          "line": 481,
+          "line": 480,
           "name": "passRate",
           "kind": "function",
           "exported": true,
@@ -10048,18 +9261,7 @@
           "doc_params": [],
           "summary": "The pass rate of one snapshot of one run.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 23 words (limit 20): 'Counts the **newest graded attempt per task**, so a task re…'"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 25 words (limit 20): '`signalOnly` restricts the count to `locate`/`when`/`multi`…'"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -10137,31 +9339,20 @@
       "symbols": [
         {
           "file": "src/learn/pii-redactor.ts",
-          "line": 13,
+          "line": 14,
           "name": "PiiPattern",
           "kind": "interface",
           "exported": false,
           "has_doc": true,
           "params": [],
           "doc_params": [],
-          "summary": "PII redaction for learned text.",
+          "summary": "One PII pattern: a name, the expression that finds it, and the text that replaces it.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 35 words (limit 20): 'Dependency-free on purpose: the knowledge store, the `skill…'"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 34 words (limit 20): 'The patterns are deliberately biased toward false positives…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/pii-redactor.ts",
-          "line": 52,
+          "line": 53,
           "name": "redactPii",
           "kind": "function",
           "exported": true,
@@ -10252,23 +9443,7 @@
           "doc_params": [],
           "summary": "The solver's system prompt.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 21 words (limit 20): '`instructions` are the active instruction entries (project …'"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 21 words (limit 20): 'Both are inserted as data: the prompt says so, because lear…'"
-            },
-            {
-              "rule": "S6/STE-VOICE",
-              "tier": "SHOULD",
-              "detail": "possible passive voice 'was written by a' -- prefer active"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/prompts.ts",
@@ -10325,13 +9500,7 @@
           "doc_params": [],
           "summary": "Ask for the one global instruction the bootstrapped candidates support.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 22 words (limit 20): 'The answer must be a small set of template lines that hold …'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/prompts.ts",
@@ -10372,13 +9541,7 @@
           "doc_params": [],
           "summary": "The diagnose turn: what failed, by address, and what is already known.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 24 words (limit 20): 'The failed traces carry tool names and addresses, not resul…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/prompts.ts",
@@ -10505,7 +9668,7 @@
         },
         {
           "file": "src/learn/prompts.ts",
-          "line": 469,
+          "line": 468,
           "name": "reflectPrompt",
           "kind": "function",
           "exported": true,
@@ -10516,13 +9679,7 @@
           "doc_params": [],
           "summary": "The reflect turn: what the round changed, with the ids to cite.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 22 words (limit 20): 'The prompt quotes attempts as `[@n]` and exchanges as `[#id…'"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -10852,13 +10009,7 @@
           "doc_params": [],
           "summary": "Build the server.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 21 words (limit 20): '`tool()` takes a raw Zod shape (`{ query: z.string() }`), n…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/sdk-tools.ts",
@@ -10872,25 +10023,9 @@
             "allowPropose"
           ],
           "doc_params": [],
-          "summary": "`allowedTools` is a wildcard (`mcp__episodic-learn__*`). A tool registered",
+          "summary": "`allowedTools` is a wildcard (`mcp__episodic-learn__*`).",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 22 words (limit 20): 'A tool registered here but missing from {@link SERVED_TOOL_…'"
-            },
-            {
-              "rule": "S6/STE-VOICE",
-              "tier": "SHOULD",
-              "detail": "possible passive voice 'be granted by that' -- prefer active"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -11064,15 +10199,9 @@
             "redact"
           ],
           "doc_params": [],
-          "summary": "One skill as frontmatter plus body. The function redacts and screens every",
+          "summary": "One skill as frontmatter plus body.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/skills-tool.ts",
@@ -11258,7 +10387,7 @@
         },
         {
           "file": "src/learn/solver.ts",
-          "line": 161,
+          "line": 160,
           "name": "solveTask",
           "kind": "function",
           "exported": true,
@@ -11271,17 +10400,11 @@
           "doc_params": [],
           "summary": "Answer and grade one task.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 38 words (limit 20): 'The server hides exactly `task.truth.exchanges` — the sourc…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/solver.ts",
-          "line": 252,
+          "line": 251,
           "name": "SolveManyOptions",
           "kind": "interface",
           "exported": true,
@@ -11294,7 +10417,7 @@
         },
         {
           "file": "src/learn/solver.ts",
-          "line": 268,
+          "line": 267,
           "name": "solveMany",
           "kind": "function",
           "exported": true,
@@ -11307,23 +10430,7 @@
           "doc_params": [],
           "summary": "Solve a batch of tasks.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 26 words (limit 20): 'Every task goes through the single global semaphore, so the…'"
-            },
-            {
-              "rule": "S6/STE-VOICE",
-              "tier": "SHOULD",
-              "detail": "possible passive voice 'is bounded by `' -- prefer active"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 21 words (limit 20): 'The budget is shared, so a batch stops with `BudgetExhauste…'"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -11422,7 +10529,7 @@
         },
         {
           "file": "src/learn/tasks.ts",
-          "line": 127,
+          "line": 128,
           "name": "selectSourceExchanges",
           "kind": "function",
           "exported": true,
@@ -11434,17 +10541,11 @@
           "doc_params": [],
           "summary": "Select the exchanges that the module may build tasks from.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 22 words (limit 20): 'The function excludes sidechains, exchanges whose user or a…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/tasks.ts",
-          "line": 173,
+          "line": 174,
           "name": "utcDate",
           "kind": "function",
           "exported": false,
@@ -11459,7 +10560,7 @@
         },
         {
           "file": "src/learn/tasks.ts",
-          "line": 180,
+          "line": 181,
           "name": "sourceRef",
           "kind": "function",
           "exported": false,
@@ -11474,7 +10575,7 @@
         },
         {
           "file": "src/learn/tasks.ts",
-          "line": 191,
+          "line": 192,
           "name": "sessionSiblings",
           "kind": "function",
           "exported": false,
@@ -11490,7 +10591,7 @@
         },
         {
           "file": "src/learn/tasks.ts",
-          "line": 211,
+          "line": 212,
           "name": "paraphrasePrompt",
           "kind": "function",
           "exported": true,
@@ -11501,17 +10602,11 @@
           "doc_params": [],
           "summary": "The paraphrase prompt.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 23 words (limit 20): 'One call per source exchange returns all three tiers; the t…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/tasks.ts",
-          "line": 251,
+          "line": 252,
           "name": "TierBlock",
           "kind": "type",
           "exported": false,
@@ -11524,7 +10619,7 @@
         },
         {
           "file": "src/learn/tasks.ts",
-          "line": 264,
+          "line": 269,
           "name": "promptLeaksAnswerKey",
           "kind": "function",
           "exported": true,
@@ -11534,24 +10629,13 @@
             "exchange"
           ],
           "doc_params": [],
-          "summary": "A stored prompt is the solver's only view of the task. The archive path and",
+          "summary": "A stored prompt is the solver's only view of the task.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 23 words (limit 20): 'The check is lexical: a `.jsonl` path (POSIX or Windows), t…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/tasks.ts",
-          "line": 286,
+          "line": 291,
           "name": "parseParaphrase",
           "kind": "function",
           "exported": true,
@@ -11566,7 +10650,7 @@
         },
         {
           "file": "src/learn/tasks.ts",
-          "line": 306,
+          "line": 311,
           "name": "GenerateTasksOptions",
           "kind": "interface",
           "exported": true,
@@ -11579,7 +10663,7 @@
         },
         {
           "file": "src/learn/tasks.ts",
-          "line": 320,
+          "line": 325,
           "name": "GenerateTasksResult",
           "kind": "interface",
           "exported": true,
@@ -11592,7 +10676,7 @@
         },
         {
           "file": "src/learn/tasks.ts",
-          "line": 328,
+          "line": 333,
           "name": "DraftTask",
           "kind": "interface",
           "exported": false,
@@ -11605,7 +10689,7 @@
         },
         {
           "file": "src/learn/tasks.ts",
-          "line": 344,
+          "line": 349,
           "name": "generateTasks",
           "kind": "function",
           "exported": true,
@@ -11622,7 +10706,7 @@
         },
         {
           "file": "src/learn/tasks.ts",
-          "line": 471,
+          "line": 476,
           "name": "AddressRow",
           "kind": "interface",
           "exported": false,
@@ -11635,7 +10719,7 @@
         },
         {
           "file": "src/learn/tasks.ts",
-          "line": 478,
+          "line": 483,
           "name": "addressResolves",
           "kind": "function",
           "exported": false,
@@ -11651,7 +10735,7 @@
         },
         {
           "file": "src/learn/tasks.ts",
-          "line": 489,
+          "line": 494,
           "name": "overlaps",
           "kind": "function",
           "exported": false,
@@ -11669,7 +10753,7 @@
         },
         {
           "file": "src/learn/tasks.ts",
-          "line": 504,
+          "line": 508,
           "name": "checkTasks",
           "kind": "function",
           "exported": true,
@@ -11681,13 +10765,7 @@
           "doc_params": [],
           "summary": "Mark every task whose source address does not resolve.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 21 words (limit 20): 'The function marks both cases `stale`, which excludes the t…'"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -12056,13 +11134,7 @@
           "doc_params": [],
           "summary": "A seeded sample of `ids`, without replacement, in a stable order.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 23 words (limit 20): 'Sorting first makes the sample a function of `(ids, size, s…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/validate.ts",
@@ -12138,13 +11210,7 @@
           "doc_params": [],
           "summary": "The snapshot the candidate is scored in.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 29 words (limit 20): 'Active entries, with the version this candidate supersedes …'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/learn/validate.ts",
@@ -12184,7 +11250,7 @@
         },
         {
           "file": "src/learn/validate.ts",
-          "line": 213,
+          "line": 214,
           "name": "validateCandidate",
           "kind": "function",
           "exported": true,
@@ -12197,18 +11263,7 @@
           "doc_params": [],
           "summary": "Validate one candidate and act on the verdict.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 32 words (limit 20): 'On a keep the entry is activated (`verified`) when its kind…'"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 27 words (limit 20): 'On a drop the record is written, the instruction's heuristi…'"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -12273,20 +11328,9 @@
             "staleMs"
           ],
           "doc_params": [],
-          "summary": "Decide whether an existing lock can be stolen, re-reading current file state so",
+          "summary": "Decide whether an existing lock can be stolen.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 35 words (limit 20): 'Decide whether an existing lock can be stolen, re-reading c…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/lockfile.ts",
@@ -12300,19 +11344,13 @@
             "staleMs"
           ],
           "doc_params": [],
-          "summary": "Acquire an exclusive lock at `lockPath`. Returns a handle, or null if a live,",
+          "summary": "Acquire an exclusive lock at `lockPath`.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/lockfile.ts",
-          "line": 115,
+          "line": 117,
           "name": "releaseLock",
           "kind": "function",
           "exported": true,
@@ -12323,13 +11361,7 @@
           "doc_params": [],
           "summary": "Release a lock that `acquireLock` returned.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 22 words (limit 20): 'The function closes the file descriptor, then deletes the l…'"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -12402,13 +11434,7 @@
           "doc_params": [],
           "summary": "Dedicated log for `learn` runs.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 34 words (limit 20): 'A learning run is long, detached from a terminal and spends…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/logging.ts",
@@ -12434,20 +11460,9 @@
             "maxBytes"
           ],
           "doc_params": [],
-          "summary": "Rotate the sync log when it exceeds `maxBytes` so it can't grow without bound",
+          "summary": "Rotate the sync log when it exceeds `maxBytes` so it can't grow without bound.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 26 words (limit 20): 'Rotate the sync log when it exceeds `maxBytes` so it can't …'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/logging.ts",
@@ -12750,31 +11765,20 @@
       "symbols": [
         {
           "file": "src/ollama-backend.ts",
-          "line": 25,
+          "line": 26,
           "name": "GpuReservedError",
           "kind": "class",
           "exported": true,
           "has_doc": true,
           "params": [],
           "doc_params": [],
-          "summary": "Another agent reserves the shared GPU. The function therefore does not load a model now. This is not a",
+          "summary": "Another agent reserves the shared GPU.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-REF",
-              "tier": "SHOULD",
-              "detail": "ambiguous 'This' -- name the thing it refers to"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/ollama-backend.ts",
-          "line": 29,
+          "line": 30,
           "name": "constructor",
           "kind": "method",
           "exported": false,
@@ -12789,7 +11793,7 @@
         },
         {
           "file": "src/ollama-backend.ts",
-          "line": 41,
+          "line": 42,
           "name": "summarizerBackend",
           "kind": "function",
           "exported": true,
@@ -12802,7 +11806,7 @@
         },
         {
           "file": "src/ollama-backend.ts",
-          "line": 48,
+          "line": 49,
           "name": "stripThinking",
           "kind": "function",
           "exported": true,
@@ -12817,7 +11821,7 @@
         },
         {
           "file": "src/ollama-backend.ts",
-          "line": 57,
+          "line": 58,
           "name": "OllamaCallOptions",
           "kind": "interface",
           "exported": true,
@@ -12830,7 +11834,7 @@
         },
         {
           "file": "src/ollama-backend.ts",
-          "line": 63,
+          "line": 64,
           "name": "positiveInt",
           "kind": "function",
           "exported": false,
@@ -12846,7 +11850,7 @@
         },
         {
           "file": "src/ollama-backend.ts",
-          "line": 82,
+          "line": 83,
           "name": "callOllama",
           "kind": "function",
           "exported": true,
@@ -12873,46 +11877,20 @@
       "symbols": [
         {
           "file": "src/orphan-reaper.ts",
-          "line": 21,
+          "line": 23,
           "name": "ProcSnapshot",
           "kind": "interface",
           "exported": true,
           "has_doc": true,
           "params": [],
           "doc_params": [],
-          "summary": "Reaps the process tree the summariser's SDK call leaves behind.",
+          "summary": "One process from the process table: its pid and its full command line.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 38 words (limit 20): 'That bound is real but it cannot reach the thing it is mean…'"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 37 words (limit 20): 'Measured 2026-09-02: two such workers lived 3 h 45 m agains…'"
-            },
-            {
-              "rule": "S6/STE-REF",
-              "tier": "SHOULD",
-              "detail": "ambiguous 'this' -- name the thing it refers to"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 23 words (limit 20): 'This kills only processes that (a) did not exist when the s…'"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 23 words (limit 20): 'A human's session matches none of them: an interactive sess…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/orphan-reaper.ts",
-          "line": 42,
+          "line": 44,
           "name": "selectOrphans",
           "kind": "function",
           "exported": true,
@@ -12925,28 +11903,7 @@
           "doc_params": [],
           "summary": "Pure selection: which processes are ours to reap, in the order they must be killed.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 38 words (limit 20): 'Everything present in `baselinePids` is left alone no matte…'"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 29 words (limit 20): '`protectedPids` is the same rule for a different owner: a `…'"
-            },
-            {
-              "rule": "S6/STE-REF",
-              "tier": "SHOULD",
-              "detail": "ambiguous 'those' -- name the thing it refers to"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 27 words (limit 20): 'The baseline cannot cover them — they are born after the ho…'"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -13220,7 +12177,7 @@
         },
         {
           "file": "src/paths.ts",
-          "line": 73,
+          "line": 72,
           "name": "findJsonlFiles",
           "kind": "function",
           "exported": true,
@@ -13232,117 +12189,76 @@
           "doc_params": [],
           "summary": "Recursively find all .jsonl files under a directory.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 21 words (limit 20): 'Top-level project skipping at the caller is the usual case;…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/paths.ts",
-          "line": 103,
+          "line": 102,
           "name": "getSuperpowersDir",
           "kind": "function",
           "exported": true,
           "has_doc": true,
           "params": [],
           "doc_params": [],
-          "summary": "Get the personal superpowers directory",
+          "summary": "Get the personal superpowers directory.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/paths.ts",
-          "line": 125,
+          "line": 124,
           "name": "getArchiveDir",
           "kind": "function",
           "exported": true,
           "has_doc": true,
           "params": [],
           "doc_params": [],
-          "summary": "Get conversation archive directory",
+          "summary": "Get conversation archive directory.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/paths.ts",
-          "line": 137,
+          "line": 136,
           "name": "getIndexDir",
           "kind": "function",
           "exported": true,
           "has_doc": true,
           "params": [],
           "doc_params": [],
-          "summary": "Get conversation index directory",
+          "summary": "Get conversation index directory.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/paths.ts",
-          "line": 144,
+          "line": 143,
           "name": "getDbPath",
           "kind": "function",
           "exported": true,
           "has_doc": true,
           "params": [],
           "doc_params": [],
-          "summary": "Get database path",
+          "summary": "Get database path.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/paths.ts",
-          "line": 160,
+          "line": 159,
           "name": "getLearnedDir",
           "kind": "function",
           "exported": true,
           "has_doc": true,
           "params": [],
           "doc_params": [],
-          "summary": "Get the learned-knowledge directory",
+          "summary": "Get the learned-knowledge directory.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 31 words (limit 20): 'Get the learned-knowledge directory A sibling of `conversat…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/paths.ts",
-          "line": 165,
+          "line": 164,
           "name": "getKnowledgeDbPath",
           "kind": "function",
           "exported": true,
@@ -13355,7 +12271,7 @@
         },
         {
           "file": "src/paths.ts",
-          "line": 170,
+          "line": 169,
           "name": "getLearningDbPath",
           "kind": "function",
           "exported": true,
@@ -13368,41 +12284,29 @@
         },
         {
           "file": "src/paths.ts",
-          "line": 177,
+          "line": 176,
           "name": "getExcludeConfigPath",
           "kind": "function",
           "exported": true,
           "has_doc": true,
           "params": [],
           "doc_params": [],
-          "summary": "Get exclude config path",
+          "summary": "Get exclude config path.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/paths.ts",
-          "line": 185,
+          "line": 184,
           "name": "getExcludedProjects",
           "kind": "function",
           "exported": true,
           "has_doc": true,
           "params": [],
           "doc_params": [],
-          "summary": "Get list of projects to exclude from indexing",
+          "summary": "Get list of projects to exclude from indexing.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -13441,15 +12345,9 @@
           "doc_params": [
             "setPriority"
           ],
-          "summary": "Drop this process to below-normal priority if it is the background sync",
+          "summary": "Drop this process to below-normal priority if it is the background sync worker.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -13487,7 +12385,7 @@
         },
         {
           "file": "src/prune.ts",
-          "line": 38,
+          "line": 37,
           "name": "pruneProjects",
           "kind": "function",
           "exported": true,
@@ -13567,22 +12465,16 @@
       "symbols": [
         {
           "file": "src/reentrancy.ts",
-          "line": 24,
+          "line": 23,
           "name": "shouldSkipReentrantSync",
           "kind": "function",
           "exported": true,
           "has_doc": true,
           "params": [],
           "doc_params": [],
-          "summary": "Whether the current process is a Claude Agent SDK subprocess the summarizer",
+          "summary": "Whether the current process is a Claude Agent SDK subprocess the summarizer just spawned.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -13679,15 +12571,9 @@
             "options"
           ],
           "doc_params": [],
-          "summary": "Build the AND-clause and bound-parameter list that constrains a search",
+          "summary": "Build the AND-clause and bound-parameter list that constrains a search by the optional time and metadata filters.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/search.ts",
@@ -13721,7 +12607,7 @@
         },
         {
           "file": "src/search.ts",
-          "line": 191,
+          "line": 190,
           "name": "l2DistanceToCosineSimilarity",
           "kind": "function",
           "exported": true,
@@ -13730,24 +12616,13 @@
             "distance"
           ],
           "doc_params": [],
-          "summary": "Convert an L2 (Euclidean) distance between two unit-normalized vectors",
+          "summary": "Convert an L2 (Euclidean) distance between two unit-normalized vectors into a cosine similarity in [-1, 1].",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 41 words (limit 20): 'For unit vectors u, v: ||u - v||^2 = 2 - 2 * cos(u, v) Ther…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/search.ts",
-          "line": 196,
+          "line": 195,
           "name": "validateISODate",
           "kind": "function",
           "exported": false,
@@ -13763,7 +12638,7 @@
         },
         {
           "file": "src/search.ts",
-          "line": 213,
+          "line": 212,
           "name": "buildFtsMatchQuery",
           "kind": "function",
           "exported": true,
@@ -13774,17 +12649,11 @@
           "doc_params": [],
           "summary": "Prepare an FTS5 MATCH query from user input.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 25 words (limit 20): 'Quote the whole string so punctuation / AND/OR tokens in th…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/search.ts",
-          "line": 219,
+          "line": 218,
           "name": "resolveSearchDb",
           "kind": "function",
           "exported": false,
@@ -13799,7 +12668,7 @@
         },
         {
           "file": "src/search.ts",
-          "line": 242,
+          "line": 241,
           "name": "searchConversations",
           "kind": "function",
           "exported": true,
@@ -13818,7 +12687,7 @@
         },
         {
           "file": "src/search.ts",
-          "line": 367,
+          "line": 366,
           "name": "getFileSizeInKB",
           "kind": "function",
           "exported": false,
@@ -13833,7 +12702,7 @@
         },
         {
           "file": "src/search.ts",
-          "line": 383,
+          "line": 382,
           "name": "formatResults",
           "kind": "function",
           "exported": true,
@@ -13848,7 +12717,7 @@
         },
         {
           "file": "src/search.ts",
-          "line": 442,
+          "line": 441,
           "name": "searchMultipleConcepts",
           "kind": "function",
           "exported": true,
@@ -13867,7 +12736,7 @@
         },
         {
           "file": "src/search.ts",
-          "line": 515,
+          "line": 514,
           "name": "formatMultiConceptResults",
           "kind": "function",
           "exported": true,
@@ -14175,13 +13044,7 @@
           ],
           "summary": "Format the index statistics as a plain-text report for a terminal.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 21 words (limit 20): 'The function adds the date range when `stats` has one, and …'"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -14264,7 +13127,7 @@
         },
         {
           "file": "src/summarizer.ts",
-          "line": 162,
+          "line": 161,
           "name": "buildSummarizerQueryOptions",
           "kind": "function",
           "exported": true,
@@ -14273,19 +13136,13 @@
             "args"
           ],
           "doc_params": [],
-          "summary": "Build the options object passed to the Claude Agent SDK's query() for a",
+          "summary": "Build the options object passed to the Claude Agent SDK's query() for a summarization call.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/summarizer.ts",
-          "line": 188,
+          "line": 187,
           "name": "buildCodexSummaryPrompt",
           "kind": "function",
           "exported": true,
@@ -14298,7 +13155,7 @@
         },
         {
           "file": "src/summarizer.ts",
-          "line": 221,
+          "line": 220,
           "name": "buildCodexSummarizerCommand",
           "kind": "function",
           "exported": true,
@@ -14313,26 +13170,20 @@
         },
         {
           "file": "src/summarizer.ts",
-          "line": 243,
+          "line": 242,
           "name": "summarizerTimeoutMs",
           "kind": "function",
           "exported": false,
           "has_doc": true,
           "params": [],
           "doc_params": [],
-          "summary": "Timeout (ms) for a single summarizer SDK call. Configurable via",
+          "summary": "Timeout (ms) for a single summarizer SDK call.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/summarizer.ts",
-          "line": 249,
+          "line": 248,
           "name": "CallClaudeOptions",
           "kind": "interface",
           "exported": true,
@@ -14345,7 +13196,7 @@
         },
         {
           "file": "src/summarizer.ts",
-          "line": 258,
+          "line": 257,
           "name": "callClaude",
           "kind": "function",
           "exported": false,
@@ -14361,7 +13212,7 @@
         },
         {
           "file": "src/summarizer.ts",
-          "line": 316,
+          "line": 315,
           "name": "callModel",
           "kind": "function",
           "exported": false,
@@ -14376,7 +13227,7 @@
         },
         {
           "file": "src/summarizer.ts",
-          "line": 326,
+          "line": 325,
           "name": "callDigestModel",
           "kind": "function",
           "exported": true,
@@ -14391,7 +13242,7 @@
         },
         {
           "file": "src/summarizer.ts",
-          "line": 339,
+          "line": 338,
           "name": "resolveLearnModels",
           "kind": "function",
           "exported": true,
@@ -14408,7 +13259,7 @@
         },
         {
           "file": "src/summarizer.ts",
-          "line": 354,
+          "line": 353,
           "name": "callLearnModel",
           "kind": "function",
           "exported": true,
@@ -14423,7 +13274,7 @@
         },
         {
           "file": "src/summarizer.ts",
-          "line": 361,
+          "line": 360,
           "name": "PendingAppServerRequest",
           "kind": "interface",
           "exported": false,
@@ -14436,7 +13287,7 @@
         },
         {
           "file": "src/summarizer.ts",
-          "line": 367,
+          "line": 366,
           "name": "appServerTimeoutMs",
           "kind": "function",
           "exported": false,
@@ -14449,7 +13300,7 @@
         },
         {
           "file": "src/summarizer.ts",
-          "line": 372,
+          "line": 371,
           "name": "readCommandOutput",
           "kind": "function",
           "exported": false,
@@ -14465,7 +13316,7 @@
         },
         {
           "file": "src/summarizer.ts",
-          "line": 415,
+          "line": 414,
           "name": "assertSupportedCodexVersion",
           "kind": "function",
           "exported": false,
@@ -14480,7 +13331,7 @@
         },
         {
           "file": "src/summarizer.ts",
-          "line": 427,
+          "line": 426,
           "name": "requireThreadId",
           "kind": "function",
           "exported": false,
@@ -14496,7 +13347,7 @@
         },
         {
           "file": "src/summarizer.ts",
-          "line": 435,
+          "line": 434,
           "name": "requireTurnId",
           "kind": "function",
           "exported": false,
@@ -14512,7 +13363,7 @@
         },
         {
           "file": "src/summarizer.ts",
-          "line": 461,
+          "line": 460,
           "name": "runCodexCommand",
           "kind": "function",
           "exported": true,
@@ -14523,17 +13374,11 @@
           "doc_params": [],
           "summary": "Run one summary turn in a Codex app server and return the answer text.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 43 words (limit 20): 'The returned promise rejects in these cases: - the turn doe…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/summarizer.ts",
-          "line": 636,
+          "line": 635,
           "name": "callCodex",
           "kind": "function",
           "exported": false,
@@ -14550,7 +13395,7 @@
         },
         {
           "file": "src/summarizer.ts",
-          "line": 641,
+          "line": 640,
           "name": "chunkExchanges",
           "kind": "function",
           "exported": false,
@@ -14566,7 +13411,7 @@
         },
         {
           "file": "src/summarizer.ts",
-          "line": 649,
+          "line": 648,
           "name": "getCodexSessionId",
           "kind": "function",
           "exported": false,
@@ -14582,7 +13427,7 @@
         },
         {
           "file": "src/summarizer.ts",
-          "line": 656,
+          "line": 655,
           "name": "getCodexModel",
           "kind": "function",
           "exported": false,
@@ -14597,7 +13442,7 @@
         },
         {
           "file": "src/summarizer.ts",
-          "line": 679,
+          "line": 678,
           "name": "summarizeConversation",
           "kind": "function",
           "exported": true,
@@ -14611,18 +13456,7 @@
           ],
           "summary": "Summarize one conversation and return the summary text.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 21 words (limit 20): 'For more than 15 exchanges, the function summarizes each ch…'"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 21 words (limit 20): 'When no chunk succeeds, the function returns `Error: Unable…'"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -14647,7 +13481,7 @@
         },
         {
           "file": "src/sync-banner.ts",
-          "line": 18,
+          "line": 19,
           "name": "syncHeadline",
           "kind": "function",
           "exported": true,
@@ -14656,20 +13490,9 @@
             "totals"
           ],
           "doc_params": [],
-          "summary": "The first lines a finished sync prints. A success line over a stalled queue reads as health from",
+          "summary": "The first lines a finished sync prints.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 24 words (limit 20): 'A success line over a stalled queue reads as health from ou…'"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -14715,7 +13538,7 @@
       "symbols": [
         {
           "file": "src/sync.ts",
-          "line": 23,
+          "line": 24,
           "name": "shouldSkipConversation",
           "kind": "function",
           "exported": true,
@@ -14726,17 +13549,11 @@
           "doc_params": [],
           "summary": "True when the conversation should be excluded from indexing / summarization.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 25 words (limit 20): 'Only scans the first SKIP_MARKER_SCAN_BYTES — markers are e…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/sync.ts",
-          "line": 45,
+          "line": 46,
           "name": "SyncResult",
           "kind": "interface",
           "exported": true,
@@ -14749,7 +13566,7 @@
         },
         {
           "file": "src/sync.ts",
-          "line": 82,
+          "line": 81,
           "name": "SyncOptions",
           "kind": "interface",
           "exported": true,
@@ -14762,7 +13579,7 @@
         },
         {
           "file": "src/sync.ts",
-          "line": 96,
+          "line": 95,
           "name": "maxSummaryBytes",
           "kind": "function",
           "exported": false,
@@ -14775,7 +13592,7 @@
         },
         {
           "file": "src/sync.ts",
-          "line": 101,
+          "line": 100,
           "name": "maxSummaryAttempts",
           "kind": "function",
           "exported": false,
@@ -14788,7 +13605,7 @@
         },
         {
           "file": "src/sync.ts",
-          "line": 107,
+          "line": 106,
           "name": "summaryFailPath",
           "kind": "function",
           "exported": false,
@@ -14803,7 +13620,7 @@
         },
         {
           "file": "src/sync.ts",
-          "line": 111,
+          "line": 110,
           "name": "readSummaryAttempts",
           "kind": "function",
           "exported": false,
@@ -14827,15 +13644,9 @@
             "filePath"
           ],
           "doc_params": [],
-          "summary": "A failure record is TERMINAL when it explains an empty summary for good: a recorded reason",
+          "summary": "A failure record is TERMINAL when it explains an empty summary for good.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "src/sync.ts",
@@ -14887,7 +13698,7 @@
         },
         {
           "file": "src/sync.ts",
-          "line": 437,
+          "line": 438,
           "name": "summarizeOneFile",
           "kind": "function",
           "exported": true,
@@ -14899,30 +13710,9 @@
             "summarize"
           ],
           "doc_params": [],
-          "summary": "Summarize ONE archived conversation and record the outcome on disk: a summary, a no-exchanges",
+          "summary": "Summarize ONE archived conversation and record the outcome on disk.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 24 words (limit 20): 'Summarize ONE archived conversation and record the outcome …'"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 25 words (limit 20): 'That is a wait, not a failure: nothing is recorded on disk,…'"
-            },
-            {
-              "rule": "S6/STE-REF",
-              "tier": "SHOULD",
-              "detail": "ambiguous 'That' -- name the thing it refers to"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -15472,7 +14262,7 @@
       "symbols": [
         {
           "file": "test/digest-hook.test.ts",
-          "line": 27,
+          "line": 28,
           "name": "block",
           "kind": "function",
           "exported": false,
@@ -15487,7 +14277,7 @@
         },
         {
           "file": "test/digest-hook.test.ts",
-          "line": 38,
+          "line": 39,
           "name": "runHook",
           "kind": "function",
           "exported": false,
@@ -15503,7 +14293,7 @@
         },
         {
           "file": "test/digest-hook.test.ts",
-          "line": 64,
+          "line": 65,
           "name": "seedLearned",
           "kind": "function",
           "exported": false,
@@ -15519,7 +14309,7 @@
         },
         {
           "file": "test/digest-hook.test.ts",
-          "line": 328,
+          "line": 341,
           "name": "staticImportsOf",
           "kind": "function",
           "exported": false,
@@ -15530,17 +14320,11 @@
           "doc_params": [],
           "summary": "Walk the built module graph from a `dist/` entry point.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 21 words (limit 20): 'A source-text scan only catches the file itself; the hook's…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "test/digest-hook.test.ts",
-          "line": 337,
+          "line": 350,
           "name": "graphOf",
           "kind": "function",
           "exported": false,
@@ -15858,13 +14642,7 @@
           "doc_params": [],
           "summary": "Synthesize one user/assistant exchange's worth of JSONL lines.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 23 words (limit 20): 'Matches the shape produced by Claude Code transcripts well …'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "test/incremental-indexing.test.ts",
@@ -16090,13 +14868,7 @@
           "doc_params": [],
           "summary": "A text model for task generation, the merge call and the reflection call.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 25 words (limit 20): 'It copies the marks the prompt offers, which is what a real…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "test/learn/bootstrap.test.ts",
@@ -16482,6 +15254,13 @@
       ]
     },
     {
+      "path": "test/learn/knowledge-store-write-lock.test.ts",
+      "language": "typescript",
+      "error": "",
+      "dialects": [],
+      "symbols": []
+    },
+    {
       "path": "test/learn/knowledge-store.test.ts",
       "language": "typescript",
       "error": "",
@@ -16706,7 +15485,7 @@
         },
         {
           "file": "test/learn/leaf-learner.test.ts",
-          "line": 217,
+          "line": 218,
           "name": "fakeLearner",
           "kind": "function",
           "exported": false,
@@ -16715,20 +15494,9 @@
             "proposals"
           ],
           "doc_params": [],
-          "summary": "A fake learner agent: it proposes `proposals` (optionally per round) through",
+          "summary": "A fake learner agent that proposes `proposals` (optionally per round).",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 21 words (limit 20): 'A fake learner agent: it proposes `proposals` (optionally p…'"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -17073,7 +15841,7 @@
         },
         {
           "file": "test/learn/learner.test.ts",
-          "line": 158,
+          "line": 159,
           "name": "fakeSolve",
           "kind": "function",
           "exported": false,
@@ -17085,17 +15853,11 @@
           "doc_params": [],
           "summary": "A fake solver whose pass set is a function of the snapshot's entries.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 27 words (limit 20): 'The only thing a candidate, a merge or a revert can change …'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "test/learn/learner.test.ts",
-          "line": 200,
+          "line": 201,
           "name": "promptTaskIds",
           "kind": "function",
           "exported": false,
@@ -17110,7 +15872,7 @@
         },
         {
           "file": "test/learn/learner.test.ts",
-          "line": 204,
+          "line": 205,
           "name": "LearnerCall",
           "kind": "interface",
           "exported": false,
@@ -17123,7 +15885,7 @@
         },
         {
           "file": "test/learn/learner.test.ts",
-          "line": 210,
+          "line": 211,
           "name": "fakeLearner",
           "kind": "function",
           "exported": false,
@@ -17140,7 +15902,7 @@
         },
         {
           "file": "test/learn/learner.test.ts",
-          "line": 247,
+          "line": 248,
           "name": "marksIn",
           "kind": "function",
           "exported": false,
@@ -17155,7 +15917,7 @@
         },
         {
           "file": "test/learn/learner.test.ts",
-          "line": 251,
+          "line": 252,
           "name": "TextModelHandlers",
           "kind": "interface",
           "exported": false,
@@ -17168,7 +15930,7 @@
         },
         {
           "file": "test/learn/learner.test.ts",
-          "line": 257,
+          "line": 258,
           "name": "fakeTextModel",
           "kind": "function",
           "exported": false,
@@ -17184,7 +15946,7 @@
         },
         {
           "file": "test/learn/learner.test.ts",
-          "line": 290,
+          "line": 291,
           "name": "proposalFor",
           "kind": "function",
           "exported": false,
@@ -17201,7 +15963,7 @@
         },
         {
           "file": "test/learn/learner.test.ts",
-          "line": 309,
+          "line": 310,
           "name": "common",
           "kind": "function",
           "exported": false,
@@ -17216,7 +15978,7 @@
         },
         {
           "file": "test/learn/learner.test.ts",
-          "line": 320,
+          "line": 321,
           "name": "childRuns",
           "kind": "function",
           "exported": false,
@@ -17231,7 +15993,7 @@
         },
         {
           "file": "test/learn/learner.test.ts",
-          "line": 326,
+          "line": 327,
           "name": "activeSlugs",
           "kind": "function",
           "exported": false,
@@ -17246,7 +16008,7 @@
         },
         {
           "file": "test/learn/learner.test.ts",
-          "line": 331,
+          "line": 332,
           "name": "cites",
           "kind": "function",
           "exported": false,
@@ -18439,20 +17201,9 @@
             "pass"
           ],
           "doc_params": [],
-          "summary": "A fake solver: `pass` decides the grade from the evaluation snapshot's entry",
+          "summary": "A fake solver: `pass` decides the grade from the evaluation snapshot's entry names.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 22 words (limit 20): 'A fake solver: `pass` decides the grade from the evaluation…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "test/learn/validate.test.ts",
@@ -18756,7 +17507,7 @@
       "symbols": [
         {
           "file": "test/search-metadata-filters.test.ts",
-          "line": 20,
+          "line": 19,
           "name": "makeExchangeLines",
           "kind": "function",
           "exported": false,
@@ -18765,15 +17516,9 @@
             "opts"
           ],
           "doc_params": [],
-          "summary": "Build one user/assistant exchange with controllable metadata fields so we",
+          "summary": "Build one user/assistant exchange with controllable metadata fields so we can verify filtering on them later.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -19152,18 +17897,7 @@
           "doc_params": [],
           "summary": "A fake process lister.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 23 words (limit 20): 'The answer changes per call, because the hook lists once fo…'"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 23 words (limit 20): 'Both processes therefore appear only in the second listing,…'"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "test/sync-hook-learn-pids.test.ts",
@@ -19315,7 +18049,7 @@
       "symbols": [
         {
           "file": "test/test-indexer.ts",
-          "line": 17,
+          "line": 18,
           "name": "indexTestFiles",
           "kind": "function",
           "exported": true,
@@ -19324,20 +18058,9 @@
             "filePaths"
           ],
           "doc_params": [],
-          "summary": "Index a list of conversation files directly (for testing)",
+          "summary": "Index a list of conversation files directly (for testing).",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            },
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 25 words (limit 20): 'Index a list of conversation files directly (for testing) U…'"
-            }
-          ]
+          "issues": []
         }
       ]
     },
@@ -19356,15 +18079,9 @@
           "has_doc": true,
           "params": [],
           "doc_params": [],
-          "summary": "Suppress console output during test execution",
+          "summary": "Suppress console output during test execution.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "test/test-utils.ts",
@@ -19375,15 +18092,9 @@
           "has_doc": true,
           "params": [],
           "doc_params": [],
-          "summary": "Create a temporary test database that will be cleaned up automatically",
+          "summary": "Create a temporary test database that will be cleaned up automatically.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "test/test-utils.ts",
@@ -19399,18 +18110,7 @@
           "doc_params": [],
           "summary": "Recursively remove a directory, tolerating transient Windows file-locking.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S6/STE-LEN",
-              "tier": "SHOULD",
-              "detail": "sentence has 23 words (limit 20): 'On Windows, fs.rmSync({recursive:true, force:true}) can thr…'"
-            },
-            {
-              "rule": "S6/STE-VOICE",
-              "tier": "SHOULD",
-              "detail": "possible passive voice 'being released by the' -- prefer active"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "test/test-utils.ts",
@@ -19423,15 +18123,9 @@
             "filename"
           ],
           "doc_params": [],
-          "summary": "Get path to test fixture file",
+          "summary": "Get path to test fixture file.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "test/test-utils.ts",
@@ -19444,15 +18138,9 @@
             "filename"
           ],
           "doc_params": [],
-          "summary": "Read a test fixture file",
+          "summary": "Read a test fixture file.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         },
         {
           "file": "test/test-utils.ts",
@@ -19465,15 +18153,9 @@
             "filePath"
           ],
           "doc_params": [],
-          "summary": "Count lines in a file",
+          "summary": "Count lines in a file.",
           "dialect": "",
-          "issues": [
-            {
-              "rule": "S2",
-              "tier": "SHOULD",
-              "detail": "summary does not end with a period"
-            }
-          ]
+          "issues": []
         }
       ]
     },

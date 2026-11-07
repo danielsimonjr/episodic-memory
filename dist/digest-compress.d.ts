@@ -24,7 +24,8 @@ export interface CompressResult {
     deferred?: string;
 }
 /**
- * Merge many session entries of a past day into one day entry, and many day entries of a finished
- * week into one week entry. The compression step marks the originals as superseded and never deletes them.
+ * Merge many session entries of a past day into one day entry.
+ * Merge many day entries of a finished week into one week entry.
+ * The compression step marks the originals as superseded and never deletes them.
  */
 export declare function compressDigest(db: Database.Database, opts?: CompressOptions): Promise<CompressResult>;

@@ -36,9 +36,10 @@ function amount(suffix, fallback) {
     return parsed;
 }
 /**
- * True when `EPISODIC_MEMORY_LEARN` names an affirmative value. Everything is
- * off by default: with the flag off the hook output is byte-identical to today
- * and no store is opened.
+ * True when `EPISODIC_MEMORY_LEARN` names an affirmative value.
+ *
+ * Everything is off by default. With the flag off, the hook output is byte-identical to the output
+ * without the feature. No store is opened.
  */
 export function learnEnabled() {
     const value = process.env.EPISODIC_MEMORY_LEARN;
@@ -54,9 +55,13 @@ export function learnEnabled() {
  */
 export const LEARN_OFF_MESSAGE = 'Learning is off. Learned skills appear here once EPISODIC_MEMORY_LEARN=1 is set and the episodic-memory learn CLI has written some.';
 /**
- * The run's settings. Every value comes from its own `EPISODIC_MEMORY_LEARN_*`
- * variable and falls back to the Global Constraints default when it is absent,
- * not positive, not a whole number where a count is needed, or not in an enum.
+ * The run's settings.
+ *
+ * Every value comes from its own `EPISODIC_MEMORY_LEARN_*` variable.
+ * A value falls back to the Global Constraints default when the variable is absent or empty.
+ * The default also applies when a number is not positive.
+ * A count also needs a whole number.
+ * An approve mode must be one of the allowed modes.
  */
 export function learnConfig() {
     const approveRaw = raw('APPROVE');

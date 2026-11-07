@@ -199,8 +199,9 @@ function formatBytes(bytes) {
 /**
  * The learn section's text.
  *
- * Empty when doctor was not given the section (a caller that cannot reach the
- * learn modules), so the report shape stays the same either way.
+ * The result is empty when doctor was not given the section.
+ * A caller that cannot reach the learn modules does not give the section.
+ * So the report shape stays the same either way.
  */
 function learnTextLines(learn) {
     if (learn === undefined)

@@ -15,9 +15,8 @@
 /** Env var the summarizer sets on SDK-spawned subprocesses to mark reentrancy. */
 export const SUMMARIZER_GUARD_ENV = 'EPISODIC_MEMORY_SUMMARIZER_GUARD';
 /**
- * Whether the current process is a Claude Agent SDK subprocess the summarizer
- * just spawned. Sync entry points call this first and exit before re-entering
- * the sync→summarizer→spawn cycle.
+ * Whether the current process is a Claude Agent SDK subprocess the summarizer just spawned.
+ * Sync entry points call this first and exit before re-entering the sync→summarizer→spawn cycle.
  */
 export function shouldSkipReentrantSync() {
     return process.env[SUMMARIZER_GUARD_ENV] === '1';

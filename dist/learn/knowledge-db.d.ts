@@ -25,22 +25,23 @@ export declare class InvalidEntryName extends Error {
 /**
  * Insert a new candidate entry.
  *
- * Rejects an invalid or reserved slug, and an identical body against the latest
- * version of the same `(kind, project, slug)` (spec §7 rule 17). A changed body
- * gets the next logical version, with `parentEntityName` pointing at its
+ * The function rejects an invalid or reserved slug.
+ * The function also rejects an identical body (spec §7 rule 17).
+ * An identical body matches the body of the latest version of the same `(kind, project, slug)`.
+ * A changed body gets the next logical version, with `parentEntityName` pointing at its
  * predecessor.
  *
- * Side effects beyond the entry itself, all of them additive:
- * - an instruction gets one heuristic record per body line, and a decision
- * - a procedure skill (`steps` present) gets a `proc:<project>:<slug>` record
- * - every entry gets a proposed decision so a later `activate` can accept it
+ * Side effects beyond the entry itself are all additive.
+ * - An instruction gets one heuristic record per non-blank body line, and a decision.
+ * - A procedure skill (`steps` with at least one step) gets a `proc:<project>:<slug>` record.
+ * - Every entry gets a proposed decision, so a later `activate` can accept that decision.
  */
 export declare function insertKnowledgeEntry(store: KnowledgeStore, entry: NewKnowledgeEntry): Promise<string>;
 /**
- * Activate an entry: status `active` / `published`, the given trust level,
- * optional validation record, every other active version of the same key
- * superseded (and kept), the instruction's heuristics reinforced, the edit's
- * decision accepted.
+ * Activate an entry.
+ * The entry gets status `active` / `published`, the given trust level, and the optional validation record.
+ * Every other active version of the same key is superseded and kept.
+ * The call reinforces the instruction's heuristics and accepts the edit's decision.
  *
  * `trust` is restricted to the two levels a validation or a human approval can
  * confer. An `unverified` entry is only ever a candidate.

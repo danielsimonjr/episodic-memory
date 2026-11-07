@@ -48,8 +48,7 @@ export function migrateSchema(db) {
     ensureDigestSchema(db);
 }
 /**
- * Earlier versions created `tool_calls` with a plain
- * `FOREIGN KEY (exchange_id) REFERENCES exchanges(id)`.
+ * Earlier versions created `tool_calls` with a plain `FOREIGN KEY (exchange_id) REFERENCES exchanges(id)`.
  * Without ON DELETE CASCADE, deleting an exchange that had tool calls
  * raised SQLITE_CONSTRAINT_FOREIGNKEY (#81), and orphans accumulated.
  *

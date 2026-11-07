@@ -11,9 +11,10 @@ export interface SyncHeadlineTotals {
 }
 
 /**
- * The first lines a finished sync prints. A success line over a stalled queue reads as health from
- * outside, so a run that summarised nothing while a backlog waited says so. A run that waited for the
- * shared GPU says that instead, because a deliberate wait is not a fault.
+ * The first lines a finished sync prints.
+ * A success line over a stalled queue reads as health from outside. So a run that summarised nothing
+ * while a backlog waited says so. A run that waited for the shared GPU says that instead, because a
+ * deliberate wait is not a fault.
  */
 export function syncHeadline(totals: SyncHeadlineTotals): string[] {
   const stalled = totals.pendingSummaries > 0 && totals.summarized === 0;

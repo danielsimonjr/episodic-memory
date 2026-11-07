@@ -180,8 +180,8 @@ function solvingAgent(
 /**
  * A text model for task generation, the merge call and the reflection call.
  *
- * It copies the marks the prompt offers, which is what a real model does: the
- * prompts list `[#id]` and `[@n]` marks for exactly that purpose.
+ * The fake copies the marks the prompt offers, as a real model does.
+ * The reason: the prompts list `[#id]` and `[@n]` marks for exactly that purpose.
  */
 function fakeTextModel() {
   const prompts: string[] = [];

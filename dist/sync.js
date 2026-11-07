@@ -13,8 +13,9 @@ const EXCLUSION_MARKERS = [
 const SKIP_MARKER_SCAN_BYTES = 256 * 1024;
 /**
  * True when the conversation should be excluded from indexing / summarization.
- * Only scans the first SKIP_MARKER_SCAN_BYTES — markers are emitted early in
- * agent prompts, so a head scan is sufficient and vastly cheaper on huge JSONL.
+ * The scan reads only the first SKIP_MARKER_SCAN_BYTES bytes.
+ * Markers are emitted early in agent prompts, so a head scan is sufficient.
+ * A head scan is vastly cheaper on huge JSONL.
  */
 export function shouldSkipConversation(filePath) {
     try {
@@ -64,9 +65,10 @@ function readSummaryAttempts(filePath) {
     }
 }
 /**
- * A failure record is TERMINAL when it explains an empty summary for good: a recorded reason
- * (e.g. no-exchanges), a give-up, or an oversize skip. A bare {attempts, lastError} is a retry in
- * progress. Unreadable records count as terminal, so corruption never causes a retry storm.
+ * A failure record is TERMINAL when it explains an empty summary for good.
+ * The record holds a recorded reason (for example no-exchanges), a give-up, or an oversize skip.
+ * A bare {attempts, lastError} is a retry in progress.
+ * Unreadable records count as terminal, so corruption never causes a retry storm.
  */
 export function isTerminalFailRecord(filePath) {
     try {
@@ -206,11 +208,11 @@ export async function syncConversations(sourceDir, destDir, options = {}) {
                         }
                         catch { /* unreadable summary is not evidence either way */ }
                     }
-                    // LEGACY EMPTIES ARE RETRIED, LAST (2026-09-17). An empty summary with NO reason marker is
-                    // the artefact of a pre-1.5.2 give-up that deleted its marker; nothing else ever produces
+                    // LEGACY EMPTIES ARE RETRIED, LAST. An empty summary with NO reason marker is
+                    // the artefact of an old give-up path that deleted its marker; nothing else produces
                     // that shape now (every current empty-writer records a reason). Left alone they read as
-                    // DONE forever and were reported every run as a silent failure that nothing could clear -
-                    // 27 on the ZBOOK. They are re-queued in the LAST priority tier inside the normal budget,
+                    // DONE forever and are reported every run as a silent failure that nothing can clear.
+                    // They are re-queued in the LAST priority tier inside the normal budget,
                     // so they drain a few per sync after fresh work and retries, which is the storm the old
                     // comment here was right to fear avoided by ordering rather than by never trying. Each
                     // one then ends EXPLAINED: a real summary, a no-exchanges marker, or a recorded give-up.
@@ -300,12 +302,10 @@ export async function syncConversations(sourceDir, destDir, options = {}) {
     else if (!options.skipSummaries && filesToSummarize.length > 0) {
         const { summarizeConversation } = await import('./summarizer.js');
         const summaryLimit = options.summaryLimit ?? 10;
-        // STARVATION FIX (2026-08-29). Files are enqueued in directory order and the budget takes
-        // the FIRST N. A conversation that times out keeps its place at the front, so the same
-        // doomed files consumed the whole budget every sync - attempts 1/3 then 2/3 - while fresh
-        // conversations behind them were never reached. Measured on the ZBOOK: 87 of 140 sync
-        // blocks reported "Summarized: 0" while the backlog oscillated instead of draining.
-        // Retries still happen; they just go LAST, so they use leftover budget rather than all of it.
+        // Files are enqueued in directory order and the budget takes the FIRST N. A conversation
+        // that times out keeps its place at the front. If retries went first, the same doomed files
+        // would consume the whole budget every sync, and fresh conversations behind them would never
+        // be reached. So retries go LAST: they use leftover budget rather than all of it.
         const withFailureState = filesToSummarize.map(f => ({ ...f, priorFailures: readSummaryAttempts(f.path) }));
         // Three tiers: fresh conversations, then retries of recent failures, then legacy unexplained
         // empties. Within a tier, fewer prior failures first.
@@ -331,11 +331,10 @@ export async function syncConversations(sourceDir, destDir, options = {}) {
                 break;
             }
         }
-        // PENDING IS MEASURED AFTER THE WORK (2026-09-17). It was assigned before the loop, so every
-        // conversation queued this run counted as 'still pending' even after it got a summary or a
-        // legitimate sentinel. Production symptoms: 'Summarized: 4 (4 still pending)', and a FALSE
-        // 'Sync finished WITHOUT SUMMARISING ANYTHING - 3 conversation(s) still need summaries' when
-        // all three were no-exchanges transcripts correctly marked. A conversation is pending iff it
+        // PENDING IS MEASURED AFTER THE WORK. A count taken before the loop would report every
+        // conversation queued this run as 'still pending', even after it got a summary or a
+        // legitimate sentinel, and would raise a false 'Sync finished WITHOUT SUMMARISING ANYTHING'
+        // banner for transcripts that were correctly marked. A conversation is pending iff it
         // still has NO summary file: failures awaiting retry and anything deferred past the budget.
         // Legacy empties already have a file and are reported by unexplainedEmptySummaries instead.
         result.pendingSummaries = filesToSummarize.filter(f => !fs.existsSync(f.path.replace('.jsonl', '-summary.txt'))).length;
@@ -343,21 +342,25 @@ export async function syncConversations(sourceDir, destDir, options = {}) {
     return result;
 }
 /**
- * Summarize ONE archived conversation and record the outcome on disk: a summary, a no-exchanges
- * sentinel, an oversized skip, a retry record, or a give-up. Shared by sync and the archive backfill
- * so both leave identical evidence. Never throws; failures are recorded in result.errors.
+ * Summarize ONE archived conversation and record the outcome on disk.
+ * The outcome is one of: a summary, a no-exchanges sentinel, an oversized skip,
+ * a retry record, or a give-up.
+ * Sync and the archive backfill both call this function, so they leave identical evidence.
+ * Never throws; failures are recorded in result.errors.
  *
- * Returns the reservation message when another agent holds the shared GPU. That is a wait, not a
- * failure: nothing is recorded on disk, the attempt is not counted, and the caller should stop
- * asking for summaries. Returns `undefined` in every other case.
+ * Returns the reservation message when another agent holds the shared GPU. The hold is a wait,
+ * not a failure.
+ * Nothing is recorded on disk, the attempt is not counted, and the caller should stop asking for
+ * summaries.
+ * Returns `undefined` in every other case.
  */
 export async function summarizeOneFile(filePath, sessionId, result, summarize) {
     const { parseConversation } = await import('./parser.js');
     try {
-        // SIZE GUARD (2026-08-29). A 45.8 MB transcript was handed whole to a 120 s summariser
-        // call, which could only ever time out - it then burned its three attempts across three
-        // syncs while its archive fell a day behind. Oversized conversations are now recorded as
-        // deliberately skipped rather than retried to no purpose. Raise the ceiling with
+        // SIZE GUARD. A very large transcript handed whole to a 120 s summariser call can only
+        // time out, and it would burn all its attempts across several syncs. Oversized
+        // conversations are recorded as deliberately skipped rather than retried to no purpose.
+        // Raise the ceiling with
         // EPISODIC_MEMORY_MAX_SUMMARY_BYTES once summarisation can stream them.
         const sizeCeiling = maxSummaryBytes();
         let fileBytes = 0;

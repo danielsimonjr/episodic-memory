@@ -19,16 +19,16 @@ export declare function getSyncErrorsLogPath(): string;
 /**
  * Dedicated log for `learn` runs.
  *
- * A learning run is long, detached from a terminal and spends money, so its
- * progress goes to its own file rather than into the sync log where it would
- * interleave with every session start.
+ * A learning run is long, detached from a terminal, and spends money.
+ * So its progress goes to its own file, not into the sync log.
+ * Progress in the sync log would interleave with every session start.
  */
 export declare function getLearnLogPath(): string;
 /** Lock file serializing background syncs; lives beside the embedding-migration lock. */
 export declare function getSyncLockPath(): string;
 /**
- * Rotate the sync log when it exceeds `maxBytes` so it can't grow without bound
- * (F4 — it had reached megabytes with thousands of appended sync-start lines).
+ * Rotate the sync log when it exceeds `maxBytes` so it can't grow without bound.
+ * The log had reached megabytes, with thousands of appended sync-start lines (F4).
  * Keeps a single `.1` backup. Best-effort: any failure leaves the log as-is.
  */
 export declare function rotateSyncLogIfNeeded(maxBytes?: number): void;

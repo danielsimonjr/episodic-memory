@@ -37,7 +37,7 @@ export interface LearnToolServerOptions {
 /**
  * Build the server.
  *
- * `tool()` takes a raw Zod shape (`{ query: z.string() }`), not a `z.object`, so
- * the schemas below are plain shape objects.
+ * `tool()` takes a raw Zod shape (`{ query: z.string() }`), not a `z.object`.
+ * So the schemas below are plain shape objects.
  */
 export declare function buildLearnToolServer(options: LearnToolServerOptions): McpSdkServerConfigWithInstance;

@@ -106,7 +106,8 @@ export async function backfillArchive(archiveDir, opts) {
     return result;
 }
 /**
- * Decide what the batch loop does next. `prevRemaining` is the remainder that the previous batch left
+ * Decide what the batch loop does next.
+ * `prevRemaining` is the remainder that the previous batch left
  * (candidates - processed); undefined on the first batch. Each batch starts at the previous remainder.
  * The function measures progress on the remainder that this batch leaves, not on where the batch starts.
  */

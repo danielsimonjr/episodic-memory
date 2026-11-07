@@ -35,8 +35,9 @@ export { LEARN_USAGE };
 /**
  * The subprocess count a baseline needs: the signal tasks of the train split.
  *
- * `solve` spends one call per task; bootstrap solves the same set twice (empty
- * snapshot, then candidates), which is why its multiplier is 2.
+ * `solve` spends one call per task.
+ * Bootstrap solves the same set twice, once with an empty snapshot and once with the candidates.
+ * The bootstrap multiplier is therefore 2.
  */
 export declare function baselineCallCount(db: Database.Database, times?: number): number;
 /** A refusal message when the baseline cannot be afforded, or null. */
@@ -44,9 +45,9 @@ export declare function baselineRefusal(count: number, maxCalls: number): string
 /**
  * A unified diff of two texts, `---`/`+++` headers and one hunk.
  *
- * Deliberately small: the two sides are one entry body, so a full-file hunk is
- * what a reviewer wants to read anyway, and an LCS over a handful of lines is
- * enough to mark the changed ones.
+ * The function is deliberately small.
+ * The two sides are one entry body, so a full-file hunk is what a reviewer wants to read anyway.
+ * An LCS over a handful of lines is enough to mark the changed ones.
  */
 export declare function unifiedDiff(before: string, after: string, label: string): string;
 /**

@@ -23,8 +23,7 @@ export interface PruneOptions {
  *
  * An empty list returns at once and changes nothing. With `dryRun`, the function counts the rows and deletes nothing.
  * Otherwise, the function deletes the rows in one transaction from four tables: `tool_calls`, `vec_exchanges`, `exchanges_fts` and `exchanges`.
- * The function prepares the `exchanges_fts` delete before the loop. Without `dryRun` and with matching rows, a missing table makes the function throw before the function deletes any row.
- * Inside the loop, the function ignores a run error from the `exchanges_fts` delete.
+ * A database without an `exchanges_fts` table is pruned too. The function then skips that delete.
  * The connection must load the sqlite-vec extension, as `openDatabase` does.
  *
  * @param db The open database connection to change.

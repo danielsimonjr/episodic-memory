@@ -48,9 +48,9 @@ function commandLine(pid: number): string {
 /**
  * A fake process lister.
  *
- * The answer changes per call, because the hook lists once for the baseline (before it spawns
- * the sync) and once more to reap. Both processes therefore appear only in the second listing,
- * which is exactly the "born during the sync" case that makes a baseline insufficient.
+ * The answer changes per call. The reason: the hook lists once for the baseline, before spawning
+ * the sync, and once more to reap. Both processes therefore appear only in the second listing.
+ * Appearing there is exactly the "born during the sync" case that makes a baseline insufficient.
  */
 function writeLister(): void {
   lister = join(dir, 'lister.mjs');

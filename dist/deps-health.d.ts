@@ -24,8 +24,10 @@ export declare const DEP_SENTINELS: string[];
  */
 export declare function nodeModulesIsHealthy(nodeModulesPath: string): boolean;
 /**
- * What a caller must run to make node_modules usable. `npm install` on a tree that already lists
- * better-sqlite3 does not rebuild its binding, so a missing binding alone needs `npm rebuild`.
+ * What a caller must run to make node_modules usable.
+ *
+ * `npm install` on a tree that already lists better-sqlite3 does not rebuild its binding.
+ * So a missing binding alone needs `npm rebuild`.
 
  */
 export declare function repairPlan(nodeModulesPath: string): 'none' | 'install' | 'rebuild';

@@ -79,19 +79,14 @@ function treeSize(root) {
     return { present: true, files, bytes };
 }
 /**
- * Where `better-sqlite3` resolves from a given base directory.
+ * Return the plugin package root, or `null` when none is found.
  *
- * `require.resolve`'s `paths` option is the only way to ask "what would a module
- * living *here* load?"; a plain import from this module would always answer for
- * the plugin root and hide a nested duplicate.
+ * The function reads `CLAUDE_PLUGIN_ROOT` and `PLUGIN_ROOT` first. Then it walks up from this file
+ * to a `package.json` named `episodic-memory`.
  *
- * The plugin package root: env, then a walk up from this file to
- * `package.json` named `episodic-memory`.
- *
- * Deliberately not `process.cwd()`. Doctor is often started from a project
- * directory, and resolving `better-sqlite3` from there either misses the
- * plugin copy or finds an unrelated one — then a null result used to count as
- * "shared" and the check passed without looking at the install.
+ * Deliberately not `process.cwd()`. Doctor is often started from a project directory.
+ * Resolving `better-sqlite3` from there either misses the plugin copy or finds an unrelated one.
+ * A null result then used to count as "shared", and the check passed without looking at the install.
  */
 function pluginPackageRoot() {
     const fromEnv = [process.env.CLAUDE_PLUGIN_ROOT, process.env.PLUGIN_ROOT].filter((base) => typeof base === 'string' && base.length > 0);
@@ -119,6 +114,12 @@ function pluginPackageRoot() {
     }
     return null;
 }
+/**
+ * Where `better-sqlite3` resolves from a given base directory.
+ *
+ * `require.resolve`'s `paths` option is the only way to ask what a module living *here* would load.
+ * A plain import from this module would always answer for the plugin root and hide a nested duplicate.
+ */
 function resolveBetterSqlite3(paths) {
     if (paths.length === 0)
         return null;

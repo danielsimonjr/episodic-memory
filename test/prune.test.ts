@@ -160,4 +160,15 @@ describe('pruneProjects', () => {
     expect(result.exchangesDeleted).toBe(0);
     expect(counts()).toEqual(before);
   });
+
+  it('prunes a database that has no exchanges_fts table', () => {
+    seed('a1', 'keep');
+    seed('b1', 'noisy');
+    db.exec('DROP TABLE IF EXISTS exchanges_fts');
+
+    const result = pruneProjects(db, ['noisy']);
+
+    expect(result.exchangesDeleted).toBe(1);
+    expect(counts().exchanges).toBe(1);
+  });
 });

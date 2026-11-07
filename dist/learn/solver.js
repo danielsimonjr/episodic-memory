@@ -105,9 +105,8 @@ async function grade(task, answer, judge) {
 /**
  * Answer and grade one task.
  *
- * The server hides exactly `task.truth.exchanges` — the sources this task was
- * built from — and nothing else: the solver is meant to search the rest of the
- * archive, which is what makes finding the right file the task.
+ * The server hides exactly `task.truth.exchanges`, the sources this task was built from, and nothing else.
+ * The solver is meant to search the rest of the archive. That search is what makes the task a search for the right file.
  */
 export async function solveTask(dbs, task, options) {
     const runAgentFn = options.runAgent ?? runAgent;
@@ -187,10 +186,10 @@ export async function solveTask(dbs, task, options) {
 /**
  * Solve a batch of tasks.
  *
- * Every task goes through the single global semaphore, so the batch's own
- * parallelism is bounded by `learnConfig().concurrency` no matter how many tasks
- * the caller hands over. The budget is shared, so a batch stops with
- * `BudgetExhausted` at the cap and the caller keeps the attempts already stored.
+ * Every task passes through the single global semaphore. The semaphore bounds the batch's own
+ * parallelism at `learnConfig().concurrency`, no matter how many tasks the caller hands over.
+ * The budget is shared, so a batch stops with `BudgetExhausted` at the cap.
+ * The caller keeps the attempts already stored.
  */
 export async function solveMany(dbs, tasks, options) {
     const semaphore = globalAgentSemaphore();

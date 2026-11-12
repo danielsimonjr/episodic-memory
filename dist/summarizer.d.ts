@@ -96,6 +96,14 @@ export interface CallClaudeOptions {
 /** Digest entry point: same backend, model and fallback choice as session summaries. */
 export declare function callDigestModel(prompt: string): Promise<string>;
 /**
+ * The prompt character budget of the configured backend.
+ *
+ * On the Ollama backend the budget is EPISODIC_MEMORY_OLLAMA_MAX_PROMPT_CHARS. The value is parsed the way
+ * `callOllama` parses it, so a prompt within the budget is never cut by the call. On the Claude backend the
+ * budget is 48000 characters.
+ */
+export declare function promptBudgetChars(): number;
+/**
  * Return the model and the retry model for learning calls.
  *
  * The learn model reads EPISODIC_MEMORY_LEARN_MODEL. The retry model reads EPISODIC_MEMORY_API_MODEL_FALLBACK, which the digest also reads. Both default to `sonnet`. A blank value counts as unset.

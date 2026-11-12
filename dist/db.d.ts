@@ -58,6 +58,13 @@ export declare function deleteExchangeFts(db: Database.Database, id: string): vo
  * @param options Set `migrate` to false to skip the schema changes. The default is true.
  */
 export declare function openDatabase(options?: OpenDatabaseOptions): Database.Database;
+/**
+ * Opens the existing index database for reading only.
+ *
+ * The function creates no file and no directory. It does not change the file mode, turn on WAL mode
+ * or run a migration. It throws when the database file does not exist. The busy timeout is the same as in `openDatabase`.
+ */
+export declare function openDatabaseReadonly(): Database.Database;
 /** Open (and migrate) a database — the default writer / one-shot path. */
 export declare function initDatabase(): Database.Database;
 /**

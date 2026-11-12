@@ -299,6 +299,11 @@ describe('digest-hook', () => {
 
     it('finishes well under 2 s with the flag on', () => {
       seedLearned(block());
+      // Node startup alone can take most of 2 s on a loaded machine. Measure a bare Node start now,
+      // and hold the hook's own work, the time above that start, to the budget.
+      const bareStart = Date.now();
+      expect(spawnSync(process.execPath, ['-e', ''], { timeout: 20000 }).status).toBe(0);
+      const nodeStartMs = Date.now() - bareStart;
       const started = Date.now();
       const r = runHook({
         EPISODIC_MEMORY_DIGEST: '1',
@@ -307,7 +312,8 @@ describe('digest-hook', () => {
         EPISODIC_MEMORY_CONFIG_DIR: configDir,
       });
       expect(r.status).toBe(0);
-      expect(Date.now() - started).toBeLessThan(2000);
+      // Measured idle: Node starts in about 50 ms and the hook's own work takes about 30 ms.
+      expect(Date.now() - started - nodeStartMs).toBeLessThan(1000);
     });
 
     it('never loads the knowledge store, the SDK, transformers or sqlite-vec', () => {

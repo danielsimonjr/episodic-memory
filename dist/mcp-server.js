@@ -143,10 +143,23 @@ var init_redact = __esm({
       // Generic bearer / authorization header values on a line
       {
         name: "bearer",
-        re: /\bBearer\s+[A-Za-z0-9\-._~+/]+=*/gi
+        // `[ \t]+`, not `\s+`: the value is on the same line, so the rule never eats the next line.
+        re: /\bBearer[ \t]+[A-Za-z0-9\-._~+/]+=*/gi
       }
     ];
     REDACTED = "[redacted]";
+  }
+});
+
+// src/fts-query.ts
+function toFtsQuery(query) {
+  const terms = query.match(/[\p{L}\p{N}_]+/gu) ?? [];
+  if (terms.length === 0) return null;
+  return terms.map((t) => `"${t}"`).join(" ");
+}
+var init_fts_query = __esm({
+  "src/fts-query.ts"() {
+    "use strict";
   }
 });
 
@@ -222,11 +235,6 @@ function listActiveEntries(db, project) {
   ).all(project);
   return rows.map(fromRow);
 }
-function toFtsQuery(query) {
-  const terms = query.match(/[\p{L}\p{N}_]+/gu) ?? [];
-  if (terms.length === 0) return null;
-  return terms.map((t) => `"${t}"`).join(" ");
-}
 function citedExchangeIds(line) {
   const match = TRAILING_MARK_GROUP.exec(line);
   if (!match) return [];
@@ -267,6 +275,7 @@ var TRAILING_MARK_GROUP;
 var init_digest_db = __esm({
   "src/digest-db.ts"() {
     "use strict";
+    init_fts_query();
     TRAILING_MARK_GROUP = /\s*\[([^\]]*)\]\s*$/;
   }
 });
@@ -23125,6 +23134,32 @@ function date4(params) {
   return _coercedDate(ZodDate, params);
 }
 
+// src/topic-time.ts
+var UNIT_ID_PATTERN = /^[0-9a-f]{8}$/;
+function isValidTime(time3) {
+  const m2 = /^(\d{4})(?:-(\d{2})(?:-(\d{2}))?)?$/.exec(time3);
+  if (!m2) return false;
+  if (m2[2] === void 0) return true;
+  const month = Number(m2[2]);
+  if (month < 1 || month > 12) return false;
+  if (m2[3] === void 0) return true;
+  const year = Number(m2[1]);
+  const leap = year % 4 === 0 && year % 100 !== 0 || year % 400 === 0;
+  const lastDay = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1];
+  const day = Number(m2[3]);
+  return day >= 1 && day <= lastDay;
+}
+function startOf(time3) {
+  if (time3.length === 4) return `${time3}-01-01`;
+  if (time3.length === 7) return `${time3}-01`;
+  return time3;
+}
+function endOf(time3) {
+  if (time3.length === 4) return `${time3}-12-31`;
+  if (time3.length === 7) return `${time3}-31`;
+  return time3;
+}
+
 // src/mcp-schemas.ts
 var SearchModeEnum = external_exports.enum(["vector", "text", "both"]);
 var ResponseFormatEnum = external_exports.enum(["markdown", "json"]);
@@ -23172,6 +23207,35 @@ var SkillsInputSchema = external_exports.object({
   limit: external_exports.number().int().min(1).max(50).optional().describe("Max skills listed (default 10)"),
   auth_token: external_exports.string().min(1).optional().describe("Required when EPISODIC_MEMORY_MCP_TOKEN is set")
 }).strict();
+var TopicsActionEnum = external_exports.enum(["list", "read", "search", "links", "timeline"]);
+var TOPICS_REQUIRED_ARG = {
+  read: "slug",
+  search: "query",
+  links: "unit"
+};
+var TopicsInputSchema = external_exports.object({
+  action: TopicsActionEnum.describe("What to read: list, read, search, links or timeline"),
+  project: external_exports.string().min(1).optional().describe("Project key. Defaults to the key for the current working directory."),
+  slug: external_exports.string().min(1).optional().describe("Slug of one document (action read)"),
+  query: external_exports.string().min(1).optional().describe("Words to search the topic units for (action search)"),
+  unit: external_exports.string().regex(UNIT_ID_PATTERN, "unit must be 8 lowercase hex characters").optional().describe("Unit id of one paragraph, 8 lowercase hex characters (action links)"),
+  from: external_exports.string().refine(isValidTime, "from must be YYYY, YYYY-MM or YYYY-MM-DD").optional().describe("Earliest time, YYYY, YYYY-MM or YYYY-MM-DD (inclusive)"),
+  to: external_exports.string().refine(isValidTime, "to must be YYYY, YYYY-MM or YYYY-MM-DD").optional().describe("Latest time, YYYY, YYYY-MM or YYYY-MM-DD (inclusive)"),
+  limit: external_exports.number().int().min(1).max(50).optional().describe("Max search hits (default 10) or timeline events (default 50)"),
+  auth_token: external_exports.string().min(1).optional().describe("Required when EPISODIC_MEMORY_MCP_TOKEN is set")
+}).strict().superRefine((args, ctx) => {
+  if (args.from !== void 0 && args.to !== void 0 && startOf(args.from) > endOf(args.to)) {
+    ctx.addIssue({ code: "custom", path: ["to"], message: "to must not be before from" });
+  }
+  const field = TOPICS_REQUIRED_ARG[args.action];
+  if (field !== void 0 && args[field] === void 0) {
+    ctx.addIssue({
+      code: "custom",
+      path: [field],
+      message: `${field} is required for action ${args.action}`
+    });
+  }
+});
 function handleMcpError(error62) {
   if (error62 instanceof Error) {
     return `Error: ${error62.message}`;
@@ -23282,6 +23346,11 @@ async function handleToolCall(name, args) {
       const { skillsToolText } = await import("./learn/skills-tool.js");
       return { content: [{ type: "text", text: await skillsToolText(params) }] };
     }
+    if (name === "topics") {
+      const params = TopicsInputSchema.parse(args);
+      const { topicsToolText } = await import("./topic-tool.js");
+      return { content: [{ type: "text", text: topicsToolText(params) }] };
+    }
     throw new Error(`Unknown tool: ${name}`);
   } catch (error62) {
     return {
@@ -23375,6 +23444,27 @@ function buildServer() {
     },
     async (args) => {
       const result = await handleToolCall("skills", args);
+      return {
+        content: result.content,
+        ...result.isError ? { isError: true } : {}
+      };
+    }
+  );
+  server.registerTool(
+    "topics",
+    {
+      title: "Topic Memory",
+      description: `Reads the topic documents the plugin keeps for this project: a list of the documents, the text of one document, a search of its paragraphs, the links of one paragraph, or a timeline of dated events. Pass action with list, read (slug), search (query), links (unit) or timeline. A document cites its source exchanges in its footnotes, and each timeline event lists its source exchange ids; pass an id to the digest tool expand action. A timeline returns at most limit events (default 50). Read-only.`,
+      inputSchema: TopicsInputSchema,
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false
+      }
+    },
+    async (args) => {
+      const result = await handleToolCall("topics", args);
       return {
         content: result.content,
         ...result.isError ? { isError: true } : {}

@@ -53,7 +53,8 @@ const SECRET_PATTERNS = [
     // Generic bearer / authorization header values on a line
     {
         name: 'bearer',
-        re: /\bBearer\s+[A-Za-z0-9\-._~+/]+=*/gi,
+        // `[ \t]+`, not `\s+`: the value is on the same line, so the rule never eats the next line.
+        re: /\bBearer[ \t]+[A-Za-z0-9\-._~+/]+=*/gi,
     },
 ];
 const REDACTED = '[redacted]';

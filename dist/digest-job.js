@@ -1,13 +1,13 @@
 import { shouldSkipReentrantSync } from './reentrancy.js';
 import { gpuReservationBlock } from './gpu-reservation.js';
 import { GpuReservedError, summarizerBackend } from './ollama-backend.js';
-import { callDigestModel } from './summarizer.js';
+import { callDigestModel, promptBudgetChars } from './summarizer.js';
 import { buildSessionPrompt } from './digest-prompts.js';
 import { parseCitedLines, redactEntryText } from './digest-validate.js';
 import { insertDigestEntry } from './digest-db.js';
 import { compressDigest } from './digest-compress.js';
 /** A session whose last exchange is newer than this is still running; summarize it next time. */
-const QUIET_MS = 30 * 60 * 1000;
+export const QUIET_MS = 30 * 60 * 1000;
 const DEFAULT_MAX_SESSIONS = 5;
 /**
  * Return true when the digest feature is on.
@@ -21,7 +21,8 @@ function maxSessions() {
     const n = Number(process.env.EPISODIC_MEMORY_DIGEST_MAX_SESSIONS);
     return Number.isInteger(n) && n > 0 ? n : DEFAULT_MAX_SESSIONS;
 }
-function toExchange(r) {
+/** Map an exchange row to the public shape. */
+export function toExchange(r) {
     return {
         id: r.id,
         project: r.project,
@@ -33,7 +34,16 @@ function toExchange(r) {
         lineEnd: r.line_end,
     };
 }
-function isTrivial(exchanges) {
+/** The exchanges of one session, oldest first. */
+export function sessionExchanges(db, project, sessionId) {
+    const rows = db
+        .prepare(`SELECT id, project, timestamp, user_message, assistant_message, archive_path, line_start, line_end
+       FROM exchanges WHERE project = ? AND session_id = ? ORDER BY timestamp, line_start`)
+        .all(project, sessionId);
+    return rows.map(toExchange);
+}
+/** Tell whether a session is trivial: one exchange that is `/exit` or is shorter than 100 characters. */
+export function isTrivial(exchanges) {
     if (exchanges.length !== 1)
         return false;
     const [e] = exchanges;
@@ -58,17 +68,22 @@ async function writeSessionEntries(db, model, now, result) {
             result.skipped++;
             continue;
         }
-        const rows = db
-            .prepare(`SELECT id, project, timestamp, user_message, assistant_message, archive_path, line_start, line_end
-         FROM exchanges WHERE project = ? AND session_id = ? ORDER BY timestamp, line_start`)
-            .all(s.project, s.session_id);
-        const exchanges = rows.map(toExchange);
+        const exchanges = sessionExchanges(db, s.project, s.session_id);
         if (isTrivial(exchanges)) {
             result.skipped++;
             continue;
         }
         attempted++;
-        const { prompt, marks } = buildSessionPrompt(exchanges);
+        // The prompt must fit the backend budget, because the Ollama call cuts anything longer without a word.
+        // numberExchanges does not count the blank line between its blocks, so keep two characters of slack per exchange.
+        const budget = promptBudgetChars();
+        const overhead = buildSessionPrompt([], 0).prompt.length;
+        const { prompt, marks } = buildSessionPrompt(exchanges, Math.max(0, budget - overhead));
+        if (prompt.length > budget) {
+            console.error(`digest: session ${s.session_id} does not fit the prompt budget of ${budget} characters`);
+            result.failed++;
+            continue;
+        }
         let raw;
         try {
             raw = await model(prompt);

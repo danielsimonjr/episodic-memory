@@ -30,6 +30,8 @@ export const NO_TOPICS_MESSAGE = 'Topic memory has no documents yet.';
 
 /** The default number of search hits. */
 const SEARCH_DEFAULT_LIMIT = 10;
+/** The events that `timeline` returns when the call gives no limit. */
+const TIMELINE_DEFAULT_LIMIT = 50;
 
 /** The topic tables that the read functions use. The tool answers the no-documents text unless all of them exist. */
 const READ_TABLES = ['topic_doc', 'topic_unit', 'topic_link', 'topic_event', 'topic_unit_fts'];
@@ -84,7 +86,9 @@ function searchText(
 }
 
 function linksText(db: IndexDb, project: string, unit: string): string {
-  const { outgoing, backlinks } = topicLinks(db, project, unit);
+  const links = topicLinks(db, project, unit);
+  if (links === null) return `No topic unit "${unit}" in ${project}.`;
+  const { outgoing, backlinks } = links;
   const section = (title: string, units: TopicLinkedUnit[]): string[] => [
     `${title} of ${unit}:`,
     ...(units.length > 0 ? units.map(linkedLine) : ['- none']),
@@ -92,15 +96,16 @@ function linksText(db: IndexDb, project: string, unit: string): string {
   return [...section('Outgoing links', outgoing), ...section('Backlinks', backlinks)].join('\n');
 }
 
-function timelineText(db: IndexDb, project: string, range: { from?: string; to?: string }): string {
-  const events = topicTimeline(db, project, range);
-  if (events.length === 0) return `No timeline events for ${project}.`;
-  return events
-    .map(event => {
-      const sources = event.sources.length > 0 ? event.sources.map(id => `#${id}`).join(', ') : 'none';
-      return `- ${event.time} | ${oneLine(event.statement)} | unit ${event.unitId} | sources: ${sources}`;
-    })
-    .join('\n');
+function timelineText(db: IndexDb, project: string, range: { from?: string; to?: string }, limit: number): string {
+  const all = topicTimeline(db, project, range);
+  if (all.length === 0) return `No timeline events for ${project}.`;
+  const lines = all.slice(0, limit).map(event => {
+    const sources = event.sources.length > 0 ? event.sources.map(id => `#${id}`).join(', ') : 'none';
+    return `- ${event.time} | ${oneLine(event.statement)} | unit ${event.unitId} | sources: ${sources}`;
+  });
+  const rest = all.length - lines.length;
+  if (rest > 0) lines.push(`${rest} more event${rest === 1 ? '' : 's'}. Narrow from and to, or raise limit.`);
+  return lines.join('\n');
 }
 
 /**
@@ -134,7 +139,7 @@ export function topicsToolText(params: TopicsInput): string {
         text = linksText(db, project, params.unit ?? '');
         break;
       case 'timeline':
-        text = timelineText(db, project, range);
+        text = timelineText(db, project, range, params.limit ?? TIMELINE_DEFAULT_LIMIT);
         break;
     }
     return redactEntryText(text);

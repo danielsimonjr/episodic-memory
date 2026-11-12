@@ -172,9 +172,15 @@ describe('topic-db', () => {
         },
       ],
     });
-    const out = topicLinks(db, 'p', '5e6f7a8b');
+    const out = topicLinks(db, 'p', '5e6f7a8b')!;
     expect(out.outgoing.map(l => [l.slug, l.unitId])).toEqual([['project', '7c91e2ab']]);
     expect(out.backlinks).toEqual([]);
+  });
+
+  it('returns null for a unit that the project does not hold', () => {
+    installBoth();
+    expect(topicLinks(db, 'p', 'deadbeef')).toBeNull();
+    expect(topicLinks(db, 'other', '7c91e2ab')).toBeNull();
   });
 
   it('keeps the seq of a kept unit and gives a new unit a later seq', () => {

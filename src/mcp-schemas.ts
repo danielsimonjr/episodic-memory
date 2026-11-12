@@ -209,7 +209,7 @@ const TOPICS_REQUIRED_ARG: Partial<Record<z.infer<typeof TopicsActionEnum>, 'slu
  * The schema rejects unknown fields. `action` selects one of list, read, search, links and timeline.
  * `read` requires `slug`, `search` requires `query` and `links` requires `unit`. A missing required
  * argument is a schema error. `unit` is 8 lowercase hex characters. `from` and `to` are YYYY, YYYY-MM or
- * YYYY-MM-DD, and each check uses `isValidTime`. `limit` caps the hits of `search` (default 10).
+ * YYYY-MM-DD, and each check uses `isValidTime`. `limit` caps the hits of `search` (default 10) and the events of `timeline` (default 50).
  * `project` defaults to the key for the working directory, in the handler.
  * `assertMcpAuthorized` checks the `auth_token` input, and this schema does not.
  */
@@ -238,7 +238,7 @@ export const TopicsInputSchema = z
       .refine(isValidTime, 'to must be YYYY, YYYY-MM or YYYY-MM-DD')
       .optional()
       .describe('Latest time, YYYY, YYYY-MM or YYYY-MM-DD (inclusive)'),
-    limit: z.number().int().min(1).max(50).optional().describe('Max search hits (default 10)'),
+    limit: z.number().int().min(1).max(50).optional().describe('Max search hits (default 10) or timeline events (default 50)'),
     auth_token: z.string().min(1).optional().describe('Required when EPISODIC_MEMORY_MCP_TOKEN is set'),
   })
   .strict()

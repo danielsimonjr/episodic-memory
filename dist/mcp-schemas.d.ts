@@ -111,6 +111,43 @@ export declare const SkillsInputSchema: z.ZodObject<{
 }, z.core.$strict>;
 /** The parsed input of the `skills` tool. */
 export type SkillsInput = z.infer<typeof SkillsInputSchema>;
+/** The actions of the `topics` tool. */
+export declare const TopicsActionEnum: z.ZodEnum<{
+    search: "search";
+    list: "list";
+    read: "read";
+    links: "links";
+    timeline: "timeline";
+}>;
+/**
+ * The input schema of the `topics` tool, which reads the topic memory documents.
+ *
+ * The schema rejects unknown fields. `action` selects one of list, read, search, links and timeline.
+ * `read` requires `slug`, `search` requires `query` and `links` requires `unit`. A missing required
+ * argument is a schema error. `unit` is 8 lowercase hex characters. `from` and `to` are YYYY, YYYY-MM or
+ * YYYY-MM-DD, and each check uses `isValidTime`. `limit` caps the hits of `search` (default 10) and the events of `timeline` (default 50).
+ * `project` defaults to the key for the working directory, in the handler.
+ * `assertMcpAuthorized` checks the `auth_token` input, and this schema does not.
+ */
+export declare const TopicsInputSchema: z.ZodObject<{
+    action: z.ZodEnum<{
+        search: "search";
+        list: "list";
+        read: "read";
+        links: "links";
+        timeline: "timeline";
+    }>;
+    project: z.ZodOptional<z.ZodString>;
+    slug: z.ZodOptional<z.ZodString>;
+    query: z.ZodOptional<z.ZodString>;
+    unit: z.ZodOptional<z.ZodString>;
+    from: z.ZodOptional<z.ZodString>;
+    to: z.ZodOptional<z.ZodString>;
+    limit: z.ZodOptional<z.ZodNumber>;
+    auth_token: z.ZodOptional<z.ZodString>;
+}, z.core.$strict>;
+/** The parsed input of the `topics` tool. */
+export type TopicsInput = z.infer<typeof TopicsInputSchema>;
 /**
  * Format a caught value as the text of an MCP error result.
  *

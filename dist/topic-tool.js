@@ -1,0 +1,125 @@
+/**
+ * The `topics` MCP tool: read the topic memory documents of a project.
+ *
+ * The module holds the read-only half of the tool. `mcp-tools.ts` imports this module
+ * inside the `topics` branch, so a session that never calls the tool loads nothing of
+ * the feature. The module imports no writer, no summarizer and no model client.
+ *
+ * The tool never writes. It opens the index read-only, and it answers that topic memory has
+ * no documents yet when the index file or the topic tables do not exist.
+ * It does not check the topic flag: the MCP server never sees that variable.
+ */
+import fs from 'fs';
+import { openDatabaseReadonly } from './db.js';
+import { getDbPath } from './paths.js';
+import { listTopicDocs, readTopicDoc, searchTopicUnits, topicLinks, topicTimeline, } from './topic-db.js';
+import { projectKeyFromCwd } from './digest-inject.js';
+import { redactEntryText } from './digest-validate.js';
+/** The text that the tool returns when the topic tables do not exist. */
+export const NO_TOPICS_MESSAGE = 'Topic memory has no documents yet.';
+/** The default number of search hits. */
+const SEARCH_DEFAULT_LIMIT = 10;
+/** The events that `timeline` returns when the call gives no limit. */
+const TIMELINE_DEFAULT_LIMIT = 50;
+/** The topic tables that the read functions use. The tool answers the no-documents text unless all of them exist. */
+const READ_TABLES = ['topic_doc', 'topic_unit', 'topic_link', 'topic_event', 'topic_unit_fts'];
+/** True when every topic table that the read functions use exists. Reads the schema only. */
+function topicTablesExist(db) {
+    const placeholders = READ_TABLES.map(() => '?').join(', ');
+    const rows = db
+        .prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name IN (${placeholders})`)
+        .all(...READ_TABLES);
+    return rows.length === READ_TABLES.length;
+}
+/** One line of text: every run of whitespace becomes one space. */
+function oneLine(text) {
+    return text.replace(/\s+/g, ' ').trim();
+}
+function linkedLine(unit) {
+    return `- ${unit.slug} | ${unit.heading} | unit ${unit.unitId} | ${oneLine(unit.text)}`;
+}
+function listText(db, project) {
+    const docs = listTopicDocs(db, project);
+    if (docs.length === 0)
+        return `No topic documents for ${project}.`;
+    return docs.map(doc => `- ${doc.slug}: ${doc.title} (${doc.unitCount} units)`).join('\n');
+}
+function readText(db, project, slug) {
+    const doc = readTopicDoc(db, project, slug);
+    return doc ? doc.text : `No topic document "${slug}" in ${project}.`;
+}
+function searchText(db, project, query, range, limit) {
+    const hits = searchTopicUnits(db, query, { project, ...range, limit });
+    if (hits.length === 0)
+        return `No topic units match "${query}".`;
+    return hits
+        .map(hit => {
+        const times = hit.times.length > 0 ? hit.times.join(', ') : 'none';
+        return `- ${hit.slug} | ${hit.heading} | unit ${hit.unitId} | ${oneLine(hit.text)} | times: ${times}`;
+    })
+        .join('\n');
+}
+function linksText(db, project, unit) {
+    const links = topicLinks(db, project, unit);
+    if (links === null)
+        return `No topic unit "${unit}" in ${project}.`;
+    const { outgoing, backlinks } = links;
+    const section = (title, units) => [
+        `${title} of ${unit}:`,
+        ...(units.length > 0 ? units.map(linkedLine) : ['- none']),
+    ];
+    return [...section('Outgoing links', outgoing), ...section('Backlinks', backlinks)].join('\n');
+}
+function timelineText(db, project, range, limit) {
+    const all = topicTimeline(db, project, range);
+    if (all.length === 0)
+        return `No timeline events for ${project}.`;
+    const lines = all.slice(0, limit).map(event => {
+        const sources = event.sources.length > 0 ? event.sources.map(id => `#${id}`).join(', ') : 'none';
+        return `- ${event.time} | ${oneLine(event.statement)} | unit ${event.unitId} | sources: ${sources}`;
+    });
+    const rest = all.length - lines.length;
+    if (rest > 0)
+        lines.push(`${rest} more event${rest === 1 ? '' : 's'}. Narrow from and to, or raise limit.`);
+    return lines.join('\n');
+}
+/**
+ * Behavior of the `topics` MCP tool. Runs one action on the project, and returns redacted text.
+ *
+ * `project` defaults to the key for the working directory. The index opens read-only once for the call
+ * and closes in `finally`.
+ */
+export function topicsToolText(params) {
+    // A fresh install has no index file. Opening the index the writer way would create it.
+    if (!fs.existsSync(getDbPath()))
+        return NO_TOPICS_MESSAGE;
+    const db = openDatabaseReadonly();
+    try {
+        if (!topicTablesExist(db))
+            return NO_TOPICS_MESSAGE;
+        const project = params.project ?? projectKeyFromCwd(process.cwd());
+        const range = { from: params.from, to: params.to };
+        let text;
+        switch (params.action) {
+            case 'list':
+                text = listText(db, project);
+                break;
+            case 'read':
+                text = readText(db, project, params.slug ?? '');
+                break;
+            case 'search':
+                text = searchText(db, project, params.query ?? '', range, params.limit ?? SEARCH_DEFAULT_LIMIT);
+                break;
+            case 'links':
+                text = linksText(db, project, params.unit ?? '');
+                break;
+            case 'timeline':
+                text = timelineText(db, project, range, params.limit ?? TIMELINE_DEFAULT_LIMIT);
+                break;
+        }
+        return redactEntryText(text);
+    }
+    finally {
+        db.close();
+    }
+}

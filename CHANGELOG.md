@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [1.7.5] - 2026-11-12
+
 ### Added
 - **`EPISODIC_MEMORY_OLLAMA_FALLBACK_MODEL`: a Claude retry model for a failed Ollama call.** Set it to `haiku` (for example) and a summary, digest or text-only learning call that fails on Ollama runs once on that model. Unset, the behaviour is unchanged. A `GpuReservedError` is never retried, so a reservation still defers the work.
 

@@ -32,3 +32,13 @@ describe('redactSecrets pattern coverage', () => {
     expect(redactSecrets('')).toBe('');
   });
 });
+
+describe('redactSecrets: the bearer rule stays on its line', () => {
+  it('does not cross a line break after Bearer', () => {
+    expect(redactSecrets('Auth header is Bearer\n\nPlain words follow.')).toBe('Auth header is Bearer\n\nPlain words follow.');
+  });
+
+  it('still redacts a bearer value on the same line', () => {
+    expect(redactSecrets('Authorization: Bearer abc.def')).toBe('Authorization: [redacted]');
+  });
+});

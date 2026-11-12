@@ -360,3 +360,20 @@ describe('rewriteLinkSlugs', () => {
     expect(rewriteLinkSlugs(text, map)).toBe(text);
   });
 });
+
+describe('rewriteLinkSlugs: review fixes', () => {
+  const map = new Map([['7c91e2ab', 'new']]);
+
+  it('rewrites a link whose text spans a line break', () => {
+    expect(rewriteLinkSlugs('See [a\nb](old.md#^7c91e2ab).', map)).toBe('See [a\nb](new.md#^7c91e2ab).');
+  });
+
+  it('keeps the carriage returns of a CRLF paragraph', () => {
+    expect(rewriteLinkSlugs('See [a\r\nb](old.md#^7c91e2ab).\r\n', map)).toBe('See [a\r\nb](new.md#^7c91e2ab).\r\n');
+  });
+
+  it('keeps a link in a fence, a heading or a definition as written', () => {
+    const text = '## [h](old.md#^7c91e2ab)\n\n```\n[c](old.md#^7c91e2ab)\n```\n\n[^1]: [d](old.md#^7c91e2ab)\n';
+    expect(rewriteLinkSlugs(text, map)).toBe(text);
+  });
+});

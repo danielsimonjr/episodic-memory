@@ -1,4 +1,5 @@
 import { SUMMARIZER_CONTEXT_MARKER } from './constants.js';
+import { EXAMPLE_SLUG } from './topic-validate.js';
 import { numberExchanges } from './digest-prompts.js';
 import { redactEntryText } from './digest-validate.js';
 import { assignUnitIds, fenceStep, parseTopicDoc, rewriteLinkSlugs, rewriteMarks, serializeTopicDoc, } from './topic-format.js';
@@ -29,8 +30,9 @@ const TOPIC_RULES = [
     '- Never drop a source that a document already cites.',
     '- A slug uses lowercase letters, digits and hyphens only.',
     '- Write no line that starts with ===, except in a block header.',
+    `- The example shows the form only. Never write a document named ${EXAMPLE_SLUG}.`,
     'Example of one correct block:',
-    '=== FILE example-topic',
+    `=== FILE ${EXAMPLE_SLUG}`,
     '# Example topic',
     '',
     'The build runs on a Linux runner. [^1]',

@@ -70,7 +70,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/digest-inject.ts` | episodic-memory | src | reachable | 62 |
 | `src/digest-job.ts` | episodic-memory | src | test-only | 206 |
 | `src/digest-phase.ts` | episodic-memory | src | test-only | 28 |
-| `src/digest-prompts.ts` | episodic-memory | src | test-only | 116 |
+| `src/digest-prompts.ts` | episodic-memory | src | test-only | 122 |
 | `src/digest-tool.ts` | episodic-memory | src | reachable | 59 |
 | `src/digest-validate.ts` | episodic-memory | src | reachable | 107 |
 | `src/doctor-cli.ts` | episodic-memory | src | orphan | 84 |
@@ -143,10 +143,10 @@ This report lists each source file that the map census finds, with a disposition
 | `src/topic-format.ts` | episodic-memory | src | reachable | 462 |
 | `src/topic-job.ts` | episodic-memory | src | test-only | 307 |
 | `src/topic-phase.ts` | episodic-memory | src | test-only | 40 |
-| `src/topic-prompts.ts` | episodic-memory | src | test-only | 274 |
+| `src/topic-prompts.ts` | episodic-memory | src | test-only | 291 |
 | `src/topic-time.ts` | episodic-memory | src | reachable | 42 |
 | `src/topic-tool.ts` | episodic-memory | src | reachable | 149 |
-| `src/topic-validate.ts` | episodic-memory | src | test-only | 211 |
+| `src/topic-validate.ts` | episodic-memory | src | test-only | 218 |
 | `src/types.ts` | episodic-memory | src | reachable | 82 |
 | `src/verify.ts` | episodic-memory | src | reachable | 226 |
 | `test/agent-sdk-floor.test.ts` | (root) | tests | test | 39 |
@@ -291,9 +291,9 @@ This report lists each source file that the map census finds, with a disposition
 | `test/topic-format.test.ts` | (root) | tests | test | 379 |
 | `test/topic-job.test.ts` | (root) | tests | test | 559 |
 | `test/topic-phase.test.ts` | (root) | tests | test | 102 |
-| `test/topic-prompts.test.ts` | (root) | tests | test | 586 |
+| `test/topic-prompts.test.ts` | (root) | tests | test | 663 |
 | `test/topic-tool.test.ts` | (root) | tests | test | 492 |
-| `test/topic-validate.test.ts` | (root) | tests | test | 364 |
+| `test/topic-validate.test.ts` | (root) | tests | test | 371 |
 | `test/verify.test.ts` | (root) | tests | test | 320 |
 | `test/version-consistency.test.ts` | (root) | tests | test | 30 |
 | `vitest.config.ts` | (root) | config | config | 26 |

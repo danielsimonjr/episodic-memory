@@ -3,6 +3,9 @@ import { isValidTime, parseTopicDoc, UNIT_ID_PATTERN, type TopicDoc } from './to
 /** The form of a document slug. */
 export const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{0,63}$/;
 
+/** The reserved slug of the example block in the topic prompt. A document never uses the reserved slug. Check 1 rejects a FILE block with the reserved slug. */
+export const EXAMPLE_SLUG = 'example-topic';
+
 /** One staged block of a model answer: a new text for a document, or the removal of a document. */
 export type TopicBlock = { kind: 'file'; slug: string; text: string } | { kind: 'delete'; slug: string };
 
@@ -38,12 +41,16 @@ export function validateTopicEdit(input: TopicEditInput): string[] {
     errors.push(`check ${n}: ${message}`);
   };
 
-  // Check 1 names a bad slug or a slug in two blocks. The other checks skip a bad slug.
+  // Check 1 names a bad slug, the example slug, or a slug in two blocks. The other checks skip a bad slug.
   const valid: TopicBlock[] = [];
   const blockCount = new Map<string, number>();
   for (const block of input.blocks) {
     if (!SLUG_PATTERN.test(block.slug)) {
       fail(1, `${block.slug}: slug does not match the slug pattern`);
+      continue;
+    }
+    if (block.kind === 'file' && block.slug === EXAMPLE_SLUG) {
+      fail(1, `${block.slug}: the slug of the prompt example is not a document slug`);
       continue;
     }
     valid.push(block);

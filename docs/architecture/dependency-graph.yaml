@@ -4,7 +4,7 @@ metadata:
   language: typescript
   totalFiles: 252
   totalModules: 4
-  totalExports: 566
+  totalExports: 567
 modules:
   src:
     cli/digest-hook.js:
@@ -2777,8 +2777,9 @@ modules:
           typeOnly: true
         - file: src/topic-validate.ts
           imports:
+            - EXAMPLE_SLUG
             - TopicBlock
-          typeOnly: true
+          typeOnly: false
         - file: src/digest-prompts.ts
           imports:
             - numberExchanges
@@ -2861,6 +2862,7 @@ modules:
           typeOnly: false
       exports:
         - SLUG_PATTERN
+        - EXAMPLE_SLUG
         - TopicBlock
         - TopicEditInput
         - validateTopicEdit
@@ -6126,6 +6128,11 @@ modules:
             - prepareTopicEdit
             - TopicPromptDoc
           typeOnly: false
+        - file: src/topic-validate.ts
+          imports:
+            - EXAMPLE_SLUG
+            - validateTopicEdit
+          typeOnly: false
       exports: []
     test/topic-tool.test.ts:
       externalDependencies:
@@ -6171,6 +6178,7 @@ modules:
       internalDependencies:
         - file: src/topic-validate.ts
           imports:
+            - EXAMPLE_SLUG
             - validateTopicEdit
             - TopicEditInput
           typeOnly: false
@@ -6232,8 +6240,8 @@ statistics:
   totalTypeScriptFiles: 252
   totalSourceFiles: 252
   totalModules: 4
-  totalLinesOfCode: 51304
-  totalExports: 566
+  totalLinesOfCode: 51418
+  totalExports: 567
   entryRoots: 6
   reachableFiles: 44
   dormantFiles: 56
@@ -6241,7 +6249,7 @@ statistics:
   testOnlyFiles: 43
   runtimeCircularDeps: 0
   typeOnlyCircularDeps: 1
-  totalTypeOnlyImports: 79
+  totalTypeOnlyImports: 78
   noImporterFileCount: 13
   unusedExportsCount: 113
   circularDepsTruncated: false
@@ -6254,7 +6262,7 @@ statistics:
   totalFunctions: 316
   totalTypeGuards: 9
   totalEnums: 0
-  totalConstants: 64
+  totalConstants: 65
   totalReExports: 8
 reachability:
   roots:

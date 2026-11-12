@@ -1,5 +1,5 @@
 import type { ConversationExchange } from './types.js';
-import type { TopicBlock } from './topic-validate.js';
+import { type TopicBlock } from './topic-validate.js';
 /** One stored document, as the prompt needs it. */
 export interface TopicPromptDoc {
     slug: string;

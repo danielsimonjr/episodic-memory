@@ -98,7 +98,7 @@ Concurrency: `sync-cli.ts` holds the sync lock (`acquireLock(getSyncLockPath())`
 
 The edit is checked against the project state AFTER the edit (the untouched documents plus the new ones). Every check that fails adds one error line. Any error rejects the whole edit.
 
-1. Each slug matches the slug pattern. A slug appears in at most one block.
+1. Each slug matches the slug pattern. A `FILE` block does not use `example-topic`, the slug of the example block in the prompt. A slug appears in at most one block.
 2. A `DELETE` names an existing document.
 3. A `FILE` or `DELETE` block names a new slug or a document whose full text was in this prompt. The model cannot replace or remove a document it did not read.
 4. Each document has exactly one level-1 heading, on its first non-blank line.

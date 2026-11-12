@@ -5,6 +5,7 @@ import type { ConversationExchange } from '../src/types.js';
 import { SUMMARIZER_CONTEXT_MARKER } from '../src/constants.js';
 import { parseTopicDoc, assignUnitIds, UNIT_ID_PATTERN } from '../src/topic-format.js';
 import { buildTopicPrompt, parseTopicAnswer, prepareTopicEdit, type TopicPromptDoc } from '../src/topic-prompts.js';
+import { EXAMPLE_SLUG, validateTopicEdit } from '../src/topic-validate.js';
 
 function ex(id: string, user: string, agent = 'ok'): ConversationExchange {
   return {
@@ -620,6 +621,23 @@ describe('buildTopicPrompt: the rules', () => {
     const docParsed = parseTopicDoc(block.slug, block.text);
     expect(docParsed.errors).toEqual([]);
     expect(docParsed.definitions.length).toBeGreaterThan(1);
+  });
+
+  it('gives an example that fails validation only on its reserved slug', () => {
+    const p = prompt();
+    expect(p).toContain(`- The example shows the form only. Never write a document named ${EXAMPLE_SLUG}.`);
+    const start = p.indexOf('Example of one correct block:');
+    const parsed = parseTopicAnswer(p.slice(start, p.indexOf('=== END', start) + '=== END'.length));
+    const ids = new Map([[2, 'ex-2'], [4, 'ex-4'], [5, 'ex-5']]);
+    const blocks = prepareTopicEdit({ project: 'p', blocks: parsed.blocks, marks: ids, before: new Map() });
+    const errors = validateTopicEdit({
+      before: new Map(),
+      blocks,
+      shown: new Set(),
+      exchangeExists: id => [...ids.values()].includes(id),
+      limits: { maxDocChars: 8000, maxDocs: 50 },
+    });
+    expect(errors).toEqual([`check 1: ${EXAMPLE_SLUG}: the slug of the prompt example is not a document slug`]);
   });
 
   it('gives no concrete date outside the example block', () => {

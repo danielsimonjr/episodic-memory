@@ -606,6 +606,7 @@
     "src/topic-time.ts": [],
     "src/topic-tool.ts": [],
     "src/topic-validate.ts": [
+      "test/topic-prompts.test.ts",
       "test/topic-validate.test.ts"
     ],
     "src/types.ts": [
@@ -1206,7 +1207,8 @@
       "src/types.ts",
       "src/constants.ts",
       "src/topic-format.ts",
-      "src/topic-prompts.ts"
+      "src/topic-prompts.ts",
+      "src/topic-validate.ts"
     ],
     "test/topic-tool.test.ts": [
       "src/mcp-tools.ts",

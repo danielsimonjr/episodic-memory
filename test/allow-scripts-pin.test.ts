@@ -14,8 +14,9 @@ function resolvedBetterSqlite3FromBunLock(lockText: string): string | undefined 
 }
 
 // better-sqlite3 is a NATIVE module: without its postinstall, better_sqlite3.node is never built
-// and every sync dies with "Could not locate the bindings file". npm 11 skips install scripts
-// unless package.json declares allowScripts, and `claude plugin update` clones this repo into a
+// and every sync dies with "Could not locate the bindings file". npm 11 reads the allowScripts
+// policy of package.json. npm 11.20 still runs an unlisted script with a notice. The npm docs say
+// that a later release blocks an unlisted script. `claude plugin update` clones this repo into a
 // fresh version directory and runs npm install there - so the declaration MUST live in the repo,
 // not on any one machine.
 //
@@ -70,6 +71,16 @@ describe('allowScripts declaration for native modules', () => {
     const key = Object.keys(pkg.allowScripts).find((k) => k.startsWith('better-sqlite3@'));
     const pinned = key!.split('@').pop();
     expect(dep).toBe(pinned);
+  });
+
+  // A name-only `false` entry tells npm to skip the install script of the named package. npm 11.20
+  // skips a denied script. npm 11.20 still runs an unlisted script with a notice. The onnxruntime-node
+  // postinstall installs nothing on win32 and darwin. On linux/x64, the postinstall downloads the
+  // CUDA 12 provider files (a NuGet package of about 236 MB). The plugin runs on the CPU only. The
+  // protobufjs postinstall only prints a version-scheme warning.
+  it('denies the install scripts that the plugin does not need', () => {
+    expect(pkg.allowScripts['onnxruntime-node']).toBe(false);
+    expect(pkg.allowScripts['protobufjs']).toBe(false);
   });
 
   it('is enabled, not merely present', () => {

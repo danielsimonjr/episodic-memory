@@ -762,7 +762,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 79
+      "loc": 90
     },
     {
       "file": "test/archive-path-edges.test.ts",

@@ -1028,7 +1028,7 @@
         ]
       },
       "src/digest-validate.ts": {
-        "description": "Keep the model lines that cite only known exchanges, and rewrite their marks.",
+        "description": "A run of mark groups inside the line, such as `[1]` or `[2][3]`. No word character and no `]` comes before",
         "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [

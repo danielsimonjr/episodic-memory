@@ -59,10 +59,11 @@ export declare function listActiveByTier(db: Database.Database, tier: DigestTier
  */
 export declare function supersede(db: Database.Database, ids: number[], byId: number): void;
 /**
- * List the exchange ids that the trailing mark group of a digest line cites.
+ * List the exchange ids that the mark groups of a digest line cite.
  *
- * The mark group has the form `[#a,#b]`. The function returns an empty list when the line
- * has no trailing group. The function ignores each part that does not start with `#`.
+ * A mark group has the form `[#a,#b]`. A line can hold one mark group for each statement, so the
+ * function reads every bracket group of the line, not only the last group. The function ignores each
+ * part that does not start with `#`. The function returns an empty list when the line has no mark group.
  *
  * @param line the digest line to check
  */

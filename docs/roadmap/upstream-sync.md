@@ -26,7 +26,7 @@ upstream. Keep that set as small as possible by upstreaming aggressively.
 Standard sync, when no conflicts expected:
 
 ```bash
-cd ~/Dropbox/Github/episodic-memory
+cd ~/Github/episodic-memory
 git fetch upstream
 git log --oneline main..upstream/main          # what's new on obra
 git diff main upstream/main -- src/             # which files changed

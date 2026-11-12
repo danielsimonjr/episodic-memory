@@ -12,7 +12,7 @@ exists to ship those fixes immediately without waiting for upstream merge.
 ## Identity invariants
 
 - **Repo:** `~/Github/episodic-memory` (local) ↔ `danielsimonjr/episodic-memory` (origin) ↔ `obra/episodic-memory` (upstream)
-- **Default branch:** `main` — direct push, no PR flow for fork-only commits
+- **Default branch:** `main` is protected. The CI `build` check is required, so every change goes on a branch and a pull request.
 - **Upstream remote:** `upstream` → `https://github.com/obra/episodic-memory.git`
 - **Install path on this machine:** `episodic-memory@local-marketplace`. The marketplace `local-marketplace` is sourced from the GitHub repo `danielsimonjr/skills`. NOT `@superpowers-marketplace`.
 - **Persistent state lives outside the repo.** This fork uses a relocated copy at `~/.claude/episodic-memory-data/` (configured via `EPISODIC_MEMORY_CONFIG_DIR` user env var), while the original at `~/.config/superpowers/` is preserved untouched as a fallback so upstream installs (if reverted to) still find their data.
@@ -361,7 +361,7 @@ Use `dev-workflow` skill for any task that produces a commit. Pipeline:
 7. **update ROADMAP/todo.md** — flip checkboxes in tracking docs
 8. **update CHANGELOG** — entry under `## [Unreleased]`, user-facing
 9. **commit** — atomic, descriptive message, `Co-Authored-By: Claude` footer
-10. **push** — direct push to fork's `main`
+10. **push** — push the branch, open a pull request, and merge after CI passes
 11. **next task** — pick next 🟢 from todo.md
 12. **recurse** — back to step 1
 

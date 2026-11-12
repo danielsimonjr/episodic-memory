@@ -1,5 +1,8 @@
 ## [Unreleased]
 
+### Changed
+- **Tracker and contributor docs match the repo again.** `CLAUDE.md` and `todo.md` said "direct push" to `main`; `main` requires the CI `build` check, so they now say branch and pull request. The local path is `~/Github/episodic-memory`, not `~/Dropbox/Github/episodic-memory`. `todo.md` closes the shipped rows with evidence: topic Tasks 6-7, the combined digest, the fork install, the eol fix and upstream #95. It also adds the open work that an audit found.
+
 ## [1.8.0] - 2026-11-12
 
 ### Added

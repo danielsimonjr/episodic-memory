@@ -30,14 +30,19 @@ items move between sections as state changes.
 
 ## Active queue
 
-- [ ] **Self-organized topic memory (SOMEM)** — from arXiv paper "Can LLM Agents Organize Their Own Memory?" (Fu, Qi et al.). The sync job writes agent-organized Topic documents that cite exchanges; the runtime validates each edit and derives backlinks and a timeline. Scope: Topic + validation + backlinks + timeline + MCP search/read; Core and Recent left out (the digest covers them; paper ablation shows them within noise). Spec and plan under `docs/superpowers/`.
+- [x] **Self-organized topic memory (SOMEM)** — from arXiv paper "Can LLM Agents Organize Their Own Memory?" (Fu, Qi et al.). The sync job writes agent-organized Topic documents that cite exchanges; the runtime validates each edit and derives backlinks and a timeline. Scope: Topic + validation + backlinks + timeline + MCP search/read; Core and Recent left out (the digest covers them; paper ablation shows them within noise). Spec and plan under `docs/superpowers/`.
   - [x] Tasks 1-3 (format, validator, store) plus the fix list of the Sonnet review and the Haiku challenger: fences, one reference per label, bare marks, links by unit id, range bounds, leap years, shared FTS query, pinned test arrays.
   - [x] Task 4: prompt, answer parser and prepare (worker df74821), plus the review fix list: fenced `===` lines, caller-order-independent doc order, bearer rule on one line, malformed blocks kept verbatim, link rewrite across lines, link targets kept by redaction.
   - [x] Task 5: organize job, phase and sync wiring (worker 8c63d13, reviewer 2653bc7), plus the fix list: NOTHING answer, edit faults stay pending, prompt never rejected for size, exact transcript cap, one Ollama cap reader, SINCE warning, mutant-checked reserve and NULL tests. Spec sections 5 and 11 updated.
-  - [ ] Tasks 6-7: the `topics` MCP tool, docs and build. Task 6: import only topic-db, topic-format and constants; never write; the server does not see EPISODIC_MEMORY_TOPICS, so the tool keys off the tables, not the flag.
+  - [x] Tasks 6-7: the `topics` MCP tool, docs and build. Task 6: import only topic-db, topic-format and constants; never write; the server does not see EPISODIC_MEMORY_TOPICS, so the tool keys off the tables, not the flag. Shipped in v1.8.0 (#43): `src/topic-tool.ts`, registered as `topics` in `src/mcp-server.ts`; README and docs/SCHEMA.md describe it.
 - 2026-11-12 five-axis (topic Task 6): speed: the server loads topic-tool on the first topics call only (bundle external, schema imports the import-free topic-time); stability: two load failures fixed at the cause (a learn test reached the real judge; the hook timing test counted the Node start); reliability: the tool opens the index read-only and creates no file, rejects from after to, caps the timeline, names an unknown unit; security: every action redacts secrets (tested), PII left unredacted as the spec says; maintainability: clones 3/2/12 before and after; left: the digest tool opens the index as a writer by design (handoff writes).
 - 2026-11-12 five-axis (topic Task 5 fixes): speed n/a; stability: an edit fault no longer rejects a session for good; reliability: the digest prompt is no longer cut silently on Ollama, an empty-answer session is no longer rejected on Ollama; security n/a; maintainability: one reader of the Ollama prompt cap and one integer parser. clones 3/2/12 before and after, none in this diff.
 - 2026-11-12 five-axis (topic Task 4 fixes): speed n/a; stability n/a; reliability: a fenced `=== END` no longer truncates a document silently; security: the bearer redaction no longer eats the next line, a secret-shaped slug is no longer mangled, the transcript-echo risk is recorded for the Task 7 risks section; maintainability: one fence rule (`fenceStep`) for the parser, the rewrite helpers and the answer parser. clones 3/2/12 before and after, none in this diff.
+- [ ] **Dependency-minimization plan** — the deployed tree is 807 MB; `@huggingface/transformers` (431 MB) and the Agent SDK's bundled `claude` binary (274 MB) are 87% of it. Write `docs/roadmap/dependency-minimization.md`: per dependency the saving, risk, acceptance test, rollback and a verdict. Not every dependency has to go.
+- [ ] **Topics writes no documents** — after the start time moved back, 6 of 6 sessions gave 0 documents: 4 empty, 2 rejected by footnote checks 5 and 7, each with `attempts: 0`. Find whether the prompt, the model or the validator is at fault before changing one.
+- [ ] **Learn agent runner: cwd, poll cost, stale pid file** — the SDK child inherits the learn process cwd (`C:\Windows\System32` under a scheduled task) and scans it; `listAgentProcesses` starts a Windows PowerShell per poll per agent (615 starts in 8 minutes); `.learn.pids` keeps a dead pid after a crash.
+- [ ] **Vitest fail-fast guard for a missing fake** — a test that gives no fake judge, agent runner or text model reaches the real model and stalls to its timeout. Make the default fail at once in tests.
+- [ ] **Digest keeps raw numeric citations** — stored digest text keeps marks such as `[2]` and `[3]`. Reproduce with a test, then fix where the text is stored.
 - [ ] **STE pass over the old prose of CLAUDE.md, docs/SCHEMA.md (learn section) and MCP-TOOLS.md (digest, skills)** - 2026-11-12: `repo-tools ste` still reports long sentences and unclear references in text that the topic docs did not touch.
 - [ ] **Embedding-heavy tests time out under load** — 2026-11-12 full run: 3 failures near 12 s (`DO NOT INDEX marker`, `search` project filter, `learnSearch` hidden id), all pass alone and on the next full run (1165 of 1165). Find the shared cause (per-test timeout vs cold embedder per worker) and fix it at the root. Two more load failures on 2026-11-12, both fixed at the cause in topic Task 6: `relay-task6-findings` "spend outgrows the prechecked baseline" timed out at 30 s because its recall answers reached the default judge, a real Claude learn-model call (a probe counted 1 judge call per run, and it was the only default-judge call in the 508 learn tests); the test now passes a fake judge. `digest-hook` "finishes well under 2 s" timed the Node start too (2072 ms under load; idle: start 50 ms, hook 30 ms); it now subtracts a bare Node start and holds the hook to 1000 ms. The embedding-heavy timeouts above stay open.
 - 2026-11-12 five-axis (topic Tasks 1-3 fixes): speed n/a; stability: the flake above is recorded; reliability: a valid document with a code fence is no longer refused, a stale link slug no longer blocks a regroup; security: a source that is not an exchange id can no longer be stored silently; maintainability: one FTS query builder and one reference pattern. clones 3 exact, 2 text, 12 near before and after, none in this diff.
@@ -46,23 +51,23 @@ items move between sections as state changes.
 - [x] **Digest silent on Ollama since 2026-10-19** — `callOllama` refused every reply without `<summary>`; digest and learn calls now pass `requireSummaryBlock: false`. Also: stale committed bundle (old zod) rebuilt and a CI freshness check added; the suite no longer reads the machine's Ollama model.
 - [x] **Self-improving memory (Recursa)** — design spec at `docs/superpowers/specs/2026-11-05-recursa-self-improving-memory-design.md`, plan at `docs/superpowers/plans/2026-11-05-recursa-self-improving-memory.md` (11 tasks: knowledge store, gates, `skills` tool, archive-graded task generation + grading, in-process tool server + solver, `learn` CLI, bootstrap, leaf learner, recursive learner, export/approval/doctor, docs). All 11 tasks shipped 2026-11-06 (Tasks 0–10 as PRs #21–#30, Task 11 as the docs PR). Originally backed by `@danielsimonjr/memoryjs` (spec decision 10); replaced by a native `better-sqlite3` store on 2026-11-06 (PRs #34–#35), same on-disk layout. Flag `EPISODIC_MEMORY_LEARN`, off by default; Node floor 22.12. Remaining for the owner, both human steps from the plan: the dual-machine plugin-cache install check (Step 3) and the live-archive smoke run plus `learn approve` decision (Step 5).
 
-- [ ] **Combined memory digest** — spec approved; implemented on branch `feat/digest` (storage, validation, prompts, session job, compression, injection hook, `digest` tool). Remaining: smoke test on a copy of the live database, then enable the flag on both machines.
+- [x] **Combined memory digest** — shipped in v1.7.0 (#13, #14): `src/digest-*.ts` (storage, validation, prompts, session job, day/week compression, injection hook, `digest` tool). Spec phases 1-5 done: `EPISODIC_MEMORY_DIGEST=1` is set on both machines, and the EVO sync logs written entries.
 
 - [x] **CI RED: `bun audit --audit-level=critical` fails (2026-10-07 22:14)** — 3 new critical advisories: proxy-addr 2.0.7 (via claude-agent-sdk > MCP sdk > express) and tinypool 1.1.1 (via vitest). Found on docs PR #10; main last ran green 2026-09-24, before the advisories. Fix at the parent with `bun audit fix`, verify the resolved lockfile and the full suite, then merge so #10 can go green. DONE: merged in #11 (130c5d0); `bun audit --audit-level=critical` reports none; typecheck clean, 72 files / 355 tests pass.
 
 ### Immediate (next session-or-two)
 
-- [ ] **Swap install source from upstream → fork** — first-time activation. The user runs `/plugin uninstall episodic-memory@superpowers-marketplace` then `/plugin install episodic-memory@local-marketplace` then `/reload-plugins`. Memory is already in place at `~/.claude/episodic-memory-data/` (cloned from `~/.config/superpowers/` on 2026-05-18); `EPISODIC_MEMORY_CONFIG_DIR` user env var points the fork at it. Original at `~/.config/superpowers/` preserved as fallback.
-- [ ] **Verify fork install works end-to-end** — after the swap, run a real search query through the MCP `search` tool (should return results from the 2,739 indexed exchanges) and a real `read` against a returned archive_path (should resolve to the new `~/.claude/episodic-memory-data/conversation-archive/...` path). Confirm no `× failed` symptoms; confirm the new path-confinement rejects out-of-archive paths.
-- [ ] **Monitor obra/episodic-memory#95 for merges** — when obra responds, decide whether to split into 4 PRs or wait for review feedback.
+- [x] **Swap install source from upstream → fork** — done: `installed_plugins.json` lists only `episodic-memory@local-marketplace`.
+- [x] **Verify fork install works end-to-end** — done: the fork serves the MCP tools on both machines, and the scheduled sync runs the installed version with rc 0.
+- [x] **Monitor obra/episodic-memory#95 for merges** — closed upstream: #95 is a closed issue, fixed by upstream commits `32c8382` and `a3438a6` (v1.4.2). The upstream sync row below owns what is left.
 
 ### Short-term (1-3 months, mirrors `docs/roadmap/now.md`)
 
 - [x] **SessionStart sync failures should not be silent** (upstream #94) — `cli/sync-hook.js` logs to `sync-errors.log` and always exits 0; `doctor` surfaces last 5 errors.
 - [x] **`doctor` Windows diagnostics** — default `episodic-memory doctor` reports plugin/node_modules sentinels, DB stats, hook errors, EMBEDDING_VERSION drift; `--json` supported.
 - [x] **Search-result summary visibility** (upstream #74) — summaries in markdown + MCP JSON + multi-concept; `EPISODIC_MEMORY_INCLUDE_SUMMARY` flag.
-- [ ] **Upstream sync after first obra merges** — drop redundant fork patches per the "When upstream merges a fork patch" recipe in `docs/roadmap/upstream-sync.md`.
-- [ ] **(Considered, deliberately NOT done 2026-06-24) `.gitattributes` eol normalization for `dist/`** — the committed `dist/` churns LF↔CRLF on every Windows `tsc` build (gotcha #3 documents the "stage real-content files only" workaround). A `* text=auto eol=lf` + `git add --renormalize` would stop the churn but (a) produces a one-time ~40-file noisy diff and (b) risks eol merge friction against `upstream/main` (this is a fork that merges from obra). Left as-is on purpose; revisit if/when the fork stops tracking upstream.
+- [ ] **Upstream sync: triage the 40 obra commits since the fork point (v1.4.2 to v1.6.0)** — no fork patch went upstream as a PR, so the original trigger cannot happen. Classify each commit as already in the fork, port, or skip, with evidence. Port by cherry-pick, one PR per fix. Do not merge `upstream/main`: the fork diverged in the summarizer, sync and indexer.
+- [x] **`.gitattributes` eol normalization** — done in `5dd7e3d`: `* text=auto eol=lf` plus `"newLine": "lf"` in tsconfig, so a Windows build leaves `dist/` clean.
 
 ### Medium-term (3-6 months, mirrors `docs/roadmap/next.md`)
 
@@ -70,7 +75,7 @@ Themes (not individual tasks; promote into tasks here as plans firm up):
 
 - [ ] **Theme 1: Better first-run install story** — progress reporting, doctor install command, failure recovery hints
 - [ ] **Theme 2: Search quality experiments** — the archive-graded eval harness shipped with Recursa (`learn tasks` + `learn solve` + `learn report`: held-out `test` split, pass rate per kind and tier before and after). Remaining: label ≥50 real "find that conversation where I…" queries on top of it, then ship one quality improvement (summary visibility or rank fusion) with a measured win; LEANN feasibility study
-- [ ] **Theme 3: Embedding pipeline modernization** — compare bge-small / gte-small / mxbai-embed-large against current MiniLM-L6; reversible upgrade if winner emerges
+- [ ] **Theme 3: Embedding pipeline modernization** — compare bge-small / gte-small / mxbai-embed-large against the current bge-small-en-v1.5 (q8, 384 dims); reversible upgrade if winner emerges
 - [ ] **Theme 4: Observability & debugging UX** — structured sync log, `doctor` expansion, DEBUG=episodic:* flag, local metrics counters
 - [ ] **Theme 5: Cross-harness integration polish** — harness detection metadata, summarization fallback chain
 - [ ] **Theme 6: Multi-machine foundation (import/export)** — per-machine identity tagging, bundle export/import; full sync deferred to `later.md`
@@ -83,7 +88,7 @@ Themes (not individual tasks; promote into tasks here as plans firm up):
 ### Items that were considered but not pursued this cycle
 
 - [ ] **`: any` type tightening** — 16 sites in `src/` use `any` at DB-row + JSONL-payload trust boundaries. Tightening to `unknown` + type guards is a real refactor. Defer until a quality reason exists; don't churn for cosmetics.
-- [ ] **Major dep bumps** — typescript 5→6, vitest 3→4, marked 16→18, @types/node 24→25. All cross-major; each needs its own evaluation. Defer until needed (e.g., a vitest 4 fix we want).
+- [ ] **Major dep bumps** — typescript 5→6, marked 16→18, @types/node 24→25. All cross-major; each needs its own evaluation. vitest is already on 4. The dependency-minimization plan (row in the Active queue) owns the dependency list.
 - [x] **Parser TODO** at `src/parser.ts:207` — Claude `tool_result` now matches `tool_use_id` the same way Codex matches `call_id`.
 
 ### Upstream behavior we're tracking but not contributing to
@@ -97,10 +102,10 @@ Themes (not individual tasks; promote into tasks here as plans firm up):
 
 ### Repo state
 
-- **Repo:** `~/Dropbox/Github/episodic-memory` (local working dir)
+- **Repo:** `~/Github/episodic-memory` (local working dir)
 - **Origin:** `danielsimonjr/episodic-memory` (a fork)
 - **Upstream:** `obra/episodic-memory`
-- **Default branch:** `main` (direct push, no PR flow for fork-only commits)
+- **Default branch:** `main` is protected (required CI check `build`): every change goes on a branch and a pull request.
 - **bun.lock:** committed — prefer `bun install --frozen-lockfile` on fresh checkouts; CI audits at critical level via `bun audit`. Do not commit `package-lock.json`.
 - **dist/ committed:** edit `src/`, then `bun run build`, then commit both. Only stage dist files with real content diffs (skip line-ending-only churn)
 - **Toolchain vs runtime:** Bun for install/scripts/CI; Node for shipped CLI/MCP/hooks. Plugin first-run wrapper still runs `npm install`.

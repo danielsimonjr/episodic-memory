@@ -1,5 +1,8 @@
 ## [Unreleased]
 
+### Fixed
+- **A Windows build no longer marks every `dist/` file modified.** `.gitattributes` checks every text file out as LF and `tsconfig.json` sets `newLine: lf`. Before, `core.autocrlf=true` checked `src/` out as CRLF, `tsc` copied the CRs inside multi-line strings into `dist/`, and each build showed about 25 changed `dist/` files with no real change.
+
 ## [1.7.4] - 2026-11-12
 
 ### Fixed

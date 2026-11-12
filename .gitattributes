@@ -1,0 +1,4 @@
+# Check every text file out as LF on every OS. Under core.autocrlf=true a CRLF
+# src/ checkout puts CRs inside multi-line strings, and tsc copies them into dist/,
+# so every Windows build marked dist/ modified with no real change.
+* text=auto eol=lf

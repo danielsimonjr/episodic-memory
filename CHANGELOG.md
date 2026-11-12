@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [1.8.0] - 2026-11-12
+
 ### Added
 - **`topics` MCP tool, read-only.** It lists the topic documents of a project, reads one, searches their paragraphs, shows the links and backlinks of one paragraph, or lists the dated events. The tool opens the index read-only and creates no file on a fresh install. It answers "no documents yet" until the topic tables exist, because the server never sees `EPISODIC_MEMORY_TOPICS`. A timeline returns at most `limit` events (default 50) and says how many it left out. An unknown unit gets its own message. The tool loads on its first call only: the schema module imports the import-free `src/topic-time.ts`, and the bundle keeps `topic-tool.js` outside the server.
 

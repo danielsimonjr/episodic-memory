@@ -1,6 +1,6 @@
 import { ConversationExchange } from './types.js';
 import { query } from '@anthropic-ai/claude-agent-sdk';
-import { SUMMARIZER_CONTEXT_MARKER } from './constants.js';
+import { CLAUDE_MAX_PROMPT_CHARS, OLLAMA_MAX_PROMPT_CHARS_DEFAULT, SUMMARIZER_CONTEXT_MARKER } from './constants.js';
 import { VERSION } from './version.js';
 import { SUMMARIZER_GUARD_ENV, shouldSkipReentrantSync } from './reentrancy.js';
 import { spawn } from 'child_process';
@@ -346,6 +346,19 @@ function callModel(prompt: string, requireSummaryBlock = true): Promise<string> 
 export function callDigestModel(prompt: string): Promise<string> {
   // The digest prompt asks for cited lines, not a <summary> block. parseCitedLines checks the reply.
   return callModel(prompt, false);
+}
+
+/**
+ * The prompt character budget of the configured backend.
+ *
+ * On the Ollama backend the budget is EPISODIC_MEMORY_OLLAMA_MAX_PROMPT_CHARS. The value is parsed the way
+ * `callOllama` parses it, so a prompt within the budget is never cut by the call. On the Claude backend the
+ * budget is 48000 characters.
+ */
+export function promptBudgetChars(): number {
+  if (summarizerBackend() !== 'ollama') return CLAUDE_MAX_PROMPT_CHARS;
+  const n = Number(process.env.EPISODIC_MEMORY_OLLAMA_MAX_PROMPT_CHARS);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : OLLAMA_MAX_PROMPT_CHARS_DEFAULT;
 }
 
 /**

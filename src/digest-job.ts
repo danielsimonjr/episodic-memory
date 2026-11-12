@@ -3,7 +3,7 @@ import type { ConversationExchange } from './types.js';
 import { shouldSkipReentrantSync } from './reentrancy.js';
 import { gpuReservationBlock } from './gpu-reservation.js';
 import { GpuReservedError, summarizerBackend } from './ollama-backend.js';
-import { callDigestModel } from './summarizer.js';
+import { callDigestModel, promptBudgetChars } from './summarizer.js';
 import { buildSessionPrompt } from './digest-prompts.js';
 import { parseCitedLines, redactEntryText } from './digest-validate.js';
 import { insertDigestEntry } from './digest-db.js';
@@ -32,7 +32,7 @@ export interface DigestResult {
 }
 
 /** A session whose last exchange is newer than this is still running; summarize it next time. */
-const QUIET_MS = 30 * 60 * 1000;
+export const QUIET_MS = 30 * 60 * 1000;
 const DEFAULT_MAX_SESSIONS = 5;
 
 /**
@@ -56,7 +56,8 @@ interface SessionRow {
   end: string;
 }
 
-interface ExchangeRow {
+/** One exchange row, as the exchanges table returns it. */
+export interface ExchangeRow {
   id: string;
   project: string;
   timestamp: string;
@@ -67,7 +68,8 @@ interface ExchangeRow {
   line_end: number;
 }
 
-function toExchange(r: ExchangeRow): ConversationExchange {
+/** Map an exchange row to the public shape. */
+export function toExchange(r: ExchangeRow): ConversationExchange {
   return {
     id: r.id,
     project: r.project,
@@ -80,7 +82,8 @@ function toExchange(r: ExchangeRow): ConversationExchange {
   };
 }
 
-function isTrivial(exchanges: ConversationExchange[]): boolean {
+/** Tell whether a session is trivial: one exchange that is `/exit` or is shorter than 100 characters. */
+export function isTrivial(exchanges: ConversationExchange[]): boolean {
   if (exchanges.length !== 1) return false;
   const [e] = exchanges;
   return e.userMessage.trim() === '/exit' || e.userMessage.length + e.assistantMessage.length < 100;
@@ -123,7 +126,16 @@ async function writeSessionEntries(
       continue;
     }
     attempted++;
-    const { prompt, marks } = buildSessionPrompt(exchanges);
+    // The prompt must fit the backend budget, because the Ollama call cuts anything longer without a word.
+    // numberExchanges does not count the blank line between its blocks, so keep two characters of slack per exchange.
+    const budget = promptBudgetChars();
+    const overhead = buildSessionPrompt([], 0).prompt.length;
+    const { prompt, marks } = buildSessionPrompt(exchanges, Math.max(0, budget - overhead - 2 * exchanges.length));
+    if (prompt.length > budget) {
+      console.error(`digest: session ${s.session_id} does not fit the prompt budget of ${budget} characters`);
+      result.failed++;
+      continue;
+    }
     let raw: string;
     try {
       raw = await model(prompt);

@@ -120,6 +120,7 @@ const { initDatabase } = await import('./db.js');
 const { generateExchangeEmbedding, initEmbeddings } = await import('./embeddings.js');
 const { runMigrationBatch, countStale } = await import('./embedding-migration.js');
 const { runDigestPhase } = await import('./digest-phase.js');
+const { runTopicPhase } = await import('./topic-phase.js');
 
 const sourceDirs = getConversationSourceDirs();
 const destDir = getArchiveDir();
@@ -207,6 +208,9 @@ async function syncAll() {
 
   // Digest of past sessions (off unless EPISODIC_MEMORY_DIGEST=1). Never throws.
   await runDigestPhase();
+
+  // Topic memory, after the digest (off unless EPISODIC_MEMORY_TOPICS=1). Never throws.
+  await runTopicPhase();
 }
 
 const MIGRATION_BATCH_SIZE = parseInt(process.env.EPISODIC_MEMORY_MIGRATION_BATCH || '500', 10);

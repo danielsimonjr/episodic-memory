@@ -1,25 +1,24 @@
 {
   "metadata": {
     "totalSourceFiles": 100,
-    "totalTestFiles": 140,
-    "testedCount": 78,
-    "untestedCount": 22,
-    "coveragePercent": "78.0",
+    "totalTestFiles": 141,
+    "testedCount": 79,
+    "untestedCount": 21,
+    "coveragePercent": "79.0",
     "effectiveCoverage": {
       "policyLoaded": false,
       "activeFiles": 100,
-      "testedActive": 78,
-      "activeUntested": 22,
+      "testedActive": 79,
+      "activeUntested": 21,
       "excludedTotal": 0,
-      "percent": "78.0",
+      "percent": "79.0",
       "breakdown": {
-        "active_untested": 22
+        "active_untested": 21
       }
     }
   },
   "untestedFiles": [
     "cli/digest-hook.js",
-    "cli/ensure-deps.js",
     "cli/episodic-memory.js",
     "cli/index-conversations.js",
     "cli/mcp-server-wrapper.js",
@@ -42,6 +41,7 @@
     "src/topic-tool.ts"
   ],
   "testedFiles": [
+    "cli/ensure-deps.js",
     "src/api-endpoint.ts",
     "src/archive-path.ts",
     "src/backfill.ts",
@@ -123,7 +123,9 @@
   ],
   "coverageMap": {
     "cli/digest-hook.js": [],
-    "cli/ensure-deps.js": [],
+    "cli/ensure-deps.js": [
+      "test/runtime-imports.test.ts"
+    ],
     "cli/episodic-memory.js": [],
     "cli/index-conversations.js": [],
     "cli/mcp-server-wrapper.js": [],
@@ -1081,6 +1083,9 @@
     "test/reentrancy.test.ts": [
       "src/reentrancy.ts"
     ],
+    "test/runtime-imports.test.ts": [
+      "cli/ensure-deps.js"
+    ],
     "test/search-agent-template.test.ts": [],
     "test/search-metadata-filters.test.ts": [
       "src/indexer.ts",
@@ -1224,10 +1229,6 @@
   "classifiedUntested": [
     {
       "file": "cli/digest-hook.js",
-      "category": null
-    },
-    {
-      "file": "cli/ensure-deps.js",
       "category": null
     },
     {

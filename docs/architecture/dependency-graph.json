@@ -3,7 +3,7 @@
     "name": "episodic-memory",
     "schemaVersion": "2.0.0",
     "language": "typescript",
-    "totalFiles": 251,
+    "totalFiles": 252,
     "totalModules": 4,
     "totalExports": 566
   },
@@ -8072,6 +8072,28 @@
         ],
         "exports": []
       },
+      "test/runtime-imports.test.ts": {
+        "externalDependencies": [
+          "typescript",
+          "vitest"
+        ],
+        "nodeDependencies": [
+          "fs",
+          "module",
+          "os",
+          "path"
+        ],
+        "internalDependencies": [
+          {
+            "file": "cli/ensure-deps.js",
+            "imports": [
+              "NPM_INSTALL_ARGS"
+            ],
+            "typeOnly": false
+          }
+        ],
+        "exports": []
+      },
       "test/search-agent-template.test.ts": {
         "externalDependencies": [
           "vitest"
@@ -9286,21 +9308,21 @@
     }
   },
   "statistics": {
-    "totalTypeScriptFiles": 251,
-    "totalSourceFiles": 251,
+    "totalTypeScriptFiles": 252,
+    "totalSourceFiles": 252,
     "totalModules": 4,
-    "totalLinesOfCode": 51213,
+    "totalLinesOfCode": 51304,
     "totalExports": 566,
     "entryRoots": 6,
     "reachableFiles": 44,
     "dormantFiles": 56,
-    "orphanedFiles": 14,
-    "testOnlyFiles": 42,
+    "orphanedFiles": 13,
+    "testOnlyFiles": 43,
     "runtimeCircularDeps": 0,
     "typeOnlyCircularDeps": 1,
     "totalTypeOnlyImports": 79,
     "noImporterFileCount": 13,
-    "unusedExportsCount": 114,
+    "unusedExportsCount": 113,
     "circularDepsTruncated": false,
     "runtimeCyclicComponents": 0,
     "typeOnlyCyclicComponents": 1,
@@ -9327,7 +9349,6 @@
     "dormantCount": 56,
     "orphaned": [
       "cli/digest-hook.js",
-      "cli/ensure-deps.js",
       "cli/episodic-memory.js",
       "cli/index-conversations.js",
       "cli/mcp-server-wrapper.js",
@@ -9342,6 +9363,7 @@
       "src/sync-cli.ts"
     ],
     "testOnly": [
+      "cli/ensure-deps.js",
       "src/backfill.ts",
       "src/codex-hook-trust.ts",
       "src/deps-health.ts",

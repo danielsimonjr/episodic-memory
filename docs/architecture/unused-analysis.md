@@ -8,11 +8,11 @@
 
 - **Files with no in-repo importer**: 13
 - **Dormant files**: 56
-  - **Orphaned (reachable from nothing)**: 14
-  - **Test-only (only a test reaches them)**: 42
-- **Potentially unused exports**: 114
+  - **Orphaned (reachable from nothing)**: 13
+  - **Test-only (only a test reaches them)**: 43
+- **Potentially unused exports**: 113
   - **Unreferenced anywhere**: 4
-  - **Referenced in their own module**: 110
+  - **Referenced in their own module**: 109
   - **Not classified**: 0
 
 ## Caveats
@@ -28,7 +28,6 @@
 Source files that no root and no test reaches. Verify each one before you delete it.
 
 - `cli/digest-hook.js`
-- `cli/ensure-deps.js`
 - `cli/episodic-memory.js`
 - `cli/index-conversations.js`
 - `cli/mcp-server-wrapper.js`
@@ -46,6 +45,7 @@ Source files that no root and no test reaches. Verify each one before you delete
 
 Source files that only a test reaches. They ship nothing, but a test uses them.
 
+- `cli/ensure-deps.js`
 - `src/backfill.ts`
 - `src/codex-hook-trust.ts`
 - `src/deps-health.ts`
@@ -125,7 +125,6 @@ No other file imports these names, and their own module does not use them.
 
 No other file imports these names, but their own module uses them.
 
-- `cli/ensure-deps.js`: `NPM_INSTALL_ARGS`
 - `src/api-endpoint.ts`: `ApiBaseUrlValidation`
 - `src/deps-health.ts`: `nativeAddonPresent`
 - `src/digest-compress.ts`: `CompressOptions`, `CompressResult`

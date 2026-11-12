@@ -15,6 +15,7 @@
 - **Secret redaction ate the next line after a bare `Bearer`.** The bearer rule matched `\s+`, so `Bearer` at the end of a line took the first word of the next line as its value. It now matches spaces and tabs only. This also applies to digest text.
 
 ### Changed
+- **Docs for topic memory.** README, `docs/SCHEMA.md`, `skills/remembering-conversations/MCP-TOOLS.md`, `CLAUDE.md` and `docs/architecture/` describe the organize step, its settings, the topic tables and the `topics` tool. `CLAUDE.md` now lists the modules that the server loads at start and in each tool branch, from the import graph, and says that the bundle inlines all but `skills-tool.js` and `topic-tool.js`. The architecture docs now say that a sync run waits for the digest step and the topic step. Stale paths, counts and dates are removed.
 - **One FTS query builder.** `src/fts-query.ts` holds `toFtsQuery`, which the digest store and the topic store both use.
 
 ## [1.7.5] - 2026-11-12

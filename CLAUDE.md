@@ -17,8 +17,8 @@ exists to ship those fixes immediately without waiting for upstream merge.
 - **Install path on this machine:** `episodic-memory@local-marketplace`. The marketplace `local-marketplace` is sourced from the GitHub repo `danielsimonjr/skills`. NOT `@superpowers-marketplace`.
 - **Persistent state lives outside the repo.** This fork uses a relocated copy at `~/.claude/episodic-memory-data/` (configured via `EPISODIC_MEMORY_CONFIG_DIR` user env var), while the original at `~/.config/superpowers/` is preserved untouched as a fallback so upstream installs (if reverted to) still find their data.
   - **Active path (fork reads from here):** `C:\Users\danie\.claude\episodic-memory-data\`
-    - DB: `…\conversation-index\db.sqlite` (175 MB, 2,739 exchanges)
-    - Archive: `…\conversation-archive\` (751 MB across 16 projects)
+    - DB: `…\conversation-index\db.sqlite`
+    - Archive: `…\conversation-archive\`
   - **Fallback path (preserved, untouched, byte-identical):** `C:\Users\danie\.config\superpowers\`
   - **Why the duplication:** isolates fork's data from upstream's; lets us experiment with embedder bumps / schema migrations on the fork without contaminating the canonical config-dir copy. Original survives if we ever revert to `episodic-memory@superpowers-marketplace`.
   - **Keep them in sync intermittently** — if you want the fallback to mirror the active copy after substantive new indexing, re-run robocopy from active → fallback. Or leave them diverged; the fallback is just a recovery point.

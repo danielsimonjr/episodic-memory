@@ -8,8 +8,8 @@
 
 - **Files with no in-repo importer**: 13
 - **Dormant files**: 56
-  - **Orphaned (reachable from nothing)**: 14
-  - **Test-only (only a test reaches them)**: 42
+  - **Orphaned (reachable from nothing)**: 13
+  - **Test-only (only a test reaches them)**: 43
 - **Potentially unused exports**: 113
   - **Unreferenced anywhere**: 4
   - **Referenced in their own module**: 109
@@ -28,7 +28,6 @@
 Source files that no root and no test reaches. Verify each one before you delete it.
 
 - `cli/digest-hook.js`
-- `cli/ensure-deps.js`
 - `cli/episodic-memory.js`
 - `cli/index-conversations.js`
 - `cli/mcp-server-wrapper.js`
@@ -46,6 +45,7 @@ Source files that no root and no test reaches. Verify each one before you delete
 
 Source files that only a test reaches. They ship nothing, but a test uses them.
 
+- `cli/ensure-deps.js`
 - `src/backfill.ts`
 - `src/codex-hook-trust.ts`
 - `src/deps-health.ts`

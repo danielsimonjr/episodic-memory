@@ -10,6 +10,14 @@ import { spawnSync } from 'child_process';
 import { join } from 'path';
 import { repairPlan } from '../dist/deps-health.js';
 
+/**
+ * A first-run install on a plugin host uses these npm arguments. `--omit=dev` keeps the build and
+ * test tools (vitest, typescript, esbuild, type packages) out of the plugin cache, because no runtime
+ * file imports these tools. `test/runtime-imports.test.ts` checks that no runtime file imports a tool.
+ * The optional platform packages stay, because the native modules need these packages.
+ */
+export const NPM_INSTALL_ARGS = Object.freeze(['install', '--omit=dev', '--no-audit', '--no-fund']);
+
 function runNpm(pluginRoot, args) {
   const isWindows = process.platform === 'win32';
   const opts = { cwd: pluginRoot, stdio: ['ignore', 2, 2] };
@@ -32,7 +40,7 @@ export function ensureDeps(pluginRoot) {
 
   if (plan === 'install') {
     console.error('Installing episodic-memory dependencies (first run only, 30-60 s)...');
-    runNpm(pluginRoot, ['install', '--no-audit', '--no-fund']);
+    runNpm(pluginRoot, [...NPM_INSTALL_ARGS]);
   }
   // `npm install` does not rebuild a binding that its install scripts were skipped for, so check
   // again after an install rather than trusting its exit code.

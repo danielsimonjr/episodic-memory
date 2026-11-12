@@ -8,7 +8,7 @@ This report lists each source file that the map census finds, with a disposition
 
 **Language**: typescript
 
-**Total files**: 251
+**Total files**: 252
 
 ## Disposition counts
 
@@ -16,14 +16,14 @@ This report lists each source file that the map census finds, with a disposition
 | --- | --: | --- |
 | `reachable` | 40 | A `src`-area file that an entry root reaches. |
 | `build-entry` | 4 | A `src`-area file that is an entry root. |
-| `test-only` | 42 | A `src`-area file that only a test reaches. |
-| `orphan` | 14 | A `src`-area file that nothing reaches. Delete it, or wire it to a root. |
-| `test` | 146 | A file in a `test/` or `tests/` folder, or a `*.test.ts` or `*.spec.ts` file. |
+| `test-only` | 43 | A `src`-area file that only a test reaches. |
+| `orphan` | 13 | A `src`-area file that nothing reaches. Delete it, or wire it to a root. |
+| `test` | 147 | A file in a `test/` or `tests/` folder, or a `*.test.ts` or `*.spec.ts` file. |
 | `tool` | 4 | A file in a `tools/` or `scripts/` folder outside `src/`. |
 | `config` | 1 | A `*.config.*` file of TypeScript or JavaScript. |
 | `example` | 0 | A file in `examples/` or `docs/`. |
 | `bench` | 0 | A file in `bench/` or `benchmarks/`, or a `*.bench.*` file. |
-| **Total** | **251** | |
+| **Total** | **252** | |
 
 ## Per-area counts
 
@@ -31,14 +31,14 @@ This report lists each source file that the map census finds, with a disposition
 | --- | --: |
 | `config` | 1 |
 | `src` | 100 |
-| `tests` | 146 |
+| `tests` | 147 |
 | `tools` | 4 |
 
 ## Per-package counts
 
 | Package | Files |
 | --- | --: |
-| `(root)` | 158 |
+| `(root)` | 159 |
 | `episodic-memory` | 93 |
 
 ## All files
@@ -46,7 +46,7 @@ This report lists each source file that the map census finds, with a disposition
 | File | Package | Area | Disposition | Lines |
 | --- | --- | --- | --- | --: |
 | `cli/digest-hook.js` | (root) | src | orphan | 96 |
-| `cli/ensure-deps.js` | (root) | src | orphan | 48 |
+| `cli/ensure-deps.js` | (root) | src | test-only | 56 |
 | `cli/episodic-memory.js` | (root) | src | orphan | 140 |
 | `cli/index-conversations.js` | (root) | src | orphan | 150 |
 | `cli/mcp-server-wrapper.js` | (root) | src | orphan | 106 |
@@ -252,6 +252,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/rebuild-native.test.ts` | (root) | tests | test | 48 |
 | `test/redact-patterns.test.ts` | (root) | tests | test | 44 |
 | `test/reentrancy.test.ts` | (root) | tests | test | 42 |
+| `test/runtime-imports.test.ts` | (root) | tests | test | 91 |
 | `test/search-agent-template.test.ts` | (root) | tests | test | 162 |
 | `test/search-metadata-filters.test.ts` | (root) | tests | test | 273 |
 | `test/search-with-summary.test.ts` | (root) | tests | test | 107 |

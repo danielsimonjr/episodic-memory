@@ -9,20 +9,19 @@
 | Metric | Count |
 |--------|-------|
 | Total Source Files | 100 |
-| Total Test Files | 140 |
-| Source Files with Tests | 78 |
-| Source Files without Tests | 22 |
-| Coverage (raw, direct-import) | **78.0%** |
+| Total Test Files | 141 |
+| Source Files with Tests | 79 |
+| Source Files without Tests | 21 |
+| Coverage (raw, direct-import) | **79.0%** |
 ---
 
 ## Source Files Not Imported By A Test
 
-The following 22 source files are not directly imported by any test file:
+The following 21 source files are not directly imported by any test file:
 
 ### root/
 
 - `cli/digest-hook.js`
-- `cli/ensure-deps.js`
 - `cli/episodic-memory.js`
 - `cli/index-conversations.js`
 - `cli/mcp-server-wrapper.js`
@@ -53,6 +52,7 @@ The following 22 source files are not directly imported by any test file:
 
 | Source File | Test Files |
 |-------------|------------|
+| `cli/ensure-deps.js` | `runtime-imports.test.ts` |
 | `src/api-endpoint.ts` | `security-speed-helpers.test.ts` |
 | `src/archive-path.ts` | `archive-path-edges.test.ts`, `archive-path.test.ts` |
 | `src/backfill.ts` | `backfill-gpu-reservation.test.ts`, `backfill.test.ts` |
@@ -239,6 +239,7 @@ The following 22 source files are not directly imported by any test file:
 | `test/rebuild-native.test.ts` | 0 files |
 | `test/redact-patterns.test.ts` | 1 files |
 | `test/reentrancy.test.ts` | 1 files |
+| `test/runtime-imports.test.ts` | 1 files |
 | `test/search-agent-template.test.ts` | 0 files |
 | `test/search-metadata-filters.test.ts` | 2 files |
 | `test/search-with-summary.test.ts` | 2 files |

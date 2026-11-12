@@ -52,7 +52,7 @@ dependency, no `MEMORY_*` environment handling and no per-handle cache: a write 
 - **TypeScript source** in `src/`, compiled to `dist/` by `tsc && esbuild`. **Both are committed.**
 - **CLI entry points** in `cli/` (Node.js wrappers — no bash).
 - **MCP server** is `dist/mcp-server.js`, launched by `cli/mcp-server-wrapper.js` from the plugin manifest.
-- **Tests** in `test/` via vitest (140 files, 1352 tests).
+- **Tests** in `test/` via vitest (141 files, 1355 tests).
 - **Generated files** in `dist/` AND `src/version.ts`. The latter is gitignored; never edit it.
 - **`bun.lock` is committed** — CI uses `bun install --frozen-lockfile` + `bun audit --audit-level=critical`. Do not commit `package-lock.json` (gitignored).
 
@@ -108,7 +108,7 @@ scripts/
 
 test/
   test-utils.ts          # createTestDb, safeRmSync (fork-added), suppressConsole, fixtures
-  *.test.ts              # 140 test files, 1352 tests
+  *.test.ts              # 141 test files, 1355 tests
   learn/                 # the Recursa suite; fakes for every model call
   fixtures/              # JSONL conversation fixtures
 
@@ -145,16 +145,18 @@ is a fork-only divergence from upstream, recorded in `docs/roadmap/upstream-sync
 **Toolchain vs runtime:** Bun is the package manager and script driver (CI + local
 dev). Shipped code still runs under **Node** (CLI shebangs, `.mcp.json`, hooks).
 Plugin first-run dependency install in `cli/mcp-server-wrapper.js` still uses
-`npm install` because end-user Claude Code / Codex hosts have npm, not Bun.
+`npm install --omit=dev` (`NPM_INSTALL_ARGS` in `cli/ensure-deps.js`) because end-user Claude Code / Codex
+hosts have npm, not Bun. `test/runtime-imports.test.ts` fails when a runtime file imports a package that
+is not a dependency.
 
 ### Current test state
 
-- **Full suite: 1352 tests in 140 files pass** (~17s wall clock on Linux;
+- **Full suite: 1355 tests in 141 files pass** (~17s wall clock on Linux;
   Windows runs are slower). The former `integration.test.ts` / `verify.test.ts` cold-embedding
   timeout flakes were fixed: the embedder is pre-warmed once per worker in `beforeAll`,
   `vitest.config.ts` sets `hookTimeout: 30000`, and the repair re-index test gets 60s. If you see a fresh
   timeout flake, suspect a new embedding-heavy hook without warm-up rather than the old cold-start cause.
-- The learn tests are the bulk of it (`test/learn/`, 36 files; the other 104 test files sit directly in `test/`). They never reach a model: every agent and
+- The learn tests are the bulk of it (`test/learn/`, 36 files; the other 105 test files sit directly in `test/`). They never reach a model: every agent and
   text call is injectable and tests pass fakes. `test/test-env.ts` pins the Claude backend, a closed ollama URL
   and a temporary config directory. `test/setup-env.ts` deletes every other `EPISODIC_MEMORY_*` variable of
   the machine. A local run therefore uses the CI settings and cannot reach a model or the live data.

@@ -64,7 +64,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/codex-support.ts` | episodic-memory | src | reachable | 66 |
 | `src/constants.ts` | episodic-memory | src | reachable | 93 |
 | `src/db.ts` | episodic-memory | src | reachable | 546 |
-| `src/deps-health.ts` | episodic-memory | src | test-only | 76 |
+| `src/deps-health.ts` | episodic-memory | src | test-only | 77 |
 | `src/digest-compress.ts` | episodic-memory | src | test-only | 136 |
 | `src/digest-db.ts` | episodic-memory | src | reachable | 259 |
 | `src/digest-inject.ts` | episodic-memory | src | reachable | 62 |

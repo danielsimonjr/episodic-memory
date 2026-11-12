@@ -201,13 +201,73 @@ describe('buildTopicPrompt', () => {
     expect(none!.marks.size).toBe(0);
   });
 
-  it('never returns a prompt above the budget, for any budget', () => {
+  it('never returns a prompt above the budget, and fits once the budget is large enough', () => {
     const docs = [doc('a', 300), doc('b', 200), doc('c', 50)];
     const full = buildTopicPrompt(input(docs, 100000, 1000000))!.prompt.length;
+    expect(buildTopicPrompt(input(docs, 100000, 0))).toBeNull();
+    expect(buildTopicPrompt(input(docs, 100000, full))!.prompt.length).toBe(full);
+    let seenFit = false;
     for (let budget = 0; budget <= full + 50; budget += 37) {
       const result = buildTopicPrompt(input(docs, 100000, budget));
-      if (result !== null) expect(result.prompt.length).toBeLessThanOrEqual(budget);
+      if (seenFit) expect(result).not.toBeNull();
+      if (result !== null) {
+        seenFit = true;
+        expect(result.prompt.length).toBeLessThanOrEqual(budget);
+      }
     }
+    expect(seenFit).toBe(true);
+  });
+
+  it('shows the most recently updated documents first, whatever the input order', () => {
+    const older = { ...doc('older', 10), updatedAt: '2026-01-01T00:00:00.000Z' };
+    const newer = { ...doc('newer', 10), updatedAt: '2026-02-01T00:00:00.000Z' };
+    const result = buildTopicPrompt(input([older, newer], 15, 1000000))!;
+    expect([...result.shown.keys()]).toEqual(['newer']);
+  });
+
+  it('drops the oldest shown document first under the budget, whatever the input order', () => {
+    const older = { ...doc('older', 200), updatedAt: '2026-01-01T00:00:00.000Z' };
+    const newer = { ...doc('newer', 200), updatedAt: '2026-02-01T00:00:00.000Z' };
+    const both = buildTopicPrompt(input([older, newer], 100000, 1000000))!.prompt.length;
+    const result = buildTopicPrompt(input([older, newer], 100000, both - 1))!;
+    expect([...result.shown.keys()]).toEqual(['newer']);
+  });
+
+  it('tells the model to write no line that starts with ===', () => {
+    expect(buildTopicPrompt(input([], 0, 1000000))!.prompt).toContain('- Write no line that starts with ===, except in a block header.');
+  });
+});
+
+describe('parseTopicAnswer: fences', () => {
+  it('keeps an END line inside a fence as text', () => {
+    const answer = '=== FILE a\n# A\n\n```\n=== END\n```\n\nKept.[^1]\n=== END';
+    expect(parseTopicAnswer(answer)).toEqual({
+      blocks: [{ kind: 'file', slug: 'a', text: '# A\n\n```\n=== END\n```\n\nKept.[^1]\n' }],
+      errors: [],
+    });
+  });
+
+  it('keeps FILE and DELETE lines inside a tilde fence as text', () => {
+    const answer = '=== FILE a\n~~~\n=== FILE x\n=== DELETE y\n~~~\n=== END';
+    expect(parseTopicAnswer(answer)).toEqual({
+      blocks: [{ kind: 'file', slug: 'a', text: '~~~\n=== FILE x\n=== DELETE y\n~~~\n' }],
+      errors: [],
+    });
+  });
+
+  it('does not close a four-backtick fence on three backticks', () => {
+    const answer = '=== FILE a\n````\n```\n=== END\n````\n=== END';
+    expect(parseTopicAnswer(answer)).toEqual({
+      blocks: [{ kind: 'file', slug: 'a', text: '````\n```\n=== END\n````\n' }],
+      errors: [],
+    });
+  });
+
+  it('reports a block whose fence never closes', () => {
+    expect(parseTopicAnswer('=== FILE a\n```\n=== END\n')).toEqual({
+      blocks: [],
+      errors: ['unterminated FILE block for a'],
+    });
   });
 });
 
@@ -277,6 +337,40 @@ describe('parseTopicAnswer', () => {
   });
 });
 
+describe('prepareTopicEdit: review fixes', () => {
+  const run = (text: string) =>
+    prepareTopicEdit({ project: 'proj', blocks: [{ kind: 'file', slug: 'a', text }], marks: new Map([[3, 'ex-3']]), before: new Map() });
+
+  it('keeps the prose on the line after a Bearer line', () => {
+    const out = run('# A\n\nAuth header is Bearer\nPlain words follow.[^1]\n^22222222\n\n[^1]: Time: 2026; Sources: 3\n');
+    expect(out).toEqual([
+      {
+        kind: 'file',
+        slug: 'a',
+        text: '# A\n\nAuth header is Bearer\nPlain words follow.[^1]\n^22222222\n\n[^1]: Time: 2026; Sources: #ex-3\n',
+      },
+    ]);
+  });
+
+  it('keeps the text of a block with a malformed definition as the model wrote it', () => {
+    expect(run('# A\n\nText.[^1]\n\n[^1]: Sources: 3\n')).toEqual([
+      { kind: 'file', slug: 'a', text: '# A\n\nText.[^1]\n\n[^1]: Sources: 3\n' },
+    ]);
+  });
+
+  it('keeps a secret-shaped link target and still redacts a secret in the prose', () => {
+    const secret = 'sk-ant-api03-abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGH';
+    const out = run(`# A\n\nSee [u](sk-beta-notes-for-the-project.md#^deadbeef) and ${secret}.[^1]\n^11111111\n\n[^1]: Time: 2026; Sources: 3\n`);
+    expect(out).toEqual([
+      {
+        kind: 'file',
+        slug: 'a',
+        text: '# A\n\nSee [u](sk-beta-notes-for-the-project.md#^deadbeef) and [redacted].[^1]\n^11111111\n\n[^1]: Time: 2026; Sources: #ex-3\n',
+      },
+    ]);
+  });
+});
+
 describe('prepareTopicEdit', () => {
   const ALPHA_BEFORE = '# Alpha\n\n## S\n\nA1.[^1]\n^11111111\n\n[^1]: Time: 2026; Sources: #ex-1\n';
   const BETA_BEFORE = '# Beta\n\n## S\n\nB1.[^1]\n^22222222\n\n[^1]: Time: 2026; Sources: #ex-2\n';
@@ -321,6 +415,20 @@ describe('prepareTopicEdit', () => {
     const beta = out[1];
     if (beta.kind !== 'file') throw new Error('expected a file block');
     expect(parseTopicDoc('beta', beta.text).units[0].unitId).toMatch(UNIT_ID_PATTERN);
+    // The whole prepared text. The new ids are the first 8 hex of SHA-1(project NUL slug NUL text).
+    expect(out).toEqual([
+      {
+        kind: 'file',
+        slug: 'alpha',
+        text:
+          '# Alpha\n\n## S\n\nA1.[^1]\n^11111111\n\nB1 moved here.[^2]\n^22222222\n\n' +
+          'New fact, [redacted].[^3]\n^10074df3\n\n' +
+          'See [b](alpha.md#^22222222) and [gone](old.md#^deadbeef).[^4]\n^b64566f6\n\n' +
+          '[^1]: Time: 2026; Sources: #ex-1\n[^2]: Time: 2026; Sources: #ex-2\n' +
+          `[^3]: Time: 2026-05; Sources: #${EXCHANGE_ID}\n[^4]: Time: 2026-05; Sources: #ex-2\n`,
+      },
+      { kind: 'file', slug: 'beta', text: '# Beta\n\n## S\n\nB0 left.[^1]\n^401f2979\n\n[^1]: Time: 2026-06; Sources: #ex-2\n' },
+    ]);
   });
 
   it('passes a DELETE block through in its order and keeps the other blocks', () => {

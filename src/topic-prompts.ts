@@ -5,6 +5,8 @@ import { numberExchanges } from './digest-prompts.js';
 import { redactEntryText } from './digest-validate.js';
 import {
   assignUnitIds,
+  fenceStep,
+  type FenceState,
   parseTopicDoc,
   rewriteLinkSlugs,
   rewriteMarks,
@@ -41,6 +43,7 @@ const TOPIC_RULES = [
   '- A new paragraph has no ^id line.',
   '- Never drop a source that a document already cites.',
   '- A slug uses lowercase letters, digits and hyphens only.',
+  '- Write no line that starts with ===, except in a block header.',
 ].join('\n');
 
 const FILE_OPEN = /^=== FILE(?:\s+(.*))?$/;
@@ -51,8 +54,8 @@ const END_LINE = /^=== END\s*$/;
  * Build the prompt of one session edit: the rules, the inventory of every document, the full text of
  * the documents that fit, and the numbered transcript.
  *
- * The documents arrive most recently updated first. The full text is shown for the documents in that
- * order, while their text lengths stay within `maxDocsChars`. The first document that does not fit
+ * The function sorts the documents most recently updated first. The full text is shown for the documents
+ * in that order, while their text lengths stay within `maxDocsChars`. The first document that does not fit
  * stops the cut. When the prompt is over `budgetChars`, the function drops the last shown document (the
  * oldest) and builds the prompt again, until it fits. It returns null when the prompt does not fit with
  * no document shown.
@@ -68,11 +71,13 @@ export function buildTopicPrompt(input: {
   budgetChars: number;
 }): { prompt: string; marks: Map<number, string>; shown: Map<string, string> } | null {
   const { text: transcript, marks } = numberExchanges(input.exchanges, input.maxTranscriptChars);
-  const inventory = input.docs.map(d => `- ${d.slug}: ${d.title} | ${d.headings.join(' / ')}`);
+  // Most recently updated first, whatever the caller's order. The sort is stable for equal times.
+  const docs = [...input.docs].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0));
+  const inventory = docs.map(d => `- ${d.slug}: ${d.title} | ${d.headings.join(' / ')}`);
 
   const candidates: TopicPromptDoc[] = [];
   let used = 0;
-  for (const doc of input.docs) {
+  for (const doc of docs) {
     if (used + doc.text.length > input.maxDocsChars) break;
     used += doc.text.length;
     candidates.push(doc);
@@ -123,16 +128,23 @@ function documentBody(text: string): string {
  * (trailing spaces allowed), joined by `\n`, with a final `\n`. A `=== DELETE <slug>` line is a delete
  * block. Other lines outside the blocks are ignored. A FILE block that meets the end of the answer, or
  * another `=== FILE` or `=== DELETE` line before its `=== END`, adds an error and is dropped. The line that
- * meets it opens its own block. The function does not validate the slugs.
+ * meets it opens its own block. Inside a fenced code block of a FILE block, `===` lines are text; a fence
+ * that is still open at the end of the answer leaves the block unterminated. The function does not
+ * validate the slugs.
  *
  * @param answer the text of the model answer
  */
 export function parseTopicAnswer(answer: string): { blocks: TopicBlock[]; errors: string[] } {
   const blocks: TopicBlock[] = [];
   const errors: string[] = [];
-  let open: { slug: string; lines: string[] } | null = null;
+  let open: { slug: string; lines: string[]; fence: FenceState } | null = null;
   for (const line of answer.split(/\r?\n/)) {
     if (open !== null) {
+      if (open.fence !== null) {
+        open.lines.push(line);
+        open.fence = fenceStep(open.fence, line);
+        continue;
+      }
       if (END_LINE.test(line)) {
         blocks.push({ kind: 'file', slug: open.slug, text: `${open.lines.join('\n')}\n` });
         open = null;
@@ -140,6 +152,7 @@ export function parseTopicAnswer(answer: string): { blocks: TopicBlock[]; errors
       }
       if (!FILE_OPEN.test(line) && !DELETE_OPEN.test(line)) {
         open.lines.push(line);
+        open.fence = fenceStep(null, line);
         continue;
       }
       errors.push(`unterminated FILE block for ${open.slug}`);
@@ -147,7 +160,7 @@ export function parseTopicAnswer(answer: string): { blocks: TopicBlock[]; errors
     }
     const file = FILE_OPEN.exec(line);
     if (file) {
-      open = { slug: (file[1] ?? '').trim(), lines: [] };
+      open = { slug: (file[1] ?? '').trim(), lines: [], fence: null };
       continue;
     }
     const remove = DELETE_OPEN.exec(line);
@@ -190,7 +203,7 @@ export function prepareTopicEdit(input: {
     for (const unit of units) if (unit.unitId !== null) taken.add(unit.unitId);
   }
   const rewritten: TopicBlock[] = input.blocks.map(block =>
-    block.kind === 'file' ? { ...block, text: redactEntryText(rewriteMarks(block.text, marks)) } : block
+    block.kind === 'file' ? { ...block, text: redactOutsideLinkTargets(rewriteMarks(block.text, marks)) } : block
   );
   for (const block of rewritten) {
     if (block.kind !== 'file') continue;
@@ -205,7 +218,14 @@ export function prepareTopicEdit(input: {
       prepared.push(block);
       continue;
     }
-    const doc = assignUnitIds(project, block.slug, parseTopicDoc(block.slug, block.text), taken);
+    const parsed = parseTopicDoc(block.slug, block.text);
+    if (parsed.errors.length > 0) {
+      // A malformed definition would lose its text in the canonical layout. Keep the model's text,
+      // so validation rejects it and the retry message quotes what the model wrote.
+      prepared.push(block);
+      continue;
+    }
+    const doc = assignUnitIds(project, block.slug, parsed, taken);
     for (const unit of doc.units) if (unit.unitId !== null) taken.add(unit.unitId);
     prepared.push({ kind: 'file', slug: block.slug, text: serializeTopicDoc(doc) });
   }
@@ -225,4 +245,15 @@ export function prepareTopicEdit(input: {
   return prepared.map(block =>
     block.kind === 'file' ? { ...block, text: rewriteLinkSlugs(block.text, slugOfUnit) } : block
   );
+}
+
+/** A Markdown link target, `](...)`, as one split part. */
+const LINK_TARGET = /(\]\([^()\s]*\))/;
+
+/** Redact the secrets of a text, but keep each link target as written, so a slug is never replaced. */
+function redactOutsideLinkTargets(text: string): string {
+  return text
+    .split(LINK_TARGET)
+    .map((part, i) => (i % 2 === 1 ? part : redactEntryText(part)))
+    .join('');
 }

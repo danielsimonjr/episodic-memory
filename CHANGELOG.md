@@ -3,6 +3,11 @@
 ### Added
 - **Topic memory core (not wired into sync or the MCP server yet).** `src/topic-format.ts` parses and writes topic documents: fenced code is kept verbatim, every footnote reference is kept, malformed `.md` links are listed, and `isValidTime` and `footnoteStatements` are shared. `src/topic-validate.ts` runs checks 1 to 11. A label must be referenced exactly once, a bare mark always fails, and links resolve by unit id. `src/topic-db.ts` installs an edit in one transaction. It throws on a source that is not a `#<exchange id>`, and refuses a range bound that is not a valid time.
 
+- **Topic prompt and answer handling (`src/topic-prompts.ts`).** `buildTopicPrompt` shows the most recently updated documents that fit, and drops the oldest until the prompt fits the budget. `parseTopicAnswer` reads `=== FILE` / `=== DELETE` blocks, treats `===` lines inside a fenced block as text, and reports an unterminated block. `prepareTopicEdit` rewrites marks to exchange ids, redacts secrets outside link targets, assigns new ids, and points each link at the document that now holds its paragraph. A block with a malformed definition keeps the model's text, so validation quotes it.
+
+### Fixed
+- **Secret redaction ate the next line after a bare `Bearer`.** The bearer rule matched `\s+`, so `Bearer` at the end of a line took the first word of the next line as its value. It now matches spaces and tabs only. This also applies to digest text.
+
 ### Changed
 - **One FTS query builder.** `src/fts-query.ts` holds `toFtsQuery`, which the digest store and the topic store both use.
 

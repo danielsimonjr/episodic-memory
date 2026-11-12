@@ -396,21 +396,56 @@ export function rewriteMarks(text: string, marks: ReadonlyMap<number, string>): 
 export function rewriteLinkSlugs(text: string, slugOfUnit: ReadonlyMap<string, string>): string {
   const lines = text.split('\n');
   const inFence = fenceMask(lines);
-  return lines
-    .map((line, i) => {
-      if (inFence[i]) return line;
-      const { body, cr } = splitCr(line);
-      if (HEADING_LINE.test(body) || DEFINITION_LINE.test(body)) return line;
-      const rewritten = body.replace(LINK, (match, slug: string, id: string) => {
+  const parts = lines.map(splitCr);
+  const isProse = parts.map(
+    ({ body }, i) => !inFence[i] && !HEADING_LINE.test(body) && !DEFINITION_LINE.test(body)
+  );
+  // A link can span the lines of one paragraph, so rewrite each run of prose lines as one text.
+  // A slug has no whitespace, so the rewrite never changes the line count of a run.
+  for (let start = 0; start < lines.length; start++) {
+    if (!isProse[start]) continue;
+    let end = start;
+    while (end + 1 < lines.length && isProse[end + 1]) end++;
+    const run = parts.slice(start, end + 1);
+    const rewritten = run
+      .map(p => p.body)
+      .join('\n')
+      .replace(LINK, (match, slug: string, id: string) => {
         const next = slugOfUnit.get(id);
         if (next === undefined) return match;
         // The link text has no `]`, so the first `](` splits the match before the slug.
         const cut = match.indexOf('](') + 2;
         return `${match.slice(0, cut)}${next}${match.slice(cut + slug.length)}`;
-      });
-      return `${rewritten}${cr}`;
-    })
-    .join('\n');
+      })
+      .split('\n');
+    rewritten.forEach((body, k) => {
+      lines[start + k] = `${body}${run[k].cr}`;
+    });
+    start = end;
+  }
+  return lines.join('\n');
+}
+
+/** The open fence of a line-by-line walk: its character and length, or null outside a fence. */
+export type FenceState = { char: string; length: number } | null;
+
+/**
+ * Advance a fence walk by one line, with the same rule as the document parser.
+ *
+ * Outside a fence, a line with at most 3 leading spaces and 3 or more backticks or tildes opens one.
+ * Inside a fence, a line of the same character, at least as long and with nothing after it, closes it.
+ *
+ * @param state the state before the line
+ * @param line the line, without its line end
+ * @returns the state after the line
+ */
+export function fenceStep(state: FenceState, line: string): FenceState {
+  if (state === null) {
+    const open = FENCE_OPEN.exec(line);
+    return open ? { char: open[1][0], length: open[1].length } : null;
+  }
+  const close = FENCE_CLOSE.exec(line);
+  return close && close[1][0] === state.char && close[1].length >= state.length ? null : state;
 }
 
 /** Split a line from its carriage return, so a pattern does not see it. */
@@ -425,15 +460,11 @@ function splitCr(line: string): { body: string; cr: string } {
  * unterminated block ends at the last line.
  */
 function fenceEnd(lines: readonly string[], start: number): number {
-  const fence = FENCE_OPEN.exec(lines[start]);
-  if (!fence) return start;
-  const char = fence[1][0];
-  const length = fence[1].length;
+  let state = fenceStep(null, lines[start]);
   let end = start;
-  while (end + 1 < lines.length) {
+  while (state !== null && end + 1 < lines.length) {
     end++;
-    const close = FENCE_CLOSE.exec(lines[end]);
-    if (close && close[1][0] === char && close[1].length >= length) break;
+    state = fenceStep(state, lines[end]);
   }
   return end;
 }

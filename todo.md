@@ -51,7 +51,7 @@ items move between sections as state changes.
 
 ### Immediate (next session-or-two)
 
-- [ ] **Swap install source from upstream → fork** — first-time activation. Daniel runs `/plugin uninstall episodic-memory@superpowers-marketplace` then `/plugin install episodic-memory@local-marketplace` then `/reload-plugins`. Memory is already in place at `~/.claude/episodic-memory-data/` (cloned from `~/.config/superpowers/` on 2026-05-18); `EPISODIC_MEMORY_CONFIG_DIR` user env var points the fork at it. Original at `~/.config/superpowers/` preserved as fallback.
+- [ ] **Swap install source from upstream → fork** — first-time activation. The user runs `/plugin uninstall episodic-memory@superpowers-marketplace` then `/plugin install episodic-memory@local-marketplace` then `/reload-plugins`. Memory is already in place at `~/.claude/episodic-memory-data/` (cloned from `~/.config/superpowers/` on 2026-05-18); `EPISODIC_MEMORY_CONFIG_DIR` user env var points the fork at it. Original at `~/.config/superpowers/` preserved as fallback.
 - [ ] **Verify fork install works end-to-end** — after the swap, run a real search query through the MCP `search` tool (should return results from the 2,739 indexed exchanges) and a real `read` against a returned archive_path (should resolve to the new `~/.claude/episodic-memory-data/conversation-archive/...` path). Confirm no `× failed` symptoms; confirm the new path-confinement rejects out-of-archive paths.
 - [ ] **Monitor obra/episodic-memory#95 for merges** — when obra responds, decide whether to split into 4 PRs or wait for review feedback.
 
@@ -155,7 +155,7 @@ Re-runnable when a sweep is due (per `docs/roadmap/focus-areas/security-hardenin
 
 ### Fork-specific gotchas (don't forget)
 
-- **stdio MCP servers MUST log to stderr.** `console.log` from any module reachable from `mcp-server.ts` corrupts JSON-RPC. Reachable surface: `search.ts`, `show.ts`, `db.ts`, `paths.ts`, `embeddings.ts`, `parser.ts`, `version.ts`, plus — through the lazy `skills` branch — `learn/skills-tool.ts`, `learn/knowledge-store.ts`, `learn/knowledge-db.ts`, `learn/learn-inject.ts`, `learn/learn-config.ts`, `learn/learned-text-screen.ts` and `learn/learning-store.ts`.
+- **stdio MCP servers MUST log to stderr.** `console.log` from any module reachable from `mcp-server.ts` corrupts JSON-RPC. The reachable modules are listed in the first rule of the stderr-only section of `CLAUDE.md`.
 - **Windows paths.** Always use `path.join`, `path.basename`, `path.dirname`. Never split on literal `/` or `\\`. The fork already fixed one of these (`parseConversationFile`); be alert for others.
 - **`dist/` is committed.** Always edit src/, build, commit both. After build, only stage dist files with real content diffs.
 - **EMBEDDING_VERSION bump triggers re-embed for all users.** Don't bump casually; do it as part of a planned embedder upgrade with migration story.

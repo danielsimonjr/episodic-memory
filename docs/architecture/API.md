@@ -57,7 +57,7 @@ List learned skills, search them, or load one. It reads the knowledge store only
 
 ### `topics`
 
-Read the topic memory documents of a project. The tool has five actions. The tool never writes. It opens the index read-only. When the index or a topic table is missing, the tool answers that topic memory has no documents yet. The tool does not read `EPISODIC_MEMORY_TOPICS`.
+Read the topic memory documents of a project. The tool has five actions. The tool never writes. The tool opens the index read-only. When the index or a topic table is missing, the tool answers that topic memory has no documents yet. The tool does not read `EPISODIC_MEMORY_TOPICS`.
 
 | Field | Type | Rule |
 |---|---|---|

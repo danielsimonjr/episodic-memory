@@ -90,7 +90,7 @@ The test creates an isolated temporary `CODEX_HOME`, copies your existing Codex 
 
 ## Learned Skills and the `learn` CLI
 
-Codex sessions get the same four MCP tools, including `skills`. The SessionStart hook that Codex runs after trust prints the learned-hints block when learning is on. The `learn` commands run solver and learner agents on the Claude Agent SDK. They use the same Claude credentials as the summarizer (a Claude Code login, or `EPISODIC_MEMORY_API_TOKEN` with a custom endpoint), so run them from a terminal, not from Codex. Codex transcripts are part of the corpus. They are indexed, searched, and used for practice tasks and citations, but Codex cannot drive the learner.
+Codex sessions get the same five MCP tools, including `skills` and `topics`. The SessionStart hook that Codex runs after trust prints the learned-hints block when learning is on. The `learn` commands run solver and learner agents on the Claude Agent SDK. They use the same Claude credentials as the summarizer (a Claude Code login, or `EPISODIC_MEMORY_API_TOKEN` with a custom endpoint), so run them from a terminal, not from Codex. Codex transcripts are part of the corpus. They are indexed, searched, and used for practice tasks and citations, but Codex cannot drive the learner.
 
 ## Summaries
 

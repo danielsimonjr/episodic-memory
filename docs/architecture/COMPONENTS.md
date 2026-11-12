@@ -112,7 +112,7 @@ Renders an archived conversation as markdown or HTML, with an optional line rang
 
 | Module | Role |
 |---|---|
-| `src/topic-phase.ts` | The topic step of a sync run. It never throws and never blocks the sync. |
+| `src/topic-phase.ts` | The topic step of a sync run. It never throws. The sync awaits the step, so a slow model call delays the end of the sync. |
 | `src/topic-job.ts` | Picks the finished sessions, calls the digest model, validates each edit, and installs it in one transaction. |
 | `src/topic-prompts.ts` | Builds the organize prompt and parses the `FILE` and `DELETE` blocks of the answer. |
 | `src/topic-validate.ts` | Runs the checks of one staged edit. It returns one error line for each failed check. |

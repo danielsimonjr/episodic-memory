@@ -15,7 +15,7 @@ exists to ship those fixes immediately without waiting for upstream merge.
 - **Default branch:** `main` — direct push, no PR flow for fork-only commits
 - **Upstream remote:** `upstream` → `https://github.com/obra/episodic-memory.git`
 - **Install path on this machine:** `episodic-memory@local-marketplace`. The marketplace `local-marketplace` is sourced from the GitHub repo `danielsimonjr/skills`. NOT `@superpowers-marketplace`.
-- **Persistent state lives outside the repo.** As of 2026-05-18, this fork uses a relocated copy at `~/.claude/episodic-memory-data/` (configured via `EPISODIC_MEMORY_CONFIG_DIR` user env var), while the original at `~/.config/superpowers/` is preserved untouched as a fallback so upstream installs (if reverted to) still find their data.
+- **Persistent state lives outside the repo.** This fork uses a relocated copy at `~/.claude/episodic-memory-data/` (configured via `EPISODIC_MEMORY_CONFIG_DIR` user env var), while the original at `~/.config/superpowers/` is preserved untouched as a fallback so upstream installs (if reverted to) still find their data.
   - **Active path (fork reads from here):** `C:\Users\danie\.claude\episodic-memory-data\`
     - DB: `…\conversation-index\db.sqlite` (175 MB, 2,739 exchanges)
     - Archive: `…\conversation-archive\` (751 MB across 16 projects)
@@ -42,7 +42,7 @@ When upstream merges these (or equivalents), rebase/merge `upstream/main` and dr
 
 ## Knowledge store (no memoryjs)
 
-The `learn` feature's `learned/knowledge.db` is plain better-sqlite3 as of 2026-11-06: `src/learn/knowledge-store.ts`
+The `learn` feature's `learned/knowledge.db` is plain better-sqlite3: `src/learn/knowledge-store.ts`
 owns the `entities` / `relations` layout (the one the former `@danielsimonjr/memoryjs` adapter created, so an
 existing file opens unchanged) and every read-modify-write runs under the write lock. There is no memoryjs
 dependency, no `MEMORY_*` environment handling and no per-handle cache: a write is visible to every open handle.
@@ -150,11 +150,11 @@ Plugin first-run dependency install in `cli/mcp-server-wrapper.js` still uses
 ### Current test state
 
 - **Full suite: 1330 tests in 138 files pass** (~17s wall clock on Linux;
-  Windows runs are slower, about 45s). The former `integration.test.ts` / `verify.test.ts` cold-embedding
-  timeout flakes were fixed 2026-06-23: the embedder is pre-warmed once per worker in `beforeAll`,
+  Windows runs are slower). The former `integration.test.ts` / `verify.test.ts` cold-embedding
+  timeout flakes were fixed: the embedder is pre-warmed once per worker in `beforeAll`,
   `vitest.config.ts` sets `hookTimeout: 30000`, and the repair re-index test gets 60s. If you see a fresh
   timeout flake, suspect a new embedding-heavy hook without warm-up rather than the old cold-start cause.
-- The learn tests are the bulk of it (`test/learn/`, ~35 files). They never reach a model: every agent and
+- The learn tests are the bulk of it (`test/learn/`, 36 files; the other 102 test files sit directly in `test/`). They never reach a model: every agent and
   text call is injectable and tests pass fakes, and `vitest.config.ts` pins the Claude backend and a closed
   ollama URL so a run cannot reach a shared GPU.
 - Run a single test: `bun run test test/<file>.test.ts`. Much faster, cleaner output.
@@ -170,22 +170,25 @@ stdout is reserved for JSON-RPC. **Any `console.log` reachable from the MCP serv
 - ❌ `console.log(...)` — corrupts protocol
 - ❌ `process.stdout.write(...)` — corrupts protocol
 
-This applies to **every module reachable from `mcp-server.ts`**.
+The stderr-only rule applies to **every module reachable from `mcp-server.ts`**. The lists below name the modules of the source import graph. The `bundle` script inlines all of them into `dist/mcp-server.js`, except `learn/skills-tool.js` and `topic-tool.js`, which stay separate files. The rule holds for both the source and the bundle.
 
 Static imports load these modules at server start:
 
-`mcp-server.ts`, `mcp-tools.ts`, `mcp-schemas.ts`, `mcp-auth.ts`, `archive-path.ts`, `paths.ts`, `db.ts`, `digest-db.ts`, `embedding-migration.ts`, `fts-query.ts`, `lockfile.ts`, `redact.ts`, `constants.ts`, `types.ts`, `version.ts`, `learn/learn-config.ts`, `topic-time.ts`
+`mcp-server.ts`, `mcp-tools.ts`, `mcp-schemas.ts`, `mcp-auth.ts`, `archive-path.ts`, `paths.ts`, `db.ts`, `digest-db.ts`, `embedding-migration.ts`, `fts-query.ts`, `lockfile.ts`, `redact.ts`, `constants.ts`, `version.ts`, `learn/learn-config.ts`, `topic-time.ts`
 
 Dynamic imports load these modules only inside a branch:
 
-- `search`: `search.ts`, `show.ts`, `embeddings.ts`
+- `search`: `search.ts`, `embeddings.ts`
+- `read`: `show.ts`
 - `digest`: `digest-tool.ts`, `digest-inject.ts`, `digest-validate.ts`
-- `skills`: `learn/skills-tool.ts`, `learn/knowledge-store.ts`, `learn/learn-inject.ts`, `learn/learned-text-screen.ts`, `learn/pii-redactor.ts`
+- `skills`: `learn/skills-tool.ts`, `digest-inject.ts`, `learn/knowledge-store.ts`, `learn/learn-inject.ts`, `learn/learned-text-screen.ts`, `learn/pii-redactor.ts`
 - `topics`: `topic-tool.ts`, `topic-db.ts`, `topic-format.ts`, `digest-inject.ts`, `digest-validate.ts`
 
-`topic-tool.ts` is imported lazily, like `skills-tool.ts`. `fts-query.ts` and `topic-time.ts` are already eager, so the topic branch adds nothing to them. `mcp-schemas.ts` imports only `topic-time.ts` eagerly. Modules used only by CLI files (`indexer.ts`, `sync.ts`, `learn/cli-main.ts`, etc.) are safe to use `console.log` in.
+`topic-tool.ts` is imported lazily, like `skills-tool.ts`. `fts-query.ts` and `topic-time.ts` are already eager. The topic branch adds nothing to them. `mcp-schemas.ts` imports only `topic-time.ts` eagerly.
 
-The lazy import is load-bearing in both directions: `mcp-tools.ts` calls `learnEnabled()` from `learn-config.ts` (which imports nothing) *before* it imports `skills-tool.ts`, so a flag-off server never opens the knowledge store and a session that never asks for a skill pays nothing for the feature. The same holds for `topic-tool.ts`: a session that never calls `topics` loads none of the topic modules. Keep the eager feature surface at `learn-config.ts` and `topic-time.ts` and nothing else.
+CLI files use some modules that the server never loads, for example `indexer.ts`, `sync.ts` and `learn/cli-main.ts`. These modules can use `console.log`.
+
+The lazy import is load-bearing in both directions: `mcp-tools.ts` calls `learnEnabled()` from `learn-config.ts` (which imports nothing) *before* it imports `skills-tool.ts`, so a flag-off server never opens the knowledge store and a session that never asks for a skill pays nothing for the feature. The same holds for `topic-tool.ts`: a session that never calls `topics` loads no topic module except `topic-time.ts`. Keep the eager feature surface at `learn-config.ts` and `topic-time.ts` and nothing else.
 
 ### 2. Windows path separators
 
@@ -226,7 +229,7 @@ Tests use `mkdtempSync`, set `TEST_DB_PATH`/`TEST_PROJECTS_DIR`/`EPISODIC_MEMORY
 
 ### 7. MCP failure-cache bug
 
-Claude Code's plugin loader caches MCP failures keyed on config-hash. Once a server fails to start, `/reload-plugins` silently skips it forever. To force a retry, change the env in `.mcp.json` (a `_RETRY` field with a unique timestamp works). Documented at [[feedback_claude_code_mcp_failure_cache]] and exercised during the mcp-host troubleshooting on 2026-05-18.
+Claude Code's plugin loader caches MCP failures keyed on config-hash. Once a server fails to start, `/reload-plugins` silently skips it forever. To force a retry, change the env in `.mcp.json` (a `_RETRY` field with a unique timestamp works). Documented at [[feedback_claude_code_mcp_failure_cache]].
 
 The fork's plugin uses `cwd: '.'` and a fixed command — if a fresh install fails, it's the plugin bug, not the cache bug.
 
@@ -372,7 +375,7 @@ Use `dev-workflow` skill for any task that produces a commit. Pipeline:
 **For non-trivial work, also use:**
 - `superpowers:brainstorming` → `superpowers:writing-plans` for design/plan docs
 - `Adam (Gemini 2.5 Pro) + Eve (OpenAI o3)` adversarial review on both design AND plan (the "review-both" lesson from UPT)
-- `RLM` skill for whole-codebase audits (this fork's first one happened 2026-05-18; see `CHANGELOG.md`)
+- `RLM` skill for whole-codebase audits (see `CHANGELOG.md` for the first audit of this fork)
 - `honest-claude` skill to vet every RLM finding by reading the actual file before recommending or committing
 
 ## Common debugging recipes
@@ -402,7 +405,7 @@ echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":
 
 Expected response on stdout (single JSON line):
 ```json
-{"result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"episodic-memory","version":"1.4.0"}},"jsonrpc":"2.0","id":1}
+{"result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"episodic-memory","version":"<version>"}},"jsonrpc":"2.0","id":1}
 ```
 Plus on stderr: `Episodic Memory MCP server running via stdio`.
 

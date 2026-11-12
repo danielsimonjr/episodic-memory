@@ -249,7 +249,7 @@ The MCP server does not read the `EPISODIC_MEMORY_TOPICS_*` variables. The plugi
 | `links` | `unit` | `project` |
 | `timeline` | none | `project`, `from`, `to`, `limit` |
 
-A missing required argument is a schema error. An argument that the action does not use is accepted and ignored. An unknown field is refused.
+A missing required argument is a schema error. The schema refuses an unknown field. The schema checks `unit`, `from` and `to` for every action. A malformed value is a schema error, even when the action does not use that argument. A `to` before `from` is also a schema error. The action ignores any other argument that it does not use.
 
 ### Usage
 
@@ -263,7 +263,7 @@ A missing required argument is a schema error. An argument that the action does 
 
 **Show a timeline:** `{ "action": "timeline", "from": "2026", "to": "2026-06" }`
 
-Each timeline event names its source exchange ids. Pass an id to the `digest` tool with `expand` to get the archive path and line range, then pass that to `read`. To see the sources of a paragraph, `read` the document: its footnotes list the exchange ids. A search hit gives a unit id. Pass that id to `links` to see the paragraphs that link to the unit or that the unit links to.
+Each timeline event names its source exchange ids. A source `#4f2a...` is the id `4f2a...` without the `#`. Call the `digest` tool with `expand` set to that id, for example `{ "expand": "a1b2c3d4e5f60718293a4b5c6d7e8f90" }`. The call returns the archive path and line range to pass to the `read` tool. To see the sources of a paragraph, use the `read` action on the document: its footnotes list the exchange ids. A search hit gives a unit id. Pass that id to `links` to see the paragraphs that link to the unit or that the unit links to.
 
 ### Response Format
 
@@ -273,7 +273,7 @@ Every response is plain text.
 |--------|--------|
 | `list` | One line for each document: `- <slug>: <title> (<n> units)`. With no document: `No topic documents for <project>.` |
 | `read` | The text of the document, as stored. With an unknown slug: `No topic document "<slug>" in <project>.` |
-| `search` | One line for each hit: `- <slug> \| <heading> \| unit <unit id> \| <text> \| times: <times>`. `times` lists the event times in the range, or `none`. With no hit: `No topic units match "<query>".` |
+| `search` | One line for each hit: `- <slug> \| <heading> \| unit <unit id> \| <text> \| times: <times>`. `times` lists the event times in the range, or `none`. With no `from` and `to`, the range is all times. With no hit: `No topic units match "<query>".` |
 | `links` | The heading `Outgoing links of <unit>:`, then one line for each linked paragraph, or `- none`. Then the heading `Backlinks of <unit>:`, with the same lines. With an unknown unit: `No topic unit "<unit>" in <project>.` |
 | `timeline` | One line for each event, in time order: `- <time> \| <statement> \| unit <unit id> \| sources: #<id>, #<id>`, or `sources: none` when the event has no source. With no event: `No timeline events for <project>.` |
 

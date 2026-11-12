@@ -115,6 +115,9 @@ describe('relay task 6 findings', () => {
             ...cap.deps,
             dbs,
             runAgent: fakeRunAgent(),
+            // A recall answer that locates its range goes to the judge. Without a fake, the default
+            // judge calls the real learn model, which stalls this test to its timeout under load.
+            judge: async () => '<score>1</score>',
           });
         } catch (error) {
           threw = error;

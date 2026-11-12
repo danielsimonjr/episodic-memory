@@ -33,3 +33,35 @@ export declare function truncationNoticeFor(originalLength: number): string;
  * never stacks notices.
  */
 export declare function truncateForIndex(message: string): string;
+/** Prompt budget of the Ollama backend, in characters: the default of EPISODIC_MEMORY_OLLAMA_MAX_PROMPT_CHARS. */
+export declare const OLLAMA_MAX_PROMPT_CHARS_DEFAULT = 24000;
+/** Prompt budget of the Claude backend, in characters. */
+export declare const CLAUDE_MAX_PROMPT_CHARS = 48000;
+/**
+ * Defaults of the topic memory limits. Each limit with an environment variable is read from it at call time,
+ * and an invalid value falls back to the default here.
+ */
+export declare const TOPIC_DEFAULTS: {
+    /** EPISODIC_MEMORY_TOPICS_MAX_SESSIONS: sessions that reach the model per run. */
+    readonly maxSessions: 3;
+    /** EPISODIC_MEMORY_TOPICS_MAX_TRANSCRIPT_CHARS: the numbered transcript of one session. */
+    readonly maxTranscriptChars: 10000;
+    /** EPISODIC_MEMORY_TOPICS_MAX_DOCS_CHARS: the full text of the documents shown in one prompt. */
+    readonly maxDocsChars: 10000;
+    /** EPISODIC_MEMORY_TOPICS_MAX_DOC_CHARS: the length of one document. */
+    readonly maxDocChars: 8000;
+    /** EPISODIC_MEMORY_TOPICS_MAX_DOCS: the number of documents of one project. */
+    readonly maxDocs: 50;
+    /** Failed model calls of one session before the session is rejected. */
+    readonly maxFailedCalls: 3;
+    /** Prompt characters kept free for the error list that a retry adds. */
+    readonly retryReserveChars: 1000;
+};
+/** Return true when topic memory is on. The flag is on only when EPISODIC_MEMORY_TOPICS is exactly `1`. */
+export declare function topicsEnabled(): boolean;
+/**
+ * Read a positive integer from an environment variable.
+ *
+ * A fraction is rounded down. An unset or invalid value, or a value below 1, gives `fallback`.
+ */
+export declare function envPositiveInt(name: string, fallback: number): number;

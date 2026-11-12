@@ -46,6 +46,12 @@ export interface OllamaCallOptions {
     requireSummaryBlock?: boolean;
 }
 /**
+ * The prompt cap of the Ollama backend: `EPISODIC_MEMORY_OLLAMA_MAX_PROMPT_CHARS`, default 24000.
+ *
+ * `callOllama` cuts every prompt to this length, and `promptBudgetChars` builds prompts within it.
+ */
+export declare function ollamaMaxPromptChars(): number;
+/**
  * Sends a summarizer prompt to an Ollama server and returns the reply text without `<think>` blocks.
  *
  * The call throws `GpuReservedError` while another agent holds the shared GPU.

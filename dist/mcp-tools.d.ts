@@ -17,7 +17,7 @@ export interface McpToolResult {
 /**
  * Run one MCP tool call and return its result.
  *
- * The tools are `search`, `read`, `digest` and `skills`. When `EPISODIC_MEMORY_MCP_TOKEN` is set, the function first requires a matching `auth_token` argument. The function then parses the arguments with the schema of the tool.
+ * The tools are `search`, `read`, `digest`, `skills` and `topics`. When `EPISODIC_MEMORY_MCP_TOKEN` is set, the function first requires a matching `auth_token` argument. The function then parses the arguments with the schema of the tool.
  *
  * The function does not throw. A failed check, an invalid argument or an unknown tool name gives a result with `isError` set.
  */

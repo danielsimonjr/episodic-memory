@@ -5,6 +5,7 @@
  * schemas without starting a stdio transport.
  */
 import { z } from 'zod';
+import { UNIT_ID_PATTERN, endOf, isValidTime, startOf } from './topic-time.js';
 /**
  * The search methods that the `mode` input of the `search` tool accepts.
  *
@@ -165,6 +166,66 @@ export const SkillsInputSchema = z
     auth_token: z.string().min(1).optional().describe('Required when EPISODIC_MEMORY_MCP_TOKEN is set'),
 })
     .strict();
+/** The actions of the `topics` tool. */
+export const TopicsActionEnum = z.enum(['list', 'read', 'search', 'links', 'timeline']);
+/** The argument that each action requires. The `list` and `timeline` actions require none. */
+const TOPICS_REQUIRED_ARG = {
+    read: 'slug',
+    search: 'query',
+    links: 'unit',
+};
+/**
+ * The input schema of the `topics` tool, which reads the topic memory documents.
+ *
+ * The schema rejects unknown fields. `action` selects one of list, read, search, links and timeline.
+ * `read` requires `slug`, `search` requires `query` and `links` requires `unit`. A missing required
+ * argument is a schema error. `unit` is 8 lowercase hex characters. `from` and `to` are YYYY, YYYY-MM or
+ * YYYY-MM-DD, and each check uses `isValidTime`. `limit` caps the hits of `search` (default 10) and the events of `timeline` (default 50).
+ * `project` defaults to the key for the working directory, in the handler.
+ * `assertMcpAuthorized` checks the `auth_token` input, and this schema does not.
+ */
+export const TopicsInputSchema = z
+    .object({
+    action: TopicsActionEnum.describe('What to read: list, read, search, links or timeline'),
+    project: z
+        .string()
+        .min(1)
+        .optional()
+        .describe('Project key. Defaults to the key for the current working directory.'),
+    slug: z.string().min(1).optional().describe('Slug of one document (action read)'),
+    query: z.string().min(1).optional().describe('Words to search the topic units for (action search)'),
+    unit: z
+        .string()
+        .regex(UNIT_ID_PATTERN, 'unit must be 8 lowercase hex characters')
+        .optional()
+        .describe('Unit id of one paragraph, 8 lowercase hex characters (action links)'),
+    from: z
+        .string()
+        .refine(isValidTime, 'from must be YYYY, YYYY-MM or YYYY-MM-DD')
+        .optional()
+        .describe('Earliest time, YYYY, YYYY-MM or YYYY-MM-DD (inclusive)'),
+    to: z
+        .string()
+        .refine(isValidTime, 'to must be YYYY, YYYY-MM or YYYY-MM-DD')
+        .optional()
+        .describe('Latest time, YYYY, YYYY-MM or YYYY-MM-DD (inclusive)'),
+    limit: z.number().int().min(1).max(50).optional().describe('Max search hits (default 10) or timeline events (default 50)'),
+    auth_token: z.string().min(1).optional().describe('Required when EPISODIC_MEMORY_MCP_TOKEN is set'),
+})
+    .strict()
+    .superRefine((args, ctx) => {
+    if (args.from !== undefined && args.to !== undefined && startOf(args.from) > endOf(args.to)) {
+        ctx.addIssue({ code: 'custom', path: ['to'], message: 'to must not be before from' });
+    }
+    const field = TOPICS_REQUIRED_ARG[args.action];
+    if (field !== undefined && args[field] === undefined) {
+        ctx.addIssue({
+            code: 'custom',
+            path: [field],
+            message: `${field} is required for action ${args.action}`,
+        });
+    }
+});
 /**
  * Format a caught value as the text of an MCP error result.
  *

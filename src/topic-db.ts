@@ -265,7 +265,9 @@ export function topicLinks(
   db: Database.Database,
   project: string,
   unitId: string
-): { outgoing: TopicLinkedUnit[]; backlinks: TopicLinkedUnit[] } {
+): { outgoing: TopicLinkedUnit[]; backlinks: TopicLinkedUnit[] } | null {
+  const known = db.prepare('SELECT 1 FROM topic_unit WHERE project = ? AND unit_id = ?').get(project, unitId);
+  if (known === undefined) return null;
   const outgoing = db
     .prepare(
       `SELECT DISTINCT u.slug AS slug, u.heading AS heading, u.unit_id AS unit_id, u.text AS text, u.seq AS seq

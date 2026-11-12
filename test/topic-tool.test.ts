@@ -189,6 +189,85 @@ describe('topics tool', () => {
     });
   });
 
+  describe('fixer findings', () => {
+    const SECRET = 'ghp_abcdefghijklmnopqrstuvwxyz0123456789';
+    const LEAKY =
+      `# Leak ${SECRET}\n\n## Heading ${SECRET}\n\nToken ${SECRET} sits with [Orion](project.md#^7c91e2ab).[^1]\n^1a2b3c4d\n\n` +
+      `[^1]: Time: 2026-09; Sources: #ex-333; Statement ${SECRET}\n`;
+
+    it('redacts a secret in the output of every action', async () => {
+      seed('proj-a', [
+        { slug: 'project', text: PROJECT_V1 },
+        { slug: 'leak', text: LEAKY },
+      ]);
+      const calls: Record<string, unknown>[] = [
+        { action: 'list' },
+        { action: 'read', slug: 'leak' },
+        { action: 'search', query: 'Token' },
+        { action: 'links', unit: '7c91e2ab' },
+        { action: 'links', unit: '1a2b3c4d' },
+        { action: 'timeline' },
+      ];
+      for (const args of calls) {
+        const r = await topics({ ...args, project: 'proj-a' });
+        expect(r.isError, JSON.stringify(args)).toBe(false);
+        expect(r.text, JSON.stringify(args)).not.toContain(SECRET);
+      }
+      // The secret really reached each action: the redaction mark shows where it was.
+      const search = await topics({ action: 'search', query: 'Token', project: 'proj-a' });
+      expect(search.text).toContain('1a2b3c4d');
+    });
+
+    it('leaves the index file byte-identical after every action', async () => {
+      seedWorkAndProject();
+      const file = process.env.TEST_DB_PATH!;
+      // A rollback journal makes any writer open visible: initDatabase switches the file to WAL.
+      const raw = new Database(file);
+      raw.pragma('journal_mode = DELETE');
+      raw.close();
+      const before = fs.readFileSync(file);
+      const mtime = fs.statSync(file).mtimeMs;
+      for (const args of [
+        { action: 'list' },
+        { action: 'read', slug: 'work' },
+        { action: 'search', query: 'Orion' },
+        { action: 'links', unit: '5e6f7a8b' },
+        { action: 'timeline' },
+      ]) {
+        await topics({ ...args, project: 'proj-a' });
+      }
+      expect(fs.readFileSync(file).equals(before)).toBe(true);
+      expect(fs.statSync(file).mtimeMs).toBe(mtime);
+    });
+
+    it('caps the timeline at limit and says how many events it left out', async () => {
+      seedWorkAndProject();
+      const r = await topics({ action: 'timeline', project: 'proj-a', limit: 2 });
+      const lines = r.text.split('\n').filter(line => line.startsWith('- '));
+      expect(lines).toHaveLength(2);
+      expect(r.text).toContain('1 more event');
+    });
+
+    it('caps the timeline at 50 events by default', async () => {
+      const units = Array.from({ length: 60 }, (_, i) => {
+        const id = (0x10000000 + i).toString(16);
+        return `Event ${i}.[^${i + 1}]\n^${id}\n`;
+      });
+      const notes = Array.from({ length: 60 }, (_, i) => `[^${i + 1}]: Time: 2026-01-${String((i % 28) + 1).padStart(2, '0')}; Sources: #ex-${i}`);
+      seed('proj-a', [{ slug: 'many', text: `# Many\n\n## S\n\n${units.join('\n')}\n${notes.join('\n')}\n` }]);
+      const r = await topics({ action: 'timeline', project: 'proj-a' });
+      expect(r.text.split('\n').filter(line => line.startsWith('- '))).toHaveLength(50);
+      expect(r.text).toContain('10 more events');
+    });
+
+    it('says so when the unit of a links call does not exist', async () => {
+      seedWorkAndProject();
+      const r = await topics({ action: 'links', project: 'proj-a', unit: 'deadbeef' });
+      expect(r.isError).toBe(false);
+      expect(r.text).toBe('No topic unit "deadbeef" in proj-a.');
+    });
+  });
+
   describe('project default', () => {
     it('reads the project of the working directory when project is omitted', async () => {
       const cwdKey = projectKeyFromCwd(process.cwd());

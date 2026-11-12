@@ -123,7 +123,7 @@ function buildServer(): McpServer {
     'topics',
     {
       title: 'Topic Memory',
-      description: `Reads the topic documents the plugin keeps for this project: a list of the documents, the text of one document, a search of its paragraphs, the links of one paragraph, or a timeline of dated events. Pass action with list, read (slug), search (query), links (unit) or timeline. Each result cites the source exchanges to pass to the digest tool. Read-only.`,
+      description: `Reads the topic documents the plugin keeps for this project: a list of the documents, the text of one document, a search of its paragraphs, the links of one paragraph, or a timeline of dated events. Pass action with list, read (slug), search (query), links (unit) or timeline. A document cites its source exchanges in its footnotes, and each timeline event lists its source exchange ids; pass an id to the digest tool expand action. A timeline returns at most limit events (default 50). Read-only.`,
       inputSchema: TopicsInputSchema,
       annotations: {
         readOnlyHint: true,

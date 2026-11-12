@@ -1,3 +1,4 @@
+import { toFtsQuery } from './fts-query.js';
 function fromRow(r) {
     return {
         id: r.id,
@@ -106,12 +107,6 @@ export function supersede(db, ids, byId) {
             stmt.run(byId, id);
     });
     tx();
-}
-function toFtsQuery(query) {
-    const terms = query.match(/[\p{L}\p{N}_]+/gu) ?? [];
-    if (terms.length === 0)
-        return null;
-    return terms.map(t => `"${t}"`).join(' ');
 }
 /** A citation mark group at the end of a line: `[#a,#b]` (the stored digest form). */
 const TRAILING_MARK_GROUP = /\s*\[([^\]]*)\]\s*$/;

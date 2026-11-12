@@ -4,7 +4,7 @@
 
 # episodic-memory - Dependency Graph
 
-**Version**: 1.7.4
+**Version**: 1.7.5
 
 This document provides a comprehensive dependency graph of all files, components, imports, functions, and variables in the codebase.
 
@@ -1931,4 +1931,4 @@ graph TD
 
 ---
 
-*Version*: 1.7.4
+*Version*: 1.7.5

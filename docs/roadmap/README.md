@@ -16,6 +16,7 @@ docs/roadmap/
 ├── next.md              ← 3-6 months — themes with sketched plans
 ├── later.md             ← 6-12+ months — aspirational + visionary
 ├── upstream-sync.md     ← strategy for tracking obra/episodic-memory
+├── dependency-minimization.md ← plan to shrink the install footprint
 └── focus-areas/         ← per-theme deep dives
     ├── windows-correctness.md
     ├── security-hardening.md
@@ -27,7 +28,8 @@ docs/roadmap/
 
 Read `now.md` first if you want to know what's actively happening. Read
 `upstream-sync.md` to understand how this fork stays current with obra's
-work.
+work. Read [`dependency-minimization.md`](dependency-minimization.md) for the
+per-dependency plan that reduces the install footprint and the native-build risk.
 
 ## Roadmap shape
 

@@ -19,8 +19,8 @@ function clip(text, max) {
  *
  * An exchange is skipped when its lines would take the total past `maxChars`. The loop goes on to the next exchange, so a later small exchange can still fit. Skipped exchanges leave gaps in the numbering. The blocks are joined by a blank line.
  *
- * With `dated`, the user line also carries the UTC date of the exchange (`[1] 2026-06-26 User: ...`). The topic
- * prompt needs the date, because each footnote of a topic document states a time. The cap counts the date.
+ * With `dated`, the user line also carries the UTC date of the exchange (`[1] 2026-06-26 User: ...`). Each
+ * footnote of a topic document states a time. Therefore, the topic prompt needs the date. The cap counts the date.
  *
  * @param exchanges the exchanges, oldest first
  * @param maxChars the cap on the length of the returned text, the blank lines between blocks included

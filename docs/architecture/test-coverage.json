@@ -1,7 +1,7 @@
 {
   "metadata": {
     "totalSourceFiles": 100,
-    "totalTestFiles": 138,
+    "totalTestFiles": 139,
     "testedCount": 78,
     "untestedCount": 22,
     "coveragePercent": "78.0",
@@ -1172,6 +1172,7 @@
     "test/sync.test.ts": [
       "src/sync.ts"
     ],
+    "test/test-env.test.ts": [],
     "test/tool-calls-cascade.test.ts": [
       "src/db.ts"
     ],

@@ -1,11 +1,11 @@
 {
-  "totalFiles": 246,
+  "totalFiles": 249,
   "byDisposition": {
     "reachable": 40,
     "build-entry": 4,
     "test-only": 42,
     "orphan": 14,
-    "test": 141,
+    "test": 144,
     "tool": 4,
     "config": 1,
     "bench": 0,
@@ -14,11 +14,11 @@
   "byArea": {
     "src": 100,
     "tools": 4,
-    "tests": 141,
+    "tests": 144,
     "config": 1
   },
   "byPackage": {
-    "(root)": 153,
+    "(root)": 156,
     "episodic-memory": 93
   },
   "files": [
@@ -1486,6 +1486,13 @@
       "loc": 69
     },
     {
+      "file": "test/setup-env.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 12
+    },
+    {
       "file": "test/show.test.ts",
       "package": "(root)",
       "area": "tests",
@@ -1654,6 +1661,20 @@
       "loc": 250
     },
     {
+      "file": "test/test-env.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 23
+    },
+    {
+      "file": "test/test-env.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 21
+    },
+    {
       "file": "test/test-indexer.ts",
       "package": "(root)",
       "area": "tests",
@@ -1742,7 +1763,7 @@
       "package": "(root)",
       "area": "config",
       "disposition": "config",
-      "loc": 26
+      "loc": 23
     }
   ],
   "skippedLinks": [],

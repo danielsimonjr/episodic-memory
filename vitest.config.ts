@@ -1,21 +1,18 @@
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { defineConfig } from 'vitest/config';
+import { TEST_ENV } from './test/test-env.js';
 
 export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    // The tests run with the env of the machine that starts them. That env can select the ollama
-    // backend and name a model server, so a test that does not set its own backend reached a real
-    // model (measured 2026-10-26: 8 requests to a shared GPU from one test run). Pin both, and
-    // point the reservation at a file that does not exist. A test that needs another value sets it.
-    env: {
-      EPISODIC_MEMORY_SUMMARIZER_BACKEND: 'claude',
-      EPISODIC_MEMORY_OLLAMA_URL: 'http://127.0.0.1:9', // port 9 is closed: no request can succeed
-      EPISODIC_MEMORY_OLLAMA_MODEL: '', // blank counts as unset; a test that needs a model sets one
-      FLEET_GPU_RESERVATION: join(tmpdir(), 'episodic-memory-test-no-gpu-reservation.json'),
-    },
+    // The tests run with the env of the machine that starts the tests. The machine env can select
+    // the ollama backend, name a model server or name a fallback model. A test that does not set
+    // its own value can then reach a real model: a shared GPU through the ollama settings, or a
+    // live Claude call through EPISODIC_MEMORY_OLLAMA_FALLBACK_MODEL.
+    // test/test-env.ts holds the pinned values, and test/setup-env.ts deletes every other
+    // EPISODIC_MEMORY_* variable. A test that needs another value sets that value.
+    env: { ...TEST_ENV },
+    setupFiles: ['test/setup-env.ts'],
     include: ['test/**/*.test.ts'],
     testTimeout: 30000, // 30 seconds for embedding/indexing tests
     // Some beforeEach hooks index multi-exchange fixtures, which is CPU-bound

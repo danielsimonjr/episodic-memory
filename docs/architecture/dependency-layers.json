@@ -1,7 +1,7 @@
 {
   "metadata": {
     "name": "episodic-memory",
-    "version": "1.7.5",
+    "version": "1.8.0",
     "schemaVersion": "2.0.0",
     "language": "typescript"
   },

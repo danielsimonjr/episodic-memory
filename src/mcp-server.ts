@@ -22,6 +22,7 @@ import {
   DigestInputSchema,
   ShowConversationInputSchema,
   SkillsInputSchema,
+  TopicsInputSchema,
 } from './mcp-schemas.js';
 
 function buildServer(): McpServer {
@@ -111,6 +112,28 @@ function buildServer(): McpServer {
     },
     async (args) => {
       const result = await handleToolCall('skills', args);
+      return {
+        content: result.content,
+        ...(result.isError ? { isError: true } : {}),
+      };
+    }
+  );
+
+  server.registerTool(
+    'topics',
+    {
+      title: 'Topic Memory',
+      description: `Reads the topic documents the plugin keeps for this project: a list of the documents, the text of one document, a search of its paragraphs, the links of one paragraph, or a timeline of dated events. Pass action with list, read (slug), search (query), links (unit) or timeline. Each result cites the source exchanges to pass to the digest tool. Read-only.`,
+      inputSchema: TopicsInputSchema,
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    async (args) => {
+      const result = await handleToolCall('topics', args);
       return {
         content: result.content,
         ...(result.isError ? { isError: true } : {}),

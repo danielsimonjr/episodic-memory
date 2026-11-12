@@ -263,7 +263,7 @@ A missing required argument is a schema error. An argument that the action does 
 
 **Show a timeline:** `{ "action": "timeline", "from": "2026", "to": "2026-06" }`
 
-Each event and each search hit names its source exchange ids. Pass an id to the `digest` tool with `expand` to get the archive path and line range, then pass that to `read`.
+Each timeline event names its source exchange ids. Pass an id to the `digest` tool with `expand` to get the archive path and line range, then pass that to `read`. To see the sources of a paragraph, `read` the document: its footnotes list the exchange ids. A search hit gives a unit id. Pass that id to `links` to see the paragraphs that link to the unit or that the unit links to.
 
 ### Response Format
 

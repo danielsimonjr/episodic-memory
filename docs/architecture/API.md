@@ -4,7 +4,7 @@ This document lists the public surface of the package. There are four surfaces: 
 
 ## MCP tools
 
-The server name is `episodic-memory`. It registers four tools in `src/mcp-server.ts`. Every input schema is strict, and an unknown field is an error. When `EPISODIC_MEMORY_MCP_TOKEN` is set, every call must also carry `auth_token`.
+The server name is `episodic-memory`. It registers five tools in `src/mcp-server.ts`. Every input schema is strict, and an unknown field is an error. When `EPISODIC_MEMORY_MCP_TOKEN` is set, every call must also carry `auth_token`.
 
 ### `search`
 
@@ -57,7 +57,7 @@ List learned skills, search them, or load one. It reads the knowledge store only
 
 ### `topics`
 
-Read the topic memory documents of a project. The tool has five actions. It never writes. It opens the index read-only, and it answers that topic memory has no documents yet when the index or a topic table is missing. It does not read `EPISODIC_MEMORY_TOPICS`.
+Read the topic memory documents of a project. The tool has five actions. The tool never writes. It opens the index read-only. When the index or a topic table is missing, the tool answers that topic memory has no documents yet. The tool does not read `EPISODIC_MEMORY_TOPICS`.
 
 | Field | Type | Rule |
 |---|---|---|

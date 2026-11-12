@@ -150,7 +150,7 @@ Plugin first-run dependency install in `cli/mcp-server-wrapper.js` still uses
 ### Current test state
 
 - **Full suite: 1330 tests in 138 files pass** (~17s wall clock on Linux;
-  Windows runs are slower, about 45s in the last run). The former `integration.test.ts` / `verify.test.ts` cold-embedding
+  Windows runs are slower, about 45s). The former `integration.test.ts` / `verify.test.ts` cold-embedding
   timeout flakes were fixed 2026-06-23: the embedder is pre-warmed once per worker in `beforeAll`,
   `vitest.config.ts` sets `hookTimeout: 30000`, and the repair re-index test gets 60s. If you see a fresh
   timeout flake, suspect a new embedding-heavy hook without warm-up rather than the old cold-start cause.
@@ -170,9 +170,20 @@ stdout is reserved for JSON-RPC. **Any `console.log` reachable from the MCP serv
 - ❌ `console.log(...)` — corrupts protocol
 - ❌ `process.stdout.write(...)` — corrupts protocol
 
-This applies to **every module reachable from `mcp-server.ts`**. The modules that load at server start (static imports) are: `mcp-server.ts`, `mcp-tools.ts`, `mcp-schemas.ts`, `mcp-auth.ts`, `archive-path.ts`, `paths.ts`, `db.ts`, `digest-db.ts`, `embedding-migration.ts`, `fts-query.ts`, `lockfile.ts`, `redact.ts`, `constants.ts`, `types.ts`, `version.ts`, `learn/learn-config.ts` and `topic-time.ts`.
+This applies to **every module reachable from `mcp-server.ts`**.
 
-The modules that load only inside a branch (dynamic import) are: `search.ts`, `show.ts` and `embeddings.ts` (`search`, `read`); `digest-tool.ts`, `digest-inject.ts` and `digest-validate.ts` (`digest`); `learn/skills-tool.ts`, `learn/knowledge-store.ts`, `learn/learn-inject.ts`, `learn/learned-text-screen.ts` and `learn/pii-redactor.ts` (`skills`); and `topic-tool.ts`, `topic-db.ts` and `topic-format.ts` (`topics`). `topic-tool.ts` is imported lazily, like `skills-tool.ts`. `fts-query.ts` and `topic-time.ts` are already eager, so the topic branch adds nothing to them. `mcp-schemas.ts` imports only `topic-time.ts` eagerly. Modules used only by CLI files (`indexer.ts`, `sync.ts`, `learn/cli-main.ts`, etc.) are safe to use `console.log` in.
+Static imports load these modules at server start:
+
+`mcp-server.ts`, `mcp-tools.ts`, `mcp-schemas.ts`, `mcp-auth.ts`, `archive-path.ts`, `paths.ts`, `db.ts`, `digest-db.ts`, `embedding-migration.ts`, `fts-query.ts`, `lockfile.ts`, `redact.ts`, `constants.ts`, `types.ts`, `version.ts`, `learn/learn-config.ts`, `topic-time.ts`
+
+Dynamic imports load these modules only inside a branch:
+
+- `search`: `search.ts`, `show.ts`, `embeddings.ts`
+- `digest`: `digest-tool.ts`, `digest-inject.ts`, `digest-validate.ts`
+- `skills`: `learn/skills-tool.ts`, `learn/knowledge-store.ts`, `learn/learn-inject.ts`, `learn/learned-text-screen.ts`, `learn/pii-redactor.ts`
+- `topics`: `topic-tool.ts`, `topic-db.ts`, `topic-format.ts`, `digest-inject.ts`, `digest-validate.ts`
+
+`topic-tool.ts` is imported lazily, like `skills-tool.ts`. `fts-query.ts` and `topic-time.ts` are already eager, so the topic branch adds nothing to them. `mcp-schemas.ts` imports only `topic-time.ts` eagerly. Modules used only by CLI files (`indexer.ts`, `sync.ts`, `learn/cli-main.ts`, etc.) are safe to use `console.log` in.
 
 The lazy import is load-bearing in both directions: `mcp-tools.ts` calls `learnEnabled()` from `learn-config.ts` (which imports nothing) *before* it imports `skills-tool.ts`, so a flag-off server never opens the knowledge store and a session that never asks for a skill pays nothing for the feature. The same holds for `topic-tool.ts`: a session that never calls `topics` loads none of the topic modules. Keep the eager feature surface at `learn-config.ts` and `topic-time.ts` and nothing else.
 
@@ -332,7 +343,7 @@ Inputs (`TopicsInputSchema` in `src/mcp-schemas.ts`, strict: unknown fields are 
 - `limit`: 1–50; `search` default 10, `timeline` default 50
 - `auth_token`: required only when `EPISODIC_MEMORY_MCP_TOKEN` is set
 
-Read-only. `src/topic-tool.ts` opens the index read-only, never calls `ensureTopicSchema`, and answers `Topic memory has no documents yet.` when the index file or a topic table is missing. The tool does not check `EPISODIC_MEMORY_TOPICS`: it returns what the sync step wrote. The server reads no topic variable, so `.mcp.json` does not whitelist any `EPISODIC_MEMORY_TOPICS_*` name. Topic text passes `redactEntryText` again on the way out.
+Read-only. `src/topic-tool.ts` opens the index read-only, never calls `ensureTopicSchema`, and answers `Topic memory has no documents yet.` when the index file or a topic table is missing. The tool does not check `EPISODIC_MEMORY_TOPICS`. The tool returns what the sync step wrote. The server reads no topic variable, so `.mcp.json` does not whitelist any `EPISODIC_MEMORY_TOPICS_*` name. Topic text passes `redactEntryText` again on the way out.
 
 ## Development workflow — the user's 12 steps
 

@@ -176,7 +176,7 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 252 | repo-tools map |
+| totalSourceFiles | 253 | repo-tools map |
 | totalClasses | 7 | repo-tools map |
 | totalInterfaces | 136 | repo-tools map |
 | totalFunctions | 316 | repo-tools map |

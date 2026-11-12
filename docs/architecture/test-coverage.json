@@ -1,7 +1,7 @@
 {
   "metadata": {
     "totalSourceFiles": 100,
-    "totalTestFiles": 141,
+    "totalTestFiles": 142,
     "testedCount": 79,
     "untestedCount": 21,
     "coveragePercent": "79.0",
@@ -1141,6 +1141,7 @@
     "test/sync-banner.test.ts": [
       "src/sync-banner.ts"
     ],
+    "test/sync-cli-args.test.ts": [],
     "test/sync-cli-lock.test.ts": [
       "src/logging.ts"
     ],

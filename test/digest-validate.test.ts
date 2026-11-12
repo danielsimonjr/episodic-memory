@@ -46,6 +46,37 @@ describe('parseCitedLines', () => {
     expect(r.dropped).toBe(0);
   });
 
+  it('rewrites a mark group inside the line, not only the trailing group', () => {
+    const r = parseCitedLines('Fixed the parser. [1] Added a test. [2, 3]', marks);
+    expect(r.lines).toEqual(['Fixed the parser. [#ex-a] Added a test. [#ex-b,#ex-c]']);
+    expect(r.sources).toEqual(['ex-a', 'ex-b', 'ex-c']);
+    expect(r.dropped).toBe(0);
+  });
+
+  it('drops a line whose inner mark group cites an unknown mark', () => {
+    const r = parseCitedLines('A ghost fact [99] and a real fact [1]', marks);
+    expect(r.lines).toEqual([]);
+    expect(r.sources).toEqual([]);
+    expect(r.dropped).toBe(1);
+  });
+
+  it('rewrites a mark group after a bracket, a parenthesis or a quote', () => {
+    const r = parseCitedLines('a ([1]) b [2][3] c "[1]" d [2]', marks);
+    expect(r.lines).toEqual(['a ([#ex-a]) b [#ex-b][#ex-c] c "[#ex-a]" d [#ex-b]']);
+    expect(r.sources).toEqual(['ex-a', 'ex-b', 'ex-c']);
+  });
+
+  it('does not treat a chained index in code as a mark', () => {
+    const r = parseCitedLines('Reads matrix[i][1] at boot [2]', marks);
+    expect(r.lines).toEqual(['Reads matrix[i][1] at boot [#ex-b]']);
+  });
+
+  it('does not treat an index in code as a mark', () => {
+    const r = parseCitedLines('Reads process.argv[1] at boot [2]', marks);
+    expect(r.lines).toEqual(['Reads process.argv[1] at boot [#ex-b]']);
+    expect(r.sources).toEqual(['ex-b']);
+  });
+
   it('does not treat a number in prose as a mark', () => {
     const r = parseCitedLines('Raised the limit to 3 workers', marks);
     expect(r.lines).toEqual([]);

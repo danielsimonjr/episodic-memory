@@ -174,7 +174,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 257
+      "loc": 259
     },
     {
       "file": "src/digest-inject.ts",
@@ -202,7 +202,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 115
+      "loc": 116
     },
     {
       "file": "src/digest-tool.ts",
@@ -216,7 +216,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 74
+      "loc": 107
     },
     {
       "file": "src/doctor-cli.ts",
@@ -916,7 +916,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 139
+      "loc": 153
     },
     {
       "file": "test/digest-gpu-reservation.test.ts",
@@ -965,14 +965,14 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 69
+      "loc": 77
     },
     {
       "file": "test/digest-validate.test.ts",
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 62
+      "loc": 93
     },
     {
       "file": "test/doctor.test.ts",

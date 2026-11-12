@@ -79,9 +79,10 @@ export function buildSessionPrompt(exchanges: ConversationExchange[], maxChars =
 /**
  * Build the summarizer prompt that merges the digest notes of one day or one week.
  *
- * A note can end with a source mark, such as `[#id,#id]`. The function renumbers each source mark from 1 in order of first use.
+ * A note can end with a source mark, such as `[#id,#id]`. A note can also hold a source mark before its end, one for
+ * each statement. The function renumbers each source mark from 1 in order of first use.
  * `marks` maps each new number to its original id. Blank lines are dropped.
- * A note without a trailing mark keeps its text and gets no number.
+ * A note without a source mark keeps its text and gets no number.
  */
 export function buildCompressPrompt(entries: DigestEntry[], tier: 'day' | 'week'): BuiltPrompt {
   const marks = new Map<number, string>();
@@ -90,7 +91,7 @@ export function buildCompressPrompt(entries: DigestEntry[], tier: 'day' | 'week'
   for (const e of entries) {
     for (const raw of e.text.split('\n')) {
       if (!raw.trim()) continue;
-      const rewritten = raw.replace(/\[((?:#[^,\]\s]+)(?:,#[^,\]\s]+)*)\]\s*$/, (_m, group: string) => {
+      const rewritten = raw.replace(/\[((?:#[^,\]\s]+)(?:,#[^,\]\s]+)*)\]/g, (_m, group: string) => {
         const nums = group.split(',').map(tok => {
           const id = tok.slice(1);
           let n = numberOf.get(id);

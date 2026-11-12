@@ -66,4 +66,12 @@ describe('buildCompressPrompt', () => {
     expect(prompt).toContain('B fact [2,3]');
     expect(prompt.startsWith(SUMMARIZER_CONTEXT_MARKER)).toBe(true);
   });
+
+  it('renumbers a source mark inside the note, not only the trailing mark', () => {
+    const entries = [entry(1, 'A fact [#e1] B fact [#e2,#e3]', ['e1', 'e2', 'e3'])];
+    const { prompt, marks } = buildCompressPrompt(entries, 'day');
+    expect([...marks.entries()]).toEqual([[1, 'e1'], [2, 'e2'], [3, 'e3']]);
+    expect(prompt).toContain('A fact [1] B fact [2,3]');
+    expect(prompt).not.toContain('#e1');
+  });
 });

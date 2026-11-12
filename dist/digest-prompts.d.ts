@@ -37,8 +37,9 @@ export declare function buildSessionPrompt(exchanges: ConversationExchange[], ma
 /**
  * Build the summarizer prompt that merges the digest notes of one day or one week.
  *
- * A note can end with a source mark, such as `[#id,#id]`. The function renumbers each source mark from 1 in order of first use.
+ * A note can end with a source mark, such as `[#id,#id]`. A note can also hold a source mark before its end, one for
+ * each statement. The function renumbers each source mark from 1 in order of first use.
  * `marks` maps each new number to its original id. Blank lines are dropped.
- * A note without a trailing mark keeps its text and gets no number.
+ * A note without a source mark keeps its text and gets no number.
  */
 export declare function buildCompressPrompt(entries: DigestEntry[], tier: 'day' | 'week'): BuiltPrompt;

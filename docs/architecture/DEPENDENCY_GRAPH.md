@@ -421,7 +421,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/digest-validate.ts` - Keep the model lines that cite only known exchanges, and rewrite their marks.
+### `src/digest-validate.ts` - A run of mark groups inside the line, such as `[1]` or `[2][3]`. No word character and no `]` comes before
 
 **Internal Dependencies:**
 | File | Imports | Type |
@@ -2099,7 +2099,7 @@ graph TD
 |----------|-------|
 | Total Source Files | 251 |
 | Subsystems | 4 |
-| Total Lines of Code | 51115 |
+| Total Lines of Code | 51204 |
 | Total Exports | 565 |
 | Total Re-exports | 8 |
 | Total Classes | 7 |

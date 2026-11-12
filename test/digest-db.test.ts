@@ -100,6 +100,20 @@ describe('digest-db', () => {
     expect(other.text).not.toContain('Hidden line about the cache');
   });
 
+  it('searchDigest hides a line whose inner mark group cites a hidden id', () => {
+    insertDigestEntry(db, entry({ text: 'The cache fact [#ex9] and the postgres fact [#ex1]\nKept cache line [#ex1]' }));
+    const [hit] = searchDigest(db, 'cache', undefined, 10, { hideExchangeIds: ['ex9'] });
+    expect(hit.text).not.toContain('#ex9');
+    expect(hit.text).toBe('Kept cache line [#ex1]');
+  });
+
+  it('searchDigest hides a line whose hidden mark sits inside an unclosed bracket', () => {
+    insertDigestEntry(db, entry({ text: 'Note [see the cache [#ex9] and more [#ex1]\nKept cache line [#ex1]' }));
+    const [hit] = searchDigest(db, 'cache', undefined, 10, { hideExchangeIds: ['ex9'] });
+    expect(hit.text).not.toContain('#ex9');
+    expect(hit.text).toBe('Kept cache line [#ex1]');
+  });
+
   it('searchDigest reports nothing when every line cites a hidden id', () => {
     insertDigestEntry(db, entry({ text: 'Only the cache [#ex9]' }));
     expect(searchDigest(db, 'cache', undefined, 10, { hideExchangeIds: ['ex9'] })).toEqual([]);

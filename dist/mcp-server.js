@@ -236,12 +236,12 @@ function listActiveEntries(db, project) {
   return rows.map(fromRow);
 }
 function citedExchangeIds(line) {
-  const match = TRAILING_MARK_GROUP.exec(line);
-  if (!match) return [];
   const ids = [];
-  for (const part of match[1].split(",")) {
-    const trimmed = part.trim();
-    if (trimmed.startsWith("#")) ids.push(trimmed.slice(1));
+  for (const match of line.matchAll(BRACKET_GROUP)) {
+    for (const part of match[1].split(",")) {
+      const trimmed = part.trim();
+      if (trimmed.startsWith("#")) ids.push(trimmed.slice(1));
+    }
   }
   return ids;
 }
@@ -271,12 +271,12 @@ function searchDigest(db, query, project, limit = 10, opts = {}) {
   }
   return out;
 }
-var TRAILING_MARK_GROUP;
+var BRACKET_GROUP;
 var init_digest_db = __esm({
   "src/digest-db.ts"() {
     "use strict";
     init_fts_query();
-    TRAILING_MARK_GROUP = /\s*\[([^\]]*)\]\s*$/;
+    BRACKET_GROUP = /\[([^\][]*)\]/g;
   }
 });
 

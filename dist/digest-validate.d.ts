@@ -11,10 +11,13 @@ export interface CitedLines {
  * Keep the model lines that cite only known exchanges, and rewrite their marks.
  *
  * A kept line ends in a mark group such as `[3,5]`. Each number in the group must be a key of `marks`.
+ * A line can also hold mark groups before its end, one for each statement. No word character and no `]` comes
+ * before such a group. Each number in these groups must also be a key of `marks`. The function therefore reads a
+ * number in brackets after a space as a mark: `the index [0]` drops the line when 0 is not a key of `marks`.
  * The function removes a leading bullet marker from each line and skips blank lines without counting them.
  * The function drops a line with no mark group.
  * The function also drops a line that cites an unknown number, and a line with no text before the group.
- * The function rewrites the mark group of a kept line to `[#<exchangeId>,#<exchangeId>]`.
+ * The function rewrites each mark group of a kept line to `[#<exchangeId>,#<exchangeId>]`.
  *
  * @param raw the model output. Each line holds one statement.
  * @param marks maps each mark number to the exchange id that the number names

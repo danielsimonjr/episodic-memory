@@ -170,24 +170,26 @@ export function supersede(db: Database.Database, ids: number[], byId: number): v
   tx();
 }
 
-/** A citation mark group at the end of a line: `[#a,#b]` (the stored digest form). */
-const TRAILING_MARK_GROUP = /\s*\[([^\]]*)\]\s*$/;
+/** A bracket group of a line. A citation mark group has the stored digest form `[#a,#b]`. */
+// A group holds no `[`, so an unclosed bracket before a mark cannot hide the mark.
+const BRACKET_GROUP = /\[([^\][]*)\]/g;
 
 /**
- * List the exchange ids that the trailing mark group of a digest line cites.
+ * List the exchange ids that the mark groups of a digest line cite.
  *
- * The mark group has the form `[#a,#b]`. The function returns an empty list when the line
- * has no trailing group. The function ignores each part that does not start with `#`.
+ * A mark group has the form `[#a,#b]`. A line can hold one mark group for each statement, so the
+ * function reads every bracket group of the line, not only the last group. The function ignores each
+ * part that does not start with `#`. The function returns an empty list when the line has no mark group.
  *
  * @param line the digest line to check
  */
 export function citedExchangeIds(line: string): string[] {
-  const match = TRAILING_MARK_GROUP.exec(line);
-  if (!match) return [];
   const ids: string[] = [];
-  for (const part of match[1].split(',')) {
-    const trimmed = part.trim();
-    if (trimmed.startsWith('#')) ids.push(trimmed.slice(1));
+  for (const match of line.matchAll(BRACKET_GROUP)) {
+    for (const part of match[1].split(',')) {
+      const trimmed = part.trim();
+      if (trimmed.startsWith('#')) ids.push(trimmed.slice(1));
+    }
   }
   return ids;
 }

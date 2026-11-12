@@ -77,6 +77,16 @@ function isLockStealable(lockPath: string, staleMs: number): boolean {
 }
 
 /**
+ * Return true when a live, non-stale holder has the lock at `lockPath`.
+ *
+ * The function uses the rule that `acquireLock` uses to steal a lock.
+ * A missing file, a dead holder and a lock older than `staleMs` all give false.
+ */
+export function isLockHeld(lockPath: string, staleMs = DEFAULT_STALE_MS): boolean {
+  return !isLockStealable(lockPath, staleMs);
+}
+
+/**
  * Acquire an exclusive lock at `lockPath`.
  * Returns a handle, or null if a live, non-stale holder exists.
  */

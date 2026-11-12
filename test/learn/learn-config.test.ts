@@ -72,6 +72,7 @@ describe('learnConfig defaults', () => {
       leafMax: 12,
       editsPerRound: 3,
       validateSample: 5,
+      pidPollMs: 1000,
     });
   });
 });
@@ -115,6 +116,7 @@ describe('learnConfig parsing', () => {
       ['LEAF_MAX', 2, 'leafMax'],
       ['EDITS_PER_ROUND', 8, 'editsPerRound'],
       ['VALIDATE_SAMPLE', 11, 'validateSample'],
+      ['PID_POLL_MS', 750, 'pidPollMs'],
     ];
     for (const [suffix, value, field] of cases) {
       clearLearnEnv();

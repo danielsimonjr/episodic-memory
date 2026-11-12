@@ -11,7 +11,7 @@ These modules import nothing from the repository, or only other leaf modules. A 
 | `src/reentrancy.ts` | Exports `SUMMARIZER_GUARD_ENV` and `shouldSkipReentrantSync()`. A child process that the summarizer started carries the variable, and `sync` exits when it sees it. |
 | `src/node-floor.ts` | Holds the minimum Node.js version. `assertNodeFloor()` exits with one line on standard error when the runtime is older. |
 | `src/deps-health.ts` | Checks that `node_modules` is complete. It tests for sentinel files, not only for the folder. The MCP wrapper, the sync hook and `doctor` share it. |
-| `src/lockfile.ts` | A cross-process file lock. A lock is stale when its process is gone or when it is older than a set age. |
+| `src/lockfile.ts` | A cross-process file lock. A lock is stale when its holder process is gone or when the lock is older than a set age. `isLockHeld` answers the same question without taking the lock. |
 | `src/constants.ts` | The marker text that identifies summarizer conversations, and the length cap for indexed text (`truncateForIndex`). |
 | `src/redact.ts` | Opt-in secret redaction. `maybeRedactSecrets(text)` returns the text unchanged unless `EPISODIC_MEMORY_REDACT_SECRETS` is on. |
 | `src/paths.ts` | Resolves every directory and file the plugin uses: the config directory, the archive, the index, the database, the learned-knowledge files, and the exclusion list. It creates directories with mode `0o700`. `findJsonlFiles` walks a project folder. |
@@ -179,7 +179,7 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 | totalSourceFiles | 249 | repo-tools map |
 | totalClasses | 7 | repo-tools map |
 | totalInterfaces | 136 | repo-tools map |
-| totalFunctions | 315 | repo-tools map |
+| totalFunctions | 316 | repo-tools map |
 | totalConstants | 63 | repo-tools map |
 
 The tool names, the table names and the model name come from a direct reading of `src/mcp-server.ts`, `src/db.ts` and `src/embeddings.ts`. They are not `repo-tools map` metrics.

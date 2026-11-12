@@ -647,7 +647,7 @@ The codebase is organized into the following modules:
 
 **Exports:**
 - Interfaces: `LockHandle`
-- Functions: `isProcessAlive`, `acquireLock`, `releaseLock`
+- Functions: `isProcessAlive`, `isLockHeld`, `acquireLock`, `releaseLock`
 
 ---
 
@@ -1275,17 +1275,20 @@ The codebase is organized into the following modules:
 **Node.js Built-in Dependencies:**
 | Module | Import |
 |--------|--------|
-| `child_process` | `execFileSync` |
+| `child_process` | `execFile` |
+| `util` | `promisify` |
 
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
 | `../summarizer.js` | `getApiEnv` | Import |
+| `./learn-config.js` | `learnConfig` | Import |
 | `./types.js` | `AttemptOutcome, Cost, TraceStep` | Import (type-only) |
 | `./sdk-tools.js` | `servedToolNames` | Import |
 
 **Exports:**
 - Interfaces: `PidRegistry`, `BuildAgentQueryOptionsArgs`, `ProcSnapshot`, `AgentRunOptions`, `AgentRunResult`
+- Types: `ProcessLister`
 - Functions: `buildAgentQueryOptions`, `isAgentSpawnTree`, `listAgentProcesses`, `addressFromResultText`, `looksKilled`, `runAgent`
 - Constants: `DISALLOWED_TOOLS`
 
@@ -1587,7 +1590,7 @@ The codebase is organized into the following modules:
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
-| `../lockfile.js` | `acquireLock, releaseLock` | Import |
+| `../lockfile.js` | `acquireLock, isLockHeld, releaseLock` | Import |
 | `../paths.js` | `getIndexDir` | Import |
 
 **Exports:**
@@ -1971,13 +1974,14 @@ The codebase is organized into the following modules:
 | `src/topic-job` | 11 files | 1 file |
 | `src/types` | 0 files | 12 files |
 | `src/digest-job` | 9 files | 2 files |
+| `src/learn/learn-config` | 0 files | 11 files |
 | `src/learn/learning-db` | 2 files | 9 files |
 | `src/sync` | 9 files | 2 files |
-| `src/learn/learn-config` | 0 files | 10 files |
 | `src/learn/skills-tool` | 8 files | 2 files |
 | `src/constants` | 0 files | 9 files |
 | `src/doctor` | 8 files | 1 file |
 | `src/embeddings` | 2 files | 7 files |
+| `src/learn/agent-runner` | 4 files | 5 files |
 | `src/learn/knowledge-db` | 2 files | 7 files |
 | `src/learn/knowledge-store` | 3 files | 6 files |
 | `src/learn/validate` | 7 files | 2 files |
@@ -1986,7 +1990,6 @@ The codebase is organized into the following modules:
 | `src/digest-db` | 1 file | 7 files |
 | `src/index` | 8 files | 0 files |
 | `src/indexer` | 6 files | 2 files |
-| `src/learn/agent-runner` | 3 files | 5 files |
 | `src/learn/knowledge-gate` | 5 files | 3 files |
 | `src/learn/learn-handlers` | 7 files | 1 file |
 | `src/learn/learned-block` | 4 files | 4 files |
@@ -2096,13 +2099,13 @@ graph TD
 |----------|-------|
 | Total Source Files | 249 |
 | Subsystems | 4 |
-| Total Lines of Code | 50753 |
-| Total Exports | 563 |
+| Total Lines of Code | 51076 |
+| Total Exports | 565 |
 | Total Re-exports | 8 |
 | Total Classes | 7 |
 | Total Interfaces | 136 |
-| Total Functions | 315 |
-| Total Type Guards | 8 |
+| Total Functions | 316 |
+| Total Type Guards | 9 |
 | Total Enums | 0 |
 | Type-only Imports | 79 |
 | Runtime Cyclic Components | 0 |

@@ -13,9 +13,11 @@
  * the subprocess was actually granted, a trace of addresses (never result text),
  * the cost, and an outcome that says whether the attempt may be graded at all.
  */
-import { execFileSync } from 'node:child_process';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { query as sdkQuery, } from '@anthropic-ai/claude-agent-sdk';
 import { getApiEnv } from '../summarizer.js';
+import { learnConfig } from './learn-config.js';
 import { servedToolNames } from './sdk-tools.js';
 /** The tool names an isolated agent may never reach. */
 export const DISALLOWED_TOOLS = [
@@ -72,17 +74,26 @@ const FORK = /--fork-session\b/;
 export function isAgentSpawnTree(commandLine) {
     return DAEMON.test(commandLine) || PTYHOST.test(commandLine) || FORK.test(commandLine);
 }
+const execFileAsync = promisify(execFile);
+/** The most output one listing may return. A busy host prints long command lines. */
+const LISTING_MAX_BUFFER = 16 * 1024 * 1024;
 /**
  * The machine's `claude` processes, or null when enumeration fails.
  *
+ * The listing runs as a child process and the function awaits it, so a slow listing never blocks
+ * the event loop. On Windows one listing takes most of a second.
  * Null means that the run registers nothing during this poll.
  * A run that cannot see its children is better off with a short `.learn.pids` than with a wrong one.
  */
-export function listAgentProcesses() {
+export async function listAgentProcesses() {
     try {
         if (process.platform !== 'win32') {
-            const out = execFileSync('ps', ['-eo', 'pid=,ppid=,args='], { encoding: 'utf8', timeout: 15000 });
-            return out
+            const { stdout } = await execFileAsync('ps', ['-eo', 'pid=,ppid=,args='], {
+                encoding: 'utf8',
+                timeout: 15000,
+                maxBuffer: LISTING_MAX_BUFFER,
+            });
+            return stdout
                 .split('\n')
                 .map(line => line.trim())
                 .filter(Boolean)
@@ -102,11 +113,13 @@ export function listAgentProcesses() {
         }
         const script = "Get-CimInstance Win32_Process -Filter \"Name='claude.exe'\" | " +
             'Select-Object ProcessId,ParentProcessId,CommandLine | ConvertTo-Json -Compress';
-        const out = execFileSync('powershell', ['-NoProfile', '-NonInteractive', '-Command', script], {
+        const { stdout } = await execFileAsync('powershell', ['-NoProfile', '-NonInteractive', '-Command', script], {
             encoding: 'utf8',
             timeout: 20000,
+            maxBuffer: LISTING_MAX_BUFFER,
+            windowsHide: true,
         });
-        const raw = JSON.parse(out || '[]');
+        const raw = JSON.parse(stdout || '[]');
         const rows = Array.isArray(raw) ? raw : [raw];
         return rows.filter(Boolean).map(row => ({
             pid: row.ProcessId,
@@ -118,8 +131,133 @@ export function listAgentProcesses() {
         return null;
     }
 }
+const trackers = new Map();
+/** Register the new spawn-tree processes of one listing, and release the PIDs that are gone. */
+function applyListing(tracker, procs) {
+    if (tracker.closed)
+        return;
+    const live = new Set(procs.map(proc => proc.pid));
+    const byPid = new Map(procs.map(proc => [proc.pid, proc]));
+    /** True when `pid` descends from this process or from a registered child. */
+    const isOurs = (pid) => {
+        let cursor = pid;
+        for (let depth = 0; depth < 32; depth++) {
+            const proc = byPid.get(cursor);
+            if (!proc)
+                return false;
+            const parent = proc.ppid;
+            if (parent === process.pid)
+                return true;
+            if (parent === undefined || !Number.isFinite(parent) || parent <= 0)
+                return false;
+            if (tracker.registered.has(parent))
+                return true;
+            cursor = parent;
+        }
+        return false;
+    };
+    // Repeat until stable: a child found this pass can make its own children
+    // ours in the same pass, so a single sweep may miss a deeper layer.
+    let changed = true;
+    while (changed) {
+        changed = false;
+        for (const proc of procs) {
+            if (tracker.baseline.has(proc.pid) || tracker.registered.has(proc.pid))
+                continue;
+            if (!isOurs(proc.pid) && !isAgentSpawnTree(proc.commandLine))
+                continue;
+            tracker.registered.add(proc.pid);
+            tracker.registry.add(proc.pid);
+            changed = true;
+        }
+    }
+    for (const pid of [...tracker.registered]) {
+        if (!live.has(pid)) {
+            tracker.registered.delete(pid);
+            tracker.registry.remove(pid);
+        }
+    }
+}
+/** Start one listing unless one is still in flight. A slow listing never stacks a second one. */
+function tick(tracker) {
+    if (tracker.inFlight || tracker.closed)
+        return;
+    tracker.inFlight = true;
+    Promise.resolve()
+        .then(() => tracker.lister())
+        .then(procs => {
+        if (procs)
+            applyListing(tracker, procs);
+    })
+        .catch(() => {
+        // A failed listing or a failed registry write registers nothing this time, the same as a
+        // null listing. The next listing tries again.
+    })
+        .finally(() => {
+        tracker.inFlight = false;
+    });
+}
+/**
+ * Join the tracker of `registry`, and start it if no run is live.
+ *
+ * The first run takes the baseline listing. The promise resolves after the baseline exists, so the
+ * SDK child of a run never appears in the baseline. The first run's lister and interval apply to
+ * every run that joins later. The returned function leaves the tracker. The last run to leave stops
+ * the poll and removes every PID the tracker registered.
+ */
+async function joinTracker(registry, lister, pollMs) {
+    let tracker = trackers.get(registry);
+    if (!tracker) {
+        const created = {
+            registry,
+            lister,
+            baseline: new Set(),
+            registered: new Set(),
+            users: 0,
+            timer: null,
+            inFlight: true,
+            closed: false,
+            ready: Promise.resolve(),
+        };
+        created.ready = (async () => {
+            try {
+                for (const proc of (await lister()) ?? [])
+                    created.baseline.add(proc.pid);
+            }
+            catch {
+                // No baseline listing: the tracker knows of no process from before this run.
+            }
+            finally {
+                created.inFlight = false;
+            }
+        })();
+        created.timer = setInterval(() => tick(created), pollMs);
+        if (typeof created.timer.unref === 'function')
+            created.timer.unref();
+        trackers.set(registry, created);
+        tracker = created;
+    }
+    const joined = tracker;
+    joined.users += 1;
+    await joined.ready;
+    let left = false;
+    return () => {
+        if (left)
+            return;
+        left = true;
+        joined.users -= 1;
+        if (joined.users > 0)
+            return;
+        joined.closed = true;
+        if (joined.timer)
+            clearInterval(joined.timer);
+        trackers.delete(registry);
+        for (const pid of joined.registered)
+            registry.remove(pid);
+        joined.registered.clear();
+    };
+}
 const DEFAULT_TIMEOUT_MS = 300_000;
-const DEFAULT_POLL_MS = 1_000;
 function emptyCost() {
     return { turns: 0, inputTokens: 0, outputTokens: 0, usd: null };
 }
@@ -198,9 +336,13 @@ export function looksKilled(error) {
  */
 export async function runAgent(options) {
     const queryFn = options.queryFn ?? sdkQuery;
-    const lister = options.processLister ?? listAgentProcesses;
-    const pollMs = options.pollMs ?? DEFAULT_POLL_MS;
     const timeoutMs = options.timeoutMs > 0 ? options.timeoutMs : DEFAULT_TIMEOUT_MS;
+    // A poll that every concurrent run shares tracks the spawn tree. The SDK exposes no PID accessor.
+    // The tracker finds the direct `claude` child by its parent (the current process). The tracker
+    // finds the plumbing below that child by its command line. A run with no `pids` option lists nothing.
+    const leaveTracker = options.pids
+        ? await joinTracker(options.pids, options.processLister ?? listAgentProcesses, options.pollMs ?? learnConfig().pidPollMs)
+        : null;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     const trace = [];
@@ -209,64 +351,6 @@ export async function runAgent(options) {
     let cost = emptyCost();
     let text = '';
     let outcome = 'error';
-    // The spawn tree, tracked by poll. The SDK exposes no PID accessor, so the
-    // direct `claude` child is found by its parent (this process) and the
-    // plumbing below it by its command line. `baseline` is what existed before
-    // this run, so a long-lived session of the user's is never registered as ours.
-    const baseline = new Set((lister() ?? []).map(proc => proc.pid));
-    const registered = new Set();
-    const poll = () => {
-        if (!options.pids)
-            return;
-        const procs = lister();
-        if (!procs)
-            return;
-        const live = new Set(procs.map(proc => proc.pid));
-        const byPid = new Map(procs.map(proc => [proc.pid, proc]));
-        /** True when `pid` descends from this process or from a registered child. */
-        const isOurs = (pid) => {
-            let cursor = pid;
-            for (let depth = 0; depth < 32; depth++) {
-                const proc = byPid.get(cursor);
-                if (!proc)
-                    return false;
-                const parent = proc.ppid;
-                if (parent === process.pid)
-                    return true;
-                if (parent === undefined || !Number.isFinite(parent) || parent <= 0)
-                    return false;
-                if (registered.has(parent))
-                    return true;
-                cursor = parent;
-            }
-            return false;
-        };
-        // Repeat until stable: a child found this pass can make its own children
-        // ours in the same pass, so a single sweep may miss a deeper layer.
-        let changed = true;
-        while (changed) {
-            changed = false;
-            for (const proc of procs) {
-                if (baseline.has(proc.pid) || registered.has(proc.pid))
-                    continue;
-                if (!isOurs(proc.pid) && !isAgentSpawnTree(proc.commandLine))
-                    continue;
-                registered.add(proc.pid);
-                options.pids.add(proc.pid);
-                changed = true;
-            }
-        }
-        for (const pid of [...registered]) {
-            if (!live.has(pid)) {
-                registered.delete(pid);
-                options.pids.remove(pid);
-            }
-        }
-    };
-    poll();
-    const pollTimer = setInterval(poll, pollMs);
-    if (typeof pollTimer.unref === 'function')
-        pollTimer.unref();
     try {
         for await (const message of queryFn({
             prompt: options.prompt,
@@ -353,12 +437,7 @@ export async function runAgent(options) {
     }
     finally {
         clearTimeout(timer);
-        clearInterval(pollTimer);
-        if (options.pids) {
-            for (const pid of registered)
-                options.pids.remove(pid);
-            registered.clear();
-        }
+        leaveTracker?.();
     }
     return { text, trace, cost, outcome, toolsSeen };
 }

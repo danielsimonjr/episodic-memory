@@ -129,7 +129,7 @@ The `skills` MCP tool (`skills-tool.ts`) lists, searches and loads active skills
 
 - **One run at a time.** `withLearnLock` takes `.learn.lock` through the shared lock file code, so the same liveness and age rules as sync recover the lock of a crashed run. A held lock reports the pid of the holder.
 - **One subprocess limit.** Every agent subprocess goes through one global semaphore (`globalAgentSemaphore`). Depth does not multiply the number of processes. An awaited nested call reuses the slot of its caller, so nesting cannot deadlock.
-- **No orphan kills.** `.learn.pids` lists the live child processes. The session-start orphan reaper reads it and never ends a process of a live run.
+- **No orphan kills.** `.learn.pids` lists the live child processes. The session-start orphan reaper reads it and never ends a process of a live run. The reaper ignores the file when the process named in `.learn.lock` is not alive, so a killed run protects nothing. One tracker lists the processes for every concurrent agent of a run, at the `EPISODIC_MEMORY_LEARN_PID_POLL_MS` interval. A PID leaves the file when a listing no longer shows the PID, or when the last agent ends.
 - **Budget check first.** A command that spends model calls computes its baseline cost first and refuses to start when the baseline alone exceeds the call limit.
 - **Output channels.** Progress goes to standard error. The report goes to standard output.
 
@@ -180,7 +180,7 @@ The `skills` MCP tool (`skills-tool.ts`) lists, searches and loads active skills
 | `tasks.ts` | `selectSourceExchanges`, `generateTasks`, `checkTasks`, `paraphrasePrompt`, `parseParaphrase`, `promptLeaksAnswerKey`. |
 | `grade.ts` | `parseSolverAnswer`, `gradeLocate`, `gradeWhen`, `gradeMulti`, `gradeRecall`, `parseJudgeScore`, `samePath`. |
 | `prompts.ts` | Pure prompt builders: `solverSystemPrompt`, `bootstrapperSystemPrompt`, `bootstrapperBrief`, `mergeInstructionPrompt`, `diagnosePrompt`, `editBrief`, `splitPrompt`, `mergeEntriesPrompt`, `reflectPrompt`. |
-| `agent-runner.ts` | `runAgent`, `buildAgentQueryOptions`, `DISALLOWED_TOOLS`, `listAgentProcesses`, `isAgentSpawnTree`. One of two modules that import the SDK. |
+| `agent-runner.ts` | `runAgent`, `buildAgentQueryOptions`, `DISALLOWED_TOOLS`, `listAgentProcesses` (async), `isAgentSpawnTree`, `ProcessLister`. One of two modules that import the SDK. |
 | `sdk-tools.ts` | `buildLearnToolServer`, `servedToolNames`, `SERVER_NAME`, `PROPOSE_TOOL_NAME`. The other module that imports the SDK. |
 | `learn-handlers.ts` | `learnSearch`, `learnRead`, `learnDigest`, `learnSkills`. Read-only handlers. |
 | `semaphore.ts` | `createSemaphore`, `globalAgentSemaphore`. |

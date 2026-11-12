@@ -1,5 +1,10 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { buildAgentQueryOptions, runAgent } from '../../src/learn/agent-runner.js';
+import {
+  buildAgentQueryOptions,
+  listAgentProcesses,
+  runAgent,
+  type ProcSnapshot,
+} from '../../src/learn/agent-runner.js';
 import {
   SERVED_TOOL_NAMES,
   PROPOSE_TOOL_NAME,
@@ -362,5 +367,115 @@ describe('runAgent', () => {
     // Everything registered is released when the run ends.
     for (const pid of added) expect(removed).toContain(pid);
   });
+  /** A stream that yields init, waits `ms`, then yields a result. */
+  function slowStream(ms: number): () => AsyncIterable<any> {
+    return () =>
+      (async function* () {
+        yield { type: 'system', subtype: 'init', tools: [] };
+        await new Promise(resolve => setTimeout(resolve, ms));
+        yield { type: 'result', is_error: false, result: 'done' };
+      })();
+  }
+
+  it('lists no process when the run has no pid registry', async () => {
+    let calls = 0;
+    await runAgent({
+      ...baseOptions,
+      server: server(),
+      pollMs: 5,
+      processLister: () => {
+        calls += 1;
+        return [];
+      },
+      queryFn: slowStream(30),
+    });
+    expect(calls).toBe(0);
+  });
+
+  it('shares one listing across concurrent runs and never starts a listing while one is in flight', async () => {
+    const pids = { add: () => {}, remove: () => {} };
+    let calls = 0;
+    let release: (() => void) | null = null;
+    // The first call is the baseline. Every later call stays pending until the test releases it.
+    const processLister = (): ProcSnapshot[] | Promise<ProcSnapshot[]> => {
+      calls += 1;
+      if (calls === 1) return [];
+      return new Promise<ProcSnapshot[]>(resolve => {
+        release = () => resolve([]);
+      });
+    };
+    const run = () =>
+      runAgent({ ...baseOptions, server: server(), pids, pollMs: 5, processLister, queryFn: slowStream(80) });
+
+    await Promise.all([run(), run()]);
+
+    // One baseline and one tick in flight, for both runs together.
+    expect(calls).toBe(2);
+    (release as (() => void) | null)?.();
+  });
+
+  it('contains a registry that throws, so a listing never raises an unhandled rejection', async () => {
+    const unhandled: unknown[] = [];
+    const onUnhandled = (reason: unknown) => unhandled.push(reason);
+    process.on('unhandledRejection', onUnhandled);
+    try {
+      let calls = 0;
+      const processLister = (): ProcSnapshot[] => {
+        calls += 1;
+        // The baseline sees nothing. Every later listing shows a direct child, so the tracker calls add.
+        return calls === 1 ? [] : [{ pid: 701, ppid: process.pid, commandLine: 'claude -p' }];
+      };
+      const pids = {
+        add: () => {
+          throw new Error('registry write failed');
+        },
+        remove: () => {},
+      };
+      const result = await runAgent({
+        ...baseOptions,
+        server: server(),
+        pids,
+        pollMs: 5,
+        processLister,
+        queryFn: slowStream(40),
+      });
+      // Let a rejection from the last tick reach the process before the check.
+      await new Promise(resolve => setTimeout(resolve, 20));
+      expect(calls).toBeGreaterThan(1);
+      expect(result.outcome).toBe('graded');
+      expect(unhandled).toEqual([]);
+    } finally {
+      process.off('unhandledRejection', onUnhandled);
+    }
+  });
+
+  it('keeps a live child registered when a concurrent run ends first', async () => {
+    const live = new Set<number>();
+    const pids = { add: (pid: number) => live.add(pid), remove: (pid: number) => live.delete(pid) };
+    let spawned = false;
+    const processLister = (): ProcSnapshot[] =>
+      spawned ? [{ pid: 700, ppid: process.pid, commandLine: 'claude -p --output-format stream-json' }] : [];
+
+    const long = runAgent({ ...baseOptions, server: server(), pids, pollMs: 5, processLister, queryFn: slowStream(160) });
+    const short = runAgent({ ...baseOptions, server: server(), pids, pollMs: 5, processLister, queryFn: slowStream(50) });
+    spawned = true;
+
+    await short;
+    // Both runs share this process as parent, so neither can tell whose child 700 is.
+    // The child is still live, so it must stay in the registry while any run is live.
+    expect(live.has(700)).toBe(true);
+
+    await long;
+    // The last run releases everything: an orphan of a finished run is the reaper's to take.
+    expect(live.has(700)).toBe(false);
+  });
 });
 
+describe('listAgentProcesses', () => {
+  it('returns a promise, so a listing never blocks the event loop', async () => {
+    const pending = listAgentProcesses();
+    expect(pending).toBeInstanceOf(Promise);
+    const procs = await pending;
+    expect(procs === null || Array.isArray(procs)).toBe(true);
+  }, 30000);
+});

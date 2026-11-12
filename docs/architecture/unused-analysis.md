@@ -10,9 +10,9 @@
 - **Dormant files**: 56
   - **Orphaned (reachable from nothing)**: 14
   - **Test-only (only a test reaches them)**: 42
-- **Potentially unused exports**: 114
+- **Potentially unused exports**: 113
   - **Unreferenced anywhere**: 4
-  - **Referenced in their own module**: 110
+  - **Referenced in their own module**: 109
   - **Not classified**: 0
 
 ## Caveats
@@ -136,7 +136,7 @@ No other file imports these names, but their own module uses them.
 - `src/doctor-learn.ts`: `LearnEntryCounts`, `LearnLatestRunSummary`
 - `src/doctor.ts`: `CodexDoctorInputs`, `DoctorInputs`, `DoctorReport`, `StructuredDoctorReport`
 - `src/gpu-reservation.ts`: `GpuReservation`
-- `src/learn/agent-runner.ts`: `AgentRunOptions`, `AgentRunResult`, `BuildAgentQueryOptionsArgs`, `DISALLOWED_TOOLS`, `ProcSnapshot`, `addressFromResultText`, `isAgentSpawnTree`, `listAgentProcesses`, `looksKilled`
+- `src/learn/agent-runner.ts`: `AgentRunOptions`, `AgentRunResult`, `BuildAgentQueryOptionsArgs`, `DISALLOWED_TOOLS`, `ProcessLister`, `addressFromResultText`, `isAgentSpawnTree`, `looksKilled`
 - `src/learn/cited-ids.ts`: `DropReason`, `IdCitedLines`
 - `src/learn/export.ts`: `ExportOptions`, `ExportResult`
 - `src/learn/grade.ts`: `AnswerLocation`, `Grade`, `ParsedAnswer`, `parseJudgeScore`

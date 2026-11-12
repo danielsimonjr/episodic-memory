@@ -86,5 +86,6 @@ export function learnConfig() {
         leafMax: count('LEAF_MAX', 12),
         editsPerRound: count('EDITS_PER_ROUND', 3),
         validateSample: count('VALIDATE_SAMPLE', 5),
+        pidPollMs: count('PID_POLL_MS', 1000),
     };
 }

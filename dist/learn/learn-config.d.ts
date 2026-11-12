@@ -33,6 +33,11 @@ export interface LearnConfig {
     leafMax: number;
     editsPerRound: number;
     validateSample: number;
+    /**
+     * Milliseconds between two listings of the agent spawn tree, shared by every concurrent run.
+     * A new child stays unprotected from the orphan reaper for up to one interval plus one listing.
+     */
+    pidPollMs: number;
 }
 /**
  * True when `EPISODIC_MEMORY_LEARN` names an affirmative value.

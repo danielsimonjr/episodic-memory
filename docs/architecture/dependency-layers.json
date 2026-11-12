@@ -1665,6 +1665,7 @@
         "workspaceDependencies": [],
         "exports": [
           "isProcessAlive",
+          "isLockHeld",
           "acquireLock",
           "releaseLock"
         ],
@@ -1673,6 +1674,7 @@
         ],
         "functions": [
           "isProcessAlive",
+          "isLockHeld",
           "acquireLock",
           "releaseLock"
         ]
@@ -3345,7 +3347,13 @@
           {
             "module": "child_process",
             "imports": [
-              "execFileSync"
+              "execFile"
+            ]
+          },
+          {
+            "module": "util",
+            "imports": [
+              "promisify"
             ]
           }
         ],
@@ -3354,6 +3362,12 @@
             "file": "../summarizer.js",
             "imports": [
               "getApiEnv"
+            ]
+          },
+          {
+            "file": "./learn-config.js",
+            "imports": [
+              "learnConfig"
             ]
           },
           {
@@ -4406,6 +4420,7 @@
             "file": "../lockfile.js",
             "imports": [
               "acquireLock",
+              "isLockHeld",
               "releaseLock"
             ]
           },

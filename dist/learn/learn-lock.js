@@ -17,7 +17,7 @@
  */
 import fs from 'fs';
 import path from 'path';
-import { acquireLock, releaseLock } from '../lockfile.js';
+import { acquireLock, isLockHeld, releaseLock } from '../lockfile.js';
 import { getIndexDir } from '../paths.js';
 /** The file name of the learning lock. The lock file lives in the index directory. */
 export const LEARN_LOCK_NAME = '.learn.lock';
@@ -71,10 +71,21 @@ function readHolderPid(lockPath) {
  * Read the PIDs listed in `.learn.pids`.
  *
  * The function returns an empty set when the file is absent or unreadable.
+ * The function also returns an empty set when the process named in `.learn.lock` is not alive.
+ * A killed run leaves its file behind, and a dead run's PIDs must protect nothing.
+ * The age of the lock does not count here. A live step can outlast the steal age, and its children
+ * must stay protected.
  * The orphan reaper calls this function at reap time, so the function never throws.
  */
 export function readLearnPids(indexDir) {
     const pids = new Set();
+    try {
+        if (!isLockHeld(getLearnLockPath(indexDir), Number.POSITIVE_INFINITY))
+            return pids;
+    }
+    catch {
+        return pids;
+    }
     let raw;
     try {
         raw = fs.readFileSync(getLearnPidsPath(indexDir), 'utf-8');
@@ -123,6 +134,7 @@ function pidFileRegistry(pidsPath) {
  *
  * The function releases the lock on every exit path. The function also deletes `.learn.pids` with the lock.
  * A PID file that outlives its run would make the reaper refuse to reap the next run's genuinely orphaned children.
+ * A killed run skips that cleanup, so the function also deletes a left-over file when it takes the lock.
  */
 export async function withLearnLock(fn) {
     const indexDir = getIndexDir();
@@ -131,6 +143,13 @@ export async function withLearnLock(fn) {
     const handle = acquireLock(lockPath, LEARN_LOCK_STALE_MS);
     if (!handle)
         throw new LearnLockHeld(readHolderPid(lockPath), lockPath);
+    try {
+        // A run that never spawns a child never writes the file, so a killed run's list would stay.
+        fs.rmSync(pidsPath, { force: true });
+    }
+    catch {
+        // The registry rewrites the file on its first add, and the release removes the file.
+    }
     try {
         return await fn(pidFileRegistry(pidsPath));
     }

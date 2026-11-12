@@ -40,7 +40,7 @@ mostly works" and "search nearly always finds it."
 
 Without an eval set, we can't tell if an embedder change helped or hurt.
 
-**Step 1.1: Build a labeled query set.** Daniel pulls 50 "I'm looking
+**Step 1.1: Build a labeled query set.** The maintainer pulls 50 "I'm looking
 for the conversation where I..." queries from his actual workflow,
 labels the correct conversation_id for each. This lives at
 `test/fixtures/eval-queries.json`:

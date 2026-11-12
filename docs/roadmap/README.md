@@ -58,11 +58,11 @@ From recent commit history, open issues, and label set:
 | **Observability** | #45 wants debug logs | **Fork-specific** — Windows debug story matters here |
 | **Build/packaging** | v1.4.1 wrapper improvements; #86 fixed npm install flags | **Fork drove this** — sentinel check is the next iteration |
 
-## Fork-specific themes (not signaled upstream, but Daniel wants them)
+## Fork-specific themes (not signaled upstream, but the maintainer wants them)
 
 1. **Windows correctness** — fork has shipped 2 patches; more lurking. See [focus-areas/windows-correctness.md](focus-areas/windows-correctness.md).
 2. **Security hardening** — fork already closed the `read`-tool path-traversal vector; the full threat-model deserves a sweep. See [focus-areas/security-hardening.md](focus-areas/security-hardening.md).
-3. **Multi-machine sync** — Daniel runs episodic-memory across 2+ Windows desktops + a Mac. Today the index doesn't sync between them. See [later.md](later.md).
+3. **Multi-machine sync** — The maintainer runs episodic-memory across 2+ Windows desktops + a Mac. Today the index doesn't sync between them. See [later.md](later.md).
 4. **Personal MCP-host coordination** — the fork is installed via `local-marketplace`. The "swap fork-vs-upstream" workflow needs better tooling. See [next.md](next.md).
 
 ## Time horizon definitions

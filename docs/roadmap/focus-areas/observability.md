@@ -21,7 +21,7 @@ None of these surface to the user until search becomes obviously wrong.
 | Symptom | What we know about it | What's missing |
 |---|---|---|
 | `× failed` in `/mcp` | Sometimes wrapper install issue, sometimes Claude Code failure cache, sometimes server crash | Single command to check the most-likely causes |
-| New conversations not indexed | Probably the SessionStart hook silently fails | A hook-log Daniel can read |
+| New conversations not indexed | Probably the SessionStart hook silently fails | A hook-log the user can read |
 | Search returns nothing for a project | Could be the project wasn't synced, could be embedder issue | "Why is this project missing?" diagnostic |
 | Sync takes 20 minutes | Embedding model warm-up + first-time index | "What is sync doing right now?" log |
 | Search relevance drops over time | New conversations summarized differently, or model drift | Per-row provenance + drift detection |

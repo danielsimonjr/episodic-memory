@@ -1,6 +1,6 @@
 # Focus area: Developer experience
 
-> For Daniel-the-maintainer and for users who hit problems, how does
+> For the maintainer and for users who hit problems, how does
 > episodic-memory feel? Today: moderately confusing. The plan to make
 > it pleasant.
 
@@ -8,9 +8,9 @@
 
 This focus area covers two related but distinct experiences:
 
-1. **Maintainer DX** — Daniel (or anyone working ON the fork) building,
+1. **Maintainer DX** — the maintainer (or anyone working ON the fork) building,
    testing, debugging, releasing. Internal-facing.
-2. **User DX** — Daniel-the-user (or anyone installing the plugin) on
+2. **User DX** — the user (or anyone installing the plugin) on
    first run, configuring, recovering from errors. External-facing.
 
 Both matter; they're addressed together because the work overlaps.
@@ -63,7 +63,7 @@ npm run upstream-sync
 # runs tests, prompts to commit/push
 ```
 
-**Status:** nice-to-have. Daniel does this maybe once a month.
+**Status:** nice-to-have. The maintainer does this maybe once a month.
 
 ### "Why isn't my change being picked up?"
 

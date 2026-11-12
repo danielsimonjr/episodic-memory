@@ -4,8 +4,8 @@
 > **`obra/episodic-memory`** while carrying fork-specific patches.
 
 This fork is a downstream — not a competing project. The goal is to ship
-patches Daniel needs immediately while keeping the door open to merge
-back upstream and consume future upstream improvements with minimal
+the patches the fork needs immediately. The door stays open to merge back
+upstream and to consume future upstream improvements with minimal
 divergence pain.
 
 ## Three-state ownership model
@@ -16,7 +16,7 @@ Every file in this fork is in one of three states:
 |---|---|---|
 | **Identical to upstream** | We haven't modified it; just rebuild artifacts may differ (line endings) | Most of `src/`, `cli/`, `scripts/`, `test/` |
 | **Fork-patched (pending upstream PR)** | We've modified it; upstream may merge our patch eventually | `src/db.ts`, `src/parser.ts`, `src/mcp-server.ts`, `cli/mcp-server-wrapper.js`, `package.json`, `test/test-utils.ts`, `test/{db,verify,integration}.test.ts` |
-| **Fork-only (won't be upstreamed)** | Daniel-specific, not relevant to upstream | `CLAUDE.md` (Daniel-rewrite), `todo.md`, `docs/roadmap/` |
+| **Fork-only (won't be upstreamed)** | Fork-specific, not relevant to upstream | `CLAUDE.md` (fork rewrite), `todo.md`, `docs/roadmap/` |
 
 The **fork-patched** set is the source of merge conflicts when pulling from
 upstream. Keep that set as small as possible by upstreaming aggressively.
@@ -79,7 +79,7 @@ When `git diff main upstream/main` shows something new, classify it:
 - **Refactor of a fork-patched file** → manual merge; preserve both
   upstream's intent and our patch.
 - **Breaking change to public API** → flag for slow rollout; consider
-  delaying merge until fork users (Daniel) can adapt.
+  delaying merge until fork users can adapt.
 
 ## Tracking upstream activity
 
@@ -117,15 +117,15 @@ If `obra/episodic-memory` stops receiving commits for >6 months and our
 fork has accumulated material improvements, options:
 
 1. **Stay a fork** — keep merging upstream changes when they come.
-2. **Become a soft fork** — rename to `daniel-episodic-memory`, publish
-   to npm, keep a permanent upstream-sync workflow but stop trying to
+2. **Become a soft fork** — rename to `episodic-memory-fork` and publish
+   to npm. Keep a permanent upstream-sync workflow, but stop trying to
    contribute back.
 3. **Take over as maintainer** — the most polite version of this is to
    open a "are you still maintaining?" issue and offer to maintain
    collaboratively before forking the project name.
 
 Today we're at #1 and likely to stay there. Logging the options for
-future-Daniel.
+a future maintainer.
 
 ## What this fork should NOT do
 

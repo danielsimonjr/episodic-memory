@@ -2,7 +2,7 @@ metadata:
   name: episodic-memory
   schemaVersion: 2.0.0
   language: typescript
-  totalFiles: 249
+  totalFiles: 251
   totalModules: 4
   totalExports: 565
 modules:
@@ -3725,6 +3725,28 @@ modules:
             - suppressConsole
           typeOnly: false
       exports: []
+    test/global-setup.test.ts:
+      externalDependencies:
+        - '@huggingface/transformers'
+        - vitest
+      nodeDependencies:
+        - node:fs
+        - node:path
+      internalDependencies:
+        - file: vitest.config.ts
+          imports:
+            - default
+          typeOnly: false
+      exports: []
+    test/global-setup.ts:
+      externalDependencies: []
+      nodeDependencies: []
+      internalDependencies:
+        - file: src/embeddings.ts
+          imports:
+            - initEmbeddings
+          typeOnly: false
+      exports: []
     test/gpu-reservation.test.ts:
       externalDependencies:
         - vitest
@@ -6191,12 +6213,12 @@ modules:
           typeOnly: false
       exports: []
 statistics:
-  totalTypeScriptFiles: 249
-  totalSourceFiles: 249
+  totalTypeScriptFiles: 251
+  totalSourceFiles: 251
   totalModules: 4
-  totalLinesOfCode: 51076
+  totalLinesOfCode: 51115
   totalExports: 565
-  entryRoots: 5
+  entryRoots: 6
   reachableFiles: 44
   dormantFiles: 56
   orphanedFiles: 14
@@ -6225,6 +6247,7 @@ reachability:
     - src/index-cli.ts
     - src/mcp-server.ts
     - test/setup-env.ts
+    - test/global-setup.ts
   reachableCount: 44
   dormantCount: 56
   orphaned:

@@ -8,7 +8,7 @@ This report lists each source file that the map census finds, with a disposition
 
 **Language**: typescript
 
-**Total files**: 249
+**Total files**: 251
 
 ## Disposition counts
 
@@ -18,12 +18,12 @@ This report lists each source file that the map census finds, with a disposition
 | `build-entry` | 4 | A `src`-area file that is an entry root. |
 | `test-only` | 42 | A `src`-area file that only a test reaches. |
 | `orphan` | 14 | A `src`-area file that nothing reaches. Delete it, or wire it to a root. |
-| `test` | 144 | A file in a `test/` or `tests/` folder, or a `*.test.ts` or `*.spec.ts` file. |
+| `test` | 146 | A file in a `test/` or `tests/` folder, or a `*.test.ts` or `*.spec.ts` file. |
 | `tool` | 4 | A file in a `tools/` or `scripts/` folder outside `src/`. |
 | `config` | 1 | A `*.config.*` file of TypeScript or JavaScript. |
 | `example` | 0 | A file in `examples/` or `docs/`. |
 | `bench` | 0 | A file in `bench/` or `benchmarks/`, or a `*.bench.*` file. |
-| **Total** | **249** | |
+| **Total** | **251** | |
 
 ## Per-area counts
 
@@ -31,14 +31,14 @@ This report lists each source file that the map census finds, with a disposition
 | --- | --: |
 | `config` | 1 |
 | `src` | 100 |
-| `tests` | 144 |
+| `tests` | 146 |
 | `tools` | 4 |
 
 ## Per-package counts
 
 | Package | Files |
 | --- | --: |
-| `(root)` | 156 |
+| `(root)` | 158 |
 | `episodic-memory` | 93 |
 
 ## All files
@@ -186,6 +186,8 @@ This report lists each source file that the map census finds, with a disposition
 | `test/embedding-migration.test.ts` | (root) | tests | test | 221 |
 | `test/embeddings-format.test.ts` | (root) | tests | test | 35 |
 | `test/exclude-nested.test.ts` | (root) | tests | test | 124 |
+| `test/global-setup.test.ts` | (root) | tests | test | 22 |
+| `test/global-setup.ts` | (root) | tests | test | 14 |
 | `test/gpu-reservation.test.ts` | (root) | tests | test | 155 |
 | `test/helpers/forbid-modules.mjs` | (root) | tests | test | 40 |
 | `test/hooks.test.ts` | (root) | tests | test | 41 |
@@ -293,7 +295,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/topic-validate.test.ts` | (root) | tests | test | 364 |
 | `test/verify.test.ts` | (root) | tests | test | 320 |
 | `test/version-consistency.test.ts` | (root) | tests | test | 30 |
-| `vitest.config.ts` | (root) | config | config | 23 |
+| `vitest.config.ts` | (root) | config | config | 26 |
 
 ## Skipped links
 

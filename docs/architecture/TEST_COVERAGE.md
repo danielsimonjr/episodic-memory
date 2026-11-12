@@ -9,7 +9,7 @@
 | Metric | Count |
 |--------|-------|
 | Total Source Files | 100 |
-| Total Test Files | 139 |
+| Total Test Files | 140 |
 | Source Files with Tests | 78 |
 | Source Files without Tests | 22 |
 | Coverage (raw, direct-import) | **78.0%** |
@@ -175,6 +175,7 @@ The following 22 source files are not directly imported by any test file:
 | `test/embedding-migration.test.ts` | 2 files |
 | `test/embeddings-format.test.ts` | 2 files |
 | `test/exclude-nested.test.ts` | 2 files |
+| `test/global-setup.test.ts` | 0 files |
 | `test/gpu-reservation.test.ts` | 2 files |
 | `test/hooks.test.ts` | 0 files |
 | `test/incremental-indexing.test.ts` | 1 files |

@@ -13,6 +13,9 @@ export default defineConfig({
     // EPISODIC_MEMORY_* variable. A test that needs another value sets that value.
     env: { ...TEST_ENV },
     setupFiles: ['test/setup-env.ts'],
+    // test/global-setup.ts loads the embedding model once before the workers start. Therefore, the
+    // workers of a fresh checkout do not download the model at the same time.
+    globalSetup: ['test/global-setup.ts'],
     include: ['test/**/*.test.ts'],
     testTimeout: 30000, // 30 seconds for embedding/indexing tests
     // Some beforeEach hooks index multi-exchange fixtures, which is CPU-bound

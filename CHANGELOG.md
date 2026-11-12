@@ -5,7 +5,10 @@
 
 - **Topic prompt and answer handling (`src/topic-prompts.ts`).** `buildTopicPrompt` shows the most recently updated documents that fit, and drops the oldest until the prompt fits the budget. `parseTopicAnswer` reads `=== FILE` / `=== DELETE` blocks, treats `===` lines inside a fenced block as text, and reports an unterminated block. `prepareTopicEdit` rewrites marks to exchange ids, redacts secrets outside link targets, assigns new ids, and points each link at the document that now holds its paragraph. A block with a malformed definition keeps the model's text, so validation quotes it.
 
+- **Topic organize job, off by default (`EPISODIC_MEMORY_TOPICS=1`).** `sync` runs `runTopicPhase()` after the digest. The job takes finished sessions oldest first, asks the model for an edit, retries once with the error list, validates and installs it. The prompt always fits `promptBudgetChars()`: it drops shown documents, then shortens the transcript; a session that no prompt can hold is skipped and retried later. A failed call or an edit fault leaves the session pending; the third failure rejects it. The prompt asks for `NOTHING` when the session adds nothing, because Ollama refuses an empty reply.
+
 ### Fixed
+- **The digest session prompt was cut silently on Ollama.** The digest built prompts up to 48000 characters and `callOllama` sent the first 24000. The prompt is now built within `promptBudgetChars()`, and `numberExchanges` counts the blank lines between exchanges, so the cap is exact. `ollamaMaxPromptChars()` is the one reader of `EPISODIC_MEMORY_OLLAMA_MAX_PROMPT_CHARS`.
 - **Secret redaction ate the next line after a bare `Bearer`.** The bearer rule matched `\s+`, so `Bearer` at the end of a line took the first word of the next line as its value. It now matches spaces and tabs only. This also applies to digest text.
 
 ### Changed

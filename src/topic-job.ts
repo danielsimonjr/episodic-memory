@@ -34,11 +34,11 @@ export interface TopicResult {
   empty: number;
   /** Sessions that the job recorded as rejected in this run. */
   rejected: number;
-  /** Sessions left out because they are quiet or trivial. */
+  /** Sessions left out because they are quiet, trivial, or no exchange fits the prompt budget. */
   skipped: number;
   /** Edits that the `updated_at` check refused. The next run retries them. */
   stale: number;
-  /** Failed model calls. The next run retries them until the limit of failed calls. */
+  /** Failed model calls and edit faults. The next run retries them until the limit of failed calls. */
   failed: number;
   /** The reason that the run stopped, when another agent holds the shared GPU. The job counts this as a deferral. */
   deferred?: string;
@@ -93,7 +93,11 @@ function topicLimits(): TopicLimits {
 function sinceTime(db: Database.Database, now: Date): string {
   const stored = getTopicMeta(db, 'since');
   if (stored !== null) return stored;
-  const parsed = Date.parse(process.env.EPISODIC_MEMORY_TOPICS_SINCE ?? '');
+  const raw = process.env.EPISODIC_MEMORY_TOPICS_SINCE;
+  const parsed = Date.parse(raw ?? '');
+  if (raw !== undefined && raw !== '' && !Number.isFinite(parsed)) {
+    console.error('topics: EPISODIC_MEMORY_TOPICS_SINCE is not a valid time, using now');
+  }
   const value = new Date(Number.isFinite(parsed) ? parsed : now.getTime()).toISOString();
   setTopicMeta(db, 'since', value);
   return value;
@@ -166,18 +170,21 @@ function recordFailedCall(run: Run, project: string, sessionId: string, reason: 
   if (attempts >= TOPIC_DEFAULTS.maxFailedCalls) recordRejected(run, project, sessionId, reason);
 }
 
+/** How one session ended: the run goes on, the run stops for the GPU, or no exchange fit the prompt. */
+type SessionOutcome = 'next' | 'stop' | 'unfit';
+
 /**
  * Organize one session: build the prompt, ask the model, validate the answer and install it.
  *
- * A validation or parse error gets one retry with the error list. Returns true when the run must stop because
- * another agent holds the GPU.
+ * A validation or parse error gets one retry with the error list. A session that no prompt can hold is
+ * left as it is, with no row, so a later run with a larger budget can take it.
  */
 async function organizeSession(
   run: Run,
   limits: TopicLimits,
   s: SessionRow,
   exchanges: ConversationExchange[]
-): Promise<boolean> {
+): Promise<SessionOutcome> {
   const { db, model, result } = run;
   const budget = promptBudgetChars();
   const docs = storedDocs(db, s.project);
@@ -191,8 +198,8 @@ async function organizeSession(
     budgetChars: budget - TOPIC_DEFAULTS.retryReserveChars,
   });
   if (built === null) {
-    recordRejected(run, s.project, s.session_id, 'prompt does not fit the budget');
-    return false;
+    console.error(`topics: session ${s.session_id} skipped: no exchange fits the prompt budget`);
+    return 'unfit';
   }
 
   let errors: string[] = [];
@@ -204,10 +211,10 @@ async function organizeSession(
     } catch (err) {
       if (err instanceof GpuReservedError) {
         result.deferred = err.detail;
-        return true;
+        return 'stop';
       }
       recordFailedCall(run, s.project, s.session_id, errorText(err));
-      return false;
+      return 'next';
     }
     try {
       const parsed = parseTopicAnswer(answer);
@@ -218,7 +225,7 @@ async function organizeSession(
       if (parsed.blocks.length === 0) {
         setTopicSessionStatus(db, s.project, s.session_id, 'done');
         result.empty++;
-        return false;
+        return 'next';
       }
       const blocks = prepareTopicEdit({ project: s.project, blocks: parsed.blocks, marks: built.marks, before });
       errors = validateTopicEdit({
@@ -234,19 +241,19 @@ async function organizeSession(
       const outcome = installTopicEdit(db, s.project, { files, deletes, sessionId: s.session_id }, built.shown);
       if (outcome === 'stale') {
         result.stale++;
-        return false;
+        return 'next';
       }
       result.installed++;
-      return false;
+      return 'next';
     } catch (err) {
-      // The answer passed the model call, so this is not a model failure. Reject the session, so that one bad
-      // edit cannot block the sessions after it.
-      recordRejected(run, s.project, s.session_id, errorText(err));
-      return false;
+      // A fault in prepare, validate or install (a locked database, for one) can pass. Count it like a failed
+      // model call: the session stays pending, and the next run tries it again, up to the failure limit.
+      recordFailedCall(run, s.project, s.session_id, `edit failed: ${errorText(err)}`);
+      return 'next';
     }
   }
   recordRejected(run, s.project, s.session_id, errors.join('\n'));
-  return false;
+  return 'next';
 }
 
 /**
@@ -288,8 +295,13 @@ export async function runTopics(db: Database.Database, opts: TopicOptions = {}):
       result.skipped++;
       continue;
     }
+    const outcome = await organizeSession(run, limits, s, exchanges);
+    if (outcome === 'stop') break;
+    if (outcome === 'unfit') {
+      result.skipped++;
+      continue;
+    }
     attempted++;
-    if (await organizeSession(run, limits, s, exchanges)) break;
   }
   return result;
 }

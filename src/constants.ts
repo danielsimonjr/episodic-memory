@@ -85,9 +85,9 @@ export function topicsEnabled(): boolean {
 /**
  * Read a positive integer from an environment variable.
  *
- * An unset, invalid or non-positive value gives `fallback`.
+ * A fraction is rounded down. An unset or invalid value, or a value below 1, gives `fallback`.
  */
 export function envPositiveInt(name: string, fallback: number): number {
   const n = Number(process.env[name]);
-  return Number.isInteger(n) && n > 0 ? n : fallback;
+  return Number.isFinite(n) && n >= 1 ? Math.floor(n) : fallback;
 }

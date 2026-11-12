@@ -177,6 +177,28 @@ describe('buildTopicPrompt', () => {
     expect(fitted.prompt).toBe(onlyA.prompt);
   });
 
+  it('shortens the transcript when the prompt is over budget with no shown document', () => {
+    const many = Array.from({ length: 40 }, (_, i) => ex(`m${i}`, `question ${i} `.repeat(5), `answer ${i} `.repeat(5)));
+    const full = buildTopicPrompt({ exchanges: many, docs: [], maxTranscriptChars: 100000, maxDocsChars: 0, budgetChars: 1000000 })!;
+    const budget = Math.floor(full.prompt.length / 2);
+    const short = buildTopicPrompt({ exchanges: many, docs: [], maxTranscriptChars: 100000, maxDocsChars: 0, budgetChars: budget })!;
+    expect(short.prompt.length).toBeLessThanOrEqual(budget);
+    expect(short.marks.size).toBeGreaterThan(0);
+    expect(short.marks.size).toBeLessThan(full.marks.size);
+  });
+
+  it('cuts each inventory line to 240 characters', () => {
+    const wide = { ...doc('wide', 10), headings: Array.from({ length: 40 }, (_, i) => `Heading number ${i}`) };
+    const result = buildTopicPrompt(input([wide], 0, 1000000))!;
+    const line = result.prompt.split('\n').find(l => l.startsWith('- wide: '))!;
+    expect(line.length).toBe(240);
+    expect(line.endsWith('…')).toBe(true);
+  });
+
+  it('returns null only when no exchange fits', () => {
+    expect(buildTopicPrompt(input([], 0, 1000000, 10))).toBeNull();
+  });
+
   it('returns null when the prompt is over budget with no shown document', () => {
     expect(buildTopicPrompt(input([DOC_A], 100000, 10))).toBeNull();
   });
@@ -197,8 +219,8 @@ describe('buildTopicPrompt', () => {
     const result = buildTopicPrompt(input([], 100000, 1000000));
     expect([...result!.marks.entries()]).toEqual([[1, EXCHANGE_ID]]);
     expect(result!.prompt).toContain('[1] User: first user line');
-    const none = buildTopicPrompt(input([], 100000, 1000000, 0));
-    expect(none!.marks.size).toBe(0);
+    // A transcript cap that holds no exchange gives no prompt: the model is never asked about nothing.
+    expect(buildTopicPrompt(input([], 100000, 1000000, 0))).toBeNull();
   });
 
   it('never returns a prompt above the budget, and fits once the budget is large enough', () => {
@@ -231,6 +253,11 @@ describe('buildTopicPrompt', () => {
     const both = buildTopicPrompt(input([older, newer], 100000, 1000000))!.prompt.length;
     const result = buildTopicPrompt(input([older, newer], 100000, both - 1))!;
     expect([...result.shown.keys()]).toEqual(['newer']);
+  });
+
+  it('asks for the word NOTHING when the conversation adds nothing', () => {
+    expect(buildTopicPrompt(input([], 0, 1000000))!.prompt).toContain('- If the conversation adds nothing, answer with the single word NOTHING.');
+    expect(parseTopicAnswer('NOTHING')).toEqual({ blocks: [], errors: [] });
   });
 
   it('tells the model to write no line that starts with ===', () => {
@@ -540,5 +567,20 @@ describe('prepareTopicEdit', () => {
     const alpha = out[0];
     if (alpha.kind !== 'file') throw new Error('expected a file block');
     expect(parseTopicDoc('alpha', alpha.text).definitions[0].refs).toEqual([`#${EXCHANGE_ID}`]);
+  });
+});
+
+describe('numberExchanges: the cap bounds the whole text', () => {
+  it('never returns a text longer than the cap, separators included', () => {
+    const exchanges = Array.from({ length: 30 }, (_, i) => ex(`id-${i}`, 'u'.repeat(40 + (i % 7) * 13), 'a'.repeat(30)));
+    for (const cap of [0, 1, 50, 99, 100, 101, 250, 1098, 1500, 2999, 100000]) {
+      expect(numberExchanges(exchanges, cap).text.length).toBeLessThanOrEqual(cap);
+    }
+  });
+
+  it('keeps nine 100-character blocks out of a 1098 cap when their separators do not fit', () => {
+    const exchanges = Array.from({ length: 9 }, (_, i) => ex(`id-${i}`, 'u'.repeat(30), 'a'.repeat(100 - 30 - '[1] User: \n[1] Agent: '.length)));
+    const out = numberExchanges(exchanges, 1098);
+    expect(out.text.length).toBeLessThanOrEqual(1098);
   });
 });

@@ -68,10 +68,11 @@ describe('runDigest keeps the session prompt within promptBudgetChars()', () => 
     process.env.EPISODIC_MEMORY_SUMMARIZER_BACKEND = 'ollama';
     process.env.EPISODIC_MEMORY_OLLAMA_MAX_PROMPT_CHARS = String(budget);
 
-    // Precondition: the old cap (budget minus the rules) overflows the budget by the blank lines.
+    // numberExchanges counts the blank lines between blocks, so the cap "budget minus the rules" is exact.
     const overhead = buildSessionPrompt([], 0).prompt.length;
-    const naive = buildSessionPrompt(exchangesOf(40), budget - overhead).prompt;
-    expect(naive.length).toBeGreaterThan(budget);
+    const exact = buildSessionPrompt(exchangesOf(40), budget - overhead).prompt;
+    expect(exact.length).toBeLessThanOrEqual(budget);
+    expect(exact.length).toBeGreaterThan(budget - 200);
 
     const prompts: string[] = [];
     await runDigest(db, {

@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [1.7.4] - 2026-11-12
+
 ### Fixed
 
 - **The digest wrote nothing on the Ollama backend.** `callOllama` refused every reply without a `<summary>` block, and the digest and learn prompts never ask for a `<summary>` block. Every digest call failed with "Ollama reply has no <summary></summary> block"; the live digest wrote no entry after 2026-10-19. `callOllama` takes `requireSummaryBlock` (default true). `callDigestModel` and `callLearnModel` pass false. Their own parsers check the reply.

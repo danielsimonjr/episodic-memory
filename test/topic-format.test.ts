@@ -125,10 +125,32 @@ describe('serializeTopicDoc', () => {
     expect(serializeTopicDoc(doc)).not.toMatch(/^\^/m);
   });
 
-  it('does not keep a heading that has no paragraph below it (canonical form)', () => {
+  it('keeps a heading that has no paragraph below it', () => {
     const doc = parseTopicDoc('work', '# T\n\n## Empty\n\n## Full\n\nP.[^1]\n^aaaaaaaa\n\n[^1]: Time: 2026; Sources: #e1\n');
-    expect(serializeTopicDoc(doc)).not.toContain('## Empty');
+    expect(serializeTopicDoc(doc)).toContain('## Empty');
     expect(serializeTopicDoc(doc)).toContain('## Full');
+  });
+
+  it('keeps the heading levels and the order of the input, so a second parse sees the same structure', () => {
+    const inputs = [
+      // No level-one heading: check 4 must still fail after a round trip.
+      '## S\n\nP.[^1]\n^aaaaaaaa\n\n[^1]: Time: 2026; Sources: #e1\n',
+      // The level-one heading is second: check 4 must still fail after a round trip.
+      '## Intro\n\n# T\n\n## S\n\nP.[^1]\n^aaaaaaaa\n\n[^1]: Time: 2026; Sources: #e1\n',
+      // Two level-one headings: check 4 must still fail after a round trip.
+      '# A\n\n# A\n\nP.[^1]\n^aaaaaaaa\n\n[^1]: Time: 2026; Sources: #e1\n',
+    ];
+    for (const text of inputs) {
+      const first = parseTopicDoc('work', text);
+      const second = parseTopicDoc('work', serializeTopicDoc(first));
+      expect(second.h1Count).toBe(first.h1Count);
+      expect(second.titleFirst).toBe(first.titleFirst);
+      expect(second.units.map(u => u.heading)).toEqual(first.units.map(u => u.heading));
+      expect(serializeTopicDoc(second)).toBe(serializeTopicDoc(first));
+    }
+    expect(parseTopicDoc('work', inputs[0]).h1Count).toBe(0);
+    expect(parseTopicDoc('work', inputs[1]).titleFirst).toBe(false);
+    expect(parseTopicDoc('work', inputs[2]).h1Count).toBe(2);
   });
 });
 

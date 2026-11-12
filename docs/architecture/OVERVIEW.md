@@ -41,11 +41,11 @@ All figures below come from `repo-tools map` and cover the whole repository. The
 
 | Metric | Value | Scope |
 |---|---|---|
-| Source files | 226 | whole repository |
-| Lines of code | 45289 | whole repository |
-| Exports | 492 | whole repository |
+| Source files | 249 | whole repository |
+| Lines of code | 50753 | whole repository |
+| Exports | 563 | whole repository |
 | Modules (areas) | 4 | `src`, `tools`, `tests`, `config` |
-| Entry roots | 4 | `src/index.ts`, `src/node-floor.ts`, `src/index-cli.ts`, `src/mcp-server.ts` |
+| Entry roots | 5 | `src/index.ts`, `src/node-floor.ts`, `src/index-cli.ts`, `src/mcp-server.ts`, `test/setup-env.ts` (vitest loads this file by its path in `vitest.config.ts`) |
 | Runtime circular dependencies | 0 | whole repository |
 | Type-only circular dependencies | 1 | whole repository |
 
@@ -77,11 +77,11 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 246 | repo-tools map |
-| totalLinesOfCode | 50700 | repo-tools map |
-| totalExports | 562 | repo-tools map |
+| totalSourceFiles | 249 | repo-tools map |
+| totalLinesOfCode | 50753 | repo-tools map |
+| totalExports | 563 | repo-tools map |
 | totalModules | 4 | repo-tools map |
-| entryRoots | 4 | repo-tools map |
+| entryRoots | 5 | repo-tools map |
 | orphanedFiles | 14 | repo-tools map |
 | dormantFiles | 56 | repo-tools map |
 | runtimeCircularDeps | 0 | repo-tools map |

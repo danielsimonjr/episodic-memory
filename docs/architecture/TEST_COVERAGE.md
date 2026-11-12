@@ -9,7 +9,7 @@
 | Metric | Count |
 |--------|-------|
 | Total Source Files | 100 |
-| Total Test Files | 138 |
+| Total Test Files | 139 |
 | Source Files with Tests | 78 |
 | Source Files without Tests | 22 |
 | Coverage (raw, direct-import) | **78.0%** |
@@ -266,6 +266,7 @@ The following 22 source files are not directly imported by any test file:
 | `test/sync-session-id.test.ts` | 1 files |
 | `test/sync-summary-retry.test.ts` | 1 files |
 | `test/sync.test.ts` | 1 files |
+| `test/test-env.test.ts` | 0 files |
 | `test/tool-calls-cascade.test.ts` | 1 files |
 | `test/topic-db.test.ts` | 1 files |
 | `test/topic-format.test.ts` | 1 files |

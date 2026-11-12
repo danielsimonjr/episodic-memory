@@ -2,9 +2,9 @@ metadata:
   name: episodic-memory
   schemaVersion: 2.0.0
   language: typescript
-  totalFiles: 246
+  totalFiles: 249
   totalModules: 4
-  totalExports: 562
+  totalExports: 563
 modules:
   src:
     cli/digest-hook.js:
@@ -5466,6 +5466,15 @@ modules:
             - buildFtsMatchQuery
           typeOnly: false
       exports: []
+    test/setup-env.ts:
+      externalDependencies: []
+      nodeDependencies: []
+      internalDependencies:
+        - file: test/test-env.ts
+          imports:
+            - TEST_ENV
+          typeOnly: false
+      exports: []
     test/show.test.ts:
       externalDependencies:
         - vitest
@@ -5844,6 +5853,25 @@ modules:
             - syncConversations
           typeOnly: false
       exports: []
+    test/test-env.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - node:os
+      internalDependencies:
+        - file: test/test-env.ts
+          imports:
+            - TEST_ENV
+          typeOnly: false
+      exports: []
+    test/test-env.ts:
+      externalDependencies: []
+      nodeDependencies:
+        - node:os
+        - node:path
+      internalDependencies: []
+      exports:
+        - TEST_ENV
     test/test-indexer.ts:
       externalDependencies: []
       nodeDependencies: []
@@ -6144,18 +6172,20 @@ modules:
     vitest.config.ts:
       externalDependencies:
         - vitest/config
-      nodeDependencies:
-        - node:os
-        - node:path
-      internalDependencies: []
+      nodeDependencies: []
+      internalDependencies:
+        - file: test/test-env.ts
+          imports:
+            - TEST_ENV
+          typeOnly: false
       exports: []
 statistics:
-  totalTypeScriptFiles: 246
-  totalSourceFiles: 246
+  totalTypeScriptFiles: 249
+  totalSourceFiles: 249
   totalModules: 4
-  totalLinesOfCode: 50700
-  totalExports: 562
-  entryRoots: 4
+  totalLinesOfCode: 50753
+  totalExports: 563
+  entryRoots: 5
   reachableFiles: 44
   dormantFiles: 56
   orphanedFiles: 14
@@ -6175,7 +6205,7 @@ statistics:
   totalFunctions: 315
   totalTypeGuards: 8
   totalEnums: 0
-  totalConstants: 62
+  totalConstants: 63
   totalReExports: 8
 reachability:
   roots:
@@ -6183,6 +6213,7 @@ reachability:
     - src/node-floor.ts
     - src/index-cli.ts
     - src/mcp-server.ts
+    - test/setup-env.ts
   reachableCount: 44
   dormantCount: 56
   orphaned:

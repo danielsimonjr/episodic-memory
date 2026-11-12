@@ -1,5 +1,8 @@
 ## [Unreleased]
 
+### Fixed
+- **A local test run no longer reaches a live model.** The tests inherited every `EPISODIC_MEMORY_*` variable of the machine, and `vitest.config.ts` pinned only three variables. With `EPISODIC_MEMORY_OLLAMA_FALLBACK_MODEL` set, a test of a failed Ollama call fell back to a real Claude call and failed. A second test failed the same way. Both tests passed in CI, where the variable is absent. `test/setup-env.ts` now deletes every `EPISODIC_MEMORY_*` variable that `test/test-env.ts` does not pin. `EPISODIC_MEMORY_CONFIG_DIR` points to a temporary folder, so a test that does not set its own folder cannot write to the live data. `test/test-env.test.ts` fails when a machine variable leaks through.
+
 ### Changed
 - **Tracker and contributor docs match the repo again.** `CLAUDE.md` and `todo.md` said "direct push" to `main`; `main` requires the CI `build` check, so they now say branch and pull request. The local path is `~/Github/episodic-memory`, not `~/Dropbox/Github/episodic-memory`. `todo.md` closes the shipped rows with evidence: topic Tasks 6-7, the combined digest, the fork install, the eol fix and upstream #95. It also adds the open work that an audit found.
 

@@ -407,6 +407,7 @@ Every setting is read at call time and ignored when absent, not a positive numbe
 | `EPISODIC_MEMORY_LEARN_LEAF_MAX` | `12` | Failed tasks in one leaf before the learner splits by project or failure category |
 | `EPISODIC_MEMORY_LEARN_EDITS_PER_ROUND` | `3` | Entries a leaf may propose in one round |
 | `EPISODIC_MEMORY_LEARN_VALIDATE_SAMPLE` | `5` | Already-passing tasks re-solved per edit to catch regressions |
+| `EPISODIC_MEMORY_LEARN_PID_POLL_MS` | `1000` | Milliseconds between two listings of the agent subprocesses. One listing serves every concurrent agent. The registry keeps the subprocesses safe from the SessionStart orphan reaper. A new subprocess stays unprotected for up to one interval plus one listing. A longer interval widens the unprotected window |
 
 ### Approval
 

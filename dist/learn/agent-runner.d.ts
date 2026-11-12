@@ -60,10 +60,14 @@ export declare function isAgentSpawnTree(commandLine: string): boolean;
 /**
  * The machine's `claude` processes, or null when enumeration fails.
  *
+ * The listing runs as a child process and the function awaits it, so a slow listing never blocks
+ * the event loop. On Windows one listing takes most of a second.
  * Null means that the run registers nothing during this poll.
  * A run that cannot see its children is better off with a short `.learn.pids` than with a wrong one.
  */
-export declare function listAgentProcesses(): ProcSnapshot[] | null;
+export declare function listAgentProcesses(): Promise<ProcSnapshot[] | null>;
+/** A process lister. The real one is async. A test seam can answer at once. */
+export type ProcessLister = () => ProcSnapshot[] | null | Promise<ProcSnapshot[] | null>;
 /**
  * The inputs to `runAgent`. The `queryFn` and `processLister` fields are test seams.
  */
@@ -83,8 +87,11 @@ export interface AgentRunOptions {
         options: Record<string, unknown>;
     }) => AsyncIterable<SDKMessage>;
     /** Test seam: defaults to `listAgentProcesses`. */
-    processLister?: () => ProcSnapshot[] | null;
-    /** How often the spawn tree is polled while the agent runs. */
+    processLister?: ProcessLister;
+    /**
+     * Milliseconds between two listings of the spawn tree. The default is `EPISODIC_MEMORY_LEARN_PID_POLL_MS`.
+     * Concurrent runs that share one registry share one poll. The interval of the first run applies.
+     */
     pollMs?: number;
 }
 /**

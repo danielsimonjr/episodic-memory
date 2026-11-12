@@ -300,7 +300,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 446
+      "loc": 559
     },
     {
       "file": "src/learn/bootstrap.ts",
@@ -370,7 +370,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 128
+      "loc": 134
     },
     {
       "file": "src/learn/learn-handlers.ts",
@@ -391,7 +391,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 156
+      "loc": 173
     },
     {
       "file": "src/learn/learned-block.ts",
@@ -510,7 +510,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 129
+      "loc": 139
     },
     {
       "file": "src/logging.ts",
@@ -1049,7 +1049,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 366
+      "loc": 481
     },
     {
       "file": "test/learn/bootstrap.test.ts",
@@ -1126,7 +1126,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 155
+      "loc": 157
     },
     {
       "file": "test/learn/learn-handlers.test.ts",
@@ -1147,7 +1147,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 102
+      "loc": 147
     },
     {
       "file": "test/learn/learned-block.test.ts",
@@ -1616,7 +1616,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 136
+      "loc": 151
     },
     {
       "file": "test/sync-hook-logging.test.ts",

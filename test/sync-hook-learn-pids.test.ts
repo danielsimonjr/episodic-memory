@@ -111,6 +111,8 @@ afterEach(() => safeRmSync(dir));
 describe('SessionStart hook and a live learn run', () => {
   it('never kills a PID listed in .learn.pids, and reaps the one that is not', () => {
     writeFileSync(join(indexDir, '.learn.pids'), `${PROTECTED}\n`, 'utf-8');
+    // The run is live: the test runner itself holds the lock.
+    writeFileSync(join(indexDir, '.learn.lock'), String(process.pid), 'utf-8');
 
     const run = runHook();
 
@@ -122,6 +124,19 @@ describe('SessionStart hook and a live learn run', () => {
     expect(log).not.toContain(String(PROTECTED));
     // The reaper reports what it protected, so "nothing killed" cannot be mistaken for "never ran".
     expect(log).toContain('1 protected by learn');
+  });
+
+  it('ignores a .learn.pids that a killed run left behind', () => {
+    // No lock: the run that wrote the file is gone, so its PIDs protect nothing.
+    writeFileSync(join(indexDir, '.learn.pids'), `${PROTECTED}\n`, 'utf-8');
+
+    const run = runHook();
+
+    expect(run.status).toBe(0);
+    const log = readLog();
+    expect(log).toContain(String(PROTECTED));
+    expect(log).toContain(String(ORPHAN));
+    expect(log).toContain('0 protected by learn');
   });
 
   it('reaps both when no learn run is live', () => {

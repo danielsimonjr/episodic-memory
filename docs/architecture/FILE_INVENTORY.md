@@ -84,7 +84,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/index.ts` | episodic-memory | src | build-entry | 9 |
 | `src/indexer.ts` | episodic-memory | src | reachable | 417 |
 | `src/learn-cli.ts` | episodic-memory | src | orphan | 94 |
-| `src/learn/agent-runner.ts` | episodic-memory | src | test-only | 446 |
+| `src/learn/agent-runner.ts` | episodic-memory | src | test-only | 559 |
 | `src/learn/bootstrap.ts` | episodic-memory | src | test-only | 846 |
 | `src/learn/cited-ids.ts` | episodic-memory | src | test-only | 267 |
 | `src/learn/cli-main.ts` | episodic-memory | src | test-only | 833 |
@@ -94,10 +94,10 @@ This report lists each source file that the map census finds, with a disposition
 | `src/learn/knowledge-gate.ts` | episodic-memory | src | test-only | 191 |
 | `src/learn/knowledge-store.ts` | episodic-memory | src | reachable | 1893 |
 | `src/learn/leaf-learner.ts` | episodic-memory | src | test-only | 496 |
-| `src/learn/learn-config.ts` | episodic-memory | src | reachable | 128 |
+| `src/learn/learn-config.ts` | episodic-memory | src | reachable | 134 |
 | `src/learn/learn-handlers.ts` | episodic-memory | src | test-only | 225 |
 | `src/learn/learn-inject.ts` | episodic-memory | src | reachable | 291 |
-| `src/learn/learn-lock.ts` | episodic-memory | src | test-only | 156 |
+| `src/learn/learn-lock.ts` | episodic-memory | src | test-only | 173 |
 | `src/learn/learned-block.ts` | episodic-memory | src | test-only | 89 |
 | `src/learn/learned-text-screen.ts` | episodic-memory | src | reachable | 206 |
 | `src/learn/learner.ts` | episodic-memory | src | test-only | 1327 |
@@ -114,7 +114,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/learn/types.ts` | episodic-memory | src | reachable | 216 |
 | `src/learn/usage.ts` | episodic-memory | src | test-only | 60 |
 | `src/learn/validate.ts` | episodic-memory | src | test-only | 358 |
-| `src/lockfile.ts` | episodic-memory | src | reachable | 129 |
+| `src/lockfile.ts` | episodic-memory | src | reachable | 139 |
 | `src/logging.ts` | episodic-memory | src | test-only | 86 |
 | `src/mcp-auth.ts` | episodic-memory | src | reachable | 68 |
 | `src/mcp-schemas.ts` | episodic-memory | src | reachable | 274 |
@@ -191,7 +191,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/hooks.test.ts` | (root) | tests | test | 41 |
 | `test/incremental-indexing.test.ts` | (root) | tests | test | 108 |
 | `test/integration.test.ts` | (root) | tests | test | 253 |
-| `test/learn/agent-runner.test.ts` | (root) | tests | test | 366 |
+| `test/learn/agent-runner.test.ts` | (root) | tests | test | 481 |
 | `test/learn/bootstrap.test.ts` | (root) | tests | test | 884 |
 | `test/learn/cited-ids.test.ts` | (root) | tests | test | 211 |
 | `test/learn/export.test.ts` | (root) | tests | test | 482 |
@@ -202,10 +202,10 @@ This report lists each source file that the map census finds, with a disposition
 | `test/learn/knowledge-store.test.ts` | (root) | tests | test | 604 |
 | `test/learn/leaf-learner.test.ts` | (root) | tests | test | 590 |
 | `test/learn/learn-cli.test.ts` | (root) | tests | test | 587 |
-| `test/learn/learn-config.test.ts` | (root) | tests | test | 155 |
+| `test/learn/learn-config.test.ts` | (root) | tests | test | 157 |
 | `test/learn/learn-handlers.test.ts` | (root) | tests | test | 258 |
 | `test/learn/learn-inject.test.ts` | (root) | tests | test | 310 |
-| `test/learn/learn-lock.test.ts` | (root) | tests | test | 102 |
+| `test/learn/learn-lock.test.ts` | (root) | tests | test | 147 |
 | `test/learn/learned-block.test.ts` | (root) | tests | test | 146 |
 | `test/learn/learned-text-screen.test.ts` | (root) | tests | test | 368 |
 | `test/learn/learner.test.ts` | (root) | tests | test | 670 |
@@ -272,7 +272,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/sync-gpu-reservation.test.ts` | (root) | tests | test | 142 |
 | `test/sync-helpers.test.ts` | (root) | tests | test | 40 |
 | `test/sync-hook-gpu-reservation.test.ts` | (root) | tests | test | 90 |
-| `test/sync-hook-learn-pids.test.ts` | (root) | tests | test | 136 |
+| `test/sync-hook-learn-pids.test.ts` | (root) | tests | test | 151 |
 | `test/sync-hook-logging.test.ts` | (root) | tests | test | 27 |
 | `test/sync-incremental-and-db.test.ts` | (root) | tests | test | 187 |
 | `test/sync-pending-and-legacy-retry.test.ts` | (root) | tests | test | 177 |

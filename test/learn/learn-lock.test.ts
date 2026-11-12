@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'fs';
+import { spawnSync } from 'child_process';
 import os from 'os';
 import path from 'path';
 import {
@@ -93,10 +94,54 @@ describe('.learn.pids', () => {
     const missing = getLearnPidsPath(getIndexDir());
     expect(readLearnPids(getIndexDir())).toEqual(new Set());
 
+    // A live run holds the lock, so the file is read.
+    fs.writeFileSync(getLearnLockPath(getIndexDir()), String(process.pid), 'utf-8');
+
     fs.writeFileSync(missing, 'not-a-pid\n\n33\n', 'utf-8');
     expect(readLearnPids(getIndexDir())).toEqual(new Set([33]));
 
     fs.writeFileSync(missing, 'abc\n-5\n0\n77', 'utf-8');
     expect(readLearnPids(getIndexDir())).toEqual(new Set([77]));
+  });
+
+  it('readLearnPids is empty when no live run holds the lock', () => {
+    const pidsPath = getLearnPidsPath(getIndexDir());
+    const lockPath = getLearnLockPath(getIndexDir());
+    fs.mkdirSync(path.dirname(pidsPath), { recursive: true });
+    fs.writeFileSync(pidsPath, '555\n', 'utf-8');
+
+    // A killed run leaves the file and no lock.
+    expect(readLearnPids(getIndexDir())).toEqual(new Set());
+
+    // A killed run leaves the file and a lock whose holder is dead.
+    const dead = spawnSync(process.execPath, ['-e', '']).pid as number;
+    fs.writeFileSync(lockPath, String(dead), 'utf-8');
+    expect(readLearnPids(getIndexDir())).toEqual(new Set());
+
+    // A live holder makes the file count again.
+    fs.writeFileSync(lockPath, String(process.pid), 'utf-8');
+    expect(readLearnPids(getIndexDir())).toEqual(new Set([555]));
+  });
+
+  it('readLearnPids keeps protecting a live run whose lock is older than the steal age', () => {
+    const pidsPath = getLearnPidsPath(getIndexDir());
+    const lockPath = getLearnLockPath(getIndexDir());
+    fs.mkdirSync(path.dirname(pidsPath), { recursive: true });
+    fs.writeFileSync(pidsPath, '555\n', 'utf-8');
+    fs.writeFileSync(lockPath, String(process.pid), 'utf-8');
+    // One step of a run can outlast the two-hour steal age while its holder is alive.
+    const old = new Date(Date.now() - 3 * 60 * 60 * 1000);
+    fs.utimesSync(lockPath, old, old);
+
+    expect(readLearnPids(getIndexDir())).toEqual(new Set([555]));
+  });
+
+  it('withLearnLock deletes a pid file that a killed run left before the work starts', async () => {
+    const pidsPath = getLearnPidsPath(getIndexDir());
+    fs.mkdirSync(path.dirname(pidsPath), { recursive: true });
+    fs.writeFileSync(pidsPath, '555\n', 'utf-8');
+
+    const leftOver = await withLearnLock(async () => fs.existsSync(pidsPath));
+    expect(leftOver).toBe(false);
   });
 });

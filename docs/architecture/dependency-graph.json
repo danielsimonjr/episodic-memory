@@ -5,7 +5,7 @@
     "language": "typescript",
     "totalFiles": 249,
     "totalModules": 4,
-    "totalExports": 563
+    "totalExports": 565
   },
   "modules": {
     "src": {
@@ -1206,13 +1206,21 @@
           "@anthropic-ai/claude-agent-sdk"
         ],
         "nodeDependencies": [
-          "node:child_process"
+          "node:child_process",
+          "node:util"
         ],
         "internalDependencies": [
           {
             "file": "src/summarizer.ts",
             "imports": [
               "getApiEnv"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/learn/learn-config.ts",
+            "imports": [
+              "learnConfig"
             ],
             "typeOnly": false
           },
@@ -1241,6 +1249,7 @@
           "ProcSnapshot",
           "isAgentSpawnTree",
           "listAgentProcesses",
+          "ProcessLister",
           "AgentRunOptions",
           "AgentRunResult",
           "addressFromResultText",
@@ -2104,6 +2113,7 @@
             "file": "src/lockfile.ts",
             "imports": [
               "acquireLock",
+              "isLockHeld",
               "releaseLock"
             ],
             "typeOnly": false
@@ -3011,6 +3021,7 @@
         "exports": [
           "LockHandle",
           "isProcessAlive",
+          "isLockHeld",
           "acquireLock",
           "releaseLock"
         ]
@@ -5622,7 +5633,9 @@
             "file": "src/learn/agent-runner.ts",
             "imports": [
               "buildAgentQueryOptions",
-              "runAgent"
+              "listAgentProcesses",
+              "runAgent",
+              "ProcSnapshot"
             ],
             "typeOnly": false
           },
@@ -6377,6 +6390,7 @@
           "vitest"
         ],
         "nodeDependencies": [
+          "child_process",
           "fs",
           "os",
           "path"
@@ -9240,8 +9254,8 @@
     "totalTypeScriptFiles": 249,
     "totalSourceFiles": 249,
     "totalModules": 4,
-    "totalLinesOfCode": 50753,
-    "totalExports": 563,
+    "totalLinesOfCode": 51076,
+    "totalExports": 565,
     "entryRoots": 5,
     "reachableFiles": 44,
     "dormantFiles": 56,
@@ -9251,7 +9265,7 @@
     "typeOnlyCircularDeps": 1,
     "totalTypeOnlyImports": 79,
     "noImporterFileCount": 13,
-    "unusedExportsCount": 114,
+    "unusedExportsCount": 113,
     "circularDepsTruncated": false,
     "runtimeCyclicComponents": 0,
     "typeOnlyCyclicComponents": 1,
@@ -9259,8 +9273,8 @@
     "typeOnlyFilesInCycles": 2,
     "totalClasses": 7,
     "totalInterfaces": 136,
-    "totalFunctions": 315,
-    "totalTypeGuards": 8,
+    "totalFunctions": 316,
+    "totalTypeGuards": 9,
     "totalEnums": 0,
     "totalConstants": 63,
     "totalReExports": 8

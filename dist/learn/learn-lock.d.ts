@@ -51,6 +51,10 @@ export declare function getLearnPidsPath(indexDir: string): string;
  * Read the PIDs listed in `.learn.pids`.
  *
  * The function returns an empty set when the file is absent or unreadable.
+ * The function also returns an empty set when the process named in `.learn.lock` is not alive.
+ * A killed run leaves its file behind, and a dead run's PIDs must protect nothing.
+ * The age of the lock does not count here. A live step can outlast the steal age, and its children
+ * must stay protected.
  * The orphan reaper calls this function at reap time, so the function never throws.
  */
 export declare function readLearnPids(indexDir: string): Set<number>;
@@ -59,5 +63,6 @@ export declare function readLearnPids(indexDir: string): Set<number>;
  *
  * The function releases the lock on every exit path. The function also deletes `.learn.pids` with the lock.
  * A PID file that outlives its run would make the reaper refuse to reap the next run's genuinely orphaned children.
+ * A killed run skips that cleanup, so the function also deletes a left-over file when it takes the lock.
  */
 export declare function withLearnLock<T>(fn: (pids: PidRegistry) => Promise<T>): Promise<T>;

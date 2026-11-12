@@ -6,7 +6,7 @@
 
 ## Why this is a fork-level priority
 
-Daniel primarily develops on Windows. Upstream's Windows support is
+The maintainer primarily develops on Windows. Upstream's Windows support is
 "works for some users" — labeled `platform:windows` on several issues
 (#49, #78). The fork already shipped 2 platform fixes; more hide in
 corners that only emerge under real Windows usage.

@@ -62,7 +62,7 @@ Net: 6 more tests pass, 0 regressions, 0 npm vulnerabilities, 0 hardcoded secret
 ## Queued (1-3 months)
 
 ### 📋 Upstream sync after first batch of obra merges
-**Owner:** Daniel · **ETA:** depends on obra · **Tracking:** [#95](https://github.com/obra/episodic-memory/issues/95)
+**Owner:** the maintainer · **ETA:** depends on obra · **Tracking:** [#95](https://github.com/obra/episodic-memory/issues/95)
 
 Once obra merges any of the 4 audit fixes (or ships equivalents), drop
 the locally-redundant patches and re-build/test. The merge dance is
@@ -76,7 +76,7 @@ documented in `CLAUDE.md` § Upstream sync workflow.
 - todo.md + CHANGELOG.md updated
 
 ### 📋 Test stability: hook timeouts in integration.test.ts
-**Owner:** Daniel · **ETA:** next session
+**Owner:** the maintainer · **ETA:** next session
 
 3-6 `beforeEach` hooks in `test/integration.test.ts` exceed the default
 10s timeout on Windows due to cold-start embedding model warm-up.
@@ -92,7 +92,7 @@ Options:
 - CI documentation in CLAUDE.md updated with expected pass count
 
 ### 📋 SessionStart sync failures should not be silent (upstream issue #94)
-**Owner:** Daniel · **ETA:** ~2 weeks · **Tracking:** [obra#94](https://github.com/obra/episodic-memory/issues/94)
+**Owner:** the maintainer · **ETA:** ~2 weeks · **Tracking:** [obra#94](https://github.com/obra/episodic-memory/issues/94)
 
 The hook `npm rebuild ... 2>/dev/null || true` swallows real install
 errors. Two-part fix:
@@ -106,7 +106,7 @@ errors. Two-part fix:
 - PR opened upstream
 
 ### 📋 doctor command: Windows install diagnostics
-**Owner:** Daniel · **ETA:** ~3 weeks
+**Owner:** the maintainer · **ETA:** ~3 weeks
 
 Current `doctor` covers config dir + DB path + Claude CLI version. Add:
 - Plugin install path detection (which marketplace, which version)
@@ -121,7 +121,7 @@ Current `doctor` covers config dir + DB path + Claude CLI version. Add:
 - README mentions the diagnostic flow
 
 ### 📋 Search-result summary visibility (upstream issue #74)
-**Owner:** community/Daniel · **ETA:** flexible · **Tracking:** [obra#74](https://github.com/obra/episodic-memory/issues/74)
+**Owner:** community/the maintainer · **ETA:** flexible · **Tracking:** [obra#74](https://github.com/obra/episodic-memory/issues/74)
 
 When a conversation has a summary, search results currently return
 exchange snippets only. Including the summary in the result inline

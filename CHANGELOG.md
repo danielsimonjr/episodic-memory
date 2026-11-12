@@ -13,6 +13,7 @@
 - **No change to the agent working directory.** An SDK child in `C:\Windows\System32` and an SDK child in an empty folder reached the init message in the same time (891 to 1013 ms). Three live agents in a git repository started no child process in 12 s.
 
 ### Changed
+- **The roadmap docs name roles, not people.** `docs/roadmap/` and its focus areas used a personal first name for the maintainer and the user in 31 places. Each one now says "the maintainer", "the user" or "the fork". The soft-fork option in `upstream-sync.md` suggests `episodic-memory-fork` as the package name. The upstream author lines in the plugin manifests and `LICENSE` stay unchanged, because they are attribution. The four sentences that held a name are split, and `repo-tools ste docs/roadmap` reports 43 problems instead of 48, with none added.
 - **Tracker and contributor docs match the repo again.** `CLAUDE.md` and `todo.md` said "direct push" to `main`; `main` requires the CI `build` check, so they now say branch and pull request. The local path is `~/Github/episodic-memory`, not `~/Dropbox/Github/episodic-memory`. `todo.md` closes the shipped rows with evidence: topic Tasks 6-7, the combined digest, the fork install, the eol fix and upstream #95. It also adds the open work that an audit found.
 
 ## [1.8.0] - 2026-11-12

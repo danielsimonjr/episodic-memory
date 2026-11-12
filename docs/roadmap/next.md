@@ -23,7 +23,7 @@
 
 ## Theme 2: Search quality experiments
 
-**Why now:** Upstream #74 wants summaries-in-search-results; #46 explores LEANN; both indicate search quality is the most user-visible area where improvements compound. Daniel has 2,739 indexed exchanges to ground-truth against — a real-world eval set.
+**Why now:** Upstream #74 wants summaries-in-search-results; #46 explores LEANN; both indicate search quality is the most user-visible area where improvements compound. The maintainer has 2,739 indexed exchanges to ground-truth against — a real-world eval set.
 
 **Shape:**
 - **Summary-aware ranking** (upstream #74) — when a conversation has a summary, include it in the search result body. Could also weight scores using summary-level embeddings.
@@ -65,7 +65,7 @@
 
 ## Theme 4: Observability & debugging UX
 
-**Why now:** When something breaks (sync hangs, search returns nothing, hook fails silently), there's no good signal trail. Upstream #45 wants debug logs; Daniel hit silent failures multiple times in May 2026 (the failure-cache bug, the partial-install bug).
+**Why now:** When something breaks (sync hangs, search returns nothing, hook fails silently), there's no good signal trail. Upstream #45 wants debug logs; the maintainer hit silent failures multiple times in May 2026 (the failure-cache bug, the partial-install bug).
 
 **Shape:**
 - **Structured sync log** — write to `~/.config/superpowers/sync.log` with rotation (last 7 days, capped at 50 MB). Lines tagged with PID, harness, project, file. Hook errors land here too (see [now.md § SessionStart silent-fail](now.md)).
@@ -88,7 +88,7 @@
 
 **Shape:**
 - **Stronger harness detection** — currently inferred from path heuristics; explicit metadata in the archive would be cleaner.
-- **Future harness support** — Daniel uses Aider/Continue occasionally. Could the parser be generalized? Investigate without committing.
+- **Future harness support** — The maintainer uses Aider/Continue occasionally. Could the parser be generalized? Investigate without committing.
 - **Cross-harness search ranking** — does a Claude conversation about React + a Codex conversation about React rank correctly? Add an eval case.
 - **Summarization fallback chain** — when Claude SDK summary fails, today we silently skip. Better: try Codex, then a text-only extractive fallback, then mark as "needs-summary" for retry.
 
@@ -100,7 +100,7 @@
 
 ## Theme 6: Multi-machine awareness (foundation)
 
-**Why now:** Daniel runs episodic-memory on 2+ Windows desktops + a Mac. Today, each machine has its own siloed index. Even a partial story for "I asked about X on the laptop, find it on the desktop" would be valuable.
+**Why now:** The maintainer runs episodic-memory on 2+ Windows desktops + a Mac. Today, each machine has its own siloed index. Even a partial story for "I asked about X on the laptop, find it on the desktop" would be valuable.
 
 This is the smaller foundation; the full sync is [later.md § Theme A](later.md).
 
@@ -110,7 +110,7 @@ This is the smaller foundation; the full sync is [later.md § Theme A](later.md)
 - **Export bundle** — `episodic-memory export <output-path>` produces a portable bundle (archive JSONL + DB rows or re-embeddable JSON dump).
 
 **Definition of "done":**
-- Daniel can copy a bundle from machine A to machine B and run `import`, and search-on-B finds A's conversations
+- The user can copy a bundle from machine A to machine B and run `import`, and search-on-B finds A's conversations
 - No automatic sync (that's `later`); this is just the foundation
 
 **Adjacent:** see [later.md § Theme A — Multi-machine continuous sync].

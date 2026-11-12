@@ -27,10 +27,10 @@ fragment. The memory's value drops with each fragmentation.
    need careful per-row lockless writes or a switch to per-conversation
    files with a thin index.
 
-2. **Self-hosted sync server.** A small node/Rust service Daniel runs on
+2. **Self-hosted sync server.** A small node/Rust service the user runs on
    one machine; others push/pull deltas. Most reliable, most ops burden.
 
-3. **Git-as-database.** Conversations + index as git-managed repo. Daniel
+3. **Git-as-database.** Conversations + index as git-managed repo. The user
    already has git muscle memory; bonus: history. Cons: scale (175 MB
    already, growing), embedding-vector storage is binary-unfriendly.
 
@@ -82,8 +82,8 @@ scenario that's a problem. May need MCP-level scoping.
 the workflow generates more — research notes, paper drafts, code
 review threads, voice memos. A unified memory could span them.
 
-**Why it matters:** Daniel often asks "where did I work through this
-idea?" The answer might be a Claude conversation, a paper draft section,
+**Why it matters:** The user often asks a question like "where did I
+work through this idea". The answer might be a Claude conversation, a paper draft section,
 or a 30-minute voice memo transcript. Today they live in separate silos.
 
 **Possible shapes:**
@@ -97,7 +97,7 @@ or a 30-minute voice memo transcript. Today they live in separate silos.
 - **Ingest pipeline** — each source gets its own parser + summarizer;
   output normalizes to the existing schema.
 
-This is **adjacent to TensorJS / paper-reply-post workflows** Daniel
+This is **adjacent to TensorJS / paper-reply-post workflows** the maintainer
 already has (see UPT notes). The ingest pattern from `paper-reply-post`
 could be reused for paper-source indexing.
 
@@ -114,7 +114,7 @@ weights things accordingly.
 
 **Possible shapes:**
 
-- **Implicit feedback loop** — track which results agents-acting-for-Daniel actually USE downstream. Re-rank on a per-user model.
+- **Implicit feedback loop** — track which results agents-acting-for-the-user actually USE downstream. Re-rank on a per-user model.
 - **Explicit pinning** — `mcp:pin_conversation` marks one as canonical for a topic; future searches for that topic prefer it.
 - **Time-decay defaults** — recent always slightly preferred unless `before` filter explicit.
 - **Project graph** — projects with shared file paths or commits weight together at search time.
@@ -154,9 +154,9 @@ benefits from episodic-memory's recall. The reverse may be true too —
 TensorJS's visual layers could render episodic-memory's search graph
 interactively (which conversation talks to which, weighted by similarity).
 
-This is speculative; logged here because the projects share an architect
-(Daniel) and the structural-AST + numerical patterns of UPT could inform
-how episodic-memory represents conversations long-term.
+This idea is speculative. The two projects have the same maintainer. The
+structural-AST and numerical patterns of UPT could inform how episodic-memory
+represents conversations long-term.
 
 **Possible shapes:**
 

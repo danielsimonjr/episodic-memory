@@ -1,5 +1,6 @@
 import type Database from 'better-sqlite3';
-import { parseTopicDoc } from './topic-format.js';
+import { toFtsQuery } from './fts-query.js';
+import { footnoteStatements, isValidTime, parseTopicDoc } from './topic-format.js';
 
 /** A staged edit: the validated text of each written document, and the slugs to delete. */
 export interface TopicEdit {
@@ -208,7 +209,8 @@ export function searchTopicUnits(
   query: string,
   opts: { project?: string; from?: string; to?: string; limit?: number } = {}
 ): TopicUnitHit[] {
-  const match = ftsQuery(query);
+  assertRange({ from: opts.from, to: opts.to });
+  const match = toFtsQuery(query);
   if (!match) return [];
   const project = opts.project ?? null;
   const hasRange = opts.from !== undefined || opts.to !== undefined;
@@ -295,6 +297,7 @@ export function topicLinks(
  * @param range the optional bounds, inclusive
  */
 export function topicTimeline(db: Database.Database, project: string, range: TopicRange = {}): TopicEvent[] {
+  assertRange(range);
   const rows = db
     .prepare(
       `SELECT e.time AS time, e.statement AS statement, e.unit_id AS unit_id, e.sources AS sources,
@@ -433,8 +436,8 @@ function markSession(
 /**
  * Rebuild the unit, link, event and full-text rows of one project from its documents.
  *
- * A kept unit keeps its `seq`. A new unit takes the next number after the largest old `seq`, in document
- * order. The function throws when a paragraph has no identifier, or when two paragraphs share one.
+ * A kept unit keeps its `seq`. A new unit takes the next number after the largest old `seq`, in slug order,
+ * then in document order. The function throws when a footnote cites a ref that is not a `#<exchange id>`. The function throws when a paragraph has no identifier, or when two paragraphs share one.
  */
 function rebuildDerived(db: Database.Database, project: string): void {
   const docs = db.prepare('SELECT slug, text FROM topic_doc WHERE project = ? ORDER BY slug').all(project) as {
@@ -473,7 +476,12 @@ function rebuildDerived(db: Database.Database, project: string): void {
       for (const link of unit.links) insertLink.run(project, unit.unitId, link.unitId);
       const statements = footnoteStatements(unit.text);
       for (const footnote of unit.footnotes) {
-        const sources = footnote.refs.filter(ref => ref.startsWith('#')).map(ref => ref.slice(1));
+        const sources = footnote.refs.map(ref => {
+          if (ref.length < 2 || !ref.startsWith('#')) {
+            throw new Error(`topic: footnote [^${footnote.label}] of ${doc.slug} cites "${ref}", not a #<exchange id>`);
+          }
+          return ref.slice(1);
+        });
         insertEvent.run(
           project,
           unit.unitId,
@@ -484,27 +492,6 @@ function rebuildDerived(db: Database.Database, project: string): void {
       }
     }
   }
-}
-
-const REFERENCE = /\[\^([^\]\s]+)\](?!:)/g;
-
-/**
- * Give each footnote label of a paragraph the statement that it supports.
- *
- * The statement is the text from the end of the previous reference (or the start of the paragraph)
- * to the first reference of the label. The function returns the whole paragraph when that text is empty.
- *
- * @param text the paragraph text
- */
-function footnoteStatements(text: string): Map<string, string> {
-  const out = new Map<string, string>();
-  let start = 0;
-  for (const m of text.matchAll(REFERENCE)) {
-    const index = m.index ?? 0;
-    if (!out.has(m[1])) out.set(m[1], text.slice(start, index).trim() || text.trim());
-    start = index + m[0].length;
-  }
-  return out;
 }
 
 /** The start of the interval that a time covers. */
@@ -535,9 +522,11 @@ function compareTimes(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;
 }
 
-/** Turn query words into a quoted FTS5 query. Each word matches. */
-function ftsQuery(query: string): string | null {
-  const terms = query.match(/[\p{L}\p{N}_]+/gu) ?? [];
-  if (terms.length === 0) return null;
-  return terms.map(t => `"${t}"`).join(' ');
+/** Throw when a defined range bound is not a valid `YYYY`, `YYYY-MM` or `YYYY-MM-DD`. */
+function assertRange(range: TopicRange): void {
+  for (const bound of [range.from, range.to]) {
+    if (bound !== undefined && !isValidTime(bound)) {
+      throw new Error(`topic: range bound "${bound}" is not YYYY, YYYY-MM or YYYY-MM-DD`);
+    }
+  }
 }

@@ -1,4 +1,4 @@
-import { parseTopicDoc, UNIT_ID_PATTERN, type TopicDoc } from './topic-format.js';
+import { isValidTime, parseTopicDoc, UNIT_ID_PATTERN, type TopicDoc } from './topic-format.js';
 
 /** The form of a document slug. */
 export const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{0,63}$/;
@@ -14,8 +14,6 @@ export interface TopicEditInput {
   blocks: readonly TopicBlock[];
   /** The slugs whose full text was in the prompt. */
   shown: ReadonlySet<string>;
-  /** The mark numbers of the prompt. */
-  validMarks: ReadonlySet<number>;
   /** Tell whether an exchange id exists in the project. The id has no `#`. */
   exchangeExists: (id: string) => boolean;
   /** The size limits of the project. */
@@ -108,13 +106,15 @@ export function validateTopicEdit(input: TopicEditInput): string[] {
     }
   }
 
-  // Check 9: every link names an existing paragraph of an existing document.
+  // Check 9: every link names a paragraph of the project by its identifier, and every .md link has
+  // the link form. The slug part of a link can be stale after a regroup; prepare rewrites it.
   for (const [slug, doc] of docs) {
     for (const unit of doc.units) {
       for (const link of unit.links) {
-        const target = docs.get(link.slug);
-        const resolves = target !== undefined && target.units.some(u => u.unitId === link.unitId);
-        if (!resolves) fail(9, `${slug}: link to ${link.slug}.md#^${link.unitId} does not resolve`);
+        if (!owners.has(link.unitId)) fail(9, `${slug}: link to ${link.slug}.md#^${link.unitId} does not resolve`);
+      }
+      for (const target of unit.malformedLinks) {
+        fail(9, `${slug}: link target "${target}" is not <slug>.md#^<unit id>`);
       }
     }
   }
@@ -159,17 +159,19 @@ function checkStructure(
     fail(4, `${slug}: the level-1 heading is not the first line`);
   }
 
-  // Check 5: each paragraph cites a footnote, each reference has a definition, each definition is cited.
+  // Check 5: each paragraph cites a footnote, each label is referenced exactly once in the document,
+  // each reference has a definition, and each definition is cited.
   for (const err of doc.errors) fail(5, err);
-  const referenced = new Set<string>();
+  const referenced = new Map<string, number>();
   for (const unit of doc.units) {
-    if (unit.footnoteLabels.length === 0) {
+    if (unit.footnoteRefs.length === 0) {
       fail(5, `${slug}: paragraph "${snippet(unit.text)}" has no footnote reference`);
     }
-    for (const label of unit.footnoteLabels) referenced.add(label);
+    for (const label of unit.footnoteRefs) referenced.set(label, (referenced.get(label) ?? 0) + 1);
   }
-  for (const label of referenced) {
+  for (const [label, count] of referenced) {
     if (!doc.definitions.some(d => d.label === label)) fail(5, `${slug}: footnote [^${label}] has no definition`);
+    if (count > 1) fail(5, `${slug}: footnote [^${label}] is referenced ${count} times, want 1`);
   }
   for (const def of doc.definitions) {
     if (!referenced.has(def.label)) fail(5, `${slug}: footnote [^${def.label}] is not referenced`);
@@ -182,7 +184,8 @@ function checkStructure(
     }
   }
 
-  // Check 7: each source is a mark of the prompt or a # id that the project holds.
+  // Check 7: each source is a # id that the project holds. Prepare has rewritten every valid mark,
+  // so a bare number left here is a mark that the prompt did not give.
   for (const def of doc.definitions) {
     if (def.refs.length === 0) {
       fail(7, `${slug}: footnote [^${def.label}] has no source`);
@@ -190,9 +193,7 @@ function checkStructure(
     }
     for (const ref of def.refs) {
       if (/^\d+$/.test(ref)) {
-        if (!input.validMarks.has(Number(ref))) {
-          fail(7, `${slug}: footnote [^${def.label}] cites unknown mark ${ref}`);
-        }
+        fail(7, `${slug}: footnote [^${def.label}] cites mark ${ref}, which the prompt did not give`);
       } else if (/^#\S+$/.test(ref)) {
         const id = ref.slice(1);
         if (!input.exchangeExists(id)) fail(7, `${slug}: footnote [^${def.label}] cites unknown exchange id ${id}`);
@@ -201,19 +202,6 @@ function checkStructure(
       }
     }
   }
-}
-
-/** Tell whether a time is a real YYYY, YYYY-MM or YYYY-MM-DD. */
-function isValidTime(time: string): boolean {
-  const m = /^(\d{4})(?:-(\d{2})(?:-(\d{2}))?)?$/.exec(time);
-  if (!m) return false;
-  if (m[2] === undefined) return true;
-  const month = Number(m[2]);
-  if (month < 1 || month > 12) return false;
-  if (m[3] === undefined) return true;
-  const day = Number(m[3]);
-  const lastDay = new Date(Date.UTC(Number(m[1]), month, 0)).getUTCDate();
-  return day >= 1 && day <= lastDay;
 }
 
 /** Shorten the first line of a paragraph for an error message. */

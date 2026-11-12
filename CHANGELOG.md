@@ -1,5 +1,11 @@
 ## [Unreleased]
 
+### Added
+- **Topic memory core (not wired into sync or the MCP server yet).** `src/topic-format.ts` parses and writes topic documents: fenced code is kept verbatim, every footnote reference is kept, malformed `.md` links are listed, and `isValidTime` and `footnoteStatements` are shared. `src/topic-validate.ts` runs checks 1 to 11. A label must be referenced exactly once, a bare mark always fails, and links resolve by unit id. `src/topic-db.ts` installs an edit in one transaction. It throws on a source that is not a `#<exchange id>`, and refuses a range bound that is not a valid time.
+
+### Changed
+- **One FTS query builder.** `src/fts-query.ts` holds `toFtsQuery`, which the digest store and the topic store both use.
+
 ## [1.7.5] - 2026-11-12
 
 ### Added

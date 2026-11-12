@@ -9,13 +9,13 @@
 | Metric | Count |
 |--------|-------|
 | Total Source Files | 91 |
-| Total Test Files | 127 |
+| Total Test Files | 128 |
 | Source Files with Tests | 72 |
 | Source Files without Tests | 19 |
 | Coverage (raw, direct-import) | **79.1%** |
 ---
 
-## Source Files Without Test Coverage
+## Source Files Not Imported By A Test
 
 The following 19 source files are not directly imported by any test file:
 
@@ -46,7 +46,7 @@ The following 19 source files are not directly imported by any test file:
 
 ---
 
-## Source Files With Test Coverage
+## Source Files Imported By A Test
 
 | Source File | Test Files |
 |-------------|------------|
@@ -106,7 +106,7 @@ The following 19 source files are not directly imported by any test file:
 | `src/mcp-schemas.ts` | `mcp-schemas.test.ts` |
 | `src/mcp-tools.ts` | `digest-mcp.test.ts`, `learn-handlers.test.ts`, `mcp-tools.test.ts` |
 | `src/node-floor.ts` | `node-floor.test.ts` |
-| `src/ollama-backend.ts` | `backfill-gpu-reservation.test.ts`, `digest-gpu-reservation.test.ts`, `gpu-reservation.test.ts`, `ollama-backend.test.ts`, `summarizer-gpu-reservation.test.ts`, `sync-gpu-reservation.test.ts` |
+| `src/ollama-backend.ts` | `backfill-gpu-reservation.test.ts`, `digest-gpu-reservation.test.ts`, `gpu-reservation.test.ts`, `ollama-backend.test.ts`, `ollama-plain-reply.test.ts`, `summarizer-gpu-reservation.test.ts`, `sync-gpu-reservation.test.ts` |
 | `src/orphan-reaper.ts` | `orphan-reaper.test.ts` |
 | `src/parser.ts` | `codex-transcripts.test.ts`, `integration.test.ts`, `parser-tool-result.test.ts`, `parser.test.ts` |
 | `src/paths.ts` | `codex-transcripts.test.ts`, `knowledge-db.test.ts`, `knowledge-store.test.ts`, `learn-cli.test.ts`, `learn-lock.test.ts`, `learning-store.test.ts`, `skills-tool.test.ts`, `paths.test.ts` |
@@ -117,7 +117,7 @@ The following 19 source files are not directly imported by any test file:
 | `src/search.ts` | `cosine-similarity.test.ts`, `cross-harness-recall.test.ts`, `integration.test.ts`, `multi-concept.test.ts`, `search-metadata-filters.test.ts`, `search-with-summary.test.ts`, `security-speed-helpers.test.ts`, `sync-incremental-and-db.test.ts` |
 | `src/show.ts` | `mcp-read-redaction.test.ts`, `show.test.ts` |
 | `src/stats.ts` | `stats-format.test.ts`, `stats.test.ts` |
-| `src/summarizer.ts` | `summarizer-api-env.test.ts`, `summarizer-claude-path.test.ts`, `summarizer-gpu-reservation.test.ts`, `summarizer-options.test.ts`, `summarizer-text.test.ts` |
+| `src/summarizer.ts` | `ollama-plain-reply.test.ts`, `summarizer-api-env.test.ts`, `summarizer-claude-path.test.ts`, `summarizer-gpu-reservation.test.ts`, `summarizer-options.test.ts`, `summarizer-text.test.ts` |
 | `src/sync-banner.ts` | `sync-banner.test.ts` |
 | `src/sync.ts` | `exclude-nested.test.ts`, `sync-empty-summary-audit.test.ts`, `sync-gpu-reservation.test.ts`, `sync-helpers.test.ts`, `sync-incremental-and-db.test.ts`, `sync-pending-and-legacy-retry.test.ts`, `sync-session-id.test.ts`, `sync-summary-retry.test.ts`, `sync.test.ts` |
 | `src/types.ts` | `codex-transcripts.test.ts`, `cross-harness-recall.test.ts`, `db-helpers.test.ts`, `db.test.ts`, `digest-prompts.test.ts`, `embedding-migration-helpers.test.ts`, `oversized-message-guard.test.ts`, `prune.test.ts`, `search-with-summary.test.ts`, `summarizer-claude-path.test.ts`, `summarizer-gpu-reservation.test.ts`, `summarizer-text.test.ts`, `sync-incremental-and-db.test.ts`, `verify.test.ts` |
@@ -216,6 +216,7 @@ The following 19 source files are not directly imported by any test file:
 | `test/multi-concept.test.ts` | 2 files |
 | `test/node-floor.test.ts` | 1 files |
 | `test/ollama-backend.test.ts` | 1 files |
+| `test/ollama-plain-reply.test.ts` | 2 files |
 | `test/orphan-reaper.test.ts` | 1 files |
 | `test/oversized-message-guard.test.ts` | 3 files |
 | `test/parser-tool-result.test.ts` | 1 files |

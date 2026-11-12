@@ -36,11 +36,14 @@ export declare function stripThinking(text: string): string;
  * Per-call overrides for `callOllama`.
  *
  * `maxPromptChars` and `timeoutMs` replace the environment defaults. `fetchImpl` replaces the global `fetch`, so a test can pass a fake.
+ * `requireSummaryBlock` (default true) makes the call refuse a reply that has no `<summary>` block.
+ * Set it to false for a prompt that does not ask for that block, such as a digest or learn prompt.
  */
 export interface OllamaCallOptions {
     fetchImpl?: typeof fetch;
     maxPromptChars?: number;
     timeoutMs?: number;
+    requireSummaryBlock?: boolean;
 }
 /**
  * Sends a summarizer prompt to an Ollama server and returns the reply text without `<think>` blocks.
@@ -48,7 +51,8 @@ export interface OllamaCallOptions {
  * The call throws `GpuReservedError` while another agent holds the shared GPU.
  * The call throws when `EPISODIC_MEMORY_OLLAMA_MODEL` is unset or blank.
  * The call throws when the server URL fails validation or the HTTP status is not OK.
- * The call throws when the reply is empty or has no `<summary>` block.
+ * The call throws when the reply is empty.
+ * The call also throws when the reply has no `<summary>` block, unless `requireSummaryBlock` is false.
  * The call throws when the request runs longer than `timeoutMs`.
  *
  * The function cuts the prompt to the character budget before the function sends the request.

@@ -33,6 +33,11 @@ jobs:
       - run: bun run --if-present lint
       - run: bun run --if-present test
       - run: bun run --if-present build
+      # dist/ is committed and the plugin runs dist/, so dist/ must match a build of this commit.
+      # A dependency bump merged without a rebuild ships a bundle that the lockfile does not
+      # describe. Line endings are ignored: tsc writes native ones on each platform.
+      - name: Committed dist/ matches the build
+        run: git diff --ignore-cr-at-eol --stat --exit-code -- dist
 
       # The two doc gates read the source, so they run after the final build.
       # repo-tools is pinned to the version the gates were verified with.

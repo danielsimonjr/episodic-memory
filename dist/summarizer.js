@@ -248,10 +248,14 @@ async function callClaude(prompt, opts = {}) {
         clearTimeout(timer);
     }
 }
-/** Route a summarization prompt to the configured backend (see ollama-backend.ts). */
-function callModel(prompt) {
+/**
+ * Route a prompt to the configured backend (see ollama-backend.ts).
+ *
+ * `requireSummaryBlock` is true for the conversation-summary prompts. These prompts ask for a `<summary>` block.
+ */
+function callModel(prompt, requireSummaryBlock = true) {
     return summarizerBackend() === 'ollama'
-        ? callOllama(prompt)
+        ? callOllama(prompt, { requireSummaryBlock })
         : callClaude(prompt, {
             model: process.env.EPISODIC_MEMORY_API_MODEL || 'haiku',
             fallbackModel: process.env.EPISODIC_MEMORY_API_MODEL_FALLBACK || 'sonnet',
@@ -259,7 +263,8 @@ function callModel(prompt) {
 }
 /** Digest entry point: same backend, model and fallback choice as session summaries. */
 export function callDigestModel(prompt) {
-    return callModel(prompt);
+    // The digest prompt asks for cited lines, not a <summary> block. parseCitedLines checks the reply.
+    return callModel(prompt, false);
 }
 /**
  * Return the model and the retry model for learning calls.
@@ -284,7 +289,8 @@ export function resolveLearnModels(env = process.env) {
  */
 export function callLearnModel(prompt) {
     if (summarizerBackend() === 'ollama') {
-        return callOllama(prompt);
+        // Learn prompts ask for JSON or plain text, not a <summary> block. Each caller parses its reply.
+        return callOllama(prompt, { requireSummaryBlock: false });
     }
     return callClaude(prompt, resolveLearnModels());
 }

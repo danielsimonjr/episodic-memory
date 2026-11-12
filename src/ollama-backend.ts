@@ -54,11 +54,14 @@ export function stripThinking(text: string): string {
  * Per-call overrides for `callOllama`.
  *
  * `maxPromptChars` and `timeoutMs` replace the environment defaults. `fetchImpl` replaces the global `fetch`, so a test can pass a fake.
+ * `requireSummaryBlock` (default true) makes the call refuse a reply that has no `<summary>` block.
+ * Set it to false for a prompt that does not ask for that block, such as a digest or learn prompt.
  */
 export interface OllamaCallOptions {
   fetchImpl?: typeof fetch;
   maxPromptChars?: number;
   timeoutMs?: number;
+  requireSummaryBlock?: boolean;
 }
 
 function positiveInt(raw: string | undefined, fallback: number): number {
@@ -72,7 +75,8 @@ function positiveInt(raw: string | undefined, fallback: number): number {
  * The call throws `GpuReservedError` while another agent holds the shared GPU.
  * The call throws when `EPISODIC_MEMORY_OLLAMA_MODEL` is unset or blank.
  * The call throws when the server URL fails validation or the HTTP status is not OK.
- * The call throws when the reply is empty or has no `<summary>` block.
+ * The call throws when the reply is empty.
+ * The call also throws when the reply has no `<summary>` block, unless `requireSummaryBlock` is false.
  * The call throws when the request runs longer than `timeoutMs`.
  *
  * The function cuts the prompt to the character budget before the function sends the request.
@@ -119,10 +123,11 @@ export async function callOllama(prompt: string, opts: OllamaCallOptions = {}): 
     const body: any = await res.json();
     const text = stripThinking(typeof body?.response === 'string' ? body.response : '');
     if (!text) throw new Error('Ollama returned an empty response');
-    // Every summarizer prompt asks for <summary></summary>. A reply without them is a model that
+    // Every conversation-summary prompt asks for <summary></summary>. A reply without them is a model that
     // continued the transcript or emitted junk (measured on qwen2.5vl:3b). The shared extractor would
     // store it verbatim as a summary, so refuse it here and let the retry/give-up path record it.
-    if (!/<summary>[\s\S]*?<\/summary>/i.test(text)) {
+    // Digest and learn prompts ask for other formats, and their own parsers check the reply.
+    if (opts.requireSummaryBlock !== false && !/<summary>[\s\S]*?<\/summary>/i.test(text)) {
       throw new Error('Ollama reply has no <summary></summary> block');
     }
     return text;

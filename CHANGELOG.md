@@ -1,5 +1,11 @@
 ## [Unreleased]
 
+### Fixed
+
+- **The digest wrote nothing on the Ollama backend.** `callOllama` refused every reply without a `<summary>` block, and the digest and learn prompts never ask for a `<summary>` block. Every digest call failed with "Ollama reply has no <summary></summary> block"; the live digest wrote no entry after 2026-10-19. `callOllama` takes `requireSummaryBlock` (default true). `callDigestModel` and `callLearnModel` pass false. Their own parsers check the reply.
+- **The committed bundle did not match the lockfile.** `dist/mcp-server.js` was built with an older `zod` than the locked 4.6.7, so the plugin ran code that the lockfile does not describe. The bundle is rebuilt. CI now fails when the committed `dist/` differs from a build of the same commit, so a dependency bump merged without a rebuild turns red.
+- **The test suite read the machine's `EPISODIC_MEMORY_OLLAMA_MODEL`.** A machine that sets it failed the `callLearnModel` routing test. `vitest.config.ts` now pins `EPISODIC_MEMORY_OLLAMA_MODEL` to blank, as the file pins the backend and the URL.
+
 ## [1.7.3] - 2026-11-06
 
 ### Added

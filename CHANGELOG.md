@@ -1,5 +1,8 @@
 ## [Unreleased]
 
+### Added
+- **`EPISODIC_MEMORY_OLLAMA_FALLBACK_MODEL`: a Claude retry model for a failed Ollama call.** Set it to `haiku` (for example) and a summary, digest or text-only learning call that fails on Ollama runs once on that model. Unset, the behaviour is unchanged. A `GpuReservedError` is never retried, so a reservation still defers the work.
+
 ### Fixed
 - **A Windows build no longer marks every `dist/` file modified.** `.gitattributes` checks every text file out as LF and `tsconfig.json` sets `newLine: lf`. Before, `core.autocrlf=true` checked `src/` out as CRLF, `tsc` copied the CRs inside multi-line strings into `dist/`, and each build showed about 25 changed `dist/` files with no real change.
 

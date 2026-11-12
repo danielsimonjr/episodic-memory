@@ -2374,7 +2374,8 @@
             "imports": [
               "summarizerBackend",
               "callOllama",
-              "GpuReservedError"
+              "GpuReservedError",
+              "OllamaCallOptions"
             ]
           }
         ],

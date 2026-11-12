@@ -1,7 +1,7 @@
 {
   "metadata": {
     "totalSourceFiles": 91,
-    "totalTestFiles": 128,
+    "totalTestFiles": 129,
     "testedCount": 72,
     "untestedCount": 19,
     "coveragePercent": "79.1",
@@ -469,6 +469,7 @@
       "test/ollama-backend.test.ts",
       "test/ollama-plain-reply.test.ts",
       "test/summarizer-gpu-reservation.test.ts",
+      "test/summarizer-ollama-fallback.test.ts",
       "test/sync-gpu-reservation.test.ts"
     ],
     "src/orphan-reaper.ts": [
@@ -535,6 +536,7 @@
       "test/summarizer-api-env.test.ts",
       "test/summarizer-claude-path.test.ts",
       "test/summarizer-gpu-reservation.test.ts",
+      "test/summarizer-ollama-fallback.test.ts",
       "test/summarizer-options.test.ts",
       "test/summarizer-text.test.ts"
     ],
@@ -1053,6 +1055,10 @@
       "src/summarizer.ts",
       "src/ollama-backend.ts",
       "src/types.ts"
+    ],
+    "test/summarizer-ollama-fallback.test.ts": [
+      "src/summarizer.ts",
+      "src/ollama-backend.ts"
     ],
     "test/summarizer-options.test.ts": [
       "src/summarizer.ts"

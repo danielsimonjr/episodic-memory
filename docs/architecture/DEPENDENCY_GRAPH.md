@@ -951,7 +951,7 @@ The codebase is organized into the following modules:
 | `./reentrancy.js` | `SUMMARIZER_GUARD_ENV, shouldSkipReentrantSync` | Import |
 | `./codex-support.js` | `codexVersionRequirementMessage, parseCodexCliVersion, versionMeetsMinimum` | Import |
 | `./api-endpoint.js` | `validateApiBaseUrl` | Import |
-| `./ollama-backend.js` | `summarizerBackend, callOllama, GpuReservedError` | Import |
+| `./ollama-backend.js` | `summarizerBackend, callOllama, GpuReservedError, OllamaCallOptions` | Import |
 
 **Exports:**
 - Interfaces: `CodexSummarizerCommand`, `CallClaudeOptions`
@@ -1913,9 +1913,9 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 227 |
+| Total Source Files | 228 |
 | Subsystems | 4 |
-| Total Lines of Code | 45356 |
+| Total Lines of Code | 45456 |
 | Total Exports | 492 |
 | Total Re-exports | 8 |
 | Total Classes | 7 |

@@ -1,9 +1,9 @@
 {
   "metadata": {
-    "name": "episodic-memory",
+    "name": "wt",
     "schemaVersion": "2.0.0",
     "language": "typescript",
-    "totalFiles": 227,
+    "totalFiles": 228,
     "totalModules": 4,
     "totalExports": 492
   },
@@ -3488,7 +3488,8 @@
             "imports": [
               "summarizerBackend",
               "callOllama",
-              "GpuReservedError"
+              "GpuReservedError",
+              "OllamaCallOptions"
             ],
             "typeOnly": false
           }
@@ -7760,6 +7761,29 @@
         ],
         "exports": []
       },
+      "test/summarizer-ollama-fallback.test.ts": {
+        "externalDependencies": [
+          "vitest"
+        ],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "src/summarizer.ts",
+            "imports": [
+              "*"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/ollama-backend.ts",
+            "imports": [
+              "*"
+            ],
+            "typeOnly": false
+          }
+        ],
+        "exports": []
+      },
       "test/summarizer-options.test.ts": {
         "externalDependencies": [
           "vitest"
@@ -8311,10 +8335,10 @@
     }
   },
   "statistics": {
-    "totalTypeScriptFiles": 227,
-    "totalSourceFiles": 227,
+    "totalTypeScriptFiles": 228,
+    "totalSourceFiles": 228,
     "totalModules": 4,
-    "totalLinesOfCode": 45356,
+    "totalLinesOfCode": 45456,
     "totalExports": 492,
     "entryRoots": 4,
     "reachableFiles": 39,

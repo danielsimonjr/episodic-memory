@@ -11,7 +11,7 @@ import {
   versionMeetsMinimum,
 } from './codex-support.js';
 import { validateApiBaseUrl } from './api-endpoint.js';
-import { summarizerBackend, callOllama, GpuReservedError } from './ollama-backend.js';
+import { summarizerBackend, callOllama, GpuReservedError, type OllamaCallOptions } from './ollama-backend.js';
 
 /** The command that runs one Codex summarization. buildCodexSummarizerCommand creates it. */
 export interface CodexSummarizerCommand {
@@ -312,13 +312,30 @@ async function callClaude(prompt: string, opts: CallClaudeOptions = {}): Promise
 }
 
 /**
+ * Call Ollama, and retry once on a Claude model when the call fails.
+ *
+ * EPISODIC_MEMORY_OLLAMA_FALLBACK_MODEL names the retry model (for example `haiku`). When the variable is unset or blank, the Ollama error propagates.
+ * A `GpuReservedError` always propagates, because a reservation must defer the work and not move it.
+ */
+async function callOllamaWithFallback(prompt: string, opts: OllamaCallOptions = {}): Promise<string> {
+  try {
+    return await callOllama(prompt, opts);
+  } catch (err) {
+    const fallback = (process.env.EPISODIC_MEMORY_OLLAMA_FALLBACK_MODEL || '').trim();
+    if (!fallback || err instanceof GpuReservedError) throw err;
+    console.error(`    ollama call failed (${(err as Error).message}); retrying with ${fallback}`);
+    return callClaude(prompt, { model: fallback, fallbackModel: fallback });
+  }
+}
+
+/**
  * Route a prompt to the configured backend (see ollama-backend.ts).
  *
  * `requireSummaryBlock` is true for the conversation-summary prompts. These prompts ask for a `<summary>` block.
  */
 function callModel(prompt: string, requireSummaryBlock = true): Promise<string> {
   return summarizerBackend() === 'ollama'
-    ? callOllama(prompt, { requireSummaryBlock })
+    ? callOllamaWithFallback(prompt, { requireSummaryBlock })
     : callClaude(prompt, {
         model: process.env.EPISODIC_MEMORY_API_MODEL || 'haiku',
         fallbackModel: process.env.EPISODIC_MEMORY_API_MODEL_FALLBACK || 'sonnet',
@@ -358,7 +375,7 @@ export function resolveLearnModels(
 export function callLearnModel(prompt: string): Promise<string> {
   if (summarizerBackend() === 'ollama') {
     // Learn prompts ask for JSON or plain text, not a <summary> block. Each caller parses its reply.
-    return callOllama(prompt, { requireSummaryBlock: false });
+    return callOllamaWithFallback(prompt, { requireSummaryBlock: false });
   }
   return callClaude(prompt, resolveLearnModels());
 }

@@ -16,7 +16,7 @@ An estimate becomes a measurement when the acceptance test of its PR runs.
 
 ## 1. Baseline
 
-Measured on the plugin cache copy of version 1.8.0, Windows x64, Node 26.13.0.
+The measurements use the plugin cache copy of version 1.8.0, Windows x64, Node 26.13.0.
 Method: the size walk of section 7. A nested package counts once.
 
 | Direct dependency | Import sites (src, non-test) | Closure packages | Exclusive MB | Largest parts (MB) |
@@ -52,7 +52,7 @@ Parts of `onnxruntime-node/bin/napi-v6` (220.3 MB in total):
 
 Caveats:
 
-- The walk does not follow peer dependencies. `@anthropic-ai/sdk` (4.4 MB) and `@modelcontextprotocol/sdk` (4.4 MB) are installed. No row includes them.
+- The walk does not follow peer dependencies. The install includes `@anthropic-ai/sdk` (4.4 MB) and `@modelcontextprotocol/sdk` (4.4 MB). No table row includes the two SDK packages.
 - The walk skips symbolic links.
 - The values are Windows x64 values. The Agent SDK binary, `onnxruntime-node` and the `better-sqlite3` prebuilds differ per platform.
 - A Linux x64 install runs the `onnxruntime-node` postinstall (`script/install`). That script can download extra binaries into `bin/napi-v6/linux/x64`. A Linux figure needs its own measurement on Linux.
@@ -73,7 +73,7 @@ Dependency facts:
 - `package.json` has no `files` field. The plugin cache holds the whole repo, so a folder inside the repo ships to every plugin host.
 - The plugin runs under Claude Code and under Codex (`README.md`, `.codex-plugin/plugin.json`, codex-cli 0.130.0 or later). A Codex host can have no `claude` executable.
 - `engines.node` is `>=22.0.0`. `src/node-floor.ts` sets `NODE_FLOOR` to `22.0.0`. CI runs Node 24 only.
-- `dist/` is committed. CI fails when a build of the commit differs from `dist/`.
+- The repo tracks `dist/`. CI fails when a build of the commit differs from `dist/`.
 - The `bundle` script marks these packages external: the Agent SDK, `@modelcontextprotocol/server`, `@modelcontextprotocol/core`, `sharp`, `onnxruntime-node`, `better-sqlite3`, `@huggingface/transformers` and `sqlite-vec`.
 - `main` is protected. Every change uses a branch and a pull request.
 - `.mcp.json` lists 13 names in `env_vars`, and 10 of them start with `EPISODIC_MEMORY_`. `CLAUDE.md` requires one `.mcp.json` line and one `test/codex-plugin.test.ts` row for each variable that the server reads.
@@ -84,7 +84,7 @@ Install path:
 
 - `cli/ensure-deps.js` is on the start path of `cli/mcp-server-wrapper.js` and of the SessionStart hook `cli/sync-hook.js`. `src/doctor.ts` calls the same health check.
 - `ensureDeps` calls `repairPlan` from `dist/deps-health.js`. The function returns at once when the plan is `none`. The function throws on any repair failure. A throw stops the MCP server start.
-- `repairPlan` checks three JS sentinels (`better-sqlite3/lib/index.js`, `@huggingface/transformers/package.json`, `onnxruntime-common/package.json`) and the `better-sqlite3` binding. It checks no other package.
+- `repairPlan` checks three JS sentinels (`better-sqlite3/lib/index.js`, `@huggingface/transformers/package.json`, `onnxruntime-common/package.json`) and the `better-sqlite3` binding. The function checks no other package.
 - The `runNpm` argument list in `cli/ensure-deps.js` is the only place for install flags.
 
 Measured facts that the workstreams use:
@@ -103,7 +103,7 @@ Measured facts that the workstreams use:
 
 **What changes.**
 
-- Remove `tsx` from `devDependencies`. No file uses it.
+- Remove `tsx` from `devDependencies`. No file uses `tsx`.
 - Remove `@types/marked`. `marked` 16 ships its own types (`types: ./lib/marked.d.ts`).
 - Change the `sqlite-vec` range from `^0.1.7-alpha.2` to `^0.1.9`. The installed version is 0.1.9. The old range sets only a prerelease floor.
 - Regenerate `bun.lock` with the Bun version that `.github/workflows/ci.yml` pins.
@@ -166,7 +166,7 @@ This workstream changes no embedding code. The embedding backend stays the same.
 - Regenerate `bun.lock`.
 - Check the `protobufjs` override. Only `onnxruntime-web` reaches `protobufjs`. Keep that override only with a stated reason.
 
-**UNVERIFIED.** No install has proved that `npm` and `bun` both accept a `file:` override. The first step of PR 3 proves it in a scratch tree.
+**UNVERIFIED.** No install has proved that `npm` and `bun` both accept a `file:` override. The first step of PR 3 proves the override in a scratch tree.
 npm can install a `file:` directory as a symbolic link. The check in acceptance step 2 reads the stub through the link.
 
 **Saving.** 140.7 MB and 18 packages (measured by reachability; estimate until installed).
@@ -200,9 +200,9 @@ The `onnxruntime-web` directory is 134.5 MB. The other 6.2 MB belongs to package
 - The function removes every directory `onnxruntime-node/bin/napi-v6/<platform>/<arch>` except the directory that equals `process.platform` and `process.arch`.
 - The function then removes each `<platform>` directory that is empty.
 - A Node x64 process on Windows ARM64 loads the x64 binding, and `process.arch` reports `x64`. The key therefore names the binding that the process loads.
-- `ensureDeps` calls the function after the repair block and before `return`, on every call. The call includes the `none` case, so a healthy tree is pruned too. The early `return` for `none` changes for this reason.
+- `ensureDeps` calls the function after the repair block and before `return`, on every call. The call includes the `none` case, so the function prunes a healthy tree too. The early `return` for `none` changes for this reason.
 - When nothing remains to remove, the function does only `existsSync` checks.
-- The function runs after `npm install`, so it runs after the `onnxruntime-node` postinstall.
+- The function runs after `npm install` and after the `onnxruntime-node` postinstall.
 - `src/deps-health.ts` does not check the idle directories. A pruned tree stays healthy.
 
 **Best-effort rule (shared with section 3.4).**
@@ -217,15 +217,15 @@ The `onnxruntime-web` directory is 134.5 MB. The other 6.2 MB belongs to package
 
 **Risk.**
 
-- A later `npm install` re-extracts `onnxruntime-node` and restores the directories. The prune runs on every `ensureDeps` call, so the next call removes them again.
+- A later `npm install` re-extracts `onnxruntime-node` and restores the directories. The prune runs on every `ensureDeps` call, so the next call removes the directories again.
 - A wrong key removes the binding that the process loads. The mutation test below catches that error.
 
 **Acceptance test.**
 
-1. A unit test builds a fake tree with three `<platform>/<arch>` pairs, one of them the running pair. After one call, only the running pair stays.
+1. A unit test builds a fake tree with three `<platform>/<arch>` pairs. One of the pairs is the running pair. After one call, only the running pair stays.
 2. A second call changes nothing.
 3. A mutated prune that removes the running pair fails test 1.
-4. A healthy fake tree with the idle directories is pruned by one `ensureDeps` call.
+4. One `ensureDeps` call prunes a healthy fake tree with the idle directories.
 5. A test makes one target read-only or locked. `ensureDeps` returns normally, and stderr holds exactly one line.
 6. A fresh scratch install falls by 158.1 MB, inside the band of section 6. `doctor` reports a healthy tree.
 7. The fixture search of section 7 returns the known passage as the first hit.
@@ -241,7 +241,7 @@ The SDK accepts `pathToClaudeCodeExecutable` (string). When the option is set, t
 When the platform package is absent and the option is unset, the SDK throws `Native CLI binary for <platform> not found`.
 
 **Decision: opt-in removal (option i).** The default install keeps the platform package. A host that sets `EPISODIC_MEMORY_CLAUDE_BIN` removes the package and gets the saving.
-Default removal (option ii) is rejected.
+The plan rejects default removal (option ii).
 
 Discriminators:
 
@@ -259,7 +259,7 @@ Discriminators:
 
 **What changes.**
 
-1. **One resolution module.** A new module (name set in the PR) reads `EPISODIC_MEMORY_CLAUDE_BIN`. `src/summarizer.ts`, `src/learn/agent-runner.ts` and `cli/ensure-deps.js` use it. No other module reads the variable. `cli/ensure-deps.js` imports the compiled module from `dist/`.
+1. **One resolution module.** A new module (name set in the PR) reads `EPISODIC_MEMORY_CLAUDE_BIN`. `src/summarizer.ts`, `src/learn/agent-runner.ts` and `cli/ensure-deps.js` use the module. No other module reads the variable. `cli/ensure-deps.js` imports the compiled module from `dist/`.
 2. **One place to set the variable.** The opt-in is the environment variable and nothing else. The installer, the MCP wrapper, the SessionStart hook and the CLI read the variable through the module. The docs name one place to set the variable. All four processes inherit that place: the Claude Code `env` setting or the user shell profile.
 3. **Environment whitelist.** The server process reads the variable. The PR adds the name to `env_vars` in `.mcp.json` and a row to `test/codex-plugin.test.ts`.
 4. **Bounded version probe.** When the variable is set, the module runs `<path> --version` once per process and caches the result.
@@ -272,17 +272,17 @@ Discriminators:
    - The probe does not run for the bundled binary.
 5. **Install-time removal.** In `cli/ensure-deps.js`, when the variable is set and the probe passes, remove every directory that matches `@anthropic-ai/claude-agent-sdk-*` under `node_modules`.
    - The SDK package itself (no suffix) stays.
-   - On Linux, npm can install more than one candidate (for example `-linux-x64` and `-linux-x64-musl`). The pattern removes all of them.
+   - On Linux, npm can install more than one candidate (for example `-linux-x64` and `-linux-x64-musl`). The pattern removes every candidate directory.
    - The removal runs in `pruneOptionalWeight` on every call, under the best-effort rule of section 3.3b.
    - The `runNpm` arguments do not change for this step.
-6. **Runtime policy when the package is absent and the variable is unset.** The module checks the platform package directory before it calls the SDK. If the package is absent, the module writes one stderr line and the run stops.
+6. **Runtime policy when the package is absent and the variable is unset.** The module checks the platform package directory before the SDK call. If the package is absent, the module writes one stderr line and the run stops.
    - The line names `EPISODIC_MEMORY_CLAUDE_BIN`.
    - The summarizer line also names the Ollama backend (`EPISODIC_MEMORY_SUMMARIZER_BACKEND=ollama`).
    - The run never falls back to a path that is not on disk.
 7. **Health check.** `src/deps-health.ts` does not require the platform package. A tree without the package stays healthy.
 8. **Documentation.** The architecture docs and `CLAUDE.md` describe the variable, the opt-in and the failure lines.
 
-An `overrides` entry for the eight platform packages is not used. An override applies to every host, and option (i) needs the default install to keep the package.
+The plan does not use an `overrides` entry for the eight platform packages. An override applies to every host, and option (i) needs the default install to keep the package.
 
 **Saving.** 269.2 MB and 1 package on each opt-in Windows x64 host (measured package size). The default install saves 0 MB. The SDK package without the platform package is 5.2 MB (estimate).
 
@@ -309,7 +309,7 @@ An `overrides` entry for the eight platform packages is not used. An override ap
 7. A test spawns the wrapper with a fake binary that prints to stdout. The wrapper stdout holds zero stray bytes.
 8. `test/agent-sdk-floor.test.ts` stays and passes.
 9. The `summarizer` and `learn` unit tests pass with the injected fake.
-10. The tests of `buildAgentQueryOptions` (`src/learn/agent-runner.ts`) and of the summarizer options builder are updated. The executable field is absent when the variable is unset.
+10. The PR updates the tests of `buildAgentQueryOptions` (`src/learn/agent-runner.ts`) and of the summarizer options builder. The executable field is absent when the variable is unset.
 11. A fresh opt-in install falls by 269.2 MB, inside the band of section 6. `test ! -d` passes for the platform package. A fresh default install keeps the package.
 12. Manual check, recorded in the PR body and not in CI: one live summary through the host binary on a Claude Code host. The record names the host binary version.
 
@@ -338,7 +338,7 @@ Embedding closure after sections 3.3a and 3.3b: 427.6 - 140.7 - 158.1 = 128.8 MB
 
 **Parity gate.**
 
-- The PR generates reference vectors with the base commit code, on the PR branch. The corpus and the vectors are committed as fixtures. Nobody types the vectors by hand.
+- The PR generates reference vectors with the base commit code, on the PR branch. The PR commits the corpus and the vectors as fixtures. Nobody types the vectors by hand.
 - The corpus has at least 50 passages and 20 prefixed queries. The corpus adds edge inputs: empty text, text over 2000 characters, non-ASCII text and a very long token run.
 - The test uses the same truncation (2000 characters per passage), the same `BGE_QUERY_PREFIX`, the same pooling and the same normalization.
 - Each vector pair has a cosine similarity of at least 0.9999. A lower value fails the gate.
@@ -405,7 +405,7 @@ Test: two processes open one file. The second process blocks in `BEGIN IMMEDIATE
 - Rows have a null prototype. A test that uses `toEqual` against a plain object, and code that calls `row.hasOwnProperty`, need a check.
 - An integer above 2^53 throws ("Value is too large to be represented as a JavaScript number"). better-sqlite3 returns a rounded number. The PR checks the schema with a query for columns that can hold such a value.
 
-**Node floor.** The version facts in this section come from the Node documentation. They are documented, not measured here. The PR checks each fact against the real binaries and corrects this document if one differs.
+**Node floor.** The version facts in this section come from the Node documentation. The plan does not measure these facts here. The PR checks each fact against the real binaries and corrects this document if one differs.
 
 - `node:sqlite` loads unflagged from Node 22.13.0.
 - `loadExtension` and `enableLoadExtension` exist from 22.13.0.
@@ -421,7 +421,7 @@ Test: two processes open one file. The second process blocks in `BEGIN IMMEDIATE
 - The change is a fork-only divergence. The PR records the divergence in `docs/roadmap/upstream-sync.md`.
 - A 24.x floor drops the 22 line. The decision keeps the 22 line, because 22.16.0 raises the floor by the smallest amount.
 
-**sqlite-vec.** Open with `allowExtension: true`, then call `loadExtension(getLoadablePath())`. The test runs with `defensive` on.
+**sqlite-vec.** Open with `allowExtension: true`. Then call `loadExtension(getLoadablePath())`. The test runs with `defensive` on.
 On Node 26.13 with sqlite-vec 0.1.9, `SELECT vec_version()` returns `v0.1.9`, and a `vec0` KNN `MATCH` query returns a row with zero bytes on stderr. That measurement proves nothing for 22.x or 24.x.
 
 **WAL and busy timeout.** Use the `timeout` option with the 5000 ms default of `EPISODIC_MEMORY_DB_BUSY_TIMEOUT_MS`. Use `PRAGMA busy_timeout` for any path that the option does not cover.
@@ -448,13 +448,13 @@ On Node 26.13 with sqlite-vec 0.1.9, `SELECT vec_version()` returns `v0.1.9`, an
 | Dependency | Size (MB) | Reason |
 |---|---|---|
 | `@modelcontextprotocol/server` | 7.6 exclusive | The MCP server (`src/mcp-server.ts`). The closure is 3 packages. |
-| `zod` | 0.0 exclusive (6.1 own) | Used by the MCP server and by 2 source files. The Agent SDK declares it as a peer. |
+| `zod` | 0.0 exclusive (6.1 own) | The MCP server and 2 source files use `zod`. The Agent SDK declares `zod` as a peer. |
 | `marked` | 0.4 | One import in `src/show.ts`. The package ships its own types. |
 | `sqlite-vec` | 0.3 exclusive | The only vector index. The `vec0` extension loads from an optional platform package, so no step uses `--omit=optional`. |
-| `@huggingface/transformers` (after section 3.3) | 128.8 (estimate) | The embedding pipeline that the code runs. Option B is the only step that removes it. |
-| `@anthropic-ai/claude-agent-sdk` | 5.2 without the platform package (estimate) | Three import sites. Only the platform package is removable (section 3.4). |
+| `@huggingface/transformers` (after section 3.3) | 128.8 (estimate) | The embedding pipeline that the code runs. Option B is the only step that removes `@huggingface/transformers`. |
+| `@anthropic-ai/claude-agent-sdk` | 5.2 without the platform package (estimate) | Three import sites. The plan can remove only the platform package (section 3.4). |
 | `better-sqlite3` | 27.7 | The database layer until section 3.6 lands. |
-| `onnxruntime-common` | 0.0 | Hoist pin: transformers imports it without a declaration. KEEP until option B removes the pin. |
+| `onnxruntime-common` | 0.0 | Hoist pin: transformers imports `onnxruntime-common` without a declaration. KEEP until option B removes the pin. |
 
 Remove list:
 
@@ -552,7 +552,7 @@ Use this method for every before figure and every after figure.
 
 1. Make an empty scratch directory outside the repo.
 2. Extract the tracked files of the base commit into the directory, for example with `git archive <commit> | tar -x`.
-   The tracked files hold `scripts/`, `cli/`, `dist/` and `vendor/`. The install, the root `postinstall` and the prune need them. `node_modules` is not tracked.
+   The tracked files hold `scripts/`, `cli/`, `dist/` and `vendor/`. The install, the root `postinstall` and the prune need these files. The repo does not track `node_modules`.
 3. Record the platform, the architecture, `node -v` and `npm -v`.
 4. Call `ensureDeps` once: `node -e "import('./cli/ensure-deps.js').then((m) => m.ensureDeps(process.cwd()))"`. Record the exit status.
    The call runs the plugin-host install with its flags, then the prune of PRs 4 and 5. Do not judge success from the output text.
@@ -573,16 +573,16 @@ Walk rules:
 - Each package counts once.
 - Exclusive means reachable from one direct dependency only.
 
-The walk is a short script in the scratch directory. The script never writes to the tree that it measures. This plan adds no CI size gate. CI runs Linux, and the figures of this plan are Windows figures.
+The walk is a short script in the scratch directory. The script never writes to the tree under measurement. This plan adds no CI size gate. CI runs Linux, and the figures of this plan are Windows figures.
 
-Fixture search: build a fixture index once with the base commit. Set `EPISODIC_MEMORY_DB_PATH` to a scratch file and index the 50-passage parity corpus. Commit nothing.
+Fixture search: build a fixture index once with the base commit. Set `EPISODIC_MEMORY_DB_PATH` to a scratch file. Index the 50-passage parity corpus. Commit nothing.
 Each PR runs `node cli/episodic-memory.js search --vector <query>` against a copy of that file. The known passage must be the first hit. The check also proves a vector of 384 dimensions.
 
 ## 8. Rollback
 
 Each PR reverts with the same steps:
 
-1. Revert the merge commit on a new branch and open a pull request. Use `git revert -m 1 <merge-commit>` for a merge commit. A squash merge reverts with one commit.
+1. Revert the merge commit on a new branch. Open a pull request. Use `git revert -m 1 <merge-commit>` for a merge commit. A squash merge reverts with one commit.
 2. Run `bun run build`. Commit the rebuilt `dist/`.
 3. Bump `version` in `.claude-plugin/marketplace.json` (the plugin entry) and in `.claude-plugin/plugin.json`. The two values must match. The updater reads `plugin.json`.
 4. Run `claude plugin marketplace update local-marketplace`.

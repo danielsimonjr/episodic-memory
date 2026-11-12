@@ -1,4 +1,5 @@
 import type Database from 'better-sqlite3';
+import { toFtsQuery } from './fts-query.js';
 
 /** The tier of a digest entry: `session`, `day` or `week`. */
 export type DigestTier = 'session' | 'day' | 'week';
@@ -167,12 +168,6 @@ export function supersede(db: Database.Database, ids: number[], byId: number): v
     for (const id of ids) stmt.run(byId, id);
   });
   tx();
-}
-
-function toFtsQuery(query: string): string | null {
-  const terms = query.match(/[\p{L}\p{N}_]+/gu) ?? [];
-  if (terms.length === 0) return null;
-  return terms.map(t => `"${t}"`).join(' ');
 }
 
 /** A citation mark group at the end of a line: `[#a,#b]` (the stored digest form). */

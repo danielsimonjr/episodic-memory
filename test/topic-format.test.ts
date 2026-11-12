@@ -4,6 +4,8 @@ import {
   serializeTopicDoc,
   assignUnitIds,
   UNIT_ID_PATTERN,
+  isValidTime,
+  footnoteStatements,
 } from '../src/topic-format.js';
 
 /** A canonical document: title, one section, one paragraph with two footnotes, then the definitions. */
@@ -199,5 +201,66 @@ describe('assignUnitIds', () => {
     expect(moved).toMatch(UNIT_ID_PATTERN);
     const again = assignUnitIds('proj', 'work', parseTopicDoc('work', NEW_PARA), new Set([first])).units[0].unitId;
     expect(again).toBe(moved);
+  });
+});
+
+describe('review fixes: fences, refs, links, times, statements', () => {
+  const FENCED = [
+    '# T', '', '## S', '', '```sh', '# install deps', '', '[^9]: x', '```', '',
+    'P.[^1]', '^aaaaaaaa', '', '[^1]: Time: 2026; Sources: #e1', '',
+  ].join('\n');
+
+  it('keeps a fenced block verbatim and out of the structure', () => {
+    const doc = parseTopicDoc('t', FENCED);
+    expect(doc.h1Count).toBe(1);
+    expect(doc.units).toHaveLength(1);
+    expect(doc.definitions.map(d => d.label)).toEqual(['1']);
+    expect(doc.errors).toEqual([]);
+    expect(doc.outline.filter(i => i.kind === 'code')).toHaveLength(1);
+    expect(serializeTopicDoc(doc)).toBe(FENCED);
+  });
+
+  it('handles tilde fences, indented openers, longer fences and unterminated fences', () => {
+    const tilde = parseTopicDoc('t', '# T\n\n~~~\n# x\n~~~\n');
+    expect(tilde.h1Count).toBe(1);
+    const indented = parseTopicDoc('t', '# T\n\n   ```\n# x\n   ```\n');
+    expect(indented.h1Count).toBe(1);
+    const long = parseTopicDoc('t', '# T\n\n````\n```\n# x\n````\n');
+    expect(long.h1Count).toBe(1);
+    const open = parseTopicDoc('t', '# T\n\n```\n# x\n\n[^1]: y\n');
+    expect(open.h1Count).toBe(1);
+    expect(open.definitions).toEqual([]);
+  });
+
+  it('keeps every footnote reference with repeats', () => {
+    const doc = parseTopicDoc('t', '# T\n\nJoined A.[^1] Left B.[^1]\n^aaaaaaaa\n\n[^1]: Time: 2026; Sources: #e1\n');
+    expect(doc.units[0].footnoteRefs).toEqual(['1', '1']);
+    expect(doc.units[0].footnoteLabels).toEqual(['1']);
+  });
+
+  it('reads a reference followed by a colon inside a paragraph', () => {
+    const doc = parseTopicDoc('t', '# T\n\nJoined A[^1]: then moved.\n^aaaaaaaa\n');
+    expect(doc.units[0].footnoteRefs).toEqual(['1']);
+  });
+
+  it('lists .md link targets that are not slug.md#^id', () => {
+    const doc = parseTopicDoc('t', '# T\n\nSee [x](project.md#7c91e2ab) and [y](project.md) and [z](https://e.com/a.md) and [w](p.md#^7c91e2ab).\n^aaaaaaaa\n');
+    expect(doc.units[0].malformedLinks).toEqual(['project.md#7c91e2ab', 'project.md']);
+    expect(doc.units[0].links).toEqual([{ slug: 'p', unitId: '7c91e2ab' }]);
+  });
+
+  it('checks times with the explicit leap rule', () => {
+    expect(isValidTime('0000-02-29')).toBe(true);
+    expect(isValidTime('2000-02-29')).toBe(true);
+    expect(isValidTime('1900-02-29')).toBe(false);
+    expect(isValidTime('2026-8')).toBe(false);
+  });
+
+  it('gives each label of a two-footnote paragraph its statement', () => {
+    const text = 'Joined A in May.[^1] Moved to B in August to work on [Orion](project.md#^7c91e2ab).[^2]';
+    expect([...footnoteStatements(text)]).toEqual([
+      ['1', 'Joined A in May.'],
+      ['2', 'Moved to B in August to work on [Orion](project.md#^7c91e2ab).'],
+    ]);
   });
 });

@@ -33,6 +33,12 @@ const WORK_V2 =
   'Started a new role in June.[^2]\n^aaaaaaaa\n\n' +
   '[^1]: Time: 2026-05; Sources: #ex-111\n[^2]: Time: 2026-06; Sources: #ex-111\n';
 
+/** WORK_V2 with the new paragraph ahead of the kept one. */
+const WORK_V2_NEW_FIRST =
+  '# Work history\n\n## Employment\n\nStarted a new role in June.[^2]\n^aaaaaaaa\n\n' +
+  'Joined A in May.[^1]\n^4a8b10cd\n\n' +
+  '[^1]: Time: 2026-05; Sources: #ex-111\n[^2]: Time: 2026-06; Sources: #ex-111\n';
+
 const PROJECT_V1 =
   '# Project\n\n## Orion\n\nOrion is the work on B.[^1]\n^7c91e2ab\n\n' +
   '[^1]: Time: 2026-08-14; Sources: #ex-222\n';
@@ -179,7 +185,7 @@ describe('topic-db', () => {
       )
     );
     const updatedAt = readTopicDoc(db, 'p', 'work')!.updatedAt;
-    const out = installTopicEdit(db, 'p', { files: [{ slug: 'work', text: WORK_V2 }], deletes: [] }, new Map([['work', updatedAt]]));
+    const out = installTopicEdit(db, 'p', { files: [{ slug: 'work', text: WORK_V2_NEW_FIRST }], deletes: [] }, new Map([['work', updatedAt]]));
     expect(out).toBe('installed');
     const after = new Map(
       (db.prepare(`SELECT unit_id, seq FROM topic_unit WHERE project = 'p'`).all() as { unit_id: string; seq: number }[]).map(
@@ -209,8 +215,10 @@ describe('topic-db', () => {
 
   it('treats a shown document that was deleted as stale', () => {
     installBoth();
+    const updatedAt = readTopicDoc(db, 'p', 'project')!.updatedAt;
+    db.prepare(`DELETE FROM topic_doc WHERE project = 'p' AND slug = 'project'`).run();
     const before = snapshot(db);
-    const out = installTopicEdit(db, 'p', { files: [], deletes: ['project'] }, new Map([['gone', 'x']]));
+    const out = installTopicEdit(db, 'p', { files: [], deletes: ['project'] }, new Map([['project', updatedAt]]));
     expect(out).toBe('stale');
     expect(snapshot(db)).toEqual(before);
   });
@@ -271,6 +279,47 @@ describe('topic-db', () => {
     expect(getTopicSession(db, 'p', 'sess-2')).toEqual({ status: 'pending', attempts: 2, error: 'boom 2' });
     setTopicSessionStatus(db, 'p', 'sess-2', 'rejected', 'final');
     expect(getTopicSession(db, 'p', 'sess-2')).toEqual({ status: 'rejected', attempts: 2, error: 'final' });
+  });
+
+  it.each(['3', '#ex-111, 3', '#'])('rolls back and throws for the source text "%s"', sources => {
+    installBoth();
+    const before = snapshot(db);
+    const text = PROJECT_V1.replace('Sources: #ex-222', `Sources: ${sources}`);
+    const updatedAt = readTopicDoc(db, 'p', 'project')!.updatedAt;
+    expect(() =>
+      installTopicEdit(db, 'p', { files: [{ slug: 'project', text }], deletes: [] }, new Map([['project', updatedAt]]))
+    ).toThrow(/not a #<exchange id>/);
+    expect(snapshot(db)).toEqual(before);
+  });
+
+  it('rejects a range bound that is not a valid time', () => {
+    installBoth();
+    expect(() => topicTimeline(db, 'p', { from: '2026-8' })).toThrow(/range bound/);
+    expect(() => searchTopicUnits(db, 'Orion', { to: '2026-13' })).toThrow(/range bound/);
+  });
+
+  it('returns no rows for a query of only an underscore', () => {
+    installBoth();
+    expect(searchTopicUnits(db, '_')).toEqual([]);
+  });
+
+  it('gives each footnote of a two-footnote paragraph its own statement', () => {
+    const text =
+      '# Work history\n\n## Employment\n\nJoined A in May.[^1] Moved to B in August to work on [Orion](project.md#^7c91e2ab).[^2]\n^4a8b10cd\n\n' +
+      '[^1]: Time: 2026-05; Sources: #ex-111\n[^2]: Time: 2026-08; Sources: #ex-222\n';
+    installTopicEdit(
+      db,
+      'p',
+      { files: [{ slug: 'work', text }, { slug: 'project', text: PROJECT_V1 }], deletes: [] },
+      new Map()
+    );
+    const statements = topicTimeline(db, 'p', {})
+      .filter(e => e.unitId === '4a8b10cd')
+      .map(e => e.statement);
+    expect(statements).toEqual([
+      'Joined A in May.',
+      'Moved to B in August to work on [Orion](project.md#^7c91e2ab).',
+    ]);
   });
 
   it('stores and reads meta values', () => {

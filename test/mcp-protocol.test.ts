@@ -97,7 +97,7 @@ describe('MCP protocol compliance', () => {
 
     const tools = messages.find((m) => m.id === 2);
     const toolNames = (tools?.result as { tools: Array<{ name: string }> })?.tools.map((t) => t.name);
-    expect(toolNames).toEqual(['search', 'read', 'digest', 'skills']);
+    expect(toolNames).toEqual(['search', 'read', 'digest', 'skills', 'topics']);
   });
 
   it('answers server/discover for MCP 2026-07-28 with supported versions', async () => {
@@ -149,7 +149,7 @@ describe('MCP protocol compliance', () => {
     const messages = parseStdoutLines(stdout);
     const tools = messages.find((m) => m.id === 2);
     const toolNames = (tools?.result as { tools: Array<{ name: string }> })?.tools.map((t) => t.name);
-    expect(toolNames).toEqual(['search', 'read', 'digest', 'skills']);
+    expect(toolNames).toEqual(['search', 'read', 'digest', 'skills', 'topics']);
   });
 
   /**
@@ -201,7 +201,7 @@ describe('MCP protocol compliance', () => {
     expect(messages.find((m) => m.id === 1)?.error).toBeUndefined();
     const tools = messages.find((m) => m.id === 2);
     const toolNames = (tools?.result as { tools: Array<{ name: string }> })?.tools.map((t) => t.name);
-    expect(toolNames).toEqual(['search', 'read', 'digest', 'skills']);
+    expect(toolNames).toEqual(['search', 'read', 'digest', 'skills', 'topics']);
 
     // A search must succeed under the probe: skills-tool is not on that path.
     const search = messages.find((m) => m.id === 3);
@@ -249,7 +249,7 @@ describe('MCP protocol compliance', () => {
     const messages = parseStdoutLines(stdout);
     const tools = messages.find((m) => m.id === 2);
     const toolNames = (tools?.result as { tools: Array<{ name: string }> })?.tools.map((t) => t.name);
-    expect(toolNames).toEqual(['search', 'read', 'digest', 'skills']);
+    expect(toolNames).toEqual(['search', 'read', 'digest', 'skills', 'topics']);
     const skills = messages.find((m) => m.id === 3);
     const skillsText = (skills?.result as { content?: Array<{ text: string }> })?.content?.[0]?.text ?? '';
     expect(skillsText).toMatch(/forbidden module loaded: \.\/learn\/skills-tool\.js/);

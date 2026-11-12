@@ -17,6 +17,7 @@
 
 import { validateApiBaseUrl } from './api-endpoint.js';
 import { gpuReservationBlock } from './gpu-reservation.js';
+import { envPositiveInt, OLLAMA_MAX_PROMPT_CHARS_DEFAULT } from './constants.js';
 
 /**
  * Another agent reserves the shared GPU.
@@ -64,9 +65,13 @@ export interface OllamaCallOptions {
   requireSummaryBlock?: boolean;
 }
 
-function positiveInt(raw: string | undefined, fallback: number): number {
-  const n = Number(raw);
-  return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
+/**
+ * The prompt cap of the Ollama backend: `EPISODIC_MEMORY_OLLAMA_MAX_PROMPT_CHARS`, default 24000.
+ *
+ * `callOllama` cuts every prompt to this length, and `promptBudgetChars` builds prompts within it.
+ */
+export function ollamaMaxPromptChars(): number {
+  return envPositiveInt('EPISODIC_MEMORY_OLLAMA_MAX_PROMPT_CHARS', OLLAMA_MAX_PROMPT_CHARS_DEFAULT);
 }
 
 /**
@@ -96,8 +101,8 @@ export async function callOllama(prompt: string, opts: OllamaCallOptions = {}): 
     throw new Error(`EPISODIC_MEMORY_OLLAMA_URL rejected: ${check.reason}`);
   }
 
-  const maxChars = opts.maxPromptChars ?? positiveInt(process.env.EPISODIC_MEMORY_OLLAMA_MAX_PROMPT_CHARS, 24000);
-  const timeoutMs = opts.timeoutMs ?? positiveInt(process.env.EPISODIC_MEMORY_API_TIMEOUT_MS, 120000);
+  const maxChars = opts.maxPromptChars ?? ollamaMaxPromptChars();
+  const timeoutMs = opts.timeoutMs ?? envPositiveInt('EPISODIC_MEMORY_API_TIMEOUT_MS', 120000);
   const doFetch = opts.fetchImpl ?? fetch;
 
   const controller = new AbortController();

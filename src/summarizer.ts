@@ -1,6 +1,6 @@
 import { ConversationExchange } from './types.js';
 import { query } from '@anthropic-ai/claude-agent-sdk';
-import { CLAUDE_MAX_PROMPT_CHARS, OLLAMA_MAX_PROMPT_CHARS_DEFAULT, SUMMARIZER_CONTEXT_MARKER } from './constants.js';
+import { CLAUDE_MAX_PROMPT_CHARS, SUMMARIZER_CONTEXT_MARKER } from './constants.js';
 import { VERSION } from './version.js';
 import { SUMMARIZER_GUARD_ENV, shouldSkipReentrantSync } from './reentrancy.js';
 import { spawn } from 'child_process';
@@ -11,7 +11,7 @@ import {
   versionMeetsMinimum,
 } from './codex-support.js';
 import { validateApiBaseUrl } from './api-endpoint.js';
-import { summarizerBackend, callOllama, GpuReservedError, type OllamaCallOptions } from './ollama-backend.js';
+import { summarizerBackend, callOllama, GpuReservedError, ollamaMaxPromptChars, type OllamaCallOptions } from './ollama-backend.js';
 
 /** The command that runs one Codex summarization. buildCodexSummarizerCommand creates it. */
 export interface CodexSummarizerCommand {
@@ -356,9 +356,7 @@ export function callDigestModel(prompt: string): Promise<string> {
  * budget is 48000 characters.
  */
 export function promptBudgetChars(): number {
-  if (summarizerBackend() !== 'ollama') return CLAUDE_MAX_PROMPT_CHARS;
-  const n = Number(process.env.EPISODIC_MEMORY_OLLAMA_MAX_PROMPT_CHARS);
-  return Number.isFinite(n) && n > 0 ? Math.floor(n) : OLLAMA_MAX_PROMPT_CHARS_DEFAULT;
+  return summarizerBackend() === 'ollama' ? ollamaMaxPromptChars() : CLAUDE_MAX_PROMPT_CHARS;
 }
 
 /**

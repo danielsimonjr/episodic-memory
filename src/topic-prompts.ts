@@ -32,7 +32,7 @@ const TOPIC_RULES = [
   '=== DELETE <slug>',
   'Rules:',
   '- Text outside the blocks does not matter.',
-  '- An empty answer means that the conversation adds nothing.',
+  '- If the conversation adds nothing, answer with the single word NOTHING.',
   '- Edit or delete only the documents shown in full.',
   '- Each document has one level-1 heading, and it is the first line.',
   '- Each paragraph ends with footnote references, such as [^1] or [^1][^2].',
@@ -57,8 +57,9 @@ const END_LINE = /^=== END\s*$/;
  * The function sorts the documents most recently updated first. The full text is shown for the documents
  * in that order, while their text lengths stay within `maxDocsChars`. The first document that does not fit
  * stops the cut. When the prompt is over `budgetChars`, the function drops the last shown document (the
- * oldest) and builds the prompt again, until it fits. It returns null when the prompt does not fit with
- * no document shown.
+ * oldest) and builds the prompt again, until it fits. With no document shown and the prompt still over the
+ * budget, it shortens the transcript to the room left. Each inventory line is cut to 240 characters. The
+ * function returns null when no exchange fits the transcript.
  *
  * @param input the exchanges, the documents and the limits
  * @returns the prompt, the mark numbers of the transcript, and the slug -> updatedAt map of the shown documents
@@ -71,9 +72,10 @@ export function buildTopicPrompt(input: {
   budgetChars: number;
 }): { prompt: string; marks: Map<number, string>; shown: Map<string, string> } | null {
   const { text: transcript, marks } = numberExchanges(input.exchanges, input.maxTranscriptChars);
+  if (marks.size === 0) return null;
   // Most recently updated first, whatever the caller's order. The sort is stable for equal times.
   const docs = [...input.docs].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0));
-  const inventory = docs.map(d => `- ${d.slug}: ${d.title} | ${d.headings.join(' / ')}`);
+  const inventory = docs.map(d => cutLine(`- ${d.slug}: ${d.title} | ${d.headings.join(' / ')}`, INVENTORY_LINE_CHARS));
 
   const candidates: TopicPromptDoc[] = [];
   let used = 0;
@@ -93,8 +95,21 @@ export function buildTopicPrompt(input: {
         shown: new Map(shown.map(doc => [doc.slug, doc.updatedAt])),
       };
     }
-    if (count === 0) return null;
+    if (count === 0) break;
   }
+
+  // Nothing shown and still over budget: shorten the transcript to the room left.
+  const room = input.budgetChars - renderTopicPrompt(inventory, [], '').length;
+  const short = numberExchanges(input.exchanges, Math.max(0, Math.min(input.maxTranscriptChars, room)));
+  if (short.marks.size === 0) return null;
+  return { prompt: renderTopicPrompt(inventory, [], short.text), marks: short.marks, shown: new Map() };
+}
+
+/** The longest inventory line. A longer line ends with an ellipsis. */
+const INVENTORY_LINE_CHARS = 240;
+
+function cutLine(line: string, max: number): string {
+  return line.length > max ? `${line.slice(0, max - 1)}\u2026` : line;
 }
 
 /** Write the prompt sections, in order. A shown document has the form of an answer block. */

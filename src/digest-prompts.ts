@@ -37,7 +37,7 @@ function clip(text: string, max: number): string {
  * An exchange is skipped when its lines would take the total past `maxChars`. The loop goes on to the next exchange, so a later small exchange can still fit. Skipped exchanges leave gaps in the numbering. The blocks are joined by a blank line.
  *
  * @param exchanges the exchanges, oldest first
- * @param maxChars the cap on the sum of the block lengths
+ * @param maxChars the cap on the length of the returned text, the blank lines between blocks included
  * @returns the transcript text and the mark number -> exchange id map
  */
 export function numberExchanges(
@@ -52,8 +52,10 @@ export function numberExchanges(
     const block =
       `[${n}] User: ${clip(redactEntryText(e.userMessage), MAX_EXCHANGE_CHARS)}\n` +
       `[${n}] Agent: ${clip(redactEntryText(e.assistantMessage), MAX_EXCHANGE_CHARS)}`;
-    if (used + block.length > maxChars) return;
-    used += block.length;
+    // The blank line between two blocks counts too, so the cap bounds the whole text.
+    const cost = block.length + (blocks.length > 0 ? 2 : 0);
+    if (used + cost > maxChars) return;
+    used += cost;
     marks.set(n, e.id);
     blocks.push(block);
   });

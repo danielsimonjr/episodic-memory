@@ -172,10 +172,16 @@ describe('runTopics', () => {
       expect(getTopicMeta(db, 'since')).toBe('2026-10-08T09:02:00.000Z');
     });
 
-    it('ignores an invalid SINCE and uses now', async () => {
+    it('ignores an invalid SINCE with one log line and uses now', async () => {
       process.env.EPISODIC_MEMORY_TOPICS_SINCE = 'not a date';
+      const log = vi.spyOn(console, 'error');
       await runTopics(db, { model: replies(''), now: NOW });
       expect(getTopicMeta(db, 'since')).toBe(NOW.toISOString());
+      expect(log.mock.calls.filter(c => String(c[0]).includes('EPISODIC_MEMORY_TOPICS_SINCE is not a valid time, using now'))).toHaveLength(1);
+      process.env.EPISODIC_MEMORY_TOPICS_SINCE = SINCE_OLD;
+      await runTopics(db, { model: replies(''), now: NOW });
+      expect(getTopicMeta(db, 'since')).toBe(NOW.toISOString());
+      log.mockRestore();
     });
 
     it('does not organize a session that started before since', async () => {
@@ -220,15 +226,18 @@ describe('runTopics', () => {
 
   describe('session selection', () => {
     it('skips a session with a NULL session_id', async () => {
-      db.prepare(
-        `INSERT INTO exchanges (id, project, timestamp, user_message, assistant_message, archive_path, line_start, line_end)
-         VALUES ('n1', 'proj-a', '2026-10-08T08:00:00.000Z', 'ALPHA question about the cache', 'Chose sqlite because it ships with the plugin', '/a.jsonl', 1, 2)`
-      ).run();
+      const long = 'ALPHA question about the cache and the store. '.repeat(10);
+      for (const id of ['n1', 'n2']) {
+        db.prepare(
+          `INSERT INTO exchanges (id, project, timestamp, user_message, assistant_message, archive_path, line_start, line_end)
+           VALUES (?, 'proj-a', '2026-10-08T08:00:00.000Z', ?, ?, '/a.jsonl', 1, 2)`
+        ).run(id, long, long);
+      }
       db.prepare('DELETE FROM exchanges WHERE session_id = ?').run('s1');
-      const model = replies('');
+      const model = replies('NOTHING');
       const r = await runTopics(db, { model, now: NOW });
       expect(model).not.toHaveBeenCalled();
-      expect(r.empty).toBe(0);
+      expect(r).toMatchObject({ empty: 0, installed: 0, failed: 0, skipped: 0 });
     });
 
     it('organizes the oldest session first, up to EPISODIC_MEMORY_TOPICS_MAX_SESSIONS', async () => {
@@ -382,7 +391,7 @@ describe('runTopics', () => {
       expect(getTopicSession(db, 'proj-a', 's1')?.status).toBe('done');
     });
 
-    it('a prepared edit that throws on install is rejected, and the next session still runs', async () => {
+    it('an edit that throws on install stays pending, the next session still runs, and a later run installs it', async () => {
       ensureTopicSchema(db);
       db.exec(
         "CREATE TRIGGER topic_poison BEFORE INSERT ON topic_unit WHEN NEW.text LIKE '%POISON%' BEGIN SELECT RAISE(ABORT, 'poison'); END;"
@@ -391,9 +400,13 @@ describe('runTopics', () => {
       addExchange(db, 'e4', 's2', '2026-10-08T10:05:00.000Z', 'BRAVO question about the cache');
       const poison = FILE_CACHE.replace('Chose sqlite', 'POISON chose sqlite');
       const r = await runTopics(db, { model: replies(poison, FILE_OTHER), now: NOW });
-      expect(r).toMatchObject({ rejected: 1, installed: 1 });
-      expect(getTopicSession(db, 'proj-a', 's1')?.status).toBe('rejected');
+      expect(r).toMatchObject({ rejected: 0, failed: 1, installed: 1 });
+      expect(getTopicSession(db, 'proj-a', 's1')).toMatchObject({ status: 'pending', attempts: 1 });
       expect(getTopicSession(db, 'proj-a', 's2')?.status).toBe('done');
+      db.exec('DROP TRIGGER topic_poison');
+      const again = await runTopics(db, { model: replies(EDIT_CACHE.replace('^9f8e7d6c\n', '')), now: NOW });
+      expect(again).toMatchObject({ installed: 1, failed: 0 });
+      expect(getTopicSession(db, 'proj-a', 's1')?.status).toBe('done');
     });
   });
 
@@ -435,17 +448,44 @@ describe('runTopics', () => {
   });
 
   describe('prompt budget', () => {
-    it('records a rejection when the prompt does not fit the budget', async () => {
+    it('skips a session that no budget room can hold, writes no row, and still runs the next session', async () => {
       process.env.EPISODIC_MEMORY_SUMMARIZER_BACKEND = 'ollama';
-      process.env.EPISODIC_MEMORY_OLLAMA_MAX_PROMPT_CHARS = '100';
-      const model = replies(FILE_CACHE);
+      process.env.EPISODIC_MEMORY_OLLAMA_MAX_PROMPT_CHARS = String(1000 + 2600);
+      addExchange(db, 'e3', 's2', '2026-10-08T10:00:00.000Z');
+      addExchange(db, 'e4', 's2', '2026-10-08T10:05:00.000Z');
+      db.prepare("UPDATE exchanges SET assistant_message = ? WHERE session_id = 's1'").run('x'.repeat(1400));
+      db.prepare("UPDATE exchanges SET user_message = ? WHERE session_id = 's1'").run('y'.repeat(1400));
+      process.env.EPISODIC_MEMORY_TOPICS_MAX_SESSIONS = '1';
+      const model = replies('NOTHING');
       const r = await runTopics(db, { model, now: NOW });
-      expect(model).not.toHaveBeenCalled();
-      expect(r.rejected).toBe(1);
-      expect(getTopicSession(db, 'proj-a', 's1')).toMatchObject({
-        status: 'rejected',
-        error: 'prompt does not fit the budget',
-      });
+      expect(getTopicSession(db, 'proj-a', 's1')).toBeNull();
+      expect(r).toMatchObject({ rejected: 0, empty: 1 });
+      expect(model).toHaveBeenCalledTimes(1);
+      expect(getTopicSession(db, 'proj-a', 's2')?.status).toBe('done');
+    });
+
+    it('fills the first prompt up to the retry reserve, and the retry still fits', async () => {
+      process.env.EPISODIC_MEMORY_SUMMARIZER_BACKEND = 'ollama';
+      process.env.EPISODIC_MEMORY_OLLAMA_MAX_PROMPT_CHARS = '8000';
+      for (let i = 10; i < 200; i++) {
+        addExchange(db, `f${i}`, 's1', `2026-10-08T09:${String(10 + (i % 40)).padStart(2, '0')}:00.000Z`, `q${i} about the cache`, `a${i}`);
+      }
+      process.env.EPISODIC_MEMORY_TOPICS_MAX_TRANSCRIPT_CHARS = '100000';
+      const model = replies('=== FILE cache\n# Cache\n\nno end line', 'NOTHING');
+      await runTopics(db, { model, now: NOW });
+      expect(model).toHaveBeenCalledTimes(2);
+      expect(model.mock.calls[0][0].length).toBeGreaterThan(8000 - 1000 - 120);
+      for (const call of model.mock.calls) expect(call[0].length).toBeLessThanOrEqual(8000);
+      delete process.env.EPISODIC_MEMORY_TOPICS_MAX_TRANSCRIPT_CHARS;
+    });
+
+    it('cuts a long error line so the retry fits the budget', async () => {
+      process.env.EPISODIC_MEMORY_SUMMARIZER_BACKEND = 'ollama';
+      process.env.EPISODIC_MEMORY_OLLAMA_MAX_PROMPT_CHARS = '8000';
+      const model = replies(`=== FILE ${'s'.repeat(7000)}\n# S\n\nP.[^1]\n\n[^1]: Time: 2026; Sources: 1\n=== END`, 'NOTHING');
+      await runTopics(db, { model, now: NOW });
+      expect(model).toHaveBeenCalledTimes(2);
+      expect(model.mock.calls[1][0].length).toBeLessThanOrEqual(8000);
     });
 
     it('never sends a prompt over promptBudgetChars(), including the retry', async () => {
@@ -465,5 +505,55 @@ describe('runTopics', () => {
       expect(model.mock.calls[1][0]).toContain('unterminated FILE block for cache');
       expect(r.empty).toBe(1);
     });
+  });
+});
+
+describe('runTopics through callOllama', () => {
+  const OKEYS = ['TEST_DB_PATH', 'FLEET_GPU_RESERVATION', 'EPISODIC_MEMORY_TOPICS', 'EPISODIC_MEMORY_TOPICS_SINCE',
+    'EPISODIC_MEMORY_SUMMARIZER_BACKEND', 'EPISODIC_MEMORY_OLLAMA_MODEL', 'EPISODIC_MEMORY_OLLAMA_URL'];
+  const kept: Record<string, string | undefined> = {};
+  let dir: string;
+  let db: Database.Database;
+
+  beforeEach(() => {
+    for (const k of OKEYS) kept[k] = process.env[k];
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'topic-ollama-'));
+    process.env.TEST_DB_PATH = path.join(dir, 't.db');
+    process.env.FLEET_GPU_RESERVATION = path.join(dir, 'gpu-reserved.json');
+    process.env.EPISODIC_MEMORY_TOPICS = '1';
+    process.env.EPISODIC_MEMORY_TOPICS_SINCE = SINCE_OLD;
+    process.env.EPISODIC_MEMORY_SUMMARIZER_BACKEND = 'ollama';
+    process.env.EPISODIC_MEMORY_OLLAMA_MODEL = 'fake-model';
+    process.env.EPISODIC_MEMORY_OLLAMA_URL = 'http://127.0.0.1:11434';
+    db = initDatabase();
+    addExchange(db, 'e1', 's1', '2026-10-08T09:00:00.000Z');
+    addExchange(db, 'e2', 's1', '2026-10-08T09:05:00.000Z');
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    db.close();
+    for (const k of OKEYS) {
+      if (kept[k] === undefined) delete process.env[k];
+      else process.env[k] = kept[k];
+    }
+    safeRmSync(dir);
+  });
+
+  const reply = (response: string) =>
+    vi.fn(async () => new Response(JSON.stringify({ response }), { status: 200, headers: { 'content-type': 'application/json' } }));
+
+  it('records a NOTHING reply as done', async () => {
+    vi.stubGlobal('fetch', reply('NOTHING'));
+    const r = await runTopics(db, { now: NOW });
+    expect(r).toMatchObject({ empty: 1, failed: 0 });
+    expect(getTopicSession(db, 'proj-a', 's1')?.status).toBe('done');
+  });
+
+  it('counts an empty Ollama reply as a failed call', async () => {
+    vi.stubGlobal('fetch', reply(''));
+    const r = await runTopics(db, { now: NOW });
+    expect(r).toMatchObject({ empty: 0, failed: 1 });
+    expect(getTopicSession(db, 'proj-a', 's1')).toMatchObject({ status: 'pending', attempts: 1 });
   });
 });

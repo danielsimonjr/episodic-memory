@@ -135,7 +135,7 @@ async function writeSessionEntries(
     // numberExchanges does not count the blank line between its blocks, so keep two characters of slack per exchange.
     const budget = promptBudgetChars();
     const overhead = buildSessionPrompt([], 0).prompt.length;
-    const { prompt, marks } = buildSessionPrompt(exchanges, Math.max(0, budget - overhead - 2 * exchanges.length));
+    const { prompt, marks } = buildSessionPrompt(exchanges, Math.max(0, budget - overhead));
     if (prompt.length > budget) {
       console.error(`digest: session ${s.session_id} does not fit the prompt budget of ${budget} characters`);
       result.failed++;

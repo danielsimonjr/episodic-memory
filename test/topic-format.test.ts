@@ -6,6 +6,8 @@ import {
   UNIT_ID_PATTERN,
   isValidTime,
   footnoteStatements,
+  rewriteMarks,
+  rewriteLinkSlugs,
 } from '../src/topic-format.js';
 
 /** A canonical document: title, one section, one paragraph with two footnotes, then the definitions. */
@@ -262,5 +264,99 @@ describe('review fixes: fences, refs, links, times, statements', () => {
       ['1', 'Joined A in May.'],
       ['2', 'Moved to B in August to work on [Orion](project.md#^7c91e2ab).'],
     ]);
+  });
+});
+
+describe('rewriteMarks', () => {
+  const DOC = (sources: string, extra = ''): string =>
+    `# T\n\nP.[^1]\n^aaaaaaaa\n\n[^1]: Time: 2026; Sources: ${sources}\n${extra}`;
+
+  it('rewrites a known mark number to the exchange id', () => {
+    const marks = new Map([[3, 'ex-333']]);
+    expect(rewriteMarks(DOC('3'), marks)).toBe(DOC('#ex-333'));
+  });
+
+  it('keeps an unknown mark number as written, so the validator can reject it', () => {
+    const marks = new Map([[3, 'ex-333']]);
+    expect(rewriteMarks(DOC('9'), marks)).toBe(DOC('9'));
+  });
+
+  it('keeps a ref that already starts with #', () => {
+    const marks = new Map([[3, 'ex-333']]);
+    expect(rewriteMarks(DOC('#ex-111'), marks)).toBe(DOC('#ex-111'));
+  });
+
+  it('rewrites only the bare number in a mixed list and keeps the separators', () => {
+    const marks = new Map([[3, 'ex-333']]);
+    expect(rewriteMarks(DOC('#ex-1, 3'), marks)).toBe(DOC('#ex-1, #ex-333'));
+    expect(rewriteMarks(DOC('3,#ex-1'), marks)).toBe(DOC('#ex-333,#ex-1'));
+  });
+
+  it('keeps the label as written and rewrites the ref of the same number', () => {
+    const marks = new Map([[3, 'ex-333']]);
+    const text = '# T\n\nP.[^3]\n^aaaaaaaa\n\n[^3]: Time: 2026; Sources: 3\n';
+    expect(rewriteMarks(text, marks)).toBe('# T\n\nP.[^3]\n^aaaaaaaa\n\n[^3]: Time: 2026; Sources: #ex-333\n');
+  });
+
+  it('leaves a definition inside a fenced block untouched', () => {
+    const marks = new Map([[3, 'ex-333']]);
+    const text = '# T\n\n```\n[^1]: Time: 2026; Sources: 3\n```\n';
+    expect(rewriteMarks(text, marks)).toBe(text);
+  });
+
+  it('leaves the paragraph text untouched', () => {
+    const marks = new Map([[3, 'ex-333']]);
+    const text = '# T\n\nSee 3 cases and [^3] here.[^1]\n^aaaaaaaa\n\n[^1]: Time: 2026; Sources: 3\n';
+    expect(rewriteMarks(text, marks)).toBe(
+      '# T\n\nSee 3 cases and [^3] here.[^1]\n^aaaaaaaa\n\n[^1]: Time: 2026; Sources: #ex-333\n'
+    );
+  });
+
+  it('leaves a malformed definition with no Time untouched', () => {
+    const marks = new Map([[3, 'ex-333']]);
+    const text = '# T\n\nP.[^1]\n^aaaaaaaa\n\n[^1]: Sources: 3\n';
+    expect(rewriteMarks(text, marks)).toBe(text);
+  });
+
+  it('keeps the carriage returns of a CRLF text', () => {
+    const marks = new Map([[3, 'ex-333']]);
+    const text = '# T\r\n\r\nP.[^1]\r\n^aaaaaaaa\r\n\r\n[^1]: Time: 2026; Sources: 3\r\n';
+    expect(rewriteMarks(text, marks)).toBe(
+      '# T\r\n\r\nP.[^1]\r\n^aaaaaaaa\r\n\r\n[^1]: Time: 2026; Sources: #ex-333\r\n'
+    );
+  });
+});
+
+describe('rewriteLinkSlugs', () => {
+  it('rewrites the slug of a link whose unit moved to another document', () => {
+    const map = new Map([['7c91e2ab', 'new-doc']]);
+    expect(rewriteLinkSlugs('See [X](old.md#^7c91e2ab).', map)).toBe('See [X](new-doc.md#^7c91e2ab).');
+  });
+
+  it('rewrites every link of one paragraph', () => {
+    const map = new Map([
+      ['7c91e2ab', 'one'],
+      ['11223344', 'two'],
+    ]);
+    expect(rewriteLinkSlugs('[A](x.md#^7c91e2ab) and [B](y.md#^11223344)', map)).toBe(
+      '[A](one.md#^7c91e2ab) and [B](two.md#^11223344)'
+    );
+  });
+
+  it('keeps a link whose unit id is unknown', () => {
+    const map = new Map([['7c91e2ab', 'new-doc']]);
+    expect(rewriteLinkSlugs('[X](old.md#^deadbeef)', map)).toBe('[X](old.md#^deadbeef)');
+  });
+
+  it('leaves a link inside a fenced block untouched', () => {
+    const map = new Map([['7c91e2ab', 'new-doc']]);
+    const text = '# T\n\n```\n[X](old.md#^7c91e2ab)\n```\n';
+    expect(rewriteLinkSlugs(text, map)).toBe(text);
+  });
+
+  it('leaves a link in a heading untouched, because a heading is not paragraph text', () => {
+    const map = new Map([['7c91e2ab', 'new-doc']]);
+    const text = '# T\n\n## See [X](old.md#^7c91e2ab)\n';
+    expect(rewriteLinkSlugs(text, map)).toBe(text);
   });
 });

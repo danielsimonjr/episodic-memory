@@ -30,13 +30,20 @@ function clip(text: string, max: number): string {
 }
 
 /**
- * Build the summarizer prompt for the exchanges of one session.
+ * Number the exchanges of one session and build their transcript block.
  *
  * Each exchange adds two lines, one for its user message and one for its assistant message. Both lines carry the exchange number. Secret-shaped tokens are replaced with `[redacted]`. After redaction, a message longer than 1500 characters keeps its first 1500 characters and ends with `...`.
  *
- * An exchange is skipped when its lines would take the total past 48000 characters. Skipped exchanges leave gaps in the numbering.
+ * An exchange is skipped when its lines would take the total past `maxChars`. The loop goes on to the next exchange, so a later small exchange can still fit. Skipped exchanges leave gaps in the numbering. The blocks are joined by a blank line.
+ *
+ * @param exchanges the exchanges, oldest first
+ * @param maxChars the cap on the sum of the block lengths
+ * @returns the transcript text and the mark number -> exchange id map
  */
-export function buildSessionPrompt(exchanges: ConversationExchange[]): BuiltPrompt {
+export function numberExchanges(
+  exchanges: ConversationExchange[],
+  maxChars: number
+): { text: string; marks: Map<number, string> } {
   const marks = new Map<number, string>();
   const blocks: string[] = [];
   let used = 0;
@@ -45,12 +52,25 @@ export function buildSessionPrompt(exchanges: ConversationExchange[]): BuiltProm
     const block =
       `[${n}] User: ${clip(redactEntryText(e.userMessage), MAX_EXCHANGE_CHARS)}\n` +
       `[${n}] Agent: ${clip(redactEntryText(e.assistantMessage), MAX_EXCHANGE_CHARS)}`;
-    if (used + block.length > MAX_PROMPT_CHARS) return;
+    if (used + block.length > maxChars) return;
     used += block.length;
     marks.set(n, e.id);
     blocks.push(block);
   });
-  const prompt = `${SUMMARIZER_CONTEXT_MARKER}.\n\n${RULES}\n\nConversation:\n\n${blocks.join('\n\n')}\n`;
+  return { text: blocks.join('\n\n'), marks };
+}
+
+/**
+ * Build the summarizer prompt for the exchanges of one session.
+ *
+ * The transcript comes from `numberExchanges`. The transcript cap defaults to 48000 characters.
+ *
+ * @param exchanges the exchanges, oldest first
+ * @param maxChars the cap on the transcript text, 48000 by default
+ */
+export function buildSessionPrompt(exchanges: ConversationExchange[], maxChars = MAX_PROMPT_CHARS): BuiltPrompt {
+  const { text, marks } = numberExchanges(exchanges, maxChars);
+  const prompt = `${SUMMARIZER_CONTEXT_MARKER}.\n\n${RULES}\n\nConversation:\n\n${text}\n`;
   return { prompt, marks };
 }
 

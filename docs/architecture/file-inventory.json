@@ -202,7 +202,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 116
+      "loc": 122
     },
     {
       "file": "src/digest-tool.ts",
@@ -713,7 +713,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 274
+      "loc": 291
     },
     {
       "file": "src/topic-time.ts",
@@ -734,7 +734,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 211
+      "loc": 218
     },
     {
       "file": "src/types.ts",
@@ -1749,7 +1749,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 586
+      "loc": 663
     },
     {
       "file": "test/topic-tool.test.ts",
@@ -1763,7 +1763,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 364
+      "loc": 371
     },
     {
       "file": "test/verify.test.ts",

@@ -128,7 +128,7 @@ The following 21 source files are not directly imported by any test file:
 | `src/topic-job.ts` | `topic-job.test.ts` |
 | `src/topic-phase.ts` | `topic-phase.test.ts` |
 | `src/topic-prompts.ts` | `topic-prompts.test.ts` |
-| `src/topic-validate.ts` | `topic-validate.test.ts` |
+| `src/topic-validate.ts` | `topic-prompts.test.ts`, `topic-validate.test.ts` |
 | `src/types.ts` | `codex-transcripts.test.ts`, `cross-harness-recall.test.ts`, `db-helpers.test.ts`, `db.test.ts`, `digest-prompt-budget.test.ts`, `digest-prompts.test.ts`, `embedding-migration-helpers.test.ts`, `oversized-message-guard.test.ts`, `prune.test.ts`, `search-with-summary.test.ts`, `summarizer-claude-path.test.ts`, `summarizer-gpu-reservation.test.ts`, `summarizer-text.test.ts`, `sync-incremental-and-db.test.ts`, `topic-prompts.test.ts`, `verify.test.ts` |
 | `src/verify.ts` | `verify.test.ts` |
 
@@ -274,7 +274,7 @@ The following 21 source files are not directly imported by any test file:
 | `test/topic-format.test.ts` | 1 files |
 | `test/topic-job.test.ts` | 6 files |
 | `test/topic-phase.test.ts` | 3 files |
-| `test/topic-prompts.test.ts` | 5 files |
+| `test/topic-prompts.test.ts` | 6 files |
 | `test/topic-tool.test.ts` | 5 files |
 | `test/topic-validate.test.ts` | 1 files |
 | `test/verify.test.ts` | 4 files |

@@ -52,7 +52,7 @@ dependency, no `MEMORY_*` environment handling and no per-handle cache: a write 
 - **TypeScript source** in `src/`, compiled to `dist/` by `tsc && esbuild`. **Both are committed.**
 - **CLI entry points** in `cli/` (Node.js wrappers — no bash).
 - **MCP server** is `dist/mcp-server.js`, launched by `cli/mcp-server-wrapper.js` from the plugin manifest.
-- **Tests** in `test/` via vitest (141 files, 1355 tests).
+- **Tests** in `test/` via vitest (141 files, 1364 tests).
 - **Generated files** in `dist/` AND `src/version.ts`. The latter is gitignored; never edit it.
 - **`bun.lock` is committed** — CI uses `bun install --frozen-lockfile` + `bun audit --audit-level=critical`. Do not commit `package-lock.json` (gitignored).
 
@@ -108,7 +108,7 @@ scripts/
 
 test/
   test-utils.ts          # createTestDb, safeRmSync (fork-added), suppressConsole, fixtures
-  *.test.ts              # 141 test files, 1355 tests
+  *.test.ts              # 141 test files, 1364 tests
   learn/                 # the Recursa suite; fakes for every model call
   fixtures/              # JSONL conversation fixtures
 
@@ -151,7 +151,7 @@ is not a dependency.
 
 ### Current test state
 
-- **Full suite: 1355 tests in 141 files pass** (~17s wall clock on Linux;
+- **Full suite: 1364 tests in 141 files pass** (~17s wall clock on Linux;
   Windows runs are slower). The former `integration.test.ts` / `verify.test.ts` cold-embedding
   timeout flakes were fixed: the embedder is pre-warmed once per worker in `beforeAll`,
   `vitest.config.ts` sets `hookTimeout: 30000`, and the repair re-index test gets 60s. If you see a fresh

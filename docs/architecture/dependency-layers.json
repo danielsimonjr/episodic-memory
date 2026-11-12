@@ -3012,9 +3012,9 @@
           {
             "file": "./topic-validate.js",
             "imports": [
+              "EXAMPLE_SLUG",
               "TopicBlock"
-            ],
-            "typeOnly": true
+            ]
           },
           {
             "file": "./digest-prompts.js",
@@ -3162,6 +3162,7 @@
         "workspaceDependencies": [],
         "exports": [
           "SLUG_PATTERN",
+          "EXAMPLE_SLUG",
           "validateTopicEdit"
         ],
         "interfaces": [
@@ -3171,7 +3172,8 @@
           "validateTopicEdit"
         ],
         "constants": [
-          "SLUG_PATTERN"
+          "SLUG_PATTERN",
+          "EXAMPLE_SLUG"
         ]
       },
       "src/types.ts": {

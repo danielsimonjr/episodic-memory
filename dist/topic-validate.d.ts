@@ -1,5 +1,7 @@
 /** The form of a document slug. */
 export declare const SLUG_PATTERN: RegExp;
+/** The reserved slug of the example block in the topic prompt. A document never uses the reserved slug. Check 1 rejects a FILE block with the reserved slug. */
+export declare const EXAMPLE_SLUG = "example-topic";
 /** One staged block of a model answer: a new text for a document, or the removal of a document. */
 export type TopicBlock = {
     kind: 'file';

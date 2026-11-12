@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateTopicEdit, type TopicEditInput } from '../src/topic-validate.js';
+import { EXAMPLE_SLUG, validateTopicEdit, type TopicEditInput } from '../src/topic-validate.js';
 
 /** One paragraph, one definition, one exchange id. */
 const WORK = '# Work history\n\n## Employment\n\nJoined A in May.[^1]\n^4a8b10cd\n\n[^1]: Time: 2026-05; Sources: #ex-111\n';
@@ -30,6 +30,13 @@ function input(over: Partial<TopicEditInput> = {}): TopicEditInput {
     ...over,
   };
 }
+
+describe('validateTopicEdit: the slug of the prompt example', () => {
+  it('rejects a FILE block that uses the example slug, so a copied example is never installed', () => {
+    const out = validateTopicEdit(input({ blocks: [{ kind: 'file', slug: EXAMPLE_SLUG, text: TRIP.replace('# Trip', '# Example topic') }], shown: new Set() }));
+    expect(out).toEqual([`check 1: ${EXAMPLE_SLUG}: the slug of the prompt example is not a document slug`]);
+  });
+});
 
 describe('validateTopicEdit: a passing edit', () => {
   it('accepts an unchanged document', () => {

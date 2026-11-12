@@ -36,21 +36,27 @@ function clip(text: string, max: number): string {
  *
  * An exchange is skipped when its lines would take the total past `maxChars`. The loop goes on to the next exchange, so a later small exchange can still fit. Skipped exchanges leave gaps in the numbering. The blocks are joined by a blank line.
  *
+ * With `dated`, the user line also carries the UTC date of the exchange (`[1] 2026-06-26 User: ...`). Each
+ * footnote of a topic document states a time. Therefore, the topic prompt needs the date. The cap counts the date.
+ *
  * @param exchanges the exchanges, oldest first
  * @param maxChars the cap on the length of the returned text, the blank lines between blocks included
+ * @param opts `dated` adds the date of each exchange to its user line
  * @returns the transcript text and the mark number -> exchange id map
  */
 export function numberExchanges(
   exchanges: ConversationExchange[],
-  maxChars: number
+  maxChars: number,
+  opts: { dated?: boolean } = {}
 ): { text: string; marks: Map<number, string> } {
   const marks = new Map<number, string>();
   const blocks: string[] = [];
   let used = 0;
   exchanges.forEach((e, i) => {
     const n = i + 1;
+    const date = opts.dated ? `${e.timestamp.slice(0, 10)} ` : '';
     const block =
-      `[${n}] User: ${clip(redactEntryText(e.userMessage), MAX_EXCHANGE_CHARS)}\n` +
+      `[${n}] ${date}User: ${clip(redactEntryText(e.userMessage), MAX_EXCHANGE_CHARS)}\n` +
       `[${n}] Agent: ${clip(redactEntryText(e.assistantMessage), MAX_EXCHANGE_CHARS)}`;
     // The blank line between two blocks counts too, so the cap bounds the whole text.
     const cost = block.length + (blocks.length > 0 ? 2 : 0);

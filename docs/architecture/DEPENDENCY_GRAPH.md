@@ -1151,7 +1151,7 @@ The codebase is organized into the following modules:
 |------|---------|------|
 | `./constants.js` | `SUMMARIZER_CONTEXT_MARKER` | Import |
 | `./types.js` | `ConversationExchange` | Import (type-only) |
-| `./topic-validate.js` | `TopicBlock` | Import (type-only) |
+| `./topic-validate.js` | `EXAMPLE_SLUG, TopicBlock` | Import |
 | `./digest-prompts.js` | `numberExchanges` | Import |
 | `./digest-validate.js` | `redactEntryText` | Import |
 | `./topic-format.js` | `assignUnitIds, fenceStep, FenceState, parseTopicDoc, rewriteLinkSlugs, rewriteMarks, serializeTopicDoc` | Import |
@@ -1204,7 +1204,7 @@ The codebase is organized into the following modules:
 - Interfaces: `TopicEditInput`
 - Types: `TopicBlock`
 - Functions: `validateTopicEdit`
-- Constants: `SLUG_PATTERN`
+- Constants: `SLUG_PATTERN`, `EXAMPLE_SLUG`
 
 ---
 
@@ -2100,15 +2100,15 @@ graph TD
 |----------|-------|
 | Total Source Files | 252 |
 | Subsystems | 4 |
-| Total Lines of Code | 51304 |
-| Total Exports | 566 |
+| Total Lines of Code | 51418 |
+| Total Exports | 567 |
 | Total Re-exports | 8 |
 | Total Classes | 7 |
 | Total Interfaces | 136 |
 | Total Functions | 316 |
 | Total Type Guards | 9 |
 | Total Enums | 0 |
-| Type-only Imports | 79 |
+| Type-only Imports | 78 |
 | Runtime Cyclic Components | 0 |
 | Type-only Cyclic Components | 1 |
 | Files in Runtime Cycles | 0 |

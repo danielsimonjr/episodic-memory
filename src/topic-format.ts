@@ -35,6 +35,9 @@ export interface TopicUnit {
   links: TopicLink[];
 }
 
+/** One step of the outline: a heading as written, or a paragraph by its index in `units`. */
+export type TopicOutlineItem = { kind: 'heading'; level: number; name: string } | { kind: 'unit'; index: number };
+
 /** A parsed document. */
 export interface TopicDoc {
   /** The text of the first level-one heading, or an empty string. */
@@ -43,6 +46,8 @@ export interface TopicDoc {
   h1Count: number;
   /** True when the first non-blank line is a level-one heading. */
   titleFirst: boolean;
+  /** The headings and paragraphs in document order. The serializer walks this list. */
+  outline: TopicOutlineItem[];
   /** The paragraphs in document order. */
   units: TopicUnit[];
   /** Every footnote definition in document order. */
@@ -81,6 +86,7 @@ export function parseTopicDoc(slug: string, text: string): TopicDoc {
   const items = scanItems(text);
   const stack: { level: number; name: string }[] = [];
   const pending: Array<Omit<TopicUnit, 'footnotes'>> = [];
+  const outline: TopicOutlineItem[] = [];
   const definitions: TopicFootnote[] = [];
   const errors: string[] = [];
   let title = '';
@@ -96,6 +102,7 @@ export function parseTopicDoc(slug: string, text: string): TopicDoc {
       }
       while (stack.length > 0 && stack[stack.length - 1].level >= item.level) stack.pop();
       stack.push({ level: item.level, name: item.name });
+      outline.push({ kind: 'heading', level: item.level, name: item.name });
     } else if (item.kind === 'definition') {
       const body = DEFINITION_BODY.exec(item.body);
       if (!body) {
@@ -110,6 +117,7 @@ export function parseTopicDoc(slug: string, text: string): TopicDoc {
         refs: body ? splitRefs(body[2]) : [],
       });
     } else {
+      outline.push({ kind: 'unit', index: pending.length });
       pending.push(paragraphUnit(item.lines, stack.map(f => f.name)));
     }
   });
@@ -121,36 +129,31 @@ export function parseTopicDoc(slug: string, text: string): TopicDoc {
       return def ? [{ label: def.label, time: def.time, refs: [...def.refs] }] : [];
     }),
   }));
-  return { title, h1Count, titleFirst, units, definitions, errors };
+  return { title, h1Count, titleFirst, outline, units, definitions, errors };
 }
 
 /**
  * Write a document in the canonical layout.
  *
- * The layout is the title, then each heading that a paragraph needs, then each paragraph with its
- * identifier line, then every definition in order. Blocks are separated by one blank line. A heading
- * with no paragraph below it is not written. The function writes each heading at the level of its
- * place in the heading path.
+ * The function walks the outline. It writes each heading at its parsed level, and each paragraph
+ * with its identifier line, in the order of the input. Every definition follows, in definition order.
+ * Blocks are separated by one blank line. The output keeps the heading levels, the order and the
+ * count of level-one headings, so a second parse gives the same structure. A malformed definition
+ * is written with an empty time and no refs, and the checks still reject it.
  *
  * @param doc the document to write
  */
 export function serializeTopicDoc(doc: TopicDoc): string {
   const blocks: string[][] = [];
-  let prev: string[] = [];
-  if (doc.title !== '') {
-    blocks.push([`# ${doc.title}`]);
-    prev = [doc.title];
-  }
-  for (const unit of doc.units) {
-    let common = 0;
-    while (common < prev.length && common < unit.path.length && prev[common] === unit.path[common]) common++;
-    for (let i = common; i < unit.path.length; i++) {
-      blocks.push([`${'#'.repeat(i + 1)} ${unit.path[i]}`]);
+  for (const item of doc.outline) {
+    if (item.kind === 'heading') {
+      blocks.push([`${'#'.repeat(item.level)} ${item.name}`]);
+    } else {
+      const unit = doc.units[item.index];
+      const para = [unit.text];
+      if (unit.unitId !== null) para.push(`^${unit.unitId}`);
+      blocks.push(para);
     }
-    prev = unit.path;
-    const para = [unit.text];
-    if (unit.unitId !== null) para.push(`^${unit.unitId}`);
-    blocks.push(para);
   }
   if (doc.definitions.length > 0) {
     blocks.push(doc.definitions.map(d => `[^${d.label}]: Time: ${d.time}; Sources: ${d.refs.join(', ')}`));

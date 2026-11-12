@@ -100,7 +100,7 @@ Renders an archived conversation as markdown or HTML, with an optional line rang
 
 | Module | Role |
 |---|---|
-| `src/digest-phase.ts` | The digest step of a sync run. It never throws and never blocks the sync. |
+| `src/digest-phase.ts` | The digest step of a sync run. It never throws. A sync run waits until the digest step ends. |
 | `src/digest-job.ts` | Summarizes quiet sessions into cited digest entries. A session counts as quiet after 30 minutes of no new exchange. |
 | `src/digest-prompts.ts` | Builds the prompt, with caps on each exchange and on the whole transcript. |
 | `src/digest-validate.ts` | Keeps only lines that cite real exchange ids, and rewrites marks to `[#id,#id]`. |

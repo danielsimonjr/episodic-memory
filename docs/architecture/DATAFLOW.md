@@ -31,7 +31,7 @@ sync-cli
   │    db insert                         exchanges, tool_calls, vec_exchanges, FTS
   ├─ summarize queued files (bounded)    summarizer → <name>-summary.txt
   ├─ embedding-migration                 re-embed rows with an old embedding_version
-  ├─ digest-phase                        digest step; never blocks, never throws
+  ├─ digest-phase                        digest step; never throws, sync waits for it
   └─ topic-phase                         topic step; never throws; runs only when EPISODIC_MEMORY_TOPICS=1
 ```
 

@@ -80,6 +80,8 @@ const MD_TARGET = /\]\(([^()\s]*\.md(?:#[^()\s]*)?)\)/g;
 const WELL_FORMED_TARGET = /^[^()\s#]+\.md#\^[^()\s]*$/;
 const URL_SCHEME = /^[a-z][a-z0-9+.-]*:/i;
 const FENCE_OPEN = /^ {0,3}(`{3,}|~{3,})/;
+const FENCE_CLOSE = /^ {0,3}(`{3,}|~{3,})\s*$/;
+const DEFINITION_SOURCES = /^(Time:\s*[^;]*?\s*;\s*Sources:\s*)(.*?)(\s*)$/;
 
 type Item =
   | { kind: 'heading'; level: number; name: string }
@@ -238,18 +240,12 @@ function scanItems(text: string): Item[] {
     const fence = FENCE_OPEN.exec(raw);
     if (fence) {
       flush();
-      const char = fence[1][0];
-      const length = fence[1].length;
-      const code = [raw];
-      while (i + 1 < lines.length) {
-        i++;
-        code.push(lines[i]);
-        const close = /^ {0,3}(`{3,}|~{3,})\s*$/.exec(lines[i]);
-        if (close && close[1][0] === char && close[1].length >= length) break;
-      }
+      const end = fenceEnd(lines, i);
+      const code = lines.slice(i, end + 1);
       // An unterminated fence runs to the end; drop the empty string that the final newline leaves.
-      if (i === lines.length - 1 && code.length > 1 && code[code.length - 1] === '') code.pop();
+      if (end === lines.length - 1 && code.length > 1 && code[code.length - 1] === '') code.pop();
       items.push({ kind: 'code', lines: code });
+      i = end;
       continue;
     }
     if (raw.trim() === '') {
@@ -353,4 +349,104 @@ function splitRefs(sources: string): string[] {
 function hashUnitId(project: string, slug: string, text: string, counter: number): string {
   const parts = counter === 0 ? [project, slug, text] : [project, slug, text, String(counter)];
   return createHash('sha1').update(parts.join('\u0000')).digest('hex').slice(0, 8);
+}
+
+/**
+ * Rewrite each footnote ref that is a bare mark number to the exchange id that the number stands for.
+ *
+ * Only the Sources part of a footnote definition is rewritten. A definition that does not have the
+ * `Time: ...; Sources: ...` form is kept. A number that is not in `marks` stays as written, so the
+ * validator rejects it. A ref that starts with `#` is kept. Text outside definitions and fenced code is kept.
+ *
+ * @param text the Markdown text of a document, with `\n` or `\r\n` line ends
+ * @param marks the mark number -> exchange id map of the prompt
+ */
+export function rewriteMarks(text: string, marks: ReadonlyMap<number, string>): string {
+  const lines = text.split('\n');
+  const inFence = fenceMask(lines);
+  return lines
+    .map((line, i) => {
+      if (inFence[i]) return line;
+      const { body, cr } = splitCr(line);
+      const definition = DEFINITION_LINE.exec(body);
+      if (!definition) return line;
+      const head = body.slice(0, body.length - definition[2].length);
+      const sources = DEFINITION_SOURCES.exec(definition[2]);
+      if (!sources) return line;
+      const refs = sources[2].replace(/[^,]+/g, part =>
+        part.replace(/^(\s*)(\d+)(\s*)$/, (all, lead: string, digits: string, trail: string) => {
+          const id = marks.get(Number(digits));
+          return id === undefined ? all : `${lead}#${id}${trail}`;
+        })
+      );
+      return `${head}${sources[1]}${refs}${sources[3]}${cr}`;
+    })
+    .join('\n');
+}
+
+/**
+ * Rewrite the slug part of each link in paragraph text to the slug of the document that holds the unit now.
+ *
+ * A link is `[text](<slug>.md#^<id>)`. The function changes it only when `slugOfUnit` has `<id>`. Fenced
+ * code, headings and footnote definitions are not paragraph text, so they are kept as written.
+ *
+ * @param text the Markdown text of a document, with `\n` or `\r\n` line ends
+ * @param slugOfUnit the unit identifier -> slug map of the project after the edit
+ */
+export function rewriteLinkSlugs(text: string, slugOfUnit: ReadonlyMap<string, string>): string {
+  const lines = text.split('\n');
+  const inFence = fenceMask(lines);
+  return lines
+    .map((line, i) => {
+      if (inFence[i]) return line;
+      const { body, cr } = splitCr(line);
+      if (HEADING_LINE.test(body) || DEFINITION_LINE.test(body)) return line;
+      const rewritten = body.replace(LINK, (match, slug: string, id: string) => {
+        const next = slugOfUnit.get(id);
+        if (next === undefined) return match;
+        // The link text has no `]`, so the first `](` splits the match before the slug.
+        const cut = match.indexOf('](') + 2;
+        return `${match.slice(0, cut)}${next}${match.slice(cut + slug.length)}`;
+      });
+      return `${rewritten}${cr}`;
+    })
+    .join('\n');
+}
+
+/** Split a line from its carriage return, so a pattern does not see it. */
+function splitCr(line: string): { body: string; cr: string } {
+  return line.endsWith('\r') ? { body: line.slice(0, -1), cr: '\r' } : { body: line, cr: '' };
+}
+
+/**
+ * The index of the last line of the fenced block that opens at `start`.
+ *
+ * The block closes on a line of the same fence character with at least the opener's length. An
+ * unterminated block ends at the last line.
+ */
+function fenceEnd(lines: readonly string[], start: number): number {
+  const fence = FENCE_OPEN.exec(lines[start]);
+  if (!fence) return start;
+  const char = fence[1][0];
+  const length = fence[1].length;
+  let end = start;
+  while (end + 1 < lines.length) {
+    end++;
+    const close = FENCE_CLOSE.exec(lines[end]);
+    if (close && close[1][0] === char && close[1].length >= length) break;
+  }
+  return end;
+}
+
+/** For each line, tell whether it belongs to a fenced block, the fence lines included. */
+function fenceMask(lines: readonly string[]): boolean[] {
+  const mask = lines.map(() => false);
+  for (let i = 0; i < lines.length; i++) {
+    if (FENCE_OPEN.test(lines[i])) {
+      const end = fenceEnd(lines, i);
+      for (let j = i; j <= end; j++) mask[j] = true;
+      i = end;
+    }
+  }
+  return mask;
 }

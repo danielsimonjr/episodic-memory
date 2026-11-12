@@ -1,7 +1,7 @@
 {
   "metadata": {
     "totalSourceFiles": 100,
-    "totalTestFiles": 139,
+    "totalTestFiles": 140,
     "testedCount": 78,
     "untestedCount": 22,
     "coveragePercent": "78.0",
@@ -776,6 +776,7 @@
       "src/indexer.ts",
       "src/sync.ts"
     ],
+    "test/global-setup.test.ts": [],
     "test/gpu-reservation.test.ts": [
       "src/gpu-reservation.ts",
       "src/ollama-backend.ts"

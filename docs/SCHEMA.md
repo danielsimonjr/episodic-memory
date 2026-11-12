@@ -121,7 +121,7 @@ CREATE TABLE topic_doc (
 
 ### `topic_unit`
 
-One row for each paragraph of each document. The row is derived from `topic_doc`.
+One row for each paragraph of each document. The code derives each row from `topic_doc`.
 
 ```sql
 CREATE TABLE topic_unit (
@@ -137,7 +137,7 @@ CREATE TABLE topic_unit (
 
 ### `topic_link`
 
-One row for each link between two paragraphs. The row is derived from `topic_doc`.
+One row for each link between two paragraphs. The code derives each row from `topic_doc`.
 
 ```sql
 CREATE TABLE topic_link (
@@ -149,7 +149,7 @@ CREATE TABLE topic_link (
 
 ### `topic_event`
 
-One row for each footnote. The row is derived from `topic_doc`.
+One row for each footnote. The code derives each row from `topic_doc`.
 
 ```sql
 CREATE TABLE topic_event (
@@ -183,13 +183,13 @@ CREATE TABLE topic_session (
   project TEXT NOT NULL,
   session_id TEXT NOT NULL,
   status TEXT NOT NULL CHECK (status IN ('pending','done','rejected')),
-  attempts INTEGER NOT NULL DEFAULT 0,  -- the count of failed model calls
+  attempts INTEGER NOT NULL DEFAULT 0,  -- the count of failed calls: model faults and edit faults
   error TEXT,                           -- the last error text, or NULL
   PRIMARY KEY (project, session_id)
 );
 ```
 
-A session with a `done` or `rejected` row is not organized again. A `pending` row is a session that failed. The next run retries it.
+The step does not organize a session with a `done` or `rejected` row again. A `pending` row is a session that failed. The next run retries it.
 
 ### `topic_meta`
 
@@ -200,7 +200,7 @@ CREATE TABLE topic_meta (
 );
 ```
 
-The key `since` holds the time of the first run. The step organizes sessions that start at or after this time.
+The key `since` holds the start time of the step. On the first run, the value is `EPISODIC_MEMORY_TOPICS_SINCE` when that variable holds a valid time. If not, the value is the time of the first run. The step organizes sessions that start at or after this time.
 
 ## Learned knowledge and the learning trace
 
@@ -221,8 +221,8 @@ learned knowledge or the learning trace.
 ### `learned/knowledge.db`
 
 Owned by `src/learn/knowledge-store.ts`, which opens it with `better-sqlite3` and creates two tables,
-`entities` and `relations`, in the layout the former memoryjs adapter used, so a file written before
-2026-11-06 opens unchanged: missing columns are added on open and the old `entities_fts` shadow table
+`entities` and `relations`, in the layout the former memoryjs adapter used, so a file written by the former adapter
+opens unchanged: missing columns are added on open and the old `entities_fts` shadow table
 and its triggers are dropped. The `skills` MCP tool opens it read-only and runs no DDL. WAL sidecars
 sit beside the file, so `learned/` is the unit to back up.
 

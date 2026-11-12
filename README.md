@@ -280,9 +280,9 @@ The feature is off by default. Set `EPISODIC_MEMORY_TOPICS=1` to write the docum
 How it works:
 
 1. After the digest step, each `sync` run finds the finished sessions of each project. A session is finished when it has been quiet for 30 minutes. The step skips trivial sessions. It organizes the oldest sessions first.
-2. The step sends the session and the current documents to the digest model. The model answers with the new text of each document that changes.
-3. The step checks the whole edit. It rejects the edit when any check fails. The model gets one more try, with the list of errors. An edit that fails again is not stored.
-4. An accepted edit replaces the documents of the project in one transaction. The code derives the links, the timeline and the search index from the documents.
+2. The step sends the session and the current documents to the digest model. The prompt shows in full only the documents that fit the size limit, the most recently updated first. The model answers with the new text of each document that changes. The step refuses an edit to a document that the prompt did not show in full.
+3. The step checks the whole edit. When a check fails, the model gets one more try in the same run, with the list of errors. When the second answer fails, the step rejects the session and does not organize the session again. A failed model call, or a fault in the check or the install, leaves the session pending. The next run tries the session again. The step rejects the session after 3 failed calls.
+4. The install of an accepted edit runs in one transaction. The transaction writes the text of each document in the edit. A written document replaces the stored document of the same name. The transaction deletes only the documents that the edit names. The code derives the links, the timeline and the search index from the documents. When another run changed a shown document in the meantime, the step discards the edit as stale.
 
 Each session is organized once. Sessions that start before the first run are not organized, unless `EPISODIC_MEMORY_TOPICS_SINCE` sets an earlier time.
 The topic step does not need the digest. Its variables apply to the `sync` run, not to the MCP server.
@@ -292,7 +292,7 @@ Settings:
 | Variable | Default | Meaning |
 |---|---|---|
 | `EPISODIC_MEMORY_TOPICS` | unset (off) | Set to `1` to write the topic documents during sync |
-| `EPISODIC_MEMORY_TOPICS_SINCE` | the first-run time | An ISO time. Replaces the first-run time on the first run only, to organize older sessions |
+| `EPISODIC_MEMORY_TOPICS_SINCE` | the first-run time | A time that `Date.parse` reads, for example an ISO time. Replaces the first-run time on the first run only, to organize older sessions. An invalid value gives a warning on stderr, and the first-run time applies |
 | `EPISODIC_MEMORY_TOPICS_MAX_SESSIONS` | `3` | Sessions that reach the model in one run |
 | `EPISODIC_MEMORY_TOPICS_MAX_TRANSCRIPT_CHARS` | `10000` | Size of the numbered transcript of one session |
 | `EPISODIC_MEMORY_TOPICS_MAX_DOCS_CHARS` | `10000` | Size of the document text that one prompt shows |
@@ -311,7 +311,7 @@ The `topics` MCP tool reads the documents. The tool has five actions:
 | `links` | The links into and out of one paragraph |
 | `timeline` | The dated events in time order, with their source exchange ids |
 
-The `topics` tool is read-only. The tool does not check `EPISODIC_MEMORY_TOPICS`. When the index has no topic tables, it answers that topic memory has no documents yet. See [`topics`](#topics) under MCP Server.
+The `topics` tool is read-only. The tool does not check `EPISODIC_MEMORY_TOPICS`. When the index has no topic tables, the tool answers that topic memory has no documents yet. See [`topics`](#topics) under MCP Server.
 
 ## Self-improving memory (Recursa)
 
@@ -667,7 +667,7 @@ before it is returned. See [Self-improving memory](#self-improving-memory-recurs
 #### `topics`
 
 Read the topic memory documents of the project: `list`, `read` (`slug`), `search` (`query`), `links` (`unit`) or `timeline`. Pass one `action` for each call. The `project` option defaults to the key for the current directory. Search and timeline take optional `from` and `to` times, and `limit` (1-50; default 10 for search, 50 for timeline).
-Read-only: it opens the index read-only and never creates a file. The server does not read `EPISODIC_MEMORY_TOPICS`. Its results come from whatever the sync step wrote. See [Topic memory](#topic-memory).
+Read-only: the tool opens the index read-only and never creates a file. The server does not read `EPISODIC_MEMORY_TOPICS`. The results come from whatever the sync step wrote. See [Topic memory](#topic-memory).
 
 ### Settings the server sees
 

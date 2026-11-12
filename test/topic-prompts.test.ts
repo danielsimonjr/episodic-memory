@@ -218,7 +218,7 @@ describe('buildTopicPrompt', () => {
   it('numbers the transcript and maps the marks, and the transcript cap reaches numberExchanges', () => {
     const result = buildTopicPrompt(input([], 100000, 1000000));
     expect([...result!.marks.entries()]).toEqual([[1, EXCHANGE_ID]]);
-    expect(result!.prompt).toContain('[1] User: first user line');
+    expect(result!.prompt).toContain('[1] 2026-10-08 User: first user line');
     // A transcript cap that holds no exchange gives no prompt: the model is never asked about nothing.
     expect(buildTopicPrompt(input([], 100000, 1000000, 0))).toBeNull();
   });
@@ -567,6 +567,65 @@ describe('prepareTopicEdit', () => {
     const alpha = out[0];
     if (alpha.kind !== 'file') throw new Error('expected a file block');
     expect(parseTopicDoc('alpha', alpha.text).definitions[0].refs).toEqual([`#${EXCHANGE_ID}`]);
+  });
+});
+
+describe('numberExchanges: dated', () => {
+  const late = { ...ex('b', 'second'), timestamp: '2026-06-27T03:41:57.989Z' };
+
+  it('puts the UTC date of each exchange on its User line', () => {
+    const { text, marks } = numberExchanges([ex('a', 'first'), late], 48000, { dated: true });
+    expect(text).toBe('[1] 2026-10-08 User: first\n[1] Agent: ok\n\n[2] 2026-06-27 User: second\n[2] Agent: ok');
+    expect([...marks.entries()]).toEqual([[1, 'a'], [2, 'b']]);
+  });
+
+  it('counts the date in the cap', () => {
+    const one = '[1] 2026-10-08 User: first\n[1] Agent: ok'.length;
+    expect(numberExchanges([ex('a', 'first'), late], one, { dated: true }).marks.size).toBe(1);
+    expect(numberExchanges([ex('a', 'first'), late], one - 1, { dated: true }).marks.size).toBe(0);
+  });
+
+  it('keeps the undated form without the option', () => {
+    expect(numberExchanges([ex('a', 'first')], 48000).text).toBe('[1] User: first\n[1] Agent: ok');
+  });
+});
+
+describe('buildTopicPrompt: the rules', () => {
+  const prompt = (): string =>
+    buildTopicPrompt({ exchanges: EXCH, docs: [], maxTranscriptChars: 48000, maxDocsChars: 0, budgetChars: 1000000 })!.prompt;
+
+  it('shows the date of each conversation turn and says what Time means', () => {
+    expect(prompt()).toContain('[1] 2026-10-08 User: first user line');
+    expect(prompt()).toContain('- Time is the date of the conversation turns that the footnote cites, unless the conversation states another time for the event.');
+  });
+
+  it('asks for plain paragraphs, one label per paragraph, no period after a source and an END line', () => {
+    const p = prompt();
+    expect(p).toContain('- Write plain paragraphs only. Do not write bullet lists, numbered lists or tables.');
+    expect(p).toContain('Never put the same label on two paragraphs.');
+    expect(p).toContain('Write no period after the last source.');
+    expect(p).toContain('- Always end each document with a line that says === END.');
+  });
+
+  it('gives an example block that parses as a valid document', () => {
+    const p = prompt();
+    const start = p.indexOf('Example of one correct block:');
+    expect(start).toBeGreaterThan(0);
+    const example = p.slice(start, p.indexOf('=== END', start) + '=== END'.length);
+    const parsed = parseTopicAnswer(example);
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.blocks).toHaveLength(1);
+    const block = parsed.blocks[0];
+    if (block.kind !== 'file') throw new Error('expected a file block');
+    const docParsed = parseTopicDoc(block.slug, block.text);
+    expect(docParsed.errors).toEqual([]);
+    expect(docParsed.definitions.length).toBeGreaterThan(1);
+  });
+
+  it('gives no concrete date outside the example block', () => {
+    const p = prompt();
+    const rules = p.slice(0, p.indexOf('Example of one correct block:'));
+    expect(rules).not.toMatch(/\d{4}-\d{2}-\d{2}/);
   });
 });
 

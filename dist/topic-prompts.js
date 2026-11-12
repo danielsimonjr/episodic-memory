@@ -14,16 +14,32 @@ const TOPIC_RULES = [
     '- Text outside the blocks does not matter.',
     '- If the conversation adds nothing, answer with the single word NOTHING.',
     '- Edit or delete only the documents shown in full.',
-    '- Each document has one level-1 heading, and it is the first line.',
-    '- Each paragraph ends with footnote references, such as [^1] or [^1][^2].',
-    '- Each footnote label is used once in each document.',
-    '- A footnote has this form: [^n]: Time: YYYY, YYYY-MM or YYYY-MM-DD; Sources: <numbers of the conversation, or #ids already in the document>.',
+    '- Each document has one level-1 heading, and the heading is the first line.',
+    '- Write plain paragraphs only. Do not write bullet lists, numbered lists or tables.',
+    '- Each paragraph ends with its own footnote reference, such as [^1] or [^1][^2].',
+    '- Each footnote label is used on one paragraph only. The first paragraph gets [^1], the next gets [^2], and so on. Never put the same label on two paragraphs.',
+    '- Write each footnote definition on its own line, after the last paragraph, in this form: [^n]: Time: <time>; Sources: <refs>',
+    '- In a footnote definition, Time is YYYY, YYYY-MM or YYYY-MM-DD. Sources are conversation numbers (or #ids already in the document) separated by commas. Write no period after the last source.',
+    '- Each turn of the conversation starts with its number and its date.',
+    '- Time is the date of the conversation turns that the footnote cites, unless the conversation states another time for the event.',
+    '- Always end each document with a line that says === END.',
     '- A link has this form: [text](slug.md#^id).',
     '- Keep the ^id line of every paragraph that you keep.',
     '- A new paragraph has no ^id line.',
     '- Never drop a source that a document already cites.',
     '- A slug uses lowercase letters, digits and hyphens only.',
     '- Write no line that starts with ===, except in a block header.',
+    'Example of one correct block:',
+    '=== FILE example-topic',
+    '# Example topic',
+    '',
+    'The build runs on a Linux runner. [^1]',
+    '',
+    'The team chose Postgres over MySQL. [^2]',
+    '',
+    '[^1]: Time: 2024-03-08; Sources: 2, 4',
+    '[^2]: Time: 2024-03; Sources: 5',
+    '=== END',
 ].join('\n');
 const FILE_OPEN = /^=== FILE(?:\s+(.*))?$/;
 const DELETE_OPEN = /^=== DELETE(?:\s+(.*))?$/;
@@ -43,7 +59,7 @@ const END_LINE = /^=== END\s*$/;
  * @returns the prompt, the mark numbers of the transcript, and the slug -> updatedAt map of the shown documents
  */
 export function buildTopicPrompt(input) {
-    const { text: transcript, marks } = numberExchanges(input.exchanges, input.maxTranscriptChars);
+    const { text: transcript, marks } = numberExchanges(input.exchanges, input.maxTranscriptChars, { dated: true });
     if (marks.size === 0)
         return null;
     // Most recently updated first, whatever the caller's order. The sort is stable for equal times.
@@ -72,7 +88,7 @@ export function buildTopicPrompt(input) {
     }
     // Nothing shown and still over budget: shorten the transcript to the room left.
     const room = input.budgetChars - renderTopicPrompt(inventory, [], '').length;
-    const short = numberExchanges(input.exchanges, Math.max(0, Math.min(input.maxTranscriptChars, room)));
+    const short = numberExchanges(input.exchanges, Math.max(0, Math.min(input.maxTranscriptChars, room)), { dated: true });
     if (short.marks.size === 0)
         return null;
     return { prompt: renderTopicPrompt(inventory, [], short.text), marks: short.marks, shown: new Map() };

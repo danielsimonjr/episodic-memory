@@ -230,6 +230,15 @@ describe('topics tool', () => {
       }
     });
 
+    it('creates no index file on a fresh install', async () => {
+      expect(fs.existsSync(process.env.TEST_DB_PATH!)).toBe(false);
+      const r = await topics({ action: 'list', project: 'proj-a' });
+      expect(r.isError).toBe(false);
+      expect(r.text).toBe('Topic memory has no documents yet.');
+      expect(fs.existsSync(process.env.TEST_DB_PATH!)).toBe(false);
+      expect(fs.existsSync(process.env.TEST_DB_PATH! + '-wal')).toBe(false);
+    });
+
     it('never reads a topic table that is missing, even when only some topic tables exist', async () => {
       const db = initDatabase();
       ensureTopicSchema(db);
@@ -243,6 +252,18 @@ describe('topics tool', () => {
   });
 
   describe('schema', () => {
+    it('refuses a range whose from is after its to, and accepts equal bounds and mixed precision', () => {
+      for (const action of ['timeline', 'search'] as const) {
+        const base = action === 'search' ? { action, query: 'x' } : { action };
+        const bad = TopicsInputSchema.safeParse({ ...base, from: '2026-08', to: '2026-05' });
+        expect(bad.success).toBe(false);
+        if (!bad.success) expect(bad.error.issues[0].path).toEqual(['to']);
+        expect(TopicsInputSchema.safeParse({ ...base, from: '2026-08', to: '2026-08' }).success).toBe(true);
+        expect(TopicsInputSchema.safeParse({ ...base, from: '2026', to: '2026-03-04' }).success).toBe(true);
+        expect(TopicsInputSchema.safeParse({ ...base, from: '2026-08-31', to: '2026-08' }).success).toBe(true);
+      }
+    });
+
     it('refuses an unknown argument', async () => {
       seedWorkAndProject();
       const r = await topics({ action: 'list', project: 'proj-a', nope: 1 });
@@ -336,9 +357,8 @@ describe('topic-tool import boundary', () => {
 
   it('reads only the read modules, the index opener and the pure helpers', () => {
     const allowed = new Set([
+      'fs',
       './topic-db.js',
-      './topic-format.js',
-      './constants.js',
       './digest-inject.js',
       './digest-validate.js',
       './db.js',
@@ -348,6 +368,16 @@ describe('topic-tool import boundary', () => {
     const names = specifiers(readSource());
     expect(names.length).toBeGreaterThan(0);
     for (const name of names) expect(allowed.has(name), `unexpected import ${name}`).toBe(true);
+  });
+
+  it('keeps the document parser out of the schema module, so the server does not load it at start', () => {
+    const schemaSource = fs.readFileSync(
+      path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'src', 'mcp-schemas.ts'),
+      'utf8'
+    );
+    const names = specifiers(schemaSource);
+    expect(names).toContain('./topic-time.js');
+    expect(names).not.toContain('./topic-format.js');
   });
 
   it('never imports the write path, the summarizer, the Claude SDK or the GPU check', () => {

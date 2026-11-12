@@ -1,4 +1,7 @@
 import { createHash } from 'node:crypto';
+import { UNIT_ID_PATTERN, isValidTime } from './topic-time.js';
+
+export { UNIT_ID_PATTERN, isValidTime };
 
 /** A footnote definition: the label, the event time and the refs that support the statement. */
 export interface TopicFootnote {
@@ -65,9 +68,6 @@ export interface TopicDoc {
   /** Malformed definitions and repeated labels, one message each. */
   errors: string[];
 }
-
-/** The form of a unit identifier: eight lowercase hex characters. */
-export const UNIT_ID_PATTERN = /^[0-9a-f]{8}$/;
 
 const HEADING_LINE = /^(#{1,6})\s+(.+?)\s*$/;
 const DEFINITION_LINE = /^\[\^([^\]\s]+)\]:\s*(.*)$/;
@@ -295,27 +295,6 @@ function paragraphUnit(lines: string[], path: string[]): Omit<TopicUnit, 'footno
       .map(m => m[1])
       .filter(target => !WELL_FORMED_TARGET.test(target) && !URL_SCHEME.test(target)),
   };
-}
-
-/**
- * Tell whether a time is a real `YYYY`, `YYYY-MM` or `YYYY-MM-DD`.
- *
- * The day check uses the Gregorian leap rule for every year, the years 0000 to 0099 included.
- *
- * @param time the time text
- */
-export function isValidTime(time: string): boolean {
-  const m = /^(\d{4})(?:-(\d{2})(?:-(\d{2}))?)?$/.exec(time);
-  if (!m) return false;
-  if (m[2] === undefined) return true;
-  const month = Number(m[2]);
-  if (month < 1 || month > 12) return false;
-  if (m[3] === undefined) return true;
-  const year = Number(m[1]);
-  const leap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
-  const lastDay = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1];
-  const day = Number(m[3]);
-  return day >= 1 && day <= lastDay;
 }
 
 /**

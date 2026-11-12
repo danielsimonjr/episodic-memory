@@ -124,7 +124,7 @@ Schema in `src/mcp-schemas.ts`, handler in `src/topic-tool.ts`, registration in 
 | `links` | `project`, `unit` | Outgoing links and backlinks of the unit, each with slug, heading and text |
 | `timeline` | `project`, optional `from`, `to` | Events by time, each with its statement, unit and source ids |
 
-A source id resolves to an archive path and line range through the existing `digest` `expand` action. The tool reads only. When the flag is off and no table exists, the tool says that topic memory is off.
+A source id resolves to an archive path and line range through the existing `digest` `expand` action. The tool reads only. The server never sees the flag. When the index file or the topic tables do not exist, the tool says that topic memory has no documents yet. The tool opens the index read-only and creates no file.
 
 Server constraints (repo `CLAUDE.md`, gotchas 1 and the `skills` pattern):
 

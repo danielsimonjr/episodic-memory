@@ -1,6 +1,7 @@
 import type Database from 'better-sqlite3';
 import { toFtsQuery } from './fts-query.js';
-import { footnoteStatements, isValidTime, parseTopicDoc } from './topic-format.js';
+import { footnoteStatements, parseTopicDoc } from './topic-format.js';
+import { endOf, isValidTime, startOf } from './topic-time.js';
 
 /** A staged edit: the validated text of each written document, and the slugs to delete. */
 export interface TopicEdit {
@@ -492,20 +493,6 @@ function rebuildDerived(db: Database.Database, project: string): void {
       }
     }
   }
-}
-
-/** The start of the interval that a time covers. */
-function startOf(time: string): string {
-  if (time.length === 4) return `${time}-01-01`;
-  if (time.length === 7) return `${time}-01`;
-  return time;
-}
-
-/** The end of the interval that a time covers. */
-function endOf(time: string): string {
-  if (time.length === 4) return `${time}-12-31`;
-  if (time.length === 7) return `${time}-31`;
-  return time;
 }
 
 /** Tell whether the interval of a time overlaps the range. */

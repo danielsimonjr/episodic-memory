@@ -30,6 +30,7 @@ items move between sections as state changes.
 
 ## Active queue
 
+- [ ] **Self-organized topic memory (SOMEM)** — from arXiv paper "Can LLM Agents Organize Their Own Memory?" (Fu, Qi et al.). The sync job writes agent-organized Topic documents that cite exchanges; the runtime validates each edit and derives backlinks and a timeline. Scope: Topic + validation + backlinks + timeline + MCP search/read; Core and Recent left out (the digest covers them; paper ablation shows them within noise). Spec and plan under `docs/superpowers/`.
 - [ ] **Declutter: `repo-tools clones` groups** — 2026-11-12 run: 3 exact, 2 text, 12 near groups (none in the digest-fix diff). Read both bodies of each pair; merge real duplicates, tests first.
 - 2026-11-12 five-axis (digest Ollama fix): speed n/a; stability: suite no longer reads the machine's Ollama model; reliability: digest writes again on Ollama, stale bundle rebuilt, CI dist-freshness gate; security n/a; maintainability: one flaky run of the `search` project-filter test (10.3 s, passed twice after) left to watch. clones 17 groups before and after, none in this diff.
 - [x] **Digest silent on Ollama since 2026-10-19** — `callOllama` refused every reply without `<summary>`; digest and learn calls now pass `requireSummaryBlock: false`. Also: stale committed bundle (old zod) rebuilt and a CI freshness check added; the suite no longer reads the machine's Ollama model.

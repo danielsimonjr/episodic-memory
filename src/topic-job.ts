@@ -4,7 +4,7 @@ import { shouldSkipReentrantSync } from './reentrancy.js';
 import { gpuReservationBlock } from './gpu-reservation.js';
 import { GpuReservedError, summarizerBackend } from './ollama-backend.js';
 import { callDigestModel, promptBudgetChars } from './summarizer.js';
-import { QUIET_MS, isTrivial, toExchange, type ExchangeRow } from './digest-job.js';
+import { QUIET_MS, isTrivial, sessionExchanges } from './digest-job.js';
 import { TOPIC_DEFAULTS, envPositiveInt, topicsEnabled } from './constants.js';
 import { parseTopicDoc } from './topic-format.js';
 import { buildTopicPrompt, parseTopicAnswer, prepareTopicEdit, type TopicPromptDoc } from './topic-prompts.js';
@@ -117,17 +117,7 @@ function candidateSessions(db: Database.Database, since: string): SessionRow[] {
     .all(since) as SessionRow[];
 }
 
-function sessionExchanges(db: Database.Database, s: SessionRow): ConversationExchange[] {
-  const rows = db
-    .prepare(
-      `SELECT id, project, timestamp, user_message, assistant_message, archive_path, line_start, line_end
-       FROM exchanges WHERE project = ? AND session_id = ? ORDER BY timestamp, line_start`
-    )
-    .all(s.project, s.session_id) as ExchangeRow[];
-  return rows.map(toExchange);
-}
-
-/** The stored documents of a project, most recently updated first, as the prompt needs them. */
+/** The stored documents of a project by slug, as the prompt needs them. buildTopicPrompt sorts them by update time. */
 function storedDocs(db: Database.Database, project: string): TopicPromptDoc[] {
   const rows = db
     .prepare('SELECT slug, text, updated_at FROM topic_doc WHERE project = ? ORDER BY slug')
@@ -293,7 +283,7 @@ export async function runTopics(db: Database.Database, opts: TopicOptions = {}):
       result.skipped++;
       continue;
     }
-    const exchanges = sessionExchanges(db, s);
+    const exchanges = sessionExchanges(db, s.project, s.session_id);
     if (isTrivial(exchanges)) {
       result.skipped++;
       continue;

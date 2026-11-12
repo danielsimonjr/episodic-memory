@@ -82,6 +82,17 @@ export function toExchange(r: ExchangeRow): ConversationExchange {
   };
 }
 
+/** The exchanges of one session, oldest first. */
+export function sessionExchanges(db: Database.Database, project: string, sessionId: string): ConversationExchange[] {
+  const rows = db
+    .prepare(
+      `SELECT id, project, timestamp, user_message, assistant_message, archive_path, line_start, line_end
+       FROM exchanges WHERE project = ? AND session_id = ? ORDER BY timestamp, line_start`
+    )
+    .all(project, sessionId) as ExchangeRow[];
+  return rows.map(toExchange);
+}
+
 /** Tell whether a session is trivial: one exchange that is `/exit` or is shorter than 100 characters. */
 export function isTrivial(exchanges: ConversationExchange[]): boolean {
   if (exchanges.length !== 1) return false;
@@ -114,13 +125,7 @@ async function writeSessionEntries(
       result.skipped++;
       continue;
     }
-    const rows = db
-      .prepare(
-        `SELECT id, project, timestamp, user_message, assistant_message, archive_path, line_start, line_end
-         FROM exchanges WHERE project = ? AND session_id = ? ORDER BY timestamp, line_start`
-      )
-      .all(s.project, s.session_id) as ExchangeRow[];
-    const exchanges = rows.map(toExchange);
+    const exchanges = sessionExchanges(db, s.project, s.session_id);
     if (isTrivial(exchanges)) {
       result.skipped++;
       continue;

@@ -6,7 +6,7 @@
  */
 
 import { z } from 'zod';
-import { UNIT_ID_PATTERN, isValidTime } from './topic-format.js';
+import { UNIT_ID_PATTERN, endOf, isValidTime, startOf } from './topic-time.js';
 
 /**
  * The search methods that the `mode` input of the `search` tool accepts.
@@ -243,6 +243,9 @@ export const TopicsInputSchema = z
   })
   .strict()
   .superRefine((args, ctx) => {
+    if (args.from !== undefined && args.to !== undefined && startOf(args.from) > endOf(args.to)) {
+      ctx.addIssue({ code: 'custom', path: ['to'], message: 'to must not be before from' });
+    }
     const field = TOPICS_REQUIRED_ARG[args.action];
     if (field !== undefined && args[field] === undefined) {
       ctx.addIssue({

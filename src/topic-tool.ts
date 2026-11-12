@@ -5,12 +5,14 @@
  * inside the `topics` branch, so a session that never calls the tool loads nothing of
  * the feature. The module imports no writer, no summarizer and no model client.
  *
- * The tool never writes. It opens the index the way the `digest` tool does, and it
- * answers that topic memory has no documents yet when the topic tables do not exist.
+ * The tool never writes. It opens the index read-only, and it answers that topic memory has
+ * no documents yet when the index file or the topic tables do not exist.
  * It does not check the topic flag: the MCP server never sees that variable.
  */
 
-import { initDatabase } from './db.js';
+import fs from 'fs';
+import { openDatabaseReadonly } from './db.js';
+import { getDbPath } from './paths.js';
 import {
   listTopicDocs,
   readTopicDoc,
@@ -33,7 +35,7 @@ const SEARCH_DEFAULT_LIMIT = 10;
 const READ_TABLES = ['topic_doc', 'topic_unit', 'topic_link', 'topic_event', 'topic_unit_fts'];
 
 /** The open index handle. */
-type IndexDb = ReturnType<typeof initDatabase>;
+type IndexDb = ReturnType<typeof openDatabaseReadonly>;
 
 /** True when every topic table that the read functions use exists. Reads the schema only. */
 function topicTablesExist(db: IndexDb): boolean {
@@ -104,11 +106,13 @@ function timelineText(db: IndexDb, project: string, range: { from?: string; to?:
 /**
  * Behavior of the `topics` MCP tool. Runs one action on the project, and returns redacted text.
  *
- * `project` defaults to the key for the working directory. The index opens once for the call
+ * `project` defaults to the key for the working directory. The index opens read-only once for the call
  * and closes in `finally`.
  */
 export function topicsToolText(params: TopicsInput): string {
-  const db = initDatabase();
+  // A fresh install has no index file. Opening the index the writer way would create it.
+  if (!fs.existsSync(getDbPath())) return NO_TOPICS_MESSAGE;
+  const db = openDatabaseReadonly();
   try {
     if (!topicTablesExist(db)) return NO_TOPICS_MESSAGE;
 

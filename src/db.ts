@@ -327,6 +327,19 @@ export function openDatabase(options: OpenDatabaseOptions = {}): Database.Databa
   return db;
 }
 
+/**
+ * Opens the existing index database for reading only.
+ *
+ * The function creates no file and no directory. It does not change the file mode, turn on WAL mode
+ * or run a migration. It throws when the database file does not exist. The busy timeout is the same as in `openDatabase`.
+ */
+export function openDatabaseReadonly(): Database.Database {
+  const db = new Database(getDbPath(), { readonly: true, fileMustExist: true });
+  const busyTimeout = parseInt(process.env.EPISODIC_MEMORY_DB_BUSY_TIMEOUT_MS || '5000', 10);
+  db.pragma(`busy_timeout = ${Number.isFinite(busyTimeout) && busyTimeout >= 0 ? busyTimeout : 5000}`);
+  return db;
+}
+
 /** Open (and migrate) a database — the default writer / one-shot path. */
 export function initDatabase(): Database.Database {
   return openDatabase({ migrate: true });

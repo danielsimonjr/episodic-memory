@@ -46,7 +46,7 @@ This report lists each source file that the map census finds, with a disposition
 | File | Package | Area | Disposition | Lines |
 | --- | --- | --- | --- | --: |
 | `cli/digest-hook.js` | (root) | src | orphan | 96 |
-| `cli/ensure-deps.js` | (root) | src | orphan | 48 |
+| `cli/ensure-deps.js` | (root) | src | orphan | 56 |
 | `cli/episodic-memory.js` | (root) | src | orphan | 140 |
 | `cli/index-conversations.js` | (root) | src | orphan | 150 |
 | `cli/mcp-server-wrapper.js` | (root) | src | orphan | 106 |

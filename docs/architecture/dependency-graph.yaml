@@ -4,7 +4,7 @@ metadata:
   language: typescript
   totalFiles: 251
   totalModules: 4
-  totalExports: 565
+  totalExports: 566
 modules:
   src:
     cli/digest-hook.js:
@@ -21,6 +21,7 @@ modules:
         - path
       internalDependencies: []
       exports:
+        - NPM_INSTALL_ARGS
         - ensureDeps
     cli/episodic-memory.js:
       externalDependencies: []
@@ -6216,8 +6217,8 @@ statistics:
   totalTypeScriptFiles: 251
   totalSourceFiles: 251
   totalModules: 4
-  totalLinesOfCode: 51205
-  totalExports: 565
+  totalLinesOfCode: 51213
+  totalExports: 566
   entryRoots: 6
   reachableFiles: 44
   dormantFiles: 56
@@ -6227,7 +6228,7 @@ statistics:
   typeOnlyCircularDeps: 1
   totalTypeOnlyImports: 79
   noImporterFileCount: 13
-  unusedExportsCount: 113
+  unusedExportsCount: 114
   circularDepsTruncated: false
   runtimeCyclicComponents: 0
   typeOnlyCyclicComponents: 1
@@ -6238,7 +6239,7 @@ statistics:
   totalFunctions: 316
   totalTypeGuards: 9
   totalEnums: 0
-  totalConstants: 63
+  totalConstants: 64
   totalReExports: 8
 reachability:
   roots:

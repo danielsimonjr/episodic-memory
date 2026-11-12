@@ -55,10 +55,14 @@
         "internalDependencies": [],
         "workspaceDependencies": [],
         "exports": [
+          "NPM_INSTALL_ARGS",
           "ensureDeps"
         ],
         "functions": [
           "ensureDeps"
+        ],
+        "constants": [
+          "NPM_INSTALL_ARGS"
         ]
       },
       "cli/episodic-memory.js": {

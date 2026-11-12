@@ -61,6 +61,7 @@ The codebase is organized into the following modules:
 
 **Exports:**
 - Functions: `ensureDeps`
+- Constants: `NPM_INSTALL_ARGS`
 
 ---
 
@@ -2099,8 +2100,8 @@ graph TD
 |----------|-------|
 | Total Source Files | 251 |
 | Subsystems | 4 |
-| Total Lines of Code | 51205 |
-| Total Exports | 565 |
+| Total Lines of Code | 51213 |
+| Total Exports | 566 |
 | Total Re-exports | 8 |
 | Total Classes | 7 |
 | Total Interfaces | 136 |

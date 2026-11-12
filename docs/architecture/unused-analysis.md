@@ -10,9 +10,9 @@
 - **Dormant files**: 56
   - **Orphaned (reachable from nothing)**: 14
   - **Test-only (only a test reaches them)**: 42
-- **Potentially unused exports**: 113
+- **Potentially unused exports**: 114
   - **Unreferenced anywhere**: 4
-  - **Referenced in their own module**: 109
+  - **Referenced in their own module**: 110
   - **Not classified**: 0
 
 ## Caveats
@@ -125,6 +125,7 @@ No other file imports these names, and their own module does not use them.
 
 No other file imports these names, but their own module uses them.
 
+- `cli/ensure-deps.js`: `NPM_INSTALL_ARGS`
 - `src/api-endpoint.ts`: `ApiBaseUrlValidation`
 - `src/deps-health.ts`: `nativeAddonPresent`
 - `src/digest-compress.ts`: `CompressOptions`, `CompressResult`

@@ -71,7 +71,9 @@
   },
   "homepage": "https://github.com/obra/episodic-memory",
   "allowScripts": {
-    "better-sqlite3@13.0.3": true
+    "better-sqlite3@13.0.3": true,
+    "onnxruntime-node": false,
+    "protobufjs": false
   },
   "trustedDependencies": [
     "better-sqlite3"

@@ -150,7 +150,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/types.ts` | episodic-memory | src | reachable | 82 |
 | `src/verify.ts` | episodic-memory | src | reachable | 226 |
 | `test/agent-sdk-floor.test.ts` | (root) | tests | test | 39 |
-| `test/allow-scripts-pin.test.ts` | (root) | tests | test | 79 |
+| `test/allow-scripts-pin.test.ts` | (root) | tests | test | 90 |
 | `test/archive-path-edges.test.ts` | (root) | tests | test | 67 |
 | `test/archive-path.test.ts` | (root) | tests | test | 132 |
 | `test/backfill-cli-gpu-reservation.test.ts` | (root) | tests | test | 51 |

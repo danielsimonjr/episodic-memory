@@ -1,11 +1,11 @@
 {
-  "totalFiles": 252,
+  "totalFiles": 253,
   "byDisposition": {
     "reachable": 40,
     "build-entry": 4,
     "test-only": 43,
     "orphan": 13,
-    "test": 147,
+    "test": 148,
     "tool": 4,
     "config": 1,
     "bench": 0,
@@ -14,11 +14,11 @@
   "byArea": {
     "src": 100,
     "tools": 4,
-    "tests": 147,
+    "tests": 148,
     "config": 1
   },
   "byPackage": {
-    "(root)": 159,
+    "(root)": 160,
     "episodic-memory": 93
   },
   "files": [
@@ -671,7 +671,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "orphan",
-      "loc": 242
+      "loc": 248
     },
     {
       "file": "src/sync.ts",
@@ -1589,6 +1589,13 @@
       "area": "tests",
       "disposition": "test",
       "loc": 34
+    },
+    {
+      "file": "test/sync-cli-args.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 49
     },
     {
       "file": "test/sync-cli-lock.test.ts",

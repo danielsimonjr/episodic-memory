@@ -57,12 +57,20 @@ EXAMPLES:
   process.exit(0);
 }
 
+// Refuse an unknown option before any work. Without the check, a misspelled or invented flag runs a
+// full sync with the default settings. The command says nothing about the flag. Exit code 2 is the
+// usage error.
+const unknown = args.filter(arg => arg !== '--background');
+if (unknown.length > 0) {
+  console.error(`episodic-memory sync: unknown option ${unknown.join(' ')}. Run 'episodic-memory sync --help'.`);
+  process.exit(2);
+}
+
 // Check if running in background mode
 const isBackground = args.includes('--background');
 
 // If background mode, fork the process and exit immediately
 if (isBackground) {
-  const filteredArgs = args.filter(arg => arg !== '--background');
   rotateSyncLogIfNeeded(); // keep the shared log from growing without bound (F4)
   const logPath = getSyncLogPath();
   const logFd = fs.openSync(logPath, 'a');
@@ -76,10 +84,8 @@ if (isBackground) {
     // priority before booting transformers. Without this the detached worker
     // embeds at NORMAL priority and starves the interactive session that spawned
     // it — including MCP servers, which then blow their 30s handshake budget.
-    const child = spawn(process.execPath, [
-      process.argv[1], // This script
-      ...filteredArgs
-    ], {
+    // The worker gets no arguments. The check above leaves --background as the only option.
+    const child = spawn(process.execPath, [process.argv[1]], {
       detached: true,
       stdio: ['ignore', logFd, logFd],
       env: { ...process.env, [BACKGROUND_WORKER_ENV]: '1' }

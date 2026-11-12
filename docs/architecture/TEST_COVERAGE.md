@@ -9,7 +9,7 @@
 | Metric | Count |
 |--------|-------|
 | Total Source Files | 100 |
-| Total Test Files | 141 |
+| Total Test Files | 142 |
 | Source Files with Tests | 79 |
 | Source Files without Tests | 21 |
 | Coverage (raw, direct-import) | **79.0%** |
@@ -255,6 +255,7 @@ The following 21 source files are not directly imported by any test file:
 | `test/summarizer-prompt-budget.test.ts` | 2 files |
 | `test/summarizer-text.test.ts` | 2 files |
 | `test/sync-banner.test.ts` | 1 files |
+| `test/sync-cli-args.test.ts` | 0 files |
 | `test/sync-cli-lock.test.ts` | 1 files |
 | `test/sync-cli-reentrancy.test.ts` | 0 files |
 | `test/sync-empty-summary-audit.test.ts` | 1 files |

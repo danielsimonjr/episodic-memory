@@ -2,9 +2,9 @@ metadata:
   name: episodic-memory
   schemaVersion: 2.0.0
   language: typescript
-  totalFiles: 228
+  totalFiles: 246
   totalModules: 4
-  totalExports: 492
+  totalExports: 562
 modules:
   src:
     cli/digest-hook.js:
@@ -191,6 +191,11 @@ modules:
         - MAX_INDEXED_MESSAGE_BYTES
         - truncationNoticeFor
         - truncateForIndex
+        - OLLAMA_MAX_PROMPT_CHARS_DEFAULT
+        - CLAUDE_MAX_PROMPT_CHARS
+        - TOPIC_DEFAULTS
+        - topicsEnabled
+        - envPositiveInt
     src/db.ts:
       externalDependencies:
         - better-sqlite3
@@ -232,6 +237,7 @@ modules:
         - upsertExchangeFts
         - deleteExchangeFts
         - openDatabase
+        - openDatabaseReadonly
         - initDatabase
         - getSharedReaderDatabase
         - closeSharedReaderDatabase
@@ -293,7 +299,11 @@ modules:
       externalDependencies:
         - better-sqlite3
       nodeDependencies: []
-      internalDependencies: []
+      internalDependencies:
+        - file: src/fts-query.ts
+          imports:
+            - toFtsQuery
+          typeOnly: false
       exports:
         - DigestTier
         - DigestEntry
@@ -346,6 +356,7 @@ modules:
         - file: src/summarizer.ts
           imports:
             - callDigestModel
+            - promptBudgetChars
           typeOnly: false
         - file: src/digest-prompts.ts
           imports:
@@ -367,7 +378,12 @@ modules:
       exports:
         - DigestOptions
         - DigestResult
+        - QUIET_MS
         - digestEnabled
+        - ExchangeRow
+        - toExchange
+        - sessionExchanges
+        - isTrivial
         - runDigest
     src/digest-phase.ts:
       externalDependencies:
@@ -409,6 +425,7 @@ modules:
           typeOnly: false
       exports:
         - BuiltPrompt
+        - numberExchanges
         - buildSessionPrompt
         - buildCompressPrompt
     src/digest-tool.ts:
@@ -618,6 +635,12 @@ modules:
         - formatExchangeEmbeddingText
         - generateExchangeEmbedding
         - generateExchangeEmbeddings
+    src/fts-query.ts:
+      externalDependencies: []
+      nodeDependencies: []
+      internalDependencies: []
+      exports:
+        - toFtsQuery
     src/gpu-reservation.ts:
       externalDependencies: []
       nodeDependencies:
@@ -691,6 +714,7 @@ modules:
             - migrateSchema
             - migrateToolCallsCascade
             - openDatabase
+            - openDatabaseReadonly
             - upsertExchangeFts
             - vacuumDatabase
           typeOnly: false
@@ -742,6 +766,7 @@ modules:
             - extractSummary
             - formatConversationText
             - getApiEnv
+            - promptBudgetChars
             - resolveLearnModels
             - runCodexCommand
             - shouldSkipReentrantSync
@@ -2086,7 +2111,14 @@ modules:
       externalDependencies:
         - zod
       nodeDependencies: []
-      internalDependencies: []
+      internalDependencies:
+        - file: src/topic-time.ts
+          imports:
+            - UNIT_ID_PATTERN
+            - endOf
+            - isValidTime
+            - startOf
+          typeOnly: false
       exports:
         - SearchModeEnum
         - ResponseFormatEnum
@@ -2098,6 +2130,9 @@ modules:
         - DigestInput
         - SkillsInputSchema
         - SkillsInput
+        - TopicsActionEnum
+        - TopicsInputSchema
+        - TopicsInput
         - handleMcpError
     src/mcp-server.ts:
       externalDependencies:
@@ -2119,6 +2154,7 @@ modules:
             - DigestInputSchema
             - ShowConversationInputSchema
             - SkillsInputSchema
+            - TopicsInputSchema
           typeOnly: false
       exports: []
     src/mcp-tools.ts:
@@ -2149,6 +2185,7 @@ modules:
             - SearchInputSchema
             - ShowConversationInputSchema
             - SkillsInputSchema
+            - TopicsInputSchema
             - handleMcpError
           typeOnly: false
         - file: src/search.ts
@@ -2164,6 +2201,10 @@ modules:
             - '*'
           typeOnly: false
         - file: src/learn/skills-tool.ts
+          imports:
+            - '*'
+          typeOnly: false
+        - file: src/topic-tool.ts
           imports:
             - '*'
           typeOnly: false
@@ -2189,11 +2230,17 @@ modules:
           imports:
             - gpuReservationBlock
           typeOnly: false
+        - file: src/constants.ts
+          imports:
+            - envPositiveInt
+            - OLLAMA_MAX_PROMPT_CHARS_DEFAULT
+          typeOnly: false
       exports:
         - GpuReservedError
         - summarizerBackend
         - stripThinking
         - OllamaCallOptions
+        - ollamaMaxPromptChars
         - callOllama
     src/orphan-reaper.ts:
       externalDependencies: []
@@ -2383,6 +2430,7 @@ modules:
           typeOnly: false
         - file: src/constants.ts
           imports:
+            - CLAUDE_MAX_PROMPT_CHARS
             - SUMMARIZER_CONTEXT_MARKER
           typeOnly: false
         - file: src/reentrancy.ts
@@ -2405,6 +2453,7 @@ modules:
             - summarizerBackend
             - callOllama
             - GpuReservedError
+            - ollamaMaxPromptChars
             - OllamaCallOptions
           typeOnly: false
       exports:
@@ -2418,6 +2467,7 @@ modules:
         - buildCodexSummarizerCommand
         - CallClaudeOptions
         - callDigestModel
+        - promptBudgetChars
         - resolveLearnModels
         - callLearnModel
         - runCodexCommand
@@ -2486,6 +2536,10 @@ modules:
           imports:
             - '*'
           typeOnly: false
+        - file: src/topic-phase.ts
+          imports:
+            - '*'
+          typeOnly: false
       exports: []
     src/sync.ts:
       externalDependencies: []
@@ -2539,6 +2593,268 @@ modules:
         - extractSessionIdFromPath
         - syncConversations
         - summarizeOneFile
+    src/topic-db.ts:
+      externalDependencies:
+        - better-sqlite3
+      nodeDependencies: []
+      internalDependencies:
+        - file: src/fts-query.ts
+          imports:
+            - toFtsQuery
+          typeOnly: false
+        - file: src/topic-format.ts
+          imports:
+            - footnoteStatements
+            - parseTopicDoc
+          typeOnly: false
+        - file: src/topic-time.ts
+          imports:
+            - endOf
+            - isValidTime
+            - startOf
+          typeOnly: false
+      exports:
+        - TopicEdit
+        - TopicSessionStatus
+        - TopicSession
+        - TopicUnitHit
+        - TopicLinkedUnit
+        - TopicEvent
+        - TopicRange
+        - ensureTopicSchema
+        - installTopicEdit
+        - listTopicDocs
+        - readTopicDoc
+        - searchTopicUnits
+        - topicLinks
+        - topicTimeline
+        - getTopicSession
+        - setTopicSessionStatus
+        - recordTopicFailedCall
+        - getTopicMeta
+        - setTopicMeta
+    src/topic-format.ts:
+      externalDependencies: []
+      nodeDependencies:
+        - node:crypto
+      internalDependencies:
+        - file: src/topic-time.ts
+          imports:
+            - UNIT_ID_PATTERN
+            - isValidTime
+          typeOnly: false
+      exports:
+        - UNIT_ID_PATTERN
+        - isValidTime
+        - TopicFootnote
+        - TopicLink
+        - TopicUnit
+        - TopicOutlineItem
+        - TopicDoc
+        - parseTopicDoc
+        - serializeTopicDoc
+        - assignUnitIds
+        - footnoteStatements
+        - rewriteMarks
+        - rewriteLinkSlugs
+        - FenceState
+        - fenceStep
+    src/topic-job.ts:
+      externalDependencies:
+        - better-sqlite3
+      nodeDependencies: []
+      internalDependencies:
+        - file: src/types.ts
+          imports:
+            - ConversationExchange
+          typeOnly: true
+        - file: src/reentrancy.ts
+          imports:
+            - shouldSkipReentrantSync
+          typeOnly: false
+        - file: src/gpu-reservation.ts
+          imports:
+            - gpuReservationBlock
+          typeOnly: false
+        - file: src/ollama-backend.ts
+          imports:
+            - GpuReservedError
+            - summarizerBackend
+          typeOnly: false
+        - file: src/summarizer.ts
+          imports:
+            - callDigestModel
+            - promptBudgetChars
+          typeOnly: false
+        - file: src/digest-job.ts
+          imports:
+            - QUIET_MS
+            - isTrivial
+            - sessionExchanges
+          typeOnly: false
+        - file: src/constants.ts
+          imports:
+            - TOPIC_DEFAULTS
+            - envPositiveInt
+            - topicsEnabled
+          typeOnly: false
+        - file: src/topic-format.ts
+          imports:
+            - parseTopicDoc
+          typeOnly: false
+        - file: src/topic-prompts.ts
+          imports:
+            - buildTopicPrompt
+            - parseTopicAnswer
+            - prepareTopicEdit
+            - TopicPromptDoc
+          typeOnly: false
+        - file: src/topic-validate.ts
+          imports:
+            - validateTopicEdit
+          typeOnly: false
+        - file: src/topic-db.ts
+          imports:
+            - ensureTopicSchema
+            - getTopicMeta
+            - installTopicEdit
+            - recordTopicFailedCall
+            - setTopicMeta
+            - setTopicSessionStatus
+          typeOnly: false
+      exports:
+        - TopicOptions
+        - TopicResult
+        - runTopics
+    src/topic-phase.ts:
+      externalDependencies:
+        - better-sqlite3
+      nodeDependencies: []
+      internalDependencies:
+        - file: src/reentrancy.ts
+          imports:
+            - shouldSkipReentrantSync
+          typeOnly: false
+        - file: src/constants.ts
+          imports:
+            - topicsEnabled
+          typeOnly: false
+        - file: src/topic-job.ts
+          imports:
+            - TopicOptions
+            - TopicResult
+          typeOnly: true
+        - file: src/topic-job.ts
+          imports:
+            - '*'
+          typeOnly: false
+        - file: src/db.ts
+          imports:
+            - '*'
+          typeOnly: false
+      exports:
+        - runTopicPhase
+    src/topic-prompts.ts:
+      externalDependencies: []
+      nodeDependencies: []
+      internalDependencies:
+        - file: src/constants.ts
+          imports:
+            - SUMMARIZER_CONTEXT_MARKER
+          typeOnly: false
+        - file: src/types.ts
+          imports:
+            - ConversationExchange
+          typeOnly: true
+        - file: src/topic-validate.ts
+          imports:
+            - TopicBlock
+          typeOnly: true
+        - file: src/digest-prompts.ts
+          imports:
+            - numberExchanges
+          typeOnly: false
+        - file: src/digest-validate.ts
+          imports:
+            - redactEntryText
+          typeOnly: false
+        - file: src/topic-format.ts
+          imports:
+            - assignUnitIds
+            - fenceStep
+            - FenceState
+            - parseTopicDoc
+            - rewriteLinkSlugs
+            - rewriteMarks
+            - serializeTopicDoc
+          typeOnly: false
+      exports:
+        - TopicPromptDoc
+        - buildTopicPrompt
+        - parseTopicAnswer
+        - prepareTopicEdit
+    src/topic-time.ts:
+      externalDependencies: []
+      nodeDependencies: []
+      internalDependencies: []
+      exports:
+        - UNIT_ID_PATTERN
+        - isValidTime
+        - startOf
+        - endOf
+    src/topic-tool.ts:
+      externalDependencies: []
+      nodeDependencies:
+        - fs
+      internalDependencies:
+        - file: src/db.ts
+          imports:
+            - openDatabaseReadonly
+          typeOnly: false
+        - file: src/paths.ts
+          imports:
+            - getDbPath
+          typeOnly: false
+        - file: src/topic-db.ts
+          imports:
+            - listTopicDocs
+            - readTopicDoc
+            - searchTopicUnits
+            - topicLinks
+            - topicTimeline
+            - TopicLinkedUnit
+          typeOnly: false
+        - file: src/digest-inject.ts
+          imports:
+            - projectKeyFromCwd
+          typeOnly: false
+        - file: src/digest-validate.ts
+          imports:
+            - redactEntryText
+          typeOnly: false
+        - file: src/mcp-schemas.ts
+          imports:
+            - TopicsInput
+          typeOnly: true
+      exports:
+        - NO_TOPICS_MESSAGE
+        - topicsToolText
+    src/topic-validate.ts:
+      externalDependencies: []
+      nodeDependencies: []
+      internalDependencies:
+        - file: src/topic-format.ts
+          imports:
+            - isValidTime
+            - parseTopicDoc
+            - UNIT_ID_PATTERN
+            - TopicDoc
+          typeOnly: false
+      exports:
+        - SLUG_PATTERN
+        - TopicBlock
+        - TopicEditInput
+        - validateTopicEdit
     src/types.ts:
       externalDependencies: []
       nodeDependencies: []
@@ -3175,6 +3491,41 @@ modules:
         - file: src/digest-tool.ts
           imports:
             - normalizeHandoff
+          typeOnly: false
+        - file: test/test-utils.ts
+          imports:
+            - safeRmSync
+            - suppressConsole
+          typeOnly: false
+      exports: []
+    test/digest-prompt-budget.test.ts:
+      externalDependencies:
+        - better-sqlite3
+        - vitest
+      nodeDependencies:
+        - fs
+        - os
+        - path
+      internalDependencies:
+        - file: src/db.ts
+          imports:
+            - initDatabase
+          typeOnly: false
+        - file: src/digest-job.ts
+          imports:
+            - runDigest
+          typeOnly: false
+        - file: src/digest-prompts.ts
+          imports:
+            - buildSessionPrompt
+          typeOnly: false
+        - file: src/types.ts
+          imports:
+            - ConversationExchange
+          typeOnly: true
+        - file: src/reentrancy.ts
+          imports:
+            - SUMMARIZER_GUARD_ENV
           typeOnly: false
         - file: test/test-utils.ts
           imports:
@@ -5237,6 +5588,25 @@ modules:
             - '*'
           typeOnly: false
       exports: []
+    test/summarizer-prompt-budget.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies: []
+      internalDependencies:
+        - file: src/summarizer.ts
+          imports:
+            - promptBudgetChars
+            - '*'
+          typeOnly: false
+        - file: test/test-utils.ts
+          imports:
+            - suppressConsole
+          typeOnly: false
+        - file: src/ollama-backend.ts
+          imports:
+            - '*'
+          typeOnly: false
+      exports: []
     test/summarizer-text.test.ts:
       externalDependencies:
         - vitest
@@ -5528,6 +5898,206 @@ modules:
             - deleteExchange
           typeOnly: false
       exports: []
+    test/topic-db.test.ts:
+      externalDependencies:
+        - better-sqlite3
+        - vitest
+      nodeDependencies:
+        - fs
+        - os
+        - path
+      internalDependencies:
+        - file: src/topic-db.ts
+          imports:
+            - ensureTopicSchema
+            - installTopicEdit
+            - listTopicDocs
+            - readTopicDoc
+            - searchTopicUnits
+            - topicLinks
+            - topicTimeline
+            - getTopicSession
+            - setTopicSessionStatus
+            - recordTopicFailedCall
+            - getTopicMeta
+            - setTopicMeta
+          typeOnly: false
+        - file: test/test-utils.ts
+          imports:
+            - safeRmSync
+            - suppressConsole
+          typeOnly: false
+      exports: []
+    test/topic-format.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies: []
+      internalDependencies:
+        - file: src/topic-format.ts
+          imports:
+            - parseTopicDoc
+            - serializeTopicDoc
+            - assignUnitIds
+            - UNIT_ID_PATTERN
+            - isValidTime
+            - footnoteStatements
+            - rewriteMarks
+            - rewriteLinkSlugs
+          typeOnly: false
+      exports: []
+    test/topic-job.test.ts:
+      externalDependencies:
+        - better-sqlite3
+        - vitest
+      nodeDependencies:
+        - fs
+        - os
+        - path
+      internalDependencies:
+        - file: src/db.ts
+          imports:
+            - initDatabase
+          typeOnly: false
+        - file: src/topic-job.ts
+          imports:
+            - runTopics
+          typeOnly: false
+        - file: src/ollama-backend.ts
+          imports:
+            - GpuReservedError
+          typeOnly: false
+        - file: src/summarizer.ts
+          imports:
+            - promptBudgetChars
+          typeOnly: false
+        - file: src/reentrancy.ts
+          imports:
+            - SUMMARIZER_GUARD_ENV
+          typeOnly: false
+        - file: src/topic-db.ts
+          imports:
+            - ensureTopicSchema
+            - getTopicMeta
+            - getTopicSession
+            - installTopicEdit
+            - listTopicDocs
+            - readTopicDoc
+            - setTopicSessionStatus
+          typeOnly: false
+        - file: test/test-utils.ts
+          imports:
+            - safeRmSync
+            - suppressConsole
+          typeOnly: false
+      exports: []
+    test/topic-phase.test.ts:
+      externalDependencies:
+        - better-sqlite3
+        - vitest
+      nodeDependencies:
+        - fs
+        - os
+        - path
+      internalDependencies:
+        - file: src/db.ts
+          imports:
+            - initDatabase
+          typeOnly: false
+        - file: src/topic-phase.ts
+          imports:
+            - runTopicPhase
+          typeOnly: false
+        - file: src/reentrancy.ts
+          imports:
+            - SUMMARIZER_GUARD_ENV
+          typeOnly: false
+        - file: test/test-utils.ts
+          imports:
+            - safeRmSync
+            - suppressConsole
+          typeOnly: false
+      exports: []
+    test/topic-prompts.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - node:crypto
+      internalDependencies:
+        - file: src/digest-prompts.ts
+          imports:
+            - numberExchanges
+            - buildSessionPrompt
+          typeOnly: false
+        - file: src/types.ts
+          imports:
+            - ConversationExchange
+          typeOnly: true
+        - file: src/constants.ts
+          imports:
+            - SUMMARIZER_CONTEXT_MARKER
+          typeOnly: false
+        - file: src/topic-format.ts
+          imports:
+            - parseTopicDoc
+            - assignUnitIds
+            - UNIT_ID_PATTERN
+          typeOnly: false
+        - file: src/topic-prompts.ts
+          imports:
+            - buildTopicPrompt
+            - parseTopicAnswer
+            - prepareTopicEdit
+            - TopicPromptDoc
+          typeOnly: false
+      exports: []
+    test/topic-tool.test.ts:
+      externalDependencies:
+        - better-sqlite3
+        - vitest
+      nodeDependencies:
+        - fs
+        - os
+        - path
+        - url
+      internalDependencies:
+        - file: src/mcp-tools.ts
+          imports:
+            - handleToolCall
+          typeOnly: false
+        - file: src/mcp-schemas.ts
+          imports:
+            - TopicsInputSchema
+          typeOnly: false
+        - file: src/db.ts
+          imports:
+            - initDatabase
+          typeOnly: false
+        - file: src/topic-db.ts
+          imports:
+            - ensureTopicSchema
+            - installTopicEdit
+          typeOnly: false
+        - file: src/digest-inject.ts
+          imports:
+            - projectKeyFromCwd
+          typeOnly: false
+        - file: test/test-utils.ts
+          imports:
+            - safeRmSync
+            - suppressConsole
+          typeOnly: false
+      exports: []
+    test/topic-validate.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies: []
+      internalDependencies:
+        - file: src/topic-validate.ts
+          imports:
+            - validateTopicEdit
+            - TopicEditInput
+          typeOnly: false
+      exports: []
     test/verify.test.ts:
       externalDependencies:
         - vitest
@@ -5580,32 +6150,32 @@ modules:
       internalDependencies: []
       exports: []
 statistics:
-  totalTypeScriptFiles: 228
-  totalSourceFiles: 228
+  totalTypeScriptFiles: 246
+  totalSourceFiles: 246
   totalModules: 4
-  totalLinesOfCode: 45456
-  totalExports: 492
+  totalLinesOfCode: 50700
+  totalExports: 562
   entryRoots: 4
-  reachableFiles: 39
-  dormantFiles: 52
+  reachableFiles: 44
+  dormantFiles: 56
   orphanedFiles: 14
-  testOnlyFiles: 38
+  testOnlyFiles: 42
   runtimeCircularDeps: 0
   typeOnlyCircularDeps: 1
-  totalTypeOnlyImports: 72
+  totalTypeOnlyImports: 79
   noImporterFileCount: 13
-  unusedExportsCount: 100
+  unusedExportsCount: 114
   circularDepsTruncated: false
   runtimeCyclicComponents: 0
   typeOnlyCyclicComponents: 1
   runtimeFilesInCycles: 0
   typeOnlyFilesInCycles: 2
   totalClasses: 7
-  totalInterfaces: 121
-  totalFunctions: 276
-  totalTypeGuards: 6
+  totalInterfaces: 136
+  totalFunctions: 315
+  totalTypeGuards: 8
   totalEnums: 0
-  totalConstants: 53
+  totalConstants: 62
   totalReExports: 8
 reachability:
   roots:
@@ -5613,8 +6183,8 @@ reachability:
     - src/node-floor.ts
     - src/index-cli.ts
     - src/mcp-server.ts
-  reachableCount: 39
-  dormantCount: 52
+  reachableCount: 44
+  dormantCount: 56
   orphaned:
     - cli/digest-hook.js
     - cli/ensure-deps.js
@@ -5669,6 +6239,10 @@ reachability:
     - src/stats.ts
     - src/sync-banner.ts
     - src/sync.ts
+    - src/topic-job.ts
+    - src/topic-phase.ts
+    - src/topic-prompts.ts
+    - src/topic-validate.ts
 warnings:
   - package.json entry './cli/search-conversations' did not resolve to a known source file. The entry is ignored.
   - package.json entry './cli/mcp-server' did not resolve to a known source file. The entry is ignored.

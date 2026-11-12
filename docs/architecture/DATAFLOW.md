@@ -31,7 +31,8 @@ sync-cli
   │    db insert                         exchanges, tool_calls, vec_exchanges, FTS
   ├─ summarize queued files (bounded)    summarizer → <name>-summary.txt
   ├─ embedding-migration                 re-embed rows with an old embedding_version
-  └─ digest-phase                        digest step; never blocks, never throws
+  ├─ digest-phase                        digest step; never blocks, never throws
+  └─ topic-phase                         topic step; never throws; runs only when EPISODIC_MEMORY_TOPICS=1
 ```
 
 Key points:
@@ -73,7 +74,8 @@ agent ── JSON-RPC (stdio) ──► mcp-server
                                     ├─ search  → search.*
                                     ├─ read    → archive-path confinement → show.formatConversationAs*
                                     ├─ digest  → digest-tool
-                                    └─ skills  → learnEnabled()? → import skills-tool → knowledge store
+                                    ├─ skills  → learnEnabled()? → import skills-tool → knowledge store
+                                    └─ topics  → import topic-tool → topic-db (read-only index)
 ```
 
 The `read` tool resolves the path. The path must lie inside the archive and end in `.jsonl`. The tool caps the bytes it returns and renders the requested line range. A rejected path returns an error and reads nothing.
@@ -132,7 +134,7 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 228 | repo-tools map |
+| totalSourceFiles | 246 | repo-tools map |
 | runtimeCircularDeps | 0 | repo-tools map |
 
 The step orders above come from a direct reading of `src/sync.ts`, `src/search.ts`, `src/digest-job.ts`, `src/learn/learner.ts` and `cli/sync-hook.js`. They are not `repo-tools map` metrics.

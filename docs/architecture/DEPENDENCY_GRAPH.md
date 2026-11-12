@@ -31,7 +31,7 @@ This document provides a comprehensive dependency graph of all files, components
 The codebase is organized into the following modules:
 
 - **cli**: 7 files
-- **root**: 53 files
+- **root**: 62 files
 - **entry**: 1 file
 - **learn**: 30 files
 
@@ -228,8 +228,8 @@ The codebase is organized into the following modules:
 ### `src/constants.ts` - Marker text that identifies summarizer agent conversations.
 
 **Exports:**
-- Functions: `truncationNoticeFor`, `truncateForIndex`
-- Constants: `SUMMARIZER_CONTEXT_MARKER`, `MAX_INDEXED_MESSAGE_BYTES`
+- Functions: `truncationNoticeFor`, `truncateForIndex`, `topicsEnabled`, `envPositiveInt`
+- Constants: `SUMMARIZER_CONTEXT_MARKER`, `MAX_INDEXED_MESSAGE_BYTES`, `OLLAMA_MAX_PROMPT_CHARS_DEFAULT`, `CLAUDE_MAX_PROMPT_CHARS`, `TOPIC_DEFAULTS`
 
 ---
 
@@ -263,9 +263,9 @@ The codebase is organized into the following modules:
 
   ```text
   migrateSchema, migrateToolCallsCascade, ensureFts, upsertExchangeFts, deleteExchangeFts,
-  openDatabase, initDatabase, getSharedReaderDatabase, closeSharedReaderDatabase, insertExchange,
-  getAllExchanges, getFileLastIndexed, getMaxIndexedLine, getFreelistInfo, vacuumDatabase,
-  deleteExchange
+  openDatabase, openDatabaseReadonly, initDatabase, getSharedReaderDatabase,
+  closeSharedReaderDatabase, insertExchange, getAllExchanges, getFileLastIndexed, getMaxIndexedLine,
+  getFreelistInfo, vacuumDatabase, deleteExchange
   ```
 
 
@@ -314,6 +314,11 @@ The codebase is organized into the following modules:
 |---------|--------|
 | `better-sqlite3` | `default` |
 
+**Internal Dependencies:**
+| File | Imports | Type |
+|------|---------|------|
+| `./fts-query.js` | `toFtsQuery` | Import |
+
 **Exports:**
 - Interfaces: `DigestEntry`
 - Types: `DigestTier`
@@ -353,15 +358,16 @@ The codebase is organized into the following modules:
 | `./reentrancy.js` | `shouldSkipReentrantSync` | Import |
 | `./gpu-reservation.js` | `gpuReservationBlock` | Import |
 | `./ollama-backend.js` | `GpuReservedError, summarizerBackend` | Import |
-| `./summarizer.js` | `callDigestModel` | Import |
+| `./summarizer.js` | `callDigestModel, promptBudgetChars` | Import |
 | `./digest-prompts.js` | `buildSessionPrompt` | Import |
 | `./digest-validate.js` | `parseCitedLines, redactEntryText` | Import |
 | `./digest-db.js` | `insertDigestEntry` | Import |
 | `./digest-compress.js` | `compressDigest` | Import |
 
 **Exports:**
-- Interfaces: `DigestOptions`, `DigestResult`
-- Functions: `digestEnabled`, `runDigest`
+- Interfaces: `DigestOptions`, `DigestResult`, `ExchangeRow`
+- Functions: `digestEnabled`, `toExchange`, `sessionExchanges`, `isTrivial`, `runDigest`
+- Constants: `QUIET_MS`
 
 ---
 
@@ -395,7 +401,7 @@ The codebase is organized into the following modules:
 
 **Exports:**
 - Interfaces: `BuiltPrompt`
-- Functions: `buildSessionPrompt`, `buildCompressPrompt`
+- Functions: `numberExchanges`, `buildSessionPrompt`, `buildCompressPrompt`
 
 ---
 
@@ -547,6 +553,13 @@ The codebase is organized into the following modules:
 
 ---
 
+### `src/fts-query.ts` - Turn free text into an FTS5 query in which each word must match.
+
+**Exports:**
+- Functions: `toFtsQuery`
+
+---
+
 ### `src/gpu-reservation.ts` - The fleet GPU reservation.
 
 **Node.js Built-in Dependencies:**
@@ -676,10 +689,15 @@ The codebase is organized into the following modules:
 |---------|--------|
 | `zod` | `z` |
 
+**Internal Dependencies:**
+| File | Imports | Type |
+|------|---------|------|
+| `./topic-time.js` | `UNIT_ID_PATTERN, endOf, isValidTime, startOf` | Import |
+
 **Exports:**
-- Types: `SearchInput`, `ShowConversationInput`, `DigestInput`, `SkillsInput`
+- Types: `SearchInput`, `ShowConversationInput`, `DigestInput`, `SkillsInput`, `TopicsInput`
 - Functions: `handleMcpError`
-- Constants: `SearchModeEnum`, `ResponseFormatEnum`, `SearchInputSchema`, `ShowConversationInputSchema`, `DigestInputSchema`, `SkillsInputSchema`
+- Constants: `SearchModeEnum`, `ResponseFormatEnum`, `SearchInputSchema`, `ShowConversationInputSchema`, `DigestInputSchema`, `SkillsInputSchema`, `TopicsActionEnum`, `TopicsInputSchema`
 
 ---
 
@@ -696,7 +714,7 @@ The codebase is organized into the following modules:
 |------|---------|------|
 | `./db.js` | `closeSharedReaderDatabase` | Import |
 | `./mcp-tools.js` | `handleToolCall` | Import |
-| `./mcp-schemas.js` | `SearchInputSchema, DigestInputSchema, ShowConversationInputSchema, SkillsInputSchema` | Import |
+| `./mcp-schemas.js` | `SearchInputSchema, DigestInputSchema, ShowConversationInputSchema, SkillsInputSchema, TopicsInputSchema` | Import |
 
 ---
 
@@ -709,11 +727,12 @@ The codebase is organized into the following modules:
 | `./redact.js` | `maybeRedactSecrets` | Import |
 | `./learn/learn-config.js` | `LEARN_OFF_MESSAGE, learnEnabled` | Import |
 | `./mcp-auth.js` | `assertMcpAuthorized` | Import |
-| `./mcp-schemas.js` | `DigestInputSchema, SearchInputSchema, ShowConversationInputSchema, SkillsInputSchema, handleMcpError` | Import |
+| `./mcp-schemas.js` | `DigestInputSchema, SearchInputSchema, ShowConversationInputSchema, SkillsInputSchema, TopicsInputSchema, handleMcpError` | Import |
 | `./search.js` | `*` | Import |
 | `./show.js` | `*` | Import |
 | `./digest-tool.js` | `*` | Import |
 | `./learn/skills-tool.js` | `*` | Import |
+| `./topic-tool.js` | `*` | Import |
 
 **Exports:**
 - Interfaces: `McpToolResult`
@@ -736,11 +755,12 @@ The codebase is organized into the following modules:
 |------|---------|------|
 | `./api-endpoint.js` | `validateApiBaseUrl` | Import |
 | `./gpu-reservation.js` | `gpuReservationBlock` | Import |
+| `./constants.js` | `envPositiveInt, OLLAMA_MAX_PROMPT_CHARS_DEFAULT` | Import |
 
 **Exports:**
 - Classes: `GpuReservedError`
 - Interfaces: `OllamaCallOptions`
-- Functions: `summarizerBackend`, `stripThinking`, `callOllama`
+- Functions: `summarizerBackend`, `stripThinking`, `ollamaMaxPromptChars`, `callOllama`
 
 ---
 
@@ -947,11 +967,11 @@ The codebase is organized into the following modules:
 | File | Imports | Type |
 |------|---------|------|
 | `./types.js` | `ConversationExchange` | Import |
-| `./constants.js` | `SUMMARIZER_CONTEXT_MARKER` | Import |
+| `./constants.js` | `CLAUDE_MAX_PROMPT_CHARS, SUMMARIZER_CONTEXT_MARKER` | Import |
 | `./reentrancy.js` | `SUMMARIZER_GUARD_ENV, shouldSkipReentrantSync` | Import |
 | `./codex-support.js` | `codexVersionRequirementMessage, parseCodexCliVersion, versionMeetsMinimum` | Import |
 | `./api-endpoint.js` | `validateApiBaseUrl` | Import |
-| `./ollama-backend.js` | `summarizerBackend, callOllama, GpuReservedError, OllamaCallOptions` | Import |
+| `./ollama-backend.js` | `summarizerBackend, callOllama, GpuReservedError, ollamaMaxPromptChars, OllamaCallOptions` | Import |
 
 **Exports:**
 - Interfaces: `CodexSummarizerCommand`, `CallClaudeOptions`
@@ -959,8 +979,8 @@ The codebase is organized into the following modules:
 
   ```text
   getApiEnv, formatConversationText, extractSummary, buildSummarizerQueryOptions,
-  buildCodexSummaryPrompt, buildCodexSummarizerCommand, callDigestModel, resolveLearnModels,
-  callLearnModel, runCodexCommand, summarizeConversation
+  buildCodexSummaryPrompt, buildCodexSummarizerCommand, callDigestModel, promptBudgetChars,
+  resolveLearnModels, callLearnModel, runCodexCommand, summarizeConversation
   ```
 
 
@@ -996,6 +1016,7 @@ The codebase is organized into the following modules:
 | `./embeddings.js` | `*` | Import |
 | `./embedding-migration.js` | `*` | Import |
 | `./digest-phase.js` | `*` | Import |
+| `./topic-phase.js` | `*` | Import |
 
 ---
 
@@ -1023,6 +1044,166 @@ The codebase is organized into the following modules:
 **Exports:**
 - Interfaces: `SyncResult`, `SyncOptions`
 - Functions: `shouldSkipConversation`, `isTerminalFailRecord`, `extractSessionIdFromPath`, `syncConversations`, `summarizeOneFile`
+
+---
+
+### `src/topic-db.ts` - Install one edit and rebuild the derived tables of the project, in one transaction.
+
+**External Dependencies:**
+| Package | Import |
+|---------|--------|
+| `better-sqlite3` | `default` |
+
+**Internal Dependencies:**
+| File | Imports | Type |
+|------|---------|------|
+| `./fts-query.js` | `toFtsQuery` | Import |
+| `./topic-format.js` | `footnoteStatements, parseTopicDoc` | Import |
+| `./topic-time.js` | `endOf, isValidTime, startOf` | Import |
+
+**Exports:**
+- Interfaces: `TopicEdit`, `TopicSession`, `TopicUnitHit`, `TopicLinkedUnit`, `TopicEvent`, `TopicRange`
+- Types: `TopicSessionStatus`
+- Functions:
+
+  ```text
+  ensureTopicSchema, installTopicEdit, listTopicDocs, readTopicDoc, searchTopicUnits, topicLinks,
+  topicTimeline, getTopicSession, setTopicSessionStatus, recordTopicFailedCall, getTopicMeta,
+  setTopicMeta
+  ```
+
+
+---
+
+### `src/topic-format.ts` - One step of the outline: a heading as written, a fenced code block kept verbatim,
+
+**Node.js Built-in Dependencies:**
+| Module | Import |
+|--------|--------|
+| `crypto` | `createHash` |
+
+**Internal Dependencies:**
+| File | Imports | Type |
+|------|---------|------|
+| `./topic-time.js` | `UNIT_ID_PATTERN, isValidTime` | Import |
+
+**Exports:**
+- Interfaces: `TopicFootnote`, `TopicLink`, `TopicUnit`, `TopicDoc`
+- Types: `TopicOutlineItem`, `FenceState`
+- Functions: `parseTopicDoc`, `serializeTopicDoc`, `assignUnitIds`, `footnoteStatements`, `rewriteMarks`, `rewriteLinkSlugs`, `fenceStep`
+
+---
+
+### `src/topic-job.ts` - Return the `since` time. The first run stores it. EPISODIC_MEMORY_TOPICS_SINCE replaces `now` on that run,
+
+**External Dependencies:**
+| Package | Import |
+|---------|--------|
+| `better-sqlite3` | `default` |
+
+**Internal Dependencies:**
+| File | Imports | Type |
+|------|---------|------|
+| `./types.js` | `ConversationExchange` | Import (type-only) |
+| `./reentrancy.js` | `shouldSkipReentrantSync` | Import |
+| `./gpu-reservation.js` | `gpuReservationBlock` | Import |
+| `./ollama-backend.js` | `GpuReservedError, summarizerBackend` | Import |
+| `./summarizer.js` | `callDigestModel, promptBudgetChars` | Import |
+| `./digest-job.js` | `QUIET_MS, isTrivial, sessionExchanges` | Import |
+| `./constants.js` | `TOPIC_DEFAULTS, envPositiveInt, topicsEnabled` | Import |
+| `./topic-format.js` | `parseTopicDoc` | Import |
+| `./topic-prompts.js` | `buildTopicPrompt, parseTopicAnswer, prepareTopicEdit, TopicPromptDoc` | Import |
+| `./topic-validate.js` | `validateTopicEdit` | Import |
+| `./topic-db.js` | `ensureTopicSchema, getTopicMeta, installTopicEdit, recordTopicFailedCall, setTopicMeta, setTopicSessionStatus` | Import |
+
+**Exports:**
+- Interfaces: `TopicOptions`, `TopicResult`
+- Functions: `runTopics`
+
+---
+
+### `src/topic-phase.ts` - The topic step of a sync run.
+
+**External Dependencies:**
+| Package | Import |
+|---------|--------|
+| `better-sqlite3` | `default` |
+
+**Internal Dependencies:**
+| File | Imports | Type |
+|------|---------|------|
+| `./reentrancy.js` | `shouldSkipReentrantSync` | Import |
+| `./constants.js` | `topicsEnabled` | Import |
+| `./topic-job.js` | `TopicOptions, TopicResult` | Import (type-only) |
+| `./topic-job.js` | `*` | Import |
+| `./db.js` | `*` | Import |
+
+**Exports:**
+- Functions: `runTopicPhase`
+
+---
+
+### `src/topic-prompts.ts` - Build the prompt of one session edit: the rules, the inventory of every document, the full text of
+
+**Internal Dependencies:**
+| File | Imports | Type |
+|------|---------|------|
+| `./constants.js` | `SUMMARIZER_CONTEXT_MARKER` | Import |
+| `./types.js` | `ConversationExchange` | Import (type-only) |
+| `./topic-validate.js` | `TopicBlock` | Import (type-only) |
+| `./digest-prompts.js` | `numberExchanges` | Import |
+| `./digest-validate.js` | `redactEntryText` | Import |
+| `./topic-format.js` | `assignUnitIds, fenceStep, FenceState, parseTopicDoc, rewriteLinkSlugs, rewriteMarks, serializeTopicDoc` | Import |
+
+**Exports:**
+- Interfaces: `TopicPromptDoc`
+- Functions: `buildTopicPrompt`, `parseTopicAnswer`, `prepareTopicEdit`
+
+---
+
+### `src/topic-time.ts` - Time and unit id rules of the topic memory. The module imports nothing, so the MCP schema
+
+**Exports:**
+- Functions: `isValidTime`, `startOf`, `endOf`
+- Constants: `UNIT_ID_PATTERN`
+
+---
+
+### `src/topic-tool.ts` - The `topics` MCP tool: read the topic memory documents of a project.
+
+**Node.js Built-in Dependencies:**
+| Module | Import |
+|--------|--------|
+| `fs` | `default` |
+
+**Internal Dependencies:**
+| File | Imports | Type |
+|------|---------|------|
+| `./db.js` | `openDatabaseReadonly` | Import |
+| `./paths.js` | `getDbPath` | Import |
+| `./topic-db.js` | `listTopicDocs, readTopicDoc, searchTopicUnits, topicLinks, topicTimeline, TopicLinkedUnit` | Import |
+| `./digest-inject.js` | `projectKeyFromCwd` | Import |
+| `./digest-validate.js` | `redactEntryText` | Import |
+| `./mcp-schemas.js` | `TopicsInput` | Import (type-only) |
+
+**Exports:**
+- Functions: `topicsToolText`
+- Constants: `NO_TOPICS_MESSAGE`
+
+---
+
+### `src/topic-validate.ts` - Check one staged edit against the project state after the edit.
+
+**Internal Dependencies:**
+| File | Imports | Type |
+|------|---------|------|
+| `./topic-format.js` | `isValidTime, parseTopicDoc, UNIT_ID_PATTERN, TopicDoc` | Import |
+
+**Exports:**
+- Interfaces: `TopicEditInput`
+- Types: `TopicBlock`
+- Functions: `validateTopicEdit`
+- Constants: `SLUG_PATTERN`
 
 ---
 
@@ -1776,29 +1957,33 @@ The codebase is organized into the following modules:
 | File | Imports From | Exports To |
 |------|--------------|------------|
 | `src/learn/types` | 1 file | 22 files |
-| `src/paths` | 0 files | 21 files |
-| `src/db` | 6 files | 13 files |
+| `src/paths` | 0 files | 22 files |
+| `src/db` | 6 files | 15 files |
+| `src/summarizer` | 6 files | 13 files |
 | `src/learn/cli-main` | 17 files | 1 file |
-| `src/summarizer` | 6 files | 12 files |
 | `src/learn/bootstrap` | 14 files | 3 files |
 | `src/learn/learner` | 15 files | 1 file |
 | `src/learn/leaf-learner` | 14 files | 1 file |
 | `src/redact` | 0 files | 15 files |
 | `src/learn/solver` | 9 files | 5 files |
+| `src/mcp-tools` | 10 files | 2 files |
+| `src/sync-cli` | 12 files | 0 files |
+| `src/topic-job` | 11 files | 1 file |
+| `src/types` | 0 files | 12 files |
+| `src/digest-job` | 9 files | 2 files |
 | `src/learn/learning-db` | 2 files | 9 files |
-| `src/mcp-tools` | 9 files | 2 files |
-| `src/sync-cli` | 11 files | 0 files |
 | `src/sync` | 9 files | 2 files |
-| `src/digest-job` | 9 files | 1 file |
 | `src/learn/learn-config` | 0 files | 10 files |
 | `src/learn/skills-tool` | 8 files | 2 files |
-| `src/types` | 0 files | 10 files |
+| `src/constants` | 0 files | 9 files |
 | `src/doctor` | 8 files | 1 file |
 | `src/embeddings` | 2 files | 7 files |
 | `src/learn/knowledge-db` | 2 files | 7 files |
 | `src/learn/knowledge-store` | 3 files | 6 files |
 | `src/learn/validate` | 7 files | 2 files |
+| `src/ollama-backend` | 3 files | 6 files |
 | `src/search` | 5 files | 4 files |
+| `src/digest-db` | 1 file | 7 files |
 | `src/index` | 8 files | 0 files |
 | `src/indexer` | 6 files | 2 files |
 | `src/learn/agent-runner` | 3 files | 5 files |
@@ -1806,15 +1991,11 @@ The codebase is organized into the following modules:
 | `src/learn/learn-handlers` | 7 files | 1 file |
 | `src/learn/learned-block` | 4 files | 4 files |
 | `src/learn/tasks` | 6 files | 2 files |
-| `src/digest-db` | 0 files | 7 files |
+| `src/digest-prompts` | 4 files | 3 files |
+| `src/digest-validate` | 1 file | 6 files |
 | `src/learn-cli` | 7 files | 0 files |
-| `src/ollama-backend` | 2 files | 5 files |
-| `src/backfill` | 5 files | 1 file |
-| `src/digest-compress` | 5 files | 1 file |
-| `src/digest-prompts` | 4 files | 2 files |
-| `src/digest-tool` | 5 files | 1 file |
-| `src/learn/export` | 5 files | 1 file |
-| `src/learn/learn-inject` | 3 files | 3 files |
+| `src/reentrancy` | 0 files | 7 files |
+| `src/topic-prompts` | 6 files | 1 file |
 
 ---
 
@@ -1861,7 +2042,7 @@ graph TD
         N14[db]
         N15[deps-health]
         N16[digest-compress]
-        N17[...43 more]
+        N17[...52 more]
     end
 
     subgraph Entry
@@ -1913,17 +2094,17 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 228 |
+| Total Source Files | 246 |
 | Subsystems | 4 |
-| Total Lines of Code | 45456 |
-| Total Exports | 492 |
+| Total Lines of Code | 50700 |
+| Total Exports | 562 |
 | Total Re-exports | 8 |
 | Total Classes | 7 |
-| Total Interfaces | 121 |
-| Total Functions | 276 |
-| Total Type Guards | 6 |
+| Total Interfaces | 136 |
+| Total Functions | 315 |
+| Total Type Guards | 8 |
 | Total Enums | 0 |
-| Type-only Imports | 72 |
+| Type-only Imports | 79 |
 | Runtime Cyclic Components | 0 |
 | Type-only Cyclic Components | 1 |
 | Files in Runtime Cycles | 0 |

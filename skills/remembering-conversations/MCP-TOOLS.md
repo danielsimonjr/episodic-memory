@@ -1,6 +1,6 @@
 # Episodic Memory MCP Tools Reference
 
-The episodic-memory plugin exposes four MCP tools for searching and displaying past Claude Code and Codex conversations, and for loading the skills it has learned from them.
+The episodic-memory plugin exposes five MCP tools. They search past Claude Code and Codex conversations, load learned skills and read topic memory.
 
 ## search
 
@@ -212,6 +212,74 @@ Each line is `slug: description (confidence, vN)`. Pass a slug back as `get`.
 ### Response Format
 
 `get` returns YAML frontmatter (`name`, `description`, `scope`, `sources`, `confidence`, `version`) and then the body as markdown. Every field is screened for injected instructions and redacted for secrets before it is returned, so a skill whose text fails the screen is withheld rather than printed.
+
+## topics
+
+Read the topic memory documents of a project. The actions list the documents, read one document, search its paragraphs, show the links of one paragraph, or show a timeline of dated events.
+
+**Tool name:** `mcp__plugin_episodic-memory_episodic-memory__topics`
+
+Topic memory is optional. The sync step writes the documents when `EPISODIC_MEMORY_TOPICS=1`. The tool returns what the sync step wrote. The tool does not check that variable.
+
+**Read-only.** The tool opens the index read-only for the one call. It never creates the index file or a table. When the index file or the topic tables do not exist, the tool answers `Topic memory has no documents yet.`
+
+The MCP server does not read the `EPISODIC_MEMORY_TOPICS_*` variables. The plugin manifest does not pass them. Set them in the shell that runs `sync`.
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `action` | `string` | Yes | One of `list`, `read`, `search`, `links`, `timeline` |
+| `project` | `string` | No | Project key (default: the key for the current working directory) |
+| `slug` | `string` | For `read` | Name of one document |
+| `query` | `string` | For `search` | Words to find in the paragraphs. Every word must match |
+| `unit` | `string` | For `links` | Paragraph id: 8 lowercase hex characters |
+| `from` | `string` | No | Earliest time: `YYYY`, `YYYY-MM` or `YYYY-MM-DD` (inclusive). Used by `search` and `timeline` |
+| `to` | `string` | No | Latest time, in the same forms (inclusive). Used by `search` and `timeline`. Must not be before `from` |
+| `limit` | `number` | No | Maximum search hits (default 10) or timeline events (default 50), 1-50 |
+| `auth_token` | `string` | Only with `EPISODIC_MEMORY_MCP_TOKEN` | The token the server was started with |
+
+### Required arguments per action
+
+| Action | Required | Optional |
+|--------|----------|----------|
+| `list` | none | `project` |
+| `read` | `slug` | `project` |
+| `search` | `query` | `project`, `from`, `to`, `limit` |
+| `links` | `unit` | `project` |
+| `timeline` | none | `project`, `from`, `to`, `limit` |
+
+A missing required argument is a schema error. An argument that the action does not use is accepted and ignored. An unknown field is refused.
+
+### Usage
+
+**List the documents:** `{ "action": "list" }`
+
+**Read one document:** `{ "action": "read", "slug": "work-history" }`
+
+**Search the paragraphs:** `{ "action": "search", "query": "office move", "from": "2026-01", "limit": 5 }`
+
+**Show the links of one paragraph:** `{ "action": "links", "unit": "4a8b10cd" }`
+
+**Show a timeline:** `{ "action": "timeline", "from": "2026", "to": "2026-06" }`
+
+Each event and each search hit names its source exchange ids. Pass an id to the `digest` tool with `expand` to get the archive path and line range, then pass that to `read`.
+
+### Response Format
+
+Every response is plain text.
+
+| Action | Output |
+|--------|--------|
+| `list` | One line for each document: `- <slug>: <title> (<n> units)`. With no document: `No topic documents for <project>.` |
+| `read` | The text of the document, as stored. With an unknown slug: `No topic document "<slug>" in <project>.` |
+| `search` | One line for each hit: `- <slug> \| <heading> \| unit <unit id> \| <text> \| times: <times>`. `times` lists the event times in the range, or `none`. With no hit: `No topic units match "<query>".` |
+| `links` | The heading `Outgoing links of <unit>:`, then one line for each linked paragraph, or `- none`. Then the heading `Backlinks of <unit>:`, with the same lines. With an unknown unit: `No topic unit "<unit>" in <project>.` |
+| `timeline` | One line for each event, in time order: `- <time> \| <statement> \| unit <unit id> \| sources: #<id>, #<id>`, or `sources: none` when the event has no source. With no event: `No timeline events for <project>.` |
+
+A timeline returns at most `limit` events. When more events match, the last line says how many are left, and asks the caller to narrow `from` and `to` or raise `limit`.
+
+Every line of output passes the secret redaction again before it is returned.
 
 ## Error Handling
 

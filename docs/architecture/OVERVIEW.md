@@ -2,7 +2,7 @@
 
 ## What this repository is
 
-`episodic-memory` gives a coding agent memory across sessions. The plugin reads the transcripts of past Claude Code and Codex sessions, stores them in a local SQLite database, and lets the agent search them. The agent can also read a full past conversation and a short digest of recent sessions. The agent can list skills that the plugin learned from earlier work.
+`episodic-memory` gives a coding agent memory across sessions. The plugin reads the transcripts of past Claude Code and Codex sessions, stores them in a local SQLite database, and lets the agent search them. The agent can also read a full past conversation and a short digest of recent sessions. The agent can list skills that the plugin learned from earlier work. When topic memory is on, the agent can also read the topic documents that the plugin keeps for each project.
 
 The package runs on Node.js. Bun is the package manager and the script driver only.
 
@@ -15,10 +15,11 @@ The package runs on Node.js. Bun is the package manager and the script driver on
 | Read a full archived conversation | `read` MCP tool, `show` command | No |
 | Read a cited digest of recent sessions | `digest` MCP tool, `SessionStart` hook | Digest writing only |
 | List or load learned skills | `skills` MCP tool, `learn` command | Learning runs only |
+| Read topic memory documents of a project | `topics` MCP tool | Topic writing only (`EPISODIC_MEMORY_TOPICS=1`) |
 | Check the install and the data | `doctor` command, `stats` command | No |
 | Summarize old conversations that `sync` cannot reach | `backfill` command | Summaries |
 
-Two features are off by default. They are the digest (`EPISODIC_MEMORY_DIGEST`) and the learned-knowledge feature (`EPISODIC_MEMORY_LEARN`).
+Three features are off by default. They are the digest (`EPISODIC_MEMORY_DIGEST`), the topic memory (`EPISODIC_MEMORY_TOPICS`) and the learned-knowledge feature (`EPISODIC_MEMORY_LEARN`).
 
 ## How the repository is laid out
 
@@ -76,12 +77,12 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 228 | repo-tools map |
-| totalLinesOfCode | 45456 | repo-tools map |
-| totalExports | 492 | repo-tools map |
+| totalSourceFiles | 246 | repo-tools map |
+| totalLinesOfCode | 50700 | repo-tools map |
+| totalExports | 562 | repo-tools map |
 | totalModules | 4 | repo-tools map |
 | entryRoots | 4 | repo-tools map |
 | orphanedFiles | 14 | repo-tools map |
-| dormantFiles | 52 | repo-tools map |
+| dormantFiles | 56 | repo-tools map |
 | runtimeCircularDeps | 0 | repo-tools map |
 | typeOnlyCircularDeps | 1 | repo-tools map |

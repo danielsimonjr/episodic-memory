@@ -7,9 +7,9 @@
     "`unreferencedAnywhereNotes`'s dynamic-import check (`_dynamic_import_referrers`) only sees `import(...)` calls with a LITERAL string specifier. A dynamic import built from a variable or template literal (e.g. `import(`./cmds/${name}.js`)`, a command-dispatcher pattern) is invisible to it -- 'found none' in a note means no LITERAL match was found, NOT that nothing imports the file."
   ],
   "summary": {
-    "unusedExportCount": 100,
+    "unusedExportCount": 114,
     "unreferencedAnywhereCount": 4,
-    "referencedInModuleCount": 96,
+    "referencedInModuleCount": 110,
     "unclassifiedExportCount": 0,
     "noImporterFileCount": 13
   },
@@ -49,6 +49,10 @@
     ],
     "src/digest-inject.ts": [
       "DEFAULT_DIGEST_MAX_CHARS"
+    ],
+    "src/digest-job.ts": [
+      "ExchangeRow",
+      "toExchange"
     ],
     "src/digest-prompts.ts": [
       "BuiltPrompt"
@@ -188,7 +192,8 @@
     ],
     "src/mcp-schemas.ts": [
       "ResponseFormatEnum",
-      "SearchModeEnum"
+      "SearchModeEnum",
+      "TopicsActionEnum"
     ],
     "src/prune.ts": [
       "PruneOptions",
@@ -199,6 +204,23 @@
     ],
     "src/sync-banner.ts": [
       "SyncHeadlineTotals"
+    ],
+    "src/topic-db.ts": [
+      "TopicEdit",
+      "TopicEvent",
+      "TopicRange",
+      "TopicSession",
+      "TopicSessionStatus",
+      "TopicUnitHit"
+    ],
+    "src/topic-format.ts": [
+      "TopicFootnote",
+      "TopicLink",
+      "TopicOutlineItem",
+      "TopicUnit"
+    ],
+    "src/topic-validate.ts": [
+      "SLUG_PATTERN"
     ]
   },
   "unclassifiedExports": {},

@@ -55,6 +55,21 @@ List learned skills, search them, or load one. It reads the knowledge store only
 | `limit` | integer 1 to 50 | Default 10. |
 | `auth_token` | string | As above. |
 
+### `topics`
+
+Read the topic memory documents of a project. The tool has five actions. It never writes. It opens the index read-only, and it answers that topic memory has no documents yet when the index or a topic table is missing. It does not read `EPISODIC_MEMORY_TOPICS`.
+
+| Field | Type | Rule |
+|---|---|---|
+| `action` | string | Required. One of `list`, `read`, `search`, `links`, `timeline`. |
+| `project` | string | Project key. Default: the key for the working directory. |
+| `slug` | string | Required for `read`. |
+| `query` | string | Required for `search`. Every word must match. |
+| `unit` | string | Required for `links`. 8 lowercase hex characters. |
+| `from`, `to` | string | Optional `YYYY`, `YYYY-MM` or `YYYY-MM-DD`. Used by `search` and `timeline`. `to` must not be before `from`. |
+| `limit` | integer 1 to 50 | Search hits (default 10) or timeline events (default 50). |
+| `auth_token` | string | As above. |
+
 ## Command line
 
 `package.json` declares four `bin` entries.
@@ -122,6 +137,7 @@ A `src` export that the barrel does not re-export is internal to the package, ev
 | `EPISODIC_MEMORY_SUMMARIZER_GUARD` | Set by the plugin on child agent processes. Do not set it by hand. |
 | `EPISODIC_MEMORY_BACKGROUND_WORKER` | Marks the detached background worker. |
 | `EPISODIC_MEMORY_DIGEST` | Turns on the digest. `_DIGEST_MAX_SESSIONS`, `_DIGEST_MAX_CHARS`, `_DIGEST_DAY_CAP` and `_DIGEST_WEEK_CAP` tune it. |
+| `EPISODIC_MEMORY_TOPICS` | Set to `1` to write the topic documents during sync. `_TOPICS_MAX_SESSIONS`, `_TOPICS_MAX_TRANSCRIPT_CHARS`, `_TOPICS_MAX_DOCS_CHARS`, `_TOPICS_MAX_DOC_CHARS`, `_TOPICS_MAX_DOCS` and `_TOPICS_SINCE` tune it. The MCP server does not read them. |
 | `EPISODIC_MEMORY_LEARN` | Turns on the learned-knowledge feature. `_LEARN_MODEL`, `_LEARN_MAX_CALLS`, `_LEARN_MAX_MINUTES` and `_LEARN_MIN_SAVING` tune it. |
 
 ## Verification
@@ -131,7 +147,7 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalExports | 492 | repo-tools map |
-| totalSourceFiles | 228 | repo-tools map |
+| totalExports | 562 | repo-tools map |
+| totalSourceFiles | 246 | repo-tools map |
 
 `totalExports` counts every export in the repository, including test and tool files. The library barrel lists only the exports that `src/index.ts` re-exports. The tool schemas come from `src/mcp-schemas.ts`. The command names come from `cli/episodic-memory.js`. The variable names come from a search for `EPISODIC_MEMORY_` in `src/` and `cli/`. None of these facts is a `repo-tools map` metric.

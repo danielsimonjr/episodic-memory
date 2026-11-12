@@ -160,7 +160,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 76
+      "loc": 77
     },
     {
       "file": "src/digest-compress.ts",

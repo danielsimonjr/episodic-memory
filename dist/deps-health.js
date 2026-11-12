@@ -20,7 +20,8 @@ export const NATIVE_ADDON = 'better-sqlite3/build/Release/better_sqlite3.node';
  *
  * A wrong path here shows up far from its cause. The MCP server would run `npm rebuild
  * better-sqlite3` on every start and print "Building the better-sqlite3 native binding..." to
- * stderr. That line breaks `test/mcp-protocol.test.ts`, which asserts on the first stderr line.
+ * stderr. `test/mcp-protocol.test.ts` checks only that stderr contains the ready line. The test does
+ * not catch the extra rebuild.
  *
  * A check keyed to the INTERNAL FILE LAYOUT of a vendor fails silently when the vendor rearranges
  * it, and it fails CLOSED - indistinguishable from a genuinely broken install. This module is deliberately fs/path-only so it

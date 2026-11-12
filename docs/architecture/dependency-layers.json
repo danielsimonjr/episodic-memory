@@ -486,15 +486,25 @@
           "SUMMARIZER_CONTEXT_MARKER",
           "MAX_INDEXED_MESSAGE_BYTES",
           "truncationNoticeFor",
-          "truncateForIndex"
+          "truncateForIndex",
+          "OLLAMA_MAX_PROMPT_CHARS_DEFAULT",
+          "CLAUDE_MAX_PROMPT_CHARS",
+          "TOPIC_DEFAULTS",
+          "topicsEnabled",
+          "envPositiveInt"
         ],
         "functions": [
           "truncationNoticeFor",
-          "truncateForIndex"
+          "truncateForIndex",
+          "topicsEnabled",
+          "envPositiveInt"
         ],
         "constants": [
           "SUMMARIZER_CONTEXT_MARKER",
-          "MAX_INDEXED_MESSAGE_BYTES"
+          "MAX_INDEXED_MESSAGE_BYTES",
+          "OLLAMA_MAX_PROMPT_CHARS_DEFAULT",
+          "CLAUDE_MAX_PROMPT_CHARS",
+          "TOPIC_DEFAULTS"
         ]
       },
       "src/db.ts": {
@@ -574,6 +584,7 @@
           "upsertExchangeFts",
           "deleteExchangeFts",
           "openDatabase",
+          "openDatabaseReadonly",
           "initDatabase",
           "getSharedReaderDatabase",
           "closeSharedReaderDatabase",
@@ -595,6 +606,7 @@
           "upsertExchangeFts",
           "deleteExchangeFts",
           "openDatabase",
+          "openDatabaseReadonly",
           "initDatabase",
           "getSharedReaderDatabase",
           "closeSharedReaderDatabase",
@@ -716,7 +728,14 @@
           }
         ],
         "nodeDependencies": [],
-        "internalDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./fts-query.js",
+            "imports": [
+              "toFtsQuery"
+            ]
+          }
+        ],
         "workspaceDependencies": [],
         "exports": [
           "ensureDigestSchema",
@@ -820,7 +839,8 @@
           {
             "file": "./summarizer.js",
             "imports": [
-              "callDigestModel"
+              "callDigestModel",
+              "promptBudgetChars"
             ]
           },
           {
@@ -851,16 +871,27 @@
         ],
         "workspaceDependencies": [],
         "exports": [
+          "QUIET_MS",
           "digestEnabled",
+          "toExchange",
+          "sessionExchanges",
+          "isTrivial",
           "runDigest"
         ],
         "interfaces": [
           "DigestOptions",
-          "DigestResult"
+          "DigestResult",
+          "ExchangeRow"
         ],
         "functions": [
           "digestEnabled",
+          "toExchange",
+          "sessionExchanges",
+          "isTrivial",
           "runDigest"
+        ],
+        "constants": [
+          "QUIET_MS"
         ]
       },
       "src/digest-phase.ts": {
@@ -933,6 +964,7 @@
         ],
         "workspaceDependencies": [],
         "exports": [
+          "numberExchanges",
           "buildSessionPrompt",
           "buildCompressPrompt"
         ],
@@ -940,6 +972,7 @@
           "BuiltPrompt"
         ],
         "functions": [
+          "numberExchanges",
           "buildSessionPrompt",
           "buildCompressPrompt"
         ]
@@ -1365,6 +1398,19 @@
           "BGE_QUERY_PREFIX"
         ]
       },
+      "src/fts-query.ts": {
+        "description": "Turn free text into an FTS5 query in which each word must match.",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "toFtsQuery"
+        ],
+        "functions": [
+          "toFtsQuery"
+        ]
+      },
       "src/gpu-reservation.ts": {
         "description": "The fleet GPU reservation.",
         "externalDependencies": [],
@@ -1714,7 +1760,17 @@
           }
         ],
         "nodeDependencies": [],
-        "internalDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./topic-time.js",
+            "imports": [
+              "UNIT_ID_PATTERN",
+              "endOf",
+              "isValidTime",
+              "startOf"
+            ]
+          }
+        ],
         "workspaceDependencies": [],
         "exports": [
           "SearchModeEnum",
@@ -1723,6 +1779,8 @@
           "ShowConversationInputSchema",
           "DigestInputSchema",
           "SkillsInputSchema",
+          "TopicsActionEnum",
+          "TopicsInputSchema",
           "handleMcpError"
         ],
         "functions": [
@@ -1734,7 +1792,9 @@
           "SearchInputSchema",
           "ShowConversationInputSchema",
           "DigestInputSchema",
-          "SkillsInputSchema"
+          "SkillsInputSchema",
+          "TopicsActionEnum",
+          "TopicsInputSchema"
         ]
       },
       "src/mcp-server.ts": {
@@ -1773,7 +1833,8 @@
               "SearchInputSchema",
               "DigestInputSchema",
               "ShowConversationInputSchema",
-              "SkillsInputSchema"
+              "SkillsInputSchema",
+              "TopicsInputSchema"
             ]
           }
         ],
@@ -1818,6 +1879,7 @@
               "SearchInputSchema",
               "ShowConversationInputSchema",
               "SkillsInputSchema",
+              "TopicsInputSchema",
               "handleMcpError"
             ]
           },
@@ -1841,6 +1903,12 @@
           },
           {
             "file": "./learn/skills-tool.js",
+            "imports": [
+              "*"
+            ]
+          },
+          {
+            "file": "./topic-tool.js",
             "imports": [
               "*"
             ]
@@ -1890,6 +1958,13 @@
             "imports": [
               "gpuReservationBlock"
             ]
+          },
+          {
+            "file": "./constants.js",
+            "imports": [
+              "envPositiveInt",
+              "OLLAMA_MAX_PROMPT_CHARS_DEFAULT"
+            ]
           }
         ],
         "workspaceDependencies": [],
@@ -1897,6 +1972,7 @@
           "GpuReservedError",
           "summarizerBackend",
           "stripThinking",
+          "ollamaMaxPromptChars",
           "callOllama"
         ],
         "classes": [
@@ -1908,6 +1984,7 @@
         "functions": [
           "summarizerBackend",
           "stripThinking",
+          "ollamaMaxPromptChars",
           "callOllama"
         ]
       },
@@ -2345,6 +2422,7 @@
           {
             "file": "./constants.js",
             "imports": [
+              "CLAUDE_MAX_PROMPT_CHARS",
               "SUMMARIZER_CONTEXT_MARKER"
             ]
           },
@@ -2375,6 +2453,7 @@
               "summarizerBackend",
               "callOllama",
               "GpuReservedError",
+              "ollamaMaxPromptChars",
               "OllamaCallOptions"
             ]
           }
@@ -2389,6 +2468,7 @@
           "buildCodexSummaryPrompt",
           "buildCodexSummarizerCommand",
           "callDigestModel",
+          "promptBudgetChars",
           "resolveLearnModels",
           "callLearnModel",
           "runCodexCommand",
@@ -2406,6 +2486,7 @@
           "buildCodexSummaryPrompt",
           "buildCodexSummarizerCommand",
           "callDigestModel",
+          "promptBudgetChars",
           "resolveLearnModels",
           "callLearnModel",
           "runCodexCommand",
@@ -2518,6 +2599,12 @@
             "imports": [
               "*"
             ]
+          },
+          {
+            "file": "./topic-phase.js",
+            "imports": [
+              "*"
+            ]
           }
         ],
         "workspaceDependencies": [],
@@ -2617,6 +2704,468 @@
           "extractSessionIdFromPath",
           "syncConversations",
           "summarizeOneFile"
+        ]
+      },
+      "src/topic-db.ts": {
+        "description": "Install one edit and rebuild the derived tables of the project, in one transaction.",
+        "externalDependencies": [
+          {
+            "package": "better-sqlite3",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./fts-query.js",
+            "imports": [
+              "toFtsQuery"
+            ]
+          },
+          {
+            "file": "./topic-format.js",
+            "imports": [
+              "footnoteStatements",
+              "parseTopicDoc"
+            ]
+          },
+          {
+            "file": "./topic-time.js",
+            "imports": [
+              "endOf",
+              "isValidTime",
+              "startOf"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "ensureTopicSchema",
+          "installTopicEdit",
+          "listTopicDocs",
+          "readTopicDoc",
+          "searchTopicUnits",
+          "topicLinks",
+          "topicTimeline",
+          "getTopicSession",
+          "setTopicSessionStatus",
+          "recordTopicFailedCall",
+          "getTopicMeta",
+          "setTopicMeta"
+        ],
+        "interfaces": [
+          "TopicEdit",
+          "TopicSession",
+          "TopicUnitHit",
+          "TopicLinkedUnit",
+          "TopicEvent",
+          "TopicRange"
+        ],
+        "functions": [
+          "ensureTopicSchema",
+          "installTopicEdit",
+          "listTopicDocs",
+          "readTopicDoc",
+          "searchTopicUnits",
+          "topicLinks",
+          "topicTimeline",
+          "getTopicSession",
+          "setTopicSessionStatus",
+          "recordTopicFailedCall",
+          "getTopicMeta",
+          "setTopicMeta"
+        ]
+      },
+      "src/topic-format.ts": {
+        "description": "One step of the outline: a heading as written, a fenced code block kept verbatim,",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "crypto",
+            "imports": [
+              "createHash"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "./topic-time.js",
+            "imports": [
+              "UNIT_ID_PATTERN",
+              "isValidTime"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "UNIT_ID_PATTERN",
+          "isValidTime",
+          "parseTopicDoc",
+          "serializeTopicDoc",
+          "assignUnitIds",
+          "footnoteStatements",
+          "rewriteMarks",
+          "rewriteLinkSlugs",
+          "fenceStep"
+        ],
+        "interfaces": [
+          "TopicFootnote",
+          "TopicLink",
+          "TopicUnit",
+          "TopicDoc"
+        ],
+        "functions": [
+          "parseTopicDoc",
+          "serializeTopicDoc",
+          "assignUnitIds",
+          "footnoteStatements",
+          "rewriteMarks",
+          "rewriteLinkSlugs",
+          "fenceStep"
+        ]
+      },
+      "src/topic-job.ts": {
+        "description": "Return the `since` time. The first run stores it. EPISODIC_MEMORY_TOPICS_SINCE replaces `now` on that run,",
+        "externalDependencies": [
+          {
+            "package": "better-sqlite3",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./types.js",
+            "imports": [
+              "ConversationExchange"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "./reentrancy.js",
+            "imports": [
+              "shouldSkipReentrantSync"
+            ]
+          },
+          {
+            "file": "./gpu-reservation.js",
+            "imports": [
+              "gpuReservationBlock"
+            ]
+          },
+          {
+            "file": "./ollama-backend.js",
+            "imports": [
+              "GpuReservedError",
+              "summarizerBackend"
+            ]
+          },
+          {
+            "file": "./summarizer.js",
+            "imports": [
+              "callDigestModel",
+              "promptBudgetChars"
+            ]
+          },
+          {
+            "file": "./digest-job.js",
+            "imports": [
+              "QUIET_MS",
+              "isTrivial",
+              "sessionExchanges"
+            ]
+          },
+          {
+            "file": "./constants.js",
+            "imports": [
+              "TOPIC_DEFAULTS",
+              "envPositiveInt",
+              "topicsEnabled"
+            ]
+          },
+          {
+            "file": "./topic-format.js",
+            "imports": [
+              "parseTopicDoc"
+            ]
+          },
+          {
+            "file": "./topic-prompts.js",
+            "imports": [
+              "buildTopicPrompt",
+              "parseTopicAnswer",
+              "prepareTopicEdit",
+              "TopicPromptDoc"
+            ]
+          },
+          {
+            "file": "./topic-validate.js",
+            "imports": [
+              "validateTopicEdit"
+            ]
+          },
+          {
+            "file": "./topic-db.js",
+            "imports": [
+              "ensureTopicSchema",
+              "getTopicMeta",
+              "installTopicEdit",
+              "recordTopicFailedCall",
+              "setTopicMeta",
+              "setTopicSessionStatus"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "runTopics"
+        ],
+        "interfaces": [
+          "TopicOptions",
+          "TopicResult"
+        ],
+        "functions": [
+          "runTopics"
+        ]
+      },
+      "src/topic-phase.ts": {
+        "description": "The topic step of a sync run.",
+        "externalDependencies": [
+          {
+            "package": "better-sqlite3",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./reentrancy.js",
+            "imports": [
+              "shouldSkipReentrantSync"
+            ]
+          },
+          {
+            "file": "./constants.js",
+            "imports": [
+              "topicsEnabled"
+            ]
+          },
+          {
+            "file": "./topic-job.js",
+            "imports": [
+              "TopicOptions",
+              "TopicResult"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "./topic-job.js",
+            "imports": [
+              "*"
+            ]
+          },
+          {
+            "file": "./db.js",
+            "imports": [
+              "*"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "runTopicPhase"
+        ],
+        "functions": [
+          "runTopicPhase"
+        ]
+      },
+      "src/topic-prompts.ts": {
+        "description": "Build the prompt of one session edit: the rules, the inventory of every document, the full text of",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./constants.js",
+            "imports": [
+              "SUMMARIZER_CONTEXT_MARKER"
+            ]
+          },
+          {
+            "file": "./types.js",
+            "imports": [
+              "ConversationExchange"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "./topic-validate.js",
+            "imports": [
+              "TopicBlock"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "./digest-prompts.js",
+            "imports": [
+              "numberExchanges"
+            ]
+          },
+          {
+            "file": "./digest-validate.js",
+            "imports": [
+              "redactEntryText"
+            ]
+          },
+          {
+            "file": "./topic-format.js",
+            "imports": [
+              "assignUnitIds",
+              "fenceStep",
+              "FenceState",
+              "parseTopicDoc",
+              "rewriteLinkSlugs",
+              "rewriteMarks",
+              "serializeTopicDoc"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "buildTopicPrompt",
+          "parseTopicAnswer",
+          "prepareTopicEdit"
+        ],
+        "interfaces": [
+          "TopicPromptDoc"
+        ],
+        "functions": [
+          "buildTopicPrompt",
+          "parseTopicAnswer",
+          "prepareTopicEdit"
+        ]
+      },
+      "src/topic-time.ts": {
+        "description": "Time and unit id rules of the topic memory. The module imports nothing, so the MCP schema",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "UNIT_ID_PATTERN",
+          "isValidTime",
+          "startOf",
+          "endOf"
+        ],
+        "functions": [
+          "isValidTime",
+          "startOf",
+          "endOf"
+        ],
+        "constants": [
+          "UNIT_ID_PATTERN"
+        ]
+      },
+      "src/topic-tool.ts": {
+        "description": "The `topics` MCP tool: read the topic memory documents of a project.",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "./db.js",
+            "imports": [
+              "openDatabaseReadonly"
+            ]
+          },
+          {
+            "file": "./paths.js",
+            "imports": [
+              "getDbPath"
+            ]
+          },
+          {
+            "file": "./topic-db.js",
+            "imports": [
+              "listTopicDocs",
+              "readTopicDoc",
+              "searchTopicUnits",
+              "topicLinks",
+              "topicTimeline",
+              "TopicLinkedUnit"
+            ]
+          },
+          {
+            "file": "./digest-inject.js",
+            "imports": [
+              "projectKeyFromCwd"
+            ]
+          },
+          {
+            "file": "./digest-validate.js",
+            "imports": [
+              "redactEntryText"
+            ]
+          },
+          {
+            "file": "./mcp-schemas.js",
+            "imports": [
+              "TopicsInput"
+            ],
+            "typeOnly": true
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "NO_TOPICS_MESSAGE",
+          "topicsToolText"
+        ],
+        "functions": [
+          "topicsToolText"
+        ],
+        "constants": [
+          "NO_TOPICS_MESSAGE"
+        ]
+      },
+      "src/topic-validate.ts": {
+        "description": "Check one staged edit against the project state after the edit.",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./topic-format.js",
+            "imports": [
+              "isValidTime",
+              "parseTopicDoc",
+              "UNIT_ID_PATTERN",
+              "TopicDoc"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "SLUG_PATTERN",
+          "validateTopicEdit"
+        ],
+        "interfaces": [
+          "TopicEditInput"
+        ],
+        "functions": [
+          "validateTopicEdit"
+        ],
+        "constants": [
+          "SLUG_PATTERN"
         ]
       },
       "src/types.ts": {
@@ -4965,6 +5514,7 @@
         "src/doctor.ts",
         "src/embedding-migration.ts",
         "src/embeddings.ts",
+        "src/fts-query.ts",
         "src/gpu-reservation.ts",
         "src/index-cli.ts",
         "src/indexer.ts",
@@ -4994,6 +5544,14 @@
         "src/sync-banner.ts",
         "src/sync-cli.ts",
         "src/sync.ts",
+        "src/topic-db.ts",
+        "src/topic-format.ts",
+        "src/topic-job.ts",
+        "src/topic-phase.ts",
+        "src/topic-prompts.ts",
+        "src/topic-time.ts",
+        "src/topic-tool.ts",
+        "src/topic-validate.ts",
         "src/types.ts",
         "src/verify.ts"
       ]

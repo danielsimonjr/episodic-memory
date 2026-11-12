@@ -1,25 +1,25 @@
 {
-  "totalFiles": 228,
+  "totalFiles": 246,
   "byDisposition": {
-    "reachable": 35,
+    "reachable": 40,
     "build-entry": 4,
-    "test-only": 38,
+    "test-only": 42,
     "orphan": 14,
-    "test": 132,
+    "test": 141,
     "tool": 4,
     "config": 1,
     "bench": 0,
     "example": 0
   },
   "byArea": {
-    "src": 91,
+    "src": 100,
     "tools": 4,
-    "tests": 132,
+    "tests": 141,
     "config": 1
   },
   "byPackage": {
-    "(root)": 144,
-    "episodic-memory": 84
+    "(root)": 153,
+    "episodic-memory": 93
   },
   "files": [
     {
@@ -146,14 +146,14 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 51
+      "loc": 93
     },
     {
       "file": "src/db.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 533
+      "loc": 546
     },
     {
       "file": "src/deps-health.ts",
@@ -174,7 +174,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 262
+      "loc": 257
     },
     {
       "file": "src/digest-inject.ts",
@@ -188,7 +188,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 189
+      "loc": 206
     },
     {
       "file": "src/digest-phase.ts",
@@ -202,7 +202,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 93
+      "loc": 115
     },
     {
       "file": "src/digest-tool.ts",
@@ -252,6 +252,13 @@
       "area": "src",
       "disposition": "reachable",
       "loc": 168
+    },
+    {
+      "file": "src/fts-query.ts",
+      "package": "episodic-memory",
+      "area": "src",
+      "disposition": "reachable",
+      "loc": 14
     },
     {
       "file": "src/gpu-reservation.ts",
@@ -524,21 +531,21 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 207
+      "loc": 274
     },
     {
       "file": "src/mcp-server.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "build-entry",
-      "loc": 140
+      "loc": 163
     },
     {
       "file": "src/mcp-tools.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 166
+      "loc": 174
     },
     {
       "file": "src/node-floor.ts",
@@ -552,7 +559,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 140
+      "loc": 145
     },
     {
       "file": "src/orphan-reaper.ts",
@@ -594,7 +601,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 83
+      "loc": 84
     },
     {
       "file": "src/reentrancy.ts",
@@ -650,7 +657,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 795
+      "loc": 806
     },
     {
       "file": "src/sync-banner.ts",
@@ -664,7 +671,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "orphan",
-      "loc": 238
+      "loc": 242
     },
     {
       "file": "src/sync.ts",
@@ -672,6 +679,62 @@
       "area": "src",
       "disposition": "test-only",
       "loc": 533
+    },
+    {
+      "file": "src/topic-db.ts",
+      "package": "episodic-memory",
+      "area": "src",
+      "disposition": "reachable",
+      "loc": 521
+    },
+    {
+      "file": "src/topic-format.ts",
+      "package": "episodic-memory",
+      "area": "src",
+      "disposition": "reachable",
+      "loc": 462
+    },
+    {
+      "file": "src/topic-job.ts",
+      "package": "episodic-memory",
+      "area": "src",
+      "disposition": "test-only",
+      "loc": 307
+    },
+    {
+      "file": "src/topic-phase.ts",
+      "package": "episodic-memory",
+      "area": "src",
+      "disposition": "test-only",
+      "loc": 40
+    },
+    {
+      "file": "src/topic-prompts.ts",
+      "package": "episodic-memory",
+      "area": "src",
+      "disposition": "test-only",
+      "loc": 274
+    },
+    {
+      "file": "src/topic-time.ts",
+      "package": "episodic-memory",
+      "area": "src",
+      "disposition": "reachable",
+      "loc": 42
+    },
+    {
+      "file": "src/topic-tool.ts",
+      "package": "episodic-memory",
+      "area": "src",
+      "disposition": "reachable",
+      "loc": 149
+    },
+    {
+      "file": "src/topic-validate.ts",
+      "package": "episodic-memory",
+      "area": "src",
+      "disposition": "test-only",
+      "loc": 211
     },
     {
       "file": "src/types.ts",
@@ -867,7 +930,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 411
+      "loc": 417
     },
     {
       "file": "test/digest-inject.test.ts",
@@ -889,6 +952,13 @@
       "area": "tests",
       "disposition": "test",
       "loc": 127
+    },
+    {
+      "file": "test/digest-prompt-budget.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 105
     },
     {
       "file": "test/digest-prompts.test.ts",
@@ -1154,7 +1224,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 141
+      "loc": 144
     },
     {
       "file": "test/learn/relay-task7-findings.test.ts",
@@ -1378,7 +1448,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 34
+      "loc": 44
     },
     {
       "file": "test/reentrancy.test.ts",
@@ -1470,6 +1540,13 @@
       "area": "tests",
       "disposition": "test",
       "loc": 295
+    },
+    {
+      "file": "test/summarizer-prompt-budget.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 72
     },
     {
       "file": "test/summarizer-text.test.ts",
@@ -1596,6 +1673,55 @@
       "area": "tests",
       "disposition": "test",
       "loc": 125
+    },
+    {
+      "file": "test/topic-db.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 338
+    },
+    {
+      "file": "test/topic-format.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 379
+    },
+    {
+      "file": "test/topic-job.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 559
+    },
+    {
+      "file": "test/topic-phase.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 102
+    },
+    {
+      "file": "test/topic-prompts.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 586
+    },
+    {
+      "file": "test/topic-tool.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 492
+    },
+    {
+      "file": "test/topic-validate.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 364
     },
     {
       "file": "test/verify.test.ts",

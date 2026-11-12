@@ -202,6 +202,6 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 228 | repo-tools map |
+| totalSourceFiles | 246 | repo-tools map |
 
 The file counts, the defaults, the table names and the step orders come from a direct reading of the source and a file listing. None of them is a `repo-tools map` metric.

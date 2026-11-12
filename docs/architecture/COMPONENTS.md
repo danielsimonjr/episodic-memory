@@ -108,13 +108,27 @@ Renders an archived conversation as markdown or HTML, with an optional line rang
 | `src/digest-inject.ts` | Builds the digest text for the session-start hook and derives the project key from a working directory. |
 | `src/digest-tool.ts` | The body of the `digest` MCP tool. |
 
+## Topic memory
+
+| Module | Role |
+|---|---|
+| `src/topic-phase.ts` | The topic step of a sync run. It never throws and never blocks the sync. |
+| `src/topic-job.ts` | Picks the finished sessions, calls the digest model, validates each edit, and installs it in one transaction. |
+| `src/topic-prompts.ts` | Builds the organize prompt and parses the `FILE` and `DELETE` blocks of the answer. |
+| `src/topic-validate.ts` | Runs the checks of one staged edit. It returns one error line for each failed check. |
+| `src/topic-format.ts` | Parses and serializes topic documents. It finds units, footnotes and links, and assigns unit ids. |
+| `src/topic-db.ts` | Creates the topic tables, installs an edit with its derived tables, and runs the read queries. |
+| `src/topic-time.ts` | Checks the time forms and the unit id pattern. It imports nothing. |
+| `src/fts-query.ts` | Turns free text into an FTS5 query. It is also used by `digest-db.ts`. |
+| `src/topic-tool.ts` | The body of the `topics` MCP tool. It is read-only. |
+
 ## MCP server
 
 | Module | Role |
 |---|---|
-| `src/mcp-server.ts` | Creates the server, registers the tools `search`, `read`, `digest` and `skills`, and connects the stdio transport. |
-| `src/mcp-schemas.ts` | Strict Zod schemas for the tool inputs (`SearchInputSchema`, `ShowConversationInputSchema`, `DigestInputSchema`, `SkillsInputSchema`) and `handleMcpError`. |
-| `src/mcp-tools.ts` | Dispatches a tool call to its handler. It checks the token, validates the path for `read`, and imports the skills tool only when the learned-knowledge flag is on. |
+| `src/mcp-server.ts` | Creates the server, registers the tools `search`, `read`, `digest`, `skills` and `topics`, and connects the stdio transport. |
+| `src/mcp-schemas.ts` | Strict Zod schemas for the tool inputs (`SearchInputSchema`, `ShowConversationInputSchema`, `DigestInputSchema`, `SkillsInputSchema`, `TopicsInputSchema`) and `handleMcpError`. It imports only `topic-time.ts` eagerly. |
+| `src/mcp-tools.ts` | Dispatches a tool call to its handler. It checks the token, validates the path for `read`, and imports the skills tool only when the learned-knowledge flag is on. It imports the topic tool only inside the `topics` branch. |
 
 ## Command entry points
 
@@ -162,10 +176,10 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 228 | repo-tools map |
+| totalSourceFiles | 246 | repo-tools map |
 | totalClasses | 7 | repo-tools map |
-| totalInterfaces | 121 | repo-tools map |
-| totalFunctions | 276 | repo-tools map |
-| totalConstants | 53 | repo-tools map |
+| totalInterfaces | 136 | repo-tools map |
+| totalFunctions | 315 | repo-tools map |
+| totalConstants | 62 | repo-tools map |
 
 The tool names, the table names and the model name come from a direct reading of `src/mcp-server.ts`, `src/db.ts` and `src/embeddings.ts`. They are not `repo-tools map` metrics.

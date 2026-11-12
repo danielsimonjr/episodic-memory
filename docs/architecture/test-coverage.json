@@ -1,19 +1,19 @@
 {
   "metadata": {
-    "totalSourceFiles": 91,
-    "totalTestFiles": 129,
-    "testedCount": 72,
-    "untestedCount": 19,
-    "coveragePercent": "79.1",
+    "totalSourceFiles": 100,
+    "totalTestFiles": 138,
+    "testedCount": 78,
+    "untestedCount": 22,
+    "coveragePercent": "78.0",
     "effectiveCoverage": {
       "policyLoaded": false,
-      "activeFiles": 91,
-      "testedActive": 72,
-      "activeUntested": 19,
+      "activeFiles": 100,
+      "testedActive": 78,
+      "activeUntested": 22,
       "excludedTotal": 0,
-      "percent": "79.1",
+      "percent": "78.0",
       "breakdown": {
-        "active_untested": 19
+        "active_untested": 22
       }
     }
   },
@@ -27,6 +27,7 @@
     "cli/sync-hook.js",
     "src/backfill-cli.ts",
     "src/doctor-cli.ts",
+    "src/fts-query.ts",
     "src/index-cli.ts",
     "src/index.ts",
     "src/learn-cli.ts",
@@ -36,7 +37,9 @@
     "src/search-cli.ts",
     "src/show-cli.ts",
     "src/stats-cli.ts",
-    "src/sync-cli.ts"
+    "src/sync-cli.ts",
+    "src/topic-time.ts",
+    "src/topic-tool.ts"
   ],
   "testedFiles": [
     "src/api-endpoint.ts",
@@ -109,6 +112,12 @@
     "src/summarizer.ts",
     "src/sync-banner.ts",
     "src/sync.ts",
+    "src/topic-db.ts",
+    "src/topic-format.ts",
+    "src/topic-job.ts",
+    "src/topic-phase.ts",
+    "src/topic-prompts.ts",
+    "src/topic-validate.ts",
     "src/types.ts",
     "src/verify.ts"
   ],
@@ -145,7 +154,8 @@
       "test/digest-prompts.test.ts",
       "test/embeddings-format.test.ts",
       "test/oversized-message-guard.test.ts",
-      "test/sync-helpers.test.ts"
+      "test/sync-helpers.test.ts",
+      "test/topic-prompts.test.ts"
     ],
     "src/db.ts": [
       "test/codex-transcripts.test.ts",
@@ -157,6 +167,7 @@
       "test/digest-hook.test.ts",
       "test/digest-job.test.ts",
       "test/digest-mcp.test.ts",
+      "test/digest-prompt-budget.test.ts",
       "test/doctor.test.ts",
       "test/embedding-migration-helpers.test.ts",
       "test/integration.test.ts",
@@ -166,6 +177,9 @@
       "test/prune.test.ts",
       "test/sync-incremental-and-db.test.ts",
       "test/tool-calls-cascade.test.ts",
+      "test/topic-job.test.ts",
+      "test/topic-phase.test.ts",
+      "test/topic-tool.test.ts",
       "test/verify.test.ts"
     ],
     "src/deps-health.ts": [
@@ -190,17 +204,21 @@
       "test/digest-hook.test.ts",
       "test/digest-inject.test.ts",
       "test/learn/learn-handlers.test.ts",
-      "test/learn/skills-tool.test.ts"
+      "test/learn/skills-tool.test.ts",
+      "test/topic-tool.test.ts"
     ],
     "src/digest-job.ts": [
       "test/digest-gpu-reservation.test.ts",
-      "test/digest-job.test.ts"
+      "test/digest-job.test.ts",
+      "test/digest-prompt-budget.test.ts"
     ],
     "src/digest-phase.ts": [
       "test/digest-mcp.test.ts"
     ],
     "src/digest-prompts.ts": [
-      "test/digest-prompts.test.ts"
+      "test/digest-prompt-budget.test.ts",
+      "test/digest-prompts.test.ts",
+      "test/topic-prompts.test.ts"
     ],
     "src/digest-tool.ts": [
       "test/digest-mcp.test.ts"
@@ -228,6 +246,7 @@
       "test/query-prefix.test.ts",
       "test/verify.test.ts"
     ],
+    "src/fts-query.ts": [],
     "src/gpu-reservation.ts": [
       "test/gpu-reservation.test.ts"
     ],
@@ -451,13 +470,15 @@
       "test/mcp-auth.test.ts"
     ],
     "src/mcp-schemas.ts": [
-      "test/mcp-schemas.test.ts"
+      "test/mcp-schemas.test.ts",
+      "test/topic-tool.test.ts"
     ],
     "src/mcp-server.ts": [],
     "src/mcp-tools.ts": [
       "test/digest-mcp.test.ts",
       "test/learn/learn-handlers.test.ts",
-      "test/mcp-tools.test.ts"
+      "test/mcp-tools.test.ts",
+      "test/topic-tool.test.ts"
     ],
     "src/node-floor.ts": [
       "test/node-floor.test.ts"
@@ -470,7 +491,9 @@
       "test/ollama-plain-reply.test.ts",
       "test/summarizer-gpu-reservation.test.ts",
       "test/summarizer-ollama-fallback.test.ts",
-      "test/sync-gpu-reservation.test.ts"
+      "test/summarizer-prompt-budget.test.ts",
+      "test/sync-gpu-reservation.test.ts",
+      "test/topic-job.test.ts"
     ],
     "src/orphan-reaper.ts": [
       "test/orphan-reaper.test.ts"
@@ -506,9 +529,12 @@
       "test/backfill-cli-gpu-reservation.test.ts",
       "test/digest-gpu-reservation.test.ts",
       "test/digest-job.test.ts",
+      "test/digest-prompt-budget.test.ts",
       "test/learn/agent-runner.test.ts",
       "test/reentrancy.test.ts",
-      "test/summarizer-api-env.test.ts"
+      "test/summarizer-api-env.test.ts",
+      "test/topic-job.test.ts",
+      "test/topic-phase.test.ts"
     ],
     "src/search-cli.ts": [],
     "src/search.ts": [
@@ -538,7 +564,9 @@
       "test/summarizer-gpu-reservation.test.ts",
       "test/summarizer-ollama-fallback.test.ts",
       "test/summarizer-options.test.ts",
-      "test/summarizer-text.test.ts"
+      "test/summarizer-prompt-budget.test.ts",
+      "test/summarizer-text.test.ts",
+      "test/topic-job.test.ts"
     ],
     "src/sync-banner.ts": [
       "test/sync-banner.test.ts"
@@ -555,11 +583,35 @@
       "test/sync-summary-retry.test.ts",
       "test/sync.test.ts"
     ],
+    "src/topic-db.ts": [
+      "test/topic-db.test.ts",
+      "test/topic-job.test.ts",
+      "test/topic-tool.test.ts"
+    ],
+    "src/topic-format.ts": [
+      "test/topic-format.test.ts",
+      "test/topic-prompts.test.ts"
+    ],
+    "src/topic-job.ts": [
+      "test/topic-job.test.ts"
+    ],
+    "src/topic-phase.ts": [
+      "test/topic-phase.test.ts"
+    ],
+    "src/topic-prompts.ts": [
+      "test/topic-prompts.test.ts"
+    ],
+    "src/topic-time.ts": [],
+    "src/topic-tool.ts": [],
+    "src/topic-validate.ts": [
+      "test/topic-validate.test.ts"
+    ],
     "src/types.ts": [
       "test/codex-transcripts.test.ts",
       "test/cross-harness-recall.test.ts",
       "test/db-helpers.test.ts",
       "test/db.test.ts",
+      "test/digest-prompt-budget.test.ts",
       "test/digest-prompts.test.ts",
       "test/embedding-migration-helpers.test.ts",
       "test/oversized-message-guard.test.ts",
@@ -569,6 +621,7 @@
       "test/summarizer-gpu-reservation.test.ts",
       "test/summarizer-text.test.ts",
       "test/sync-incremental-and-db.test.ts",
+      "test/topic-prompts.test.ts",
       "test/verify.test.ts"
     ],
     "src/verify.ts": [
@@ -678,6 +731,13 @@
       "src/mcp-tools.ts",
       "src/digest-phase.ts",
       "src/digest-tool.ts"
+    ],
+    "test/digest-prompt-budget.test.ts": [
+      "src/db.ts",
+      "src/digest-job.ts",
+      "src/digest-prompts.ts",
+      "src/types.ts",
+      "src/reentrancy.ts"
     ],
     "test/digest-prompts.test.ts": [
       "src/digest-prompts.ts",
@@ -1063,6 +1123,10 @@
     "test/summarizer-options.test.ts": [
       "src/summarizer.ts"
     ],
+    "test/summarizer-prompt-budget.test.ts": [
+      "src/summarizer.ts",
+      "src/ollama-backend.ts"
+    ],
     "test/summarizer-text.test.ts": [
       "src/summarizer.ts",
       "src/types.ts"
@@ -1111,6 +1175,42 @@
     "test/tool-calls-cascade.test.ts": [
       "src/db.ts"
     ],
+    "test/topic-db.test.ts": [
+      "src/topic-db.ts"
+    ],
+    "test/topic-format.test.ts": [
+      "src/topic-format.ts"
+    ],
+    "test/topic-job.test.ts": [
+      "src/db.ts",
+      "src/topic-job.ts",
+      "src/ollama-backend.ts",
+      "src/summarizer.ts",
+      "src/reentrancy.ts",
+      "src/topic-db.ts"
+    ],
+    "test/topic-phase.test.ts": [
+      "src/db.ts",
+      "src/topic-phase.ts",
+      "src/reentrancy.ts"
+    ],
+    "test/topic-prompts.test.ts": [
+      "src/digest-prompts.ts",
+      "src/types.ts",
+      "src/constants.ts",
+      "src/topic-format.ts",
+      "src/topic-prompts.ts"
+    ],
+    "test/topic-tool.test.ts": [
+      "src/mcp-tools.ts",
+      "src/mcp-schemas.ts",
+      "src/db.ts",
+      "src/topic-db.ts",
+      "src/digest-inject.ts"
+    ],
+    "test/topic-validate.test.ts": [
+      "src/topic-validate.ts"
+    ],
     "test/verify.test.ts": [
       "src/verify.ts",
       "src/db.ts",
@@ -1157,6 +1257,10 @@
       "category": null
     },
     {
+      "file": "src/fts-query.ts",
+      "category": null
+    },
+    {
       "file": "src/index-cli.ts",
       "category": null
     },
@@ -1194,6 +1298,14 @@
     },
     {
       "file": "src/sync-cli.ts",
+      "category": null
+    },
+    {
+      "file": "src/topic-time.ts",
+      "category": null
+    },
+    {
+      "file": "src/topic-tool.ts",
       "category": null
     }
   ]

@@ -7,12 +7,12 @@
 ## Summary
 
 - **Files with no in-repo importer**: 13
-- **Dormant files**: 52
+- **Dormant files**: 56
   - **Orphaned (reachable from nothing)**: 14
-  - **Test-only (only a test reaches them)**: 38
-- **Potentially unused exports**: 100
+  - **Test-only (only a test reaches them)**: 42
+- **Potentially unused exports**: 114
   - **Unreferenced anywhere**: 4
-  - **Referenced in their own module**: 96
+  - **Referenced in their own module**: 110
   - **Not classified**: 0
 
 ## Caveats
@@ -84,6 +84,10 @@ Source files that only a test reaches. They ship nothing, but a test uses them.
 - `src/stats.ts`
 - `src/sync-banner.ts`
 - `src/sync.ts`
+- `src/topic-job.ts`
+- `src/topic-phase.ts`
+- `src/topic-prompts.ts`
+- `src/topic-validate.ts`
 
 ## Files with no in-repo importer
 
@@ -126,6 +130,7 @@ No other file imports these names, but their own module uses them.
 - `src/digest-compress.ts`: `CompressOptions`, `CompressResult`
 - `src/digest-db.ts`: `citedExchangeIds`
 - `src/digest-inject.ts`: `DEFAULT_DIGEST_MAX_CHARS`
+- `src/digest-job.ts`: `ExchangeRow`, `toExchange`
 - `src/digest-prompts.ts`: `BuiltPrompt`
 - `src/digest-validate.ts`: `CitedLines`
 - `src/doctor-learn.ts`: `LearnEntryCounts`, `LearnLatestRunSummary`
@@ -152,10 +157,13 @@ No other file imports these names, but their own module uses them.
 - `src/learn/types.ts`: `SLUG_RE`
 - `src/learn/validate.ts`: `ValidateOptions`, `ValidationResult`
 - `src/logging.ts`: `LogLevel`
-- `src/mcp-schemas.ts`: `ResponseFormatEnum`, `SearchModeEnum`
+- `src/mcp-schemas.ts`: `ResponseFormatEnum`, `SearchModeEnum`, `TopicsActionEnum`
 - `src/prune.ts`: `PruneOptions`, `PruneResult`
 - `src/stats.ts`: `IndexStats`
 - `src/sync-banner.ts`: `SyncHeadlineTotals`
+- `src/topic-db.ts`: `TopicEdit`, `TopicEvent`, `TopicRange`, `TopicSession`, `TopicSessionStatus`, `TopicUnitHit`
+- `src/topic-format.ts`: `TopicFootnote`, `TopicLink`, `TopicOutlineItem`, `TopicUnit`
+- `src/topic-validate.ts`: `SLUG_PATTERN`
 
 ## Exports not classified
 

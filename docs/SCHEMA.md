@@ -97,6 +97,111 @@ CREATE TABLE digest_entry (
 
 `digest_fts` is an FTS5 table (`id`, `text`) over the same text, used by the `digest` tool's `query`.
 
+## Topic memory
+
+The topic tables hold the topic memory documents of each project. The sync step writes them. The `topics` MCP tool only reads them.
+
+`ensureTopicSchema()` in `src/topic-db.ts` creates the tables. The sync step calls it only when `EPISODIC_MEMORY_TOPICS=1`. A fresh index has no topic tables until then. When a topic table is missing, the `topics` tool answers that topic memory has no documents yet.
+
+`topic_doc` holds the document text. The model output writes only `topic_doc`. Each accepted edit rewrites the derived tables of the project in the same transaction. The derived tables are `topic_unit`, `topic_link`, `topic_event` and `topic_unit_fts`.
+
+The statements below are the ones that `ensureTopicSchema()` runs. Each statement uses `CREATE ... IF NOT EXISTS`.
+
+### `topic_doc`
+
+```sql
+CREATE TABLE topic_doc (
+  project TEXT NOT NULL,
+  slug TEXT NOT NULL,          -- the document name, 1 to 64 characters
+  text TEXT NOT NULL,          -- the Markdown text of the document
+  updated_at TEXT NOT NULL,    -- the ISO time of the last accepted edit
+  PRIMARY KEY (project, slug)
+);
+```
+
+### `topic_unit`
+
+One row for each paragraph of each document. The row is derived from `topic_doc`.
+
+```sql
+CREATE TABLE topic_unit (
+  project TEXT NOT NULL,
+  unit_id TEXT NOT NULL,       -- 8 lowercase hex characters, unique in the project
+  slug TEXT NOT NULL,          -- the document that holds the paragraph
+  heading TEXT NOT NULL,       -- the heading path, joined by " > "
+  text TEXT NOT NULL,          -- the paragraph text
+  seq INTEGER NOT NULL,        -- creation order; a kept paragraph keeps its value
+  PRIMARY KEY (project, unit_id)
+);
+```
+
+### `topic_link`
+
+One row for each link between two paragraphs. The row is derived from `topic_doc`.
+
+```sql
+CREATE TABLE topic_link (
+  project TEXT NOT NULL,
+  from_unit TEXT NOT NULL,     -- the paragraph that holds the link
+  to_unit TEXT NOT NULL        -- the paragraph that the link names
+);
+```
+
+### `topic_event`
+
+One row for each footnote. The row is derived from `topic_doc`.
+
+```sql
+CREATE TABLE topic_event (
+  project TEXT NOT NULL,
+  unit_id TEXT NOT NULL,       -- the paragraph that holds the footnote
+  time TEXT NOT NULL,          -- YYYY, YYYY-MM or YYYY-MM-DD
+  statement TEXT NOT NULL,     -- the statement that the footnote dates
+  sources TEXT NOT NULL        -- a JSON array of exchange ids, without the # prefix
+);
+```
+
+### `topic_unit_fts`
+
+An FTS5 table over the paragraph text. The `topics` tool uses it for `search`.
+
+```sql
+CREATE VIRTUAL TABLE topic_unit_fts USING fts5(
+  unit_id UNINDEXED,
+  project UNINDEXED,
+  text,
+  tokenize = 'porter unicode61'
+);
+```
+
+### `topic_session`
+
+The progress of each session in the topic step.
+
+```sql
+CREATE TABLE topic_session (
+  project TEXT NOT NULL,
+  session_id TEXT NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('pending','done','rejected')),
+  attempts INTEGER NOT NULL DEFAULT 0,  -- the count of failed model calls
+  error TEXT,                           -- the last error text, or NULL
+  PRIMARY KEY (project, session_id)
+);
+```
+
+A session with a `done` or `rejected` row is not organized again. A `pending` row is a session that failed. The next run retries it.
+
+### `topic_meta`
+
+```sql
+CREATE TABLE topic_meta (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
+```
+
+The key `since` holds the time of the first run. The step organizes sessions that start at or after this time.
+
 ## Learned knowledge and the learning trace
 
 Self-improving memory (the `EPISODIC_MEMORY_LEARN` feature) keeps its state in
@@ -253,6 +358,10 @@ CREATE INDEX idx_sidechain ON exchanges(is_sidechain);
 
 -- Branch filtering
 CREATE INDEX idx_git_branch ON exchanges(git_branch);
+
+-- Topic memory: links by target, events by paragraph
+CREATE INDEX idx_topic_link_to ON topic_link(project, to_unit);
+CREATE INDEX idx_topic_event_unit ON topic_event(project, unit_id);
 ```
 
 ## Schema Evolution

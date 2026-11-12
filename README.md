@@ -270,6 +270,49 @@ The same SessionStart hook also appends a learned-hints block when `EPISODIC_MEM
 
 The `digest` MCP tool shows the digest and searches it (`query`). The tool also turns a `[#id]` mark into an archive path and line range for `read` (`expand`). Last, the tool stores a one-line note for the next session (`handoff`).
 
+## Topic memory
+
+Topic memory keeps a few Markdown documents for each project. Each document groups related facts from past
+sessions. Each paragraph cites the exchanges that support it, so a reader can check a statement against its source.
+
+The feature is off by default. Set `EPISODIC_MEMORY_TOPICS=1` to write the documents.
+
+How it works:
+
+1. After the digest step, each `sync` run finds the finished sessions of each project. A session is finished when it has been quiet for 30 minutes. The step skips trivial sessions. It organizes the oldest sessions first.
+2. The step sends the session and the current documents to the digest model. The model answers with the new text of each document that changes.
+3. The step checks the whole edit. It rejects the edit when any check fails. The model gets one more try, with the list of errors. An edit that fails again is not stored.
+4. An accepted edit replaces the documents of the project in one transaction. The code derives the links, the timeline and the search index from the documents.
+
+Each session is organized once. Sessions that start before the first run are not organized, unless `EPISODIC_MEMORY_TOPICS_SINCE` sets an earlier time.
+The topic step does not need the digest. Its variables apply to the `sync` run, not to the MCP server.
+
+Settings:
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `EPISODIC_MEMORY_TOPICS` | unset (off) | Set to `1` to write the topic documents during sync |
+| `EPISODIC_MEMORY_TOPICS_SINCE` | the first-run time | An ISO time. Replaces the first-run time on the first run only, to organize older sessions |
+| `EPISODIC_MEMORY_TOPICS_MAX_SESSIONS` | `3` | Sessions that reach the model in one run |
+| `EPISODIC_MEMORY_TOPICS_MAX_TRANSCRIPT_CHARS` | `10000` | Size of the numbered transcript of one session |
+| `EPISODIC_MEMORY_TOPICS_MAX_DOCS_CHARS` | `10000` | Size of the document text that one prompt shows |
+| `EPISODIC_MEMORY_TOPICS_MAX_DOC_CHARS` | `8000` | Size limit of one document |
+| `EPISODIC_MEMORY_TOPICS_MAX_DOCS` | `50` | Number of documents in one project |
+
+An invalid value falls back to the default.
+
+The `topics` MCP tool reads the documents. The tool has five actions:
+
+| Action | Returns |
+|---|---|
+| `list` | The documents of the project, with the unit count of each |
+| `read` | The text of one document |
+| `search` | The paragraphs that match the words, with their event times |
+| `links` | The links into and out of one paragraph |
+| `timeline` | The dated events in time order, with their source exchange ids |
+
+The `topics` tool is read-only. The tool does not check `EPISODIC_MEMORY_TOPICS`. When the index has no topic tables, it answers that topic memory has no documents yet. See [`topics`](#topics) under MCP Server.
+
 ## Self-improving memory (Recursa)
 
 An optional layer that lets the archive teach the agent how to search it. The layer is off by default.
@@ -488,7 +531,7 @@ open output.html
 
 - **Core package** - TypeScript library for indexing and searching conversations
 - **CLI tools** - Unified command-line interface for manual use
-- **MCP Server** - Model Context Protocol server exposing search, read, digest and skills tools
+- **MCP Server** - Model Context Protocol server exposing search, read, digest, skills and topics tools
 - **Claude Code plugin** - Integration with Claude Code (auto-indexing, MCP tools, hooks)
 - **Codex plugin** - Integration with Codex (manifest, MCP config, hooks, skills)
 - **Self-improving memory** - the `learn` CLI, an in-process tool server for isolated solver and learner agents, and a `better-sqlite3` knowledge store under `learned/`
@@ -544,7 +587,7 @@ The marker can appear in any message (user or assistant) and excludes the entire
 
 ## MCP Server
 
-When installed as a Claude Code or Codex plugin, episodic-memory provides an MCP (Model Context Protocol) server. The server exposes tools to search and view conversations and to load the skills learned from them.
+When installed as a Claude Code or Codex plugin, episodic-memory provides an MCP (Model Context Protocol) server. The server exposes tools to search and view conversations, to load the skills learned from them, and to read the topic memory documents.
 
 ### Available MCP Tools
 
@@ -620,6 +663,11 @@ List, search (`query`) or load (`get`) the skills that episodic-memory learned f
 Read-only: it opens `knowledge.db` read-only for the one call and answers that learning is off, opening
 nothing, unless `EPISODIC_MEMORY_LEARN=1`. Every field is screened for injected instructions and redacted
 before it is returned. See [Self-improving memory](#self-improving-memory-recursa).
+
+#### `topics`
+
+Read the topic memory documents of the project: `list`, `read` (`slug`), `search` (`query`), `links` (`unit`) or `timeline`. Pass one `action` for each call. The `project` option defaults to the key for the current directory. Search and timeline take optional `from` and `to` times, and `limit` (1-50; default 10 for search, 50 for timeline).
+Read-only: it opens the index read-only and never creates a file. The server does not read `EPISODIC_MEMORY_TOPICS`. Its results come from whatever the sync step wrote. See [Topic memory](#topic-memory).
 
 ### Settings the server sees
 

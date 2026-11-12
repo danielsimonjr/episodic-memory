@@ -3,7 +3,7 @@
     "name": "episodic-memory",
     "schemaVersion": "2.0.0",
     "language": "typescript",
-    "totalFiles": 226,
+    "totalFiles": 227,
     "totalModules": 4,
     "totalExports": 492
   },
@@ -7214,6 +7214,30 @@
         ],
         "exports": []
       },
+      "test/ollama-plain-reply.test.ts": {
+        "externalDependencies": [
+          "vitest"
+        ],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "src/ollama-backend.ts",
+            "imports": [
+              "callOllama"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/summarizer.ts",
+            "imports": [
+              "callDigestModel",
+              "callLearnModel"
+            ],
+            "typeOnly": false
+          }
+        ],
+        "exports": []
+      },
       "test/orphan-reaper.test.ts": {
         "externalDependencies": [
           "vitest"
@@ -8287,10 +8311,10 @@
     }
   },
   "statistics": {
-    "totalTypeScriptFiles": 226,
-    "totalSourceFiles": 226,
+    "totalTypeScriptFiles": 227,
+    "totalSourceFiles": 227,
     "totalModules": 4,
-    "totalLinesOfCode": 45289,
+    "totalLinesOfCode": 45356,
     "totalExports": 492,
     "entryRoots": 4,
     "reachableFiles": 39,

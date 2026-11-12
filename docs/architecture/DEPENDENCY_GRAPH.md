@@ -4,7 +4,7 @@
 
 # episodic-memory - Dependency Graph
 
-**Version**: 1.7.2
+**Version**: 1.7.3
 
 This document provides a comprehensive dependency graph of all files, components, imports, functions, and variables in the codebase.
 
@@ -1913,9 +1913,9 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 226 |
+| Total Source Files | 227 |
 | Subsystems | 4 |
-| Total Lines of Code | 45289 |
+| Total Lines of Code | 45356 |
 | Total Exports | 492 |
 | Total Re-exports | 8 |
 | Total Classes | 7 |
@@ -1931,4 +1931,4 @@ graph TD
 
 ---
 
-*Version*: 1.7.2
+*Version*: 1.7.3

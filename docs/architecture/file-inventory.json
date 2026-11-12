@@ -1,11 +1,11 @@
 {
-  "totalFiles": 226,
+  "totalFiles": 227,
   "byDisposition": {
     "reachable": 35,
     "build-entry": 4,
     "test-only": 38,
     "orphan": 14,
-    "test": 130,
+    "test": 131,
     "tool": 4,
     "config": 1,
     "bench": 0,
@@ -14,11 +14,11 @@
   "byArea": {
     "src": 91,
     "tools": 4,
-    "tests": 130,
+    "tests": 131,
     "config": 1
   },
   "byPackage": {
-    "(root)": 142,
+    "(root)": 143,
     "episodic-memory": 84
   },
   "files": [
@@ -552,7 +552,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 135
+      "loc": 140
     },
     {
       "file": "src/orphan-reaper.ts",
@@ -650,7 +650,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 772
+      "loc": 778
     },
     {
       "file": "src/sync-banner.ts",
@@ -1304,6 +1304,13 @@
       "loc": 75
     },
     {
+      "file": "test/ollama-plain-reply.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 55
+    },
+    {
       "file": "test/orphan-reaper.test.ts",
       "package": "(root)",
       "area": "tests",
@@ -1602,7 +1609,7 @@
       "package": "(root)",
       "area": "config",
       "disposition": "config",
-      "loc": 25
+      "loc": 26
     }
   ],
   "skippedLinks": [],

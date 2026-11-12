@@ -13,6 +13,7 @@ export default defineConfig({
     env: {
       EPISODIC_MEMORY_SUMMARIZER_BACKEND: 'claude',
       EPISODIC_MEMORY_OLLAMA_URL: 'http://127.0.0.1:9', // port 9 is closed: no request can succeed
+      EPISODIC_MEMORY_OLLAMA_MODEL: '', // blank counts as unset; a test that needs a model sets one
       FLEET_GPU_RESERVATION: join(tmpdir(), 'episodic-memory-test-no-gpu-reservation.json'),
     },
     include: ['test/**/*.test.ts'],

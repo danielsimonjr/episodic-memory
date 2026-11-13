@@ -9,7 +9,7 @@
 | Metric | Count |
 |--------|-------|
 | Total Source Files | 108 |
-| Total Test Files | 155 |
+| Total Test Files | 156 |
 | Source Files with Tests | 85 |
 | Source Files without Tests | 23 |
 | Coverage (raw, direct-import) | **78.7%** |
@@ -66,7 +66,7 @@ The following 23 source files are not directly imported by any test file:
 | `src/codex-support.ts` | `codex-support-extra.test.ts`, `codex-support.test.ts` |
 | `src/constants.ts` | `constants.test.ts`, `digest-prompts.test.ts`, `embeddings-format.test.ts`, `oversized-message-guard.test.ts`, `sync-helpers.test.ts`, `topic-prompts.test.ts` |
 | `src/content-text.ts` | `content-text.test.ts` |
-| `src/db.ts` | `codex-transcripts.test.ts`, `cross-harness-recall.test.ts`, `db-helpers.test.ts`, `db.test.ts`, `digest-db.test.ts`, `digest-gpu-reservation.test.ts`, `digest-hook.test.ts`, `digest-job.test.ts`, `digest-mcp.test.ts`, `digest-prompt-budget.test.ts`, `doctor.test.ts`, `embedding-migration-helpers.test.ts`, `integration.test.ts`, `learn-handlers.test.ts`, `mcp-tools.test.ts`, `oversized-message-guard.test.ts`, `prune.test.ts`, `sync-incremental-and-db.test.ts`, `tool-calls-cascade.test.ts`, `topic-job.test.ts`, `topic-phase.test.ts`, `topic-tool.test.ts`, `verify.test.ts` |
+| `src/db.ts` | `codex-transcripts.test.ts`, `cross-harness-recall.test.ts`, `db-helpers.test.ts`, `db.test.ts`, `digest-db.test.ts`, `digest-gpu-reservation.test.ts`, `digest-hook.test.ts`, `digest-job.test.ts`, `digest-mcp.test.ts`, `digest-prompt-budget.test.ts`, `doctor.test.ts`, `embedding-migration-helpers.test.ts`, `indexer-db-close.test.ts`, `integration.test.ts`, `learn-handlers.test.ts`, `mcp-tools.test.ts`, `oversized-message-guard.test.ts`, `prune.test.ts`, `sync-incremental-and-db.test.ts`, `tool-calls-cascade.test.ts`, `topic-job.test.ts`, `topic-phase.test.ts`, `topic-tool.test.ts`, `verify.test.ts` |
 | `src/deferral.ts` | `claude-bin-deferral.test.ts` |
 | `src/deps-health.ts` | `deps-health.test.ts`, `ensure-deps-repair.test.ts` |
 | `src/digest-compress.ts` | `digest-compress.test.ts`, `digest-gpu-reservation.test.ts` |
@@ -80,10 +80,10 @@ The following 23 source files are not directly imported by any test file:
 | `src/doctor-learn.ts` | `doctor.test.ts` |
 | `src/doctor.ts` | `codex-doctor.test.ts`, `doctor.test.ts` |
 | `src/embedding-migration.ts` | `embedding-migration-helpers.test.ts`, `embedding-migration.test.ts` |
-| `src/embeddings.ts` | `embedding-migration.test.ts`, `embeddings-format.test.ts`, `integration.test.ts`, `multi-concept.test.ts`, `query-prefix.test.ts`, `verify.test.ts` |
+| `src/embeddings.ts` | `embedding-migration.test.ts`, `embeddings-format.test.ts`, `indexer-db-close.test.ts`, `integration.test.ts`, `multi-concept.test.ts`, `query-prefix.test.ts`, `verify.test.ts` |
 | `src/fs-retry.ts` | `sync-copy-retry.test.ts` |
 | `src/gpu-reservation.ts` | `gpu-reservation.test.ts` |
-| `src/indexer.ts` | `dangling-project-link.test.ts`, `exclude-nested.test.ts`, `incremental-indexing.test.ts`, `learn-handlers.test.ts`, `search-metadata-filters.test.ts` |
+| `src/indexer.ts` | `dangling-project-link.test.ts`, `exclude-nested.test.ts`, `incremental-indexing.test.ts`, `indexer-db-close.test.ts`, `learn-handlers.test.ts`, `search-metadata-filters.test.ts` |
 | `learn/agent-runner.ts` | `agent-runner.test.ts` |
 | `learn/bootstrap.ts` | `bootstrap.test.ts`, `relay-task7-findings.test.ts` |
 | `learn/cited-ids.ts` | `cited-ids.test.ts`, `relay-challenger.test.ts` |
@@ -198,6 +198,7 @@ The following 23 source files are not directly imported by any test file:
 | `test/hooks.test.ts` | 0 files |
 | `test/incremental-indexing.test.ts` | 1 files |
 | `test/index-cli-args.test.ts` | 0 files |
+| `test/indexer-db-close.test.ts` | 3 files |
 | `test/integration.test.ts` | 4 files |
 | `learn/agent-runner.test.ts` | 4 files |
 | `learn/bootstrap.test.ts` | 7 files |

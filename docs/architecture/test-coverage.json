@@ -1,7 +1,7 @@
 {
   "metadata": {
     "totalSourceFiles": 108,
-    "totalTestFiles": 155,
+    "totalTestFiles": 156,
     "testedCount": 85,
     "untestedCount": 23,
     "coveragePercent": "78.7",
@@ -194,6 +194,7 @@
       "test/digest-prompt-budget.test.ts",
       "test/doctor.test.ts",
       "test/embedding-migration-helpers.test.ts",
+      "test/indexer-db-close.test.ts",
       "test/integration.test.ts",
       "test/learn/learn-handlers.test.ts",
       "test/mcp-tools.test.ts",
@@ -269,6 +270,7 @@
     "src/embeddings.ts": [
       "test/embedding-migration.test.ts",
       "test/embeddings-format.test.ts",
+      "test/indexer-db-close.test.ts",
       "test/integration.test.ts",
       "test/multi-concept.test.ts",
       "test/query-prefix.test.ts",
@@ -287,6 +289,7 @@
       "test/dangling-project-link.test.ts",
       "test/exclude-nested.test.ts",
       "test/incremental-indexing.test.ts",
+      "test/indexer-db-close.test.ts",
       "test/learn/learn-handlers.test.ts",
       "test/search-metadata-filters.test.ts"
     ],
@@ -865,6 +868,11 @@
       "src/indexer.ts"
     ],
     "test/index-cli-args.test.ts": [],
+    "test/indexer-db-close.test.ts": [
+      "src/db.ts",
+      "src/embeddings.ts",
+      "src/indexer.ts"
+    ],
     "test/integration.test.ts": [
       "src/db.ts",
       "src/embeddings.ts",

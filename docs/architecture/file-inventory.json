@@ -1,11 +1,11 @@
 {
-  "totalFiles": 275,
+  "totalFiles": 276,
   "byDisposition": {
     "reachable": 43,
     "build-entry": 4,
     "test-only": 46,
     "orphan": 15,
-    "test": 162,
+    "test": 163,
     "tool": 4,
     "config": 1,
     "bench": 0,
@@ -14,11 +14,11 @@
   "byArea": {
     "src": 108,
     "tools": 4,
-    "tests": 162,
+    "tests": 163,
     "config": 1
   },
   "byPackage": {
-    "(root)": 176,
+    "(root)": 177,
     "episodic-memory": 99
   },
   "files": [
@@ -321,7 +321,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 415
+      "loc": 420
     },
     {
       "file": "src/learn-cli.ts",
@@ -1155,6 +1155,13 @@
       "area": "tests",
       "disposition": "test",
       "loc": 221
+    },
+    {
+      "file": "test/indexer-db-close.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 84
     },
     {
       "file": "test/integration.test.ts",

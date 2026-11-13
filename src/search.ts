@@ -121,13 +121,37 @@ function buildSearchFilters(options: SearchOptions): { sql: string; params: unkn
   };
 }
 
-function hasMetadataFilters(options: SearchOptions): boolean {
-  return Boolean(
-    options.project ||
-      options.session_id ||
-      options.git_branch ||
-      (options.excludeIds && options.excludeIds.length > 0)
-  );
+/** The largest `k` that a KNN query of sqlite-vec accepts. A larger `k` makes the query throw. */
+const VEC_KNN_MAX_K = 4096;
+
+/**
+ * Find the nearest exchanges with an exact scan of the rows that pass the filters.
+ *
+ * vec0 takes the nearest rows before it applies a WHERE clause. A filter can therefore drop every row of a KNN
+ * query. This scan applies the filters first and then sorts the remaining rows by distance.
+ */
+function exactVectorSearch(
+  db: Database.Database,
+  embedding: Buffer,
+  filterClause: string,
+  filterParams: unknown[],
+  limit: number
+): any[] {
+  return db
+    .prepare(
+      `
+      SELECT
+        ${EXCHANGE_SELECT_COLUMNS},
+        vec_distance_l2(vec.embedding, ?) AS distance
+      FROM exchanges AS e
+      JOIN vec_exchanges AS vec ON vec.id = e.id
+      WHERE e.is_sidechain = 0
+        ${filterClause}
+      ORDER BY distance ASC
+      LIMIT ?
+    `
+    )
+    .all(embedding, ...filterParams, limit);
 }
 
 const EXCHANGE_SELECT_COLUMNS = `
@@ -277,33 +301,36 @@ export async function searchConversations(
     const { sql: filterClause, params: filterParams } = buildSearchFilters(options);
 
     if (mode === 'vector' || mode === 'both') {
-      // Vector similarity search.
-      // vec0 applies KNN before WHERE, so when extra metadata filters are
-      // active we ask for more candidates than `limit` and trim afterwards.
+      // Vector similarity search. vec0 takes the nearest rows before it applies WHERE.
+      // A filtered search therefore uses the exact scan, which applies the filters first.
       await initEmbeddings();
       const queryEmbedding = await generateQueryEmbedding(query);
-      const k = hasMetadataFilters(options) ? limit * 3 : limit;
+      const embedding = Buffer.from(new Float32Array(queryEmbedding).buffer);
 
-      const stmt = db.prepare(`
-        SELECT
-          ${EXCHANGE_SELECT_COLUMNS},
-          vec.distance
-        FROM vec_exchanges AS vec
-        JOIN exchanges AS e ON vec.id = e.id
-        WHERE vec.embedding MATCH ?
-          AND k = ?
-          AND e.is_sidechain = 0
-          ${filterClause}
-        ORDER BY vec.distance ASC
-      `);
-
-      results = stmt.all(
-        Buffer.from(new Float32Array(queryEmbedding).buffer),
-        k,
-        ...filterParams
-      );
-      if (results.length > limit) {
-        results = results.slice(0, limit);
+      if (filterClause) {
+        results = exactVectorSearch(db, embedding, filterClause, filterParams, limit);
+      } else {
+        // The KNN query takes extra rows, because the sidechain clause can drop some of them.
+        const k = Math.min(limit * 3, VEC_KNN_MAX_K);
+        const knnStmt = db.prepare(`
+          SELECT
+            ${EXCHANGE_SELECT_COLUMNS},
+            vec.distance
+          FROM vec_exchanges AS vec
+          JOIN exchanges AS e ON vec.id = e.id
+          WHERE vec.embedding MATCH ?
+            AND k = ?
+            AND e.is_sidechain = 0
+          ORDER BY vec.distance ASC
+        `);
+        results = knnStmt.all(embedding, k).slice(0, limit);
+        // Too few rows remain, and the KNN query did not read every row. The sidechain clause dropped some rows.
+        if (results.length < limit) {
+          const total = (db.prepare('SELECT COUNT(*) AS n FROM vec_exchanges').get() as { n: number }).n;
+          if (k < total) {
+            results = exactVectorSearch(db, embedding, '', [], limit);
+          }
+        }
       }
     }
 

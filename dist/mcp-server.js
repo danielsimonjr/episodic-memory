@@ -804,10 +804,20 @@ function buildSearchFilters(options) {
     params
   };
 }
-function hasMetadataFilters(options) {
-  return Boolean(
-    options.project || options.session_id || options.git_branch || options.excludeIds && options.excludeIds.length > 0
-  );
+function exactVectorSearch(db, embedding, filterClause, filterParams, limit) {
+  return db.prepare(
+    `
+      SELECT
+        ${EXCHANGE_SELECT_COLUMNS},
+        vec_distance_l2(vec.embedding, ?) AS distance
+      FROM exchanges AS e
+      JOIN vec_exchanges AS vec ON vec.id = e.id
+      WHERE e.is_sidechain = 0
+        ${filterClause}
+      ORDER BY distance ASC
+      LIMIT ?
+    `
+  ).all(embedding, ...filterParams, limit);
 }
 function exchangeFromRow(row) {
   return {
@@ -882,26 +892,29 @@ async function searchConversations(query, options = {}) {
     if (mode === "vector" || mode === "both") {
       await initEmbeddings();
       const queryEmbedding = await generateQueryEmbedding(query);
-      const k2 = hasMetadataFilters(options) ? limit * 3 : limit;
-      const stmt = db.prepare(`
-        SELECT
-          ${EXCHANGE_SELECT_COLUMNS},
-          vec.distance
-        FROM vec_exchanges AS vec
-        JOIN exchanges AS e ON vec.id = e.id
-        WHERE vec.embedding MATCH ?
-          AND k = ?
-          AND e.is_sidechain = 0
-          ${filterClause}
-        ORDER BY vec.distance ASC
-      `);
-      results = stmt.all(
-        Buffer.from(new Float32Array(queryEmbedding).buffer),
-        k2,
-        ...filterParams
-      );
-      if (results.length > limit) {
-        results = results.slice(0, limit);
+      const embedding = Buffer.from(new Float32Array(queryEmbedding).buffer);
+      if (filterClause) {
+        results = exactVectorSearch(db, embedding, filterClause, filterParams, limit);
+      } else {
+        const k2 = Math.min(limit * 3, VEC_KNN_MAX_K);
+        const knnStmt = db.prepare(`
+          SELECT
+            ${EXCHANGE_SELECT_COLUMNS},
+            vec.distance
+          FROM vec_exchanges AS vec
+          JOIN exchanges AS e ON vec.id = e.id
+          WHERE vec.embedding MATCH ?
+            AND k = ?
+            AND e.is_sidechain = 0
+          ORDER BY vec.distance ASC
+        `);
+        results = knnStmt.all(embedding, k2).slice(0, limit);
+        if (results.length < limit) {
+          const total = db.prepare("SELECT COUNT(*) AS n FROM vec_exchanges").get().n;
+          if (k2 < total) {
+            results = exactVectorSearch(db, embedding, "", [], limit);
+          }
+        }
       }
     }
     if (mode === "text" || mode === "both") {
@@ -1100,7 +1113,7 @@ async function formatMultiConceptResults(results, concepts) {
   }
   return output2;
 }
-var FALSY, EXCHANGE_SELECT_COLUMNS;
+var FALSY, VEC_KNN_MAX_K, EXCHANGE_SELECT_COLUMNS;
 var init_search = __esm({
   "src/search.ts"() {
     "use strict";
@@ -1110,6 +1123,7 @@ var init_search = __esm({
     init_archive_path();
     init_fts_query();
     FALSY = /* @__PURE__ */ new Set(["0", "false", "no", "off"]);
+    VEC_KNN_MAX_K = 4096;
     EXCHANGE_SELECT_COLUMNS = `
         e.id,
         e.project,

@@ -52,8 +52,9 @@ input (query, mode, limit, dates, project, session, branch)
   ├─ build SQL filters
   ├─ mode vector or both:
   │    initEmbeddings → generateQueryEmbedding (adds the query prefix)
-  │    KNN over vec_exchanges, k = limit (x3 when a metadata filter is active)
-  │    join exchanges, drop sidechain rows, apply filters
+  │    a filter is set: exact scan, apply filters and drop sidechain rows first, then sort by distance
+  │    no filter: KNN over vec_exchanges, k = limit x3 (at most 4096), drop sidechain rows
+  │      too few rows and k below the row count: exact scan
   ├─ mode text or both:
   │    FTS5 MATCH over exchanges_fts, each word quoted (falls back to LIKE, one condition per word, on an error)
   │    newest first, limit
@@ -134,7 +135,7 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 279 | repo-tools map |
+| totalSourceFiles | 280 | repo-tools map |
 | runtimeCircularDeps | 0 | repo-tools map |
 
 The step orders above come from a direct reading of `src/sync.ts`, `src/search.ts`, `src/digest-job.ts`, `src/learn/learner.ts` and `cli/sync-hook.js`. They are not `repo-tools map` metrics.

@@ -3,7 +3,7 @@
     "name": "episodic-memory",
     "schemaVersion": "2.0.0",
     "language": "typescript",
-    "totalFiles": 279,
+    "totalFiles": 280,
     "totalModules": 4,
     "totalExports": 604
   },
@@ -10141,6 +10141,54 @@
         ],
         "exports": []
       },
+      "test/vector-search-filters.test.ts": {
+        "externalDependencies": [
+          "vitest"
+        ],
+        "nodeDependencies": [
+          "fs",
+          "os",
+          "path"
+        ],
+        "internalDependencies": [
+          {
+            "file": "src/types.ts",
+            "imports": [
+              "ConversationExchange"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "test/test-utils.ts",
+            "imports": [
+              "safeRmSync"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/embeddings.ts",
+            "imports": [
+              "*"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/db.ts",
+            "imports": [
+              "*"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/search.ts",
+            "imports": [
+              "*"
+            ],
+            "typeOnly": false
+          }
+        ],
+        "exports": []
+      },
       "test/verify.test.ts": {
         "externalDependencies": [
           "vitest"
@@ -10233,10 +10281,10 @@
     }
   },
   "statistics": {
-    "totalTypeScriptFiles": 279,
-    "totalSourceFiles": 279,
+    "totalTypeScriptFiles": 280,
+    "totalSourceFiles": 280,
     "totalModules": 4,
-    "totalLinesOfCode": 55608,
+    "totalLinesOfCode": 55783,
     "totalExports": 604,
     "entryRoots": 6,
     "reachableFiles": 47,
@@ -10245,7 +10293,7 @@
     "testOnlyFiles": 46,
     "runtimeCircularDeps": 0,
     "typeOnlyCircularDeps": 1,
-    "totalTypeOnlyImports": 81,
+    "totalTypeOnlyImports": 82,
     "noImporterFileCount": 14,
     "unusedExportsCount": 117,
     "circularDepsTruncated": false,

@@ -205,6 +205,7 @@
       "test/search-embeddings-unavailable.test.ts",
       "test/search-text-row-similarity.test.ts",
       "test/sync-incremental-and-db.test.ts",
+      "test/sync-marker-scan.test.ts",
       "test/text-search-multiword.test.ts",
       "test/tool-calls-cascade.test.ts",
       "test/topic-job.test.ts",
@@ -1349,7 +1350,8 @@
     ],
     "test/sync-marker-scan.test.ts": [
       "src/embeddings.ts",
-      "src/sync.ts"
+      "src/sync.ts",
+      "src/db.ts"
     ],
     "test/sync-pending-and-legacy-retry.test.ts": [
       "src/sync.ts"

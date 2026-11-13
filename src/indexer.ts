@@ -1,13 +1,14 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { initDatabase, insertExchange, getMaxIndexedLine } from './db.js';
+import type Database from 'better-sqlite3';
+import { initDatabase, insertExchange, getMaxIndexedLine, deleteExchangesForArchive } from './db.js';
 import { parseConversation } from './parser.js';
 import { initEmbeddings, generateExchangeEmbedding, generateExchangeEmbeddings } from './embeddings.js';
 import { summarizeConversation } from './summarizer.js';
 import { ConversationExchange } from './types.js';
 import { getArchiveDir, getExcludedProjects, getConversationSourceDirs, findJsonlFiles, statIfExists } from './paths.js';
-import { shouldSkipConversation } from './exclusion-marker.js';
+import { scanExclusionMarkers } from './exclusion-marker.js';
 
 // Set max output tokens for Claude SDK (used by summarizer)
 process.env.CLAUDE_CODE_MAX_OUTPUT_TOKENS = '20000';
@@ -41,10 +42,18 @@ function sessionIdForSummary(exchanges: ConversationExchange[]): string | undefi
  * Tell whether a listed transcript must stay out of the index and out of the summaries, and log the skip.
  *
  * The scan reads the source transcript, because the run parses the source transcript. The archive copy can be older.
+ * The transcript can gain the marker after an earlier run indexed part of it. The function then deletes the rows of
+ * `archivePath`. The function also skips a transcript that the scan cannot read. The rows of the transcript stay.
  */
-function excludedByMarker(file: string, sourcePath: string): boolean {
-  if (!shouldSkipConversation(sourcePath)) return false;
-  console.log(`  Skipped ${file} (exclusion marker, or the marker scan could not read the file)`);
+function excludedByMarker(db: Database.Database, file: string, sourcePath: string, archivePath: string): boolean {
+  const scan = scanExclusionMarkers(sourcePath);
+  if (scan === 'clean') return false;
+  if (scan === 'marker') {
+    const removed = deleteExchangesForArchive(db, archivePath);
+    console.log(`  Skipped ${file} (exclusion marker${removed > 0 ? `; removed ${removed} indexed exchange(s)` : ''})`);
+  } else {
+    console.log(`  Skipped ${file} (the marker scan could not read the file)`);
+  }
   return true;
 }
 
@@ -149,7 +158,7 @@ export async function indexConversations(
           return parseConversation(sourcePath, project, archivePath);
         });
         if (exchanges === null) continue;
-        if (excludedByMarker(file, sourcePath)) continue;
+        if (excludedByMarker(db, file, sourcePath, archivePath)) continue;
 
         if (exchanges.length === 0) {
           console.log(`  Skipped ${file} (no exchanges)`);
@@ -282,7 +291,8 @@ export async function indexSession(sessionId: string, concurrency: number = 1, n
           return parseConversation(sourcePath, project, archivePath);
         });
 
-        if (exchanges && exchanges.length > 0 && !excludedByMarker(file, sourcePath)) {
+        // The marker check runs first. A marked transcript with no exchanges must still lose its earlier rows.
+        if (exchanges && !excludedByMarker(db, file, sourcePath, archivePath) && exchanges.length > 0) {
           // Generate summary (unless --no-summaries)
           const summaryPath = archivePath.replace('.jsonl', '-summary.txt');
           if (!noSummaries && !fs.existsSync(summaryPath)) {
@@ -386,7 +396,7 @@ export async function indexUnprocessed(concurrency: number = 1, noSummaries: boo
           return parseConversation(sourcePath, project, archivePath);
         });
         if (exchanges === null) continue;
-        if (excludedByMarker(file, sourcePath)) continue;
+        if (excludedByMarker(db, file, sourcePath, archivePath)) continue;
         const newExchanges = maxIndexedLine > 0
           ? exchanges.filter(e => e.lineStart > maxIndexedLine)
           : exchanges;

@@ -107,7 +107,7 @@ The dispatcher takes a command as its first argument.
 | Module | Exports |
 |---|---|
 | `types` | `ToolCall`, `ConversationHarness`, `ConversationExchange`, `SearchResult`, `MultiConceptResult` |
-| `db` | `OpenDatabaseOptions`, `migrateSchema`, `migrateToolCallsCascade`, `ensureFts`, `upsertExchangeFts`, `deleteExchangeFts`, `openDatabase`, `initDatabase`, `getSharedReaderDatabase`, `closeSharedReaderDatabase`, `insertExchange`, `getAllExchanges`, `getFileLastIndexed`, `getMaxIndexedLine`, `getFreelistInfo`, `vacuumDatabase`, `deleteExchange` |
+| `db` | `OpenDatabaseOptions`, `migrateSchema`, `migrateToolCallsCascade`, `ensureFts`, `upsertExchangeFts`, `deleteExchangeFts`, `openDatabase`, `initDatabase`, `getSharedReaderDatabase`, `closeSharedReaderDatabase`, `insertExchange`, `getAllExchanges`, `getFileLastIndexed`, `getMaxIndexedLine`, `getFreelistInfo`, `vacuumDatabase`, `deleteExchange`, `deleteExchangesForArchive` |
 | `embeddings` | `BGE_QUERY_PREFIX`, `initEmbeddings`, `generateEmbeddings`, `generateEmbedding`, `withQueryPrefix`, `generateQueryEmbedding`, `formatExchangeEmbeddingText`, `generateExchangeEmbedding`, `generateExchangeEmbeddings` |
 | `indexer` | `indexConversations`, `indexSession`, `indexUnprocessed` |
 | `parser` | `parseConversation`, `parseConversationFile` |
@@ -147,7 +147,7 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalExports | 611 | repo-tools map |
+| totalExports | 612 | repo-tools map |
 | totalSourceFiles | 290 | repo-tools map |
 
 `totalExports` counts every export in the repository, including test and tool files. The library barrel lists only the exports that `src/index.ts` re-exports. The tool schemas come from `src/mcp-schemas.ts`. The command names come from `cli/episodic-memory.js`. The variable names come from a search for `EPISODIC_MEMORY_` in `src/` and `cli/`. None of these facts is a `repo-tools map` metric.

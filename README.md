@@ -614,7 +614,7 @@ Conversations containing this marker anywhere in their content will be archived 
 - Test or experimental sessions
 - Any conversation you don't want searchable
 
-The marker can appear in any message (user or assistant) and excludes the entire conversation from the search index. The sync, the `index` commands and `index --repair` all honour the marker. An excluded conversation gets no summary. `index --repair` deletes the index rows of a conversation that gained the marker after an earlier index run. Practice tasks and citations come only from the index. An excluded conversation is therefore never a practice task and never a citation in a learned entry.
+The marker can appear in any message (user or assistant) and excludes the entire conversation from the search index. The sync, the `index` commands and `index --repair` all honour the marker. An excluded conversation gets no summary. A conversation can gain the marker after an earlier run indexed part of it. The sync, the `index` commands and `index --repair` then delete the index rows of that conversation. The sync, the `index` commands and `index --repair` skip a conversation that the marker scan cannot read. The rows of the conversation stay. Digest entries and topic documents that an earlier run built from the conversation stay. Practice tasks and citations come only from the index. An excluded conversation is therefore never a practice task and never a citation in a learned entry.
 
 ## MCP Server
 

@@ -315,7 +315,7 @@ export async function syncConversations(
 
   // Index copied files (unless skipIndex is set)
   if (!options.skipIndex && filesToIndex.length > 0) {
-    const { initDatabase, insertExchange, getMaxIndexedLine } = await import('./db.js');
+    const { initDatabase, insertExchange, getMaxIndexedLine, deleteExchangesForArchive } = await import('./db.js');
     const { initEmbeddings, generateExchangeEmbeddings } = await import('./embeddings.js');
     const { parseConversation } = await import('./parser.js');
 
@@ -344,10 +344,14 @@ export async function syncConversations(
       try {
         for (const file of filesToIndex) {
           try {
-            // An excluded file stays in the archive and out of the index. A file that the scan cannot read is not
-            // indexed either. The run records an error and re-queues the file, so the next sync scans the file again.
+            // An excluded file stays in the archive and out of the index. The file can gain the marker after an
+            // earlier sync indexed part of it, so the run deletes those rows. A file that the scan cannot read is not
+            // indexed either, and its rows stay. The run records an error and re-queues the file, so the next sync
+            // scans the file again.
             const markerScan = scanExclusionMarkers(file);
             if (markerScan === 'marker') {
+              const removed = deleteExchangesForArchive(db, file);
+              if (removed > 0) console.log(`  Removed ${removed} indexed exchange(s) of ${file} (exclusion marker)`);
               continue;
             }
             if (markerScan === 'unreadable') {

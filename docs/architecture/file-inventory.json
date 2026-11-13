@@ -174,7 +174,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 546
+      "loc": 565
     },
     {
       "file": "src/deferral.ts",
@@ -328,7 +328,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 455
+      "loc": 465
     },
     {
       "file": "src/learn-cli.ts",
@@ -734,7 +734,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 576
+      "loc": 580
     },
     {
       "file": "src/topic-db.ts",
@@ -1189,7 +1189,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 219
+      "loc": 324
     },
     {
       "file": "test/indexer-db-close.test.ts",
@@ -1882,7 +1882,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 161
+      "loc": 224
     },
     {
       "file": "test/sync-pending-and-legacy-retry.test.ts",

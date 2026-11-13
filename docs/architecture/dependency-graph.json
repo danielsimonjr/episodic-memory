@@ -5,7 +5,7 @@
     "language": "typescript",
     "totalFiles": 290,
     "totalModules": 4,
-    "totalExports": 611
+    "totalExports": 612
   },
   "modules": {
     "src": {
@@ -413,7 +413,8 @@
           "getMaxIndexedLine",
           "getFreelistInfo",
           "vacuumDatabase",
-          "deleteExchange"
+          "deleteExchange",
+          "deleteExchangesForArchive"
         ]
       },
       "src/deferral.ts": {
@@ -1179,6 +1180,7 @@
               "closeSharedReaderDatabase",
               "deleteExchange",
               "deleteExchangeFts",
+              "deleteExchangesForArchive",
               "ensureFts",
               "getAllExchanges",
               "getFileLastIndexed",
@@ -1292,7 +1294,9 @@
         "exports": []
       },
       "src/indexer.ts": {
-        "externalDependencies": [],
+        "externalDependencies": [
+          "better-sqlite3"
+        ],
         "nodeDependencies": [
           "events",
           "fs",
@@ -1305,7 +1309,8 @@
             "imports": [
               "initDatabase",
               "insertExchange",
-              "getMaxIndexedLine"
+              "getMaxIndexedLine",
+              "deleteExchangesForArchive"
             ],
             "typeOnly": false
           },
@@ -1353,7 +1358,7 @@
           {
             "file": "src/exclusion-marker.ts",
             "imports": [
-              "shouldSkipConversation"
+              "scanExclusionMarkers"
             ],
             "typeOnly": false
           }
@@ -9929,6 +9934,13 @@
               "*"
             ],
             "typeOnly": false
+          },
+          {
+            "file": "src/db.ts",
+            "imports": [
+              "*"
+            ],
+            "typeOnly": false
           }
         ],
         "exports": []
@@ -10690,8 +10702,8 @@
     "totalTypeScriptFiles": 290,
     "totalSourceFiles": 290,
     "totalModules": 4,
-    "totalLinesOfCode": 57411,
-    "totalExports": 611,
+    "totalLinesOfCode": 57612,
+    "totalExports": 612,
     "entryRoots": 6,
     "reachableFiles": 49,
     "dormantFiles": 60,
@@ -10709,7 +10721,7 @@
     "typeOnlyFilesInCycles": 2,
     "totalClasses": 10,
     "totalInterfaces": 139,
-    "totalFunctions": 347,
+    "totalFunctions": 348,
     "totalTypeGuards": 11,
     "totalEnums": 0,
     "totalConstants": 71,

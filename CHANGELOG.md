@@ -1,5 +1,8 @@
 ## [Unreleased]
 
+### Added
+- **`src/sqlite.ts`, a database adapter over `node:sqlite`.** The adapter gives the better-sqlite3 method names that the code uses: `prepare` with `run`, `get`, `all` and `iterate`, `exec`, `pragma`, `transaction` with `immediate`, `deferred` and `exclusive`, `function` and `close`. A nested transaction uses a savepoint. The adapter binds `undefined` as NULL. The adapter binds a safe integer as an SQL integer, so an FTS5 `rowid = ?` condition holds on SQLite 3.54. better-sqlite3 binds every number as a real, so `'v' || ?` with 7 now gives `v7`, not `v7.0`. The adapter refuses an async transaction function. The adapter hides the experimental warning that Node 22 writes when `node:sqlite` loads. No other module uses the adapter yet.
+
 ### Fixed
 - **A deleted conversation leaves no digest line behind.** The sync, the `index` commands, `index --repair` and `prune` delete the index rows of a conversation. A digest line that an earlier run built from the conversation stayed. The session-start hook could inject that line into every new session. These commands now remove each digest line that cites a deleted exchange, in active and in superseded entries. The commands replace the full-text row of each changed entry. The commands delete an entry with no line left. The entries that the deleted entry superseded become active again, so the next compression merges those entries again. The step calls no model. The new module `src/derived-text.ts` holds `removeDerivedText`. `deleteExchangesForArchive` now returns the ids of the deleted exchanges, not their number. Topic documents built from the conversation still stay. A todo row tracks these documents.
 

@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [1.12.0] - 2026-11-13
+
 ### Security
 - **`show --html` no longer emits a link to an unsafe scheme.** `marked` 16.4.2 copied a link destination into `href` as written, so a transcript that held `[x](javascript:alert(1))`, `[x](&#106;avascript:...)` or `[x](javascript&colon;...)` rendered a live `javascript:` link, and `![a](data:...)` rendered a `data:` image. The new renderer allows only `http`, `https`, `mailto` and relative destinations, escapes each `href` once, and emits no `img`.
 

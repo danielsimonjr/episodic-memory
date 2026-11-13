@@ -3441,7 +3441,7 @@ import { McpServer } from "@modelcontextprotocol/server";
 import { serveStdio } from "@modelcontextprotocol/server/stdio";
 
 // src/version.ts
-var VERSION = "1.11.0";
+var VERSION = "1.12.0";
 
 // src/mcp-server.ts
 init_db();

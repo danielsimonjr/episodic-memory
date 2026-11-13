@@ -8,7 +8,7 @@ This report lists each source file that the map census finds, with a disposition
 
 **Language**: typescript
 
-**Total files**: 261
+**Total files**: 263
 
 ## Disposition counts
 
@@ -17,28 +17,28 @@ This report lists each source file that the map census finds, with a disposition
 | `reachable` | 42 | A `src`-area file that an entry root reaches. |
 | `build-entry` | 4 | A `src`-area file that is an entry root. |
 | `test-only` | 43 | A `src`-area file that only a test reaches. |
-| `orphan` | 14 | A `src`-area file that nothing reaches. Delete it, or wire it to a root. |
-| `test` | 153 | A file in a `test/` or `tests/` folder, or a `*.test.ts` or `*.spec.ts` file. |
+| `orphan` | 15 | A `src`-area file that nothing reaches. Delete it, or wire it to a root. |
+| `test` | 154 | A file in a `test/` or `tests/` folder, or a `*.test.ts` or `*.spec.ts` file. |
 | `tool` | 4 | A file in a `tools/` or `scripts/` folder outside `src/`. |
 | `config` | 1 | A `*.config.*` file of TypeScript or JavaScript. |
 | `example` | 0 | A file in `examples/` or `docs/`. |
 | `bench` | 0 | A file in `bench/` or `benchmarks/`, or a `*.bench.*` file. |
-| **Total** | **261** | |
+| **Total** | **263** | |
 
 ## Per-area counts
 
 | Area | Files |
 | --- | --: |
 | `config` | 1 |
-| `src` | 103 |
-| `tests` | 153 |
+| `src` | 104 |
+| `tests` | 154 |
 | `tools` | 4 |
 
 ## Per-package counts
 
 | Package | Files |
 | --- | --: |
-| `(root)` | 166 |
+| `(root)` | 168 |
 | `episodic-memory` | 95 |
 
 ## All files
@@ -48,9 +48,10 @@ This report lists each source file that the map census finds, with a disposition
 | `cli/digest-hook.js` | (root) | src | orphan | 96 |
 | `cli/ensure-deps.js` | (root) | src | test-only | 190 |
 | `cli/episodic-memory.js` | (root) | src | orphan | 143 |
+| `cli/forward-child.js` | (root) | src | orphan | 28 |
 | `cli/index-conversations.js` | (root) | src | orphan | 165 |
 | `cli/mcp-server-wrapper.js` | (root) | src | orphan | 106 |
-| `cli/search-conversations.js` | (root) | src | orphan | 14 |
+| `cli/search-conversations.js` | (root) | src | orphan | 8 |
 | `cli/sync-hook.js` | (root) | src | orphan | 198 |
 | `scripts/claude-e2e.js` | (root) | tools | tool | 253 |
 | `scripts/codex-e2e.js` | (root) | tools | tool | 367 |
@@ -161,6 +162,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/claude-bin-deferral.test.ts` | (root) | tests | test | 180 |
 | `test/claude-bin.test.ts` | (root) | tests | test | 230 |
 | `test/claude-e2e-script.test.ts` | (root) | tests | test | 25 |
+| `test/cli-forward.test.ts` | (root) | tests | test | 123 |
 | `test/codex-doctor.test.ts` | (root) | tests | test | 154 |
 | `test/codex-e2e-script.test.ts` | (root) | tests | test | 24 |
 | `test/codex-hook-trust.test.ts` | (root) | tests | test | 34 |

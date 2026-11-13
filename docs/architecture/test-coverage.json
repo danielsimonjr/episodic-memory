@@ -1,25 +1,26 @@
 {
   "metadata": {
-    "totalSourceFiles": 103,
-    "totalTestFiles": 147,
+    "totalSourceFiles": 104,
+    "totalTestFiles": 148,
     "testedCount": 81,
-    "untestedCount": 22,
-    "coveragePercent": "78.6",
+    "untestedCount": 23,
+    "coveragePercent": "77.9",
     "effectiveCoverage": {
       "policyLoaded": false,
-      "activeFiles": 103,
+      "activeFiles": 104,
       "testedActive": 81,
-      "activeUntested": 22,
+      "activeUntested": 23,
       "excludedTotal": 0,
-      "percent": "78.6",
+      "percent": "77.9",
       "breakdown": {
-        "active_untested": 22
+        "active_untested": 23
       }
     }
   },
   "untestedFiles": [
     "cli/digest-hook.js",
     "cli/episodic-memory.js",
+    "cli/forward-child.js",
     "cli/index-conversations.js",
     "cli/mcp-server-wrapper.js",
     "cli/search-conversations.js",
@@ -131,6 +132,7 @@
       "test/runtime-imports.test.ts"
     ],
     "cli/episodic-memory.js": [],
+    "cli/forward-child.js": [],
     "cli/index-conversations.js": [],
     "cli/mcp-server-wrapper.js": [],
     "cli/search-conversations.js": [],
@@ -682,6 +684,7 @@
       "src/claude-bin.ts"
     ],
     "test/claude-e2e-script.test.ts": [],
+    "test/cli-forward.test.ts": [],
     "test/codex-doctor.test.ts": [
       "src/codex-hook-trust.ts",
       "src/doctor.ts"
@@ -1276,6 +1279,10 @@
     },
     {
       "file": "cli/episodic-memory.js",
+      "category": null
+    },
+    {
+      "file": "cli/forward-child.js",
       "category": null
     },
     {

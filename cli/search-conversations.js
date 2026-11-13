@@ -1,14 +1,8 @@
 #!/usr/bin/env node
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { spawn } from 'child_process';
 import { realpathSync } from 'fs';
+import { forward } from './forward-child.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(realpathSync(__filename));
-
-const child = spawn(process.execPath, [join(__dirname, '../dist/search-cli.js'), ...process.argv.slice(2)], {
-  stdio: 'inherit'
-});
-
-child.on('exit', (code) => process.exit(code ?? 0));
+// realpathSync resolves an npm bin symlink to this file. The code then finds dist/ next to the real cli/.
+forward(join(dirname(realpathSync(fileURLToPath(import.meta.url))), '../dist/search-cli.js'));

@@ -4,7 +4,7 @@ import { indexSession, indexUnprocessed, indexConversations } from './indexer.js
 import { initDatabase, getFreelistInfo, vacuumDatabase } from './db.js';
 import { getDbPath, getArchiveDir, getExcludedProjects, statIfExists } from './paths.js';
 import { pruneProjects } from './prune.js';
-import { acquireLock, releaseLock } from './lockfile.js';
+import { acquireRefreshedLock, releaseLock } from './lockfile.js';
 import { getSyncLockPath } from './logging.js';
 import fs from 'fs';
 import path from 'path';
@@ -95,7 +95,7 @@ const LOCK_BUSY_EXIT = 75;
 // summaries. The sync worker writes the same files, so each command takes the lock of the sync worker first.
 // Ported from upstream f1bcef6. index-cli checks the arguments before the lock, so a refusal never waits on a sync.
 const syncLockPath = getSyncLockPath();
-const syncLock = acquireLock(syncLockPath);
+const syncLock = acquireRefreshedLock(syncLockPath);
 if (!syncLock) {
     let holder = 'unknown pid';
     try {

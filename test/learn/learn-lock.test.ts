@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'fs';
 import { spawnSync } from 'child_process';
 import os from 'os';
@@ -51,6 +51,24 @@ describe('.learn.lock', () => {
     await first;
     // Free again once the holder released it.
     await expect(withLearnLock(async () => 'ok')).resolves.toBe('ok');
+  });
+
+  it('refreshes the lock file while the work runs, so a run longer than the steal age keeps its lock', async () => {
+    // A learn run has no hard stop. Without the refresh, a run older than LEARN_LOCK_STALE_MS loses its lock.
+    const lockPath = getLearnLockPath(getIndexDir());
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'], now: Date.now() });
+    try {
+      const moved = await withLearnLock(async () => {
+        const before = fs.statSync(lockPath).mtimeMs;
+        vi.advanceTimersByTime(31 * 60 * 1000);
+        return fs.statSync(lockPath).mtimeMs - before;
+      });
+      // The refresh at 30 minutes sets the mtime from the fake clock. The file got its first mtime a few ms after the clock started.
+      expect(moved).toBeGreaterThan(25 * 60 * 1000);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('releases the lock even when the work throws', async () => {

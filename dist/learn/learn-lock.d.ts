@@ -3,7 +3,7 @@
  *
  * `.learn.lock` lives in the index directory and goes through `lockfile.ts`.
  * `lockfile.ts` recovers a crashed run's lock with the same PID-liveness and age rules that sync and the embedding migration use.
- * When another run holds the lock, `acquireLock` returns `null`. The return value does not name the holder.
+ * When another run holds the lock, `acquireRefreshedLock` returns `null`. The return value does not name the holder.
  * This module therefore reads the holder's PID from the file and puts that PID in the error.
  * A message such as "another run holds it" is not actionable. A message such as "pid 4212 holds it" is.
  *
@@ -21,7 +21,9 @@ export declare const LEARN_LOCK_NAME = ".learn.lock";
 export declare const LEARN_PIDS_NAME = ".learn.pids";
 /**
  * The code steals a stale lock after two hours.
- * `EPISODIC_MEMORY_LEARN_MAX_MINUTES` bounds a real run (60 by default). So two hours only ever reclaims a lock whose holder is gone.
+ * A live run refreshes the lock file four times in each window, so its lock never reaches the steal age.
+ * Two hours therefore reclaims only a lock whose holder stopped, also when a run takes longer than
+ * `EPISODIC_MEMORY_LEARN_MAX_MINUTES`. That setting is not a hard stop.
  */
 export declare const LEARN_LOCK_STALE_MS: number;
 /** Where a run records the subprocesses that the run owns. */

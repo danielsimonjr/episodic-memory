@@ -11,7 +11,7 @@ These modules import nothing from the repository, or only other leaf modules. A 
 | `src/reentrancy.ts` | Exports `SUMMARIZER_GUARD_ENV` and `shouldSkipReentrantSync()`. A child process that the summarizer started carries the variable, and `sync` exits when it sees it. |
 | `src/node-floor.ts` | Holds the minimum Node.js version. `assertNodeFloor()` exits with one line on standard error when the runtime is older. |
 | `src/deps-health.ts` | Checks that `node_modules` is complete. The module tests for sentinel files and for the native bindings of better-sqlite3 and `onnxruntime-node`, not only for the folder. The MCP wrapper, the sync hook and `doctor` share the module. |
-| `src/lockfile.ts` | A cross-process file lock. A lock is stale when its holder process is gone or when the lock is older than a set age. The holder writes the PID after the holder creates the file, so a file with no PID is stale only after 10 seconds. `isLockHeld` answers the same question without taking the lock. |
+| `src/lockfile.ts` | A cross-process file lock. A lock is stale when its holder process is gone or when the lock is older than a set age. The holder writes the PID after the holder creates the file, so a file with no PID is stale only after 10 seconds. `isLockHeld` answers the same question without taking the lock. `acquireRefreshedLock` takes the lock. The function refreshes the times of the lock file four times in each stale window. A holder that runs longer than the window therefore keeps the lock. The sync worker, the `index` commands, the backfill and the learn run take their locks this way. `releaseLock` stops the refresh. |
 | `src/constants.ts` | The marker text that identifies summarizer conversations, and the length cap for indexed text (`truncateForIndex`). |
 | `src/content-text.ts` | Reads the message content of a transcript line. `extractContentText` returns the text of a content. `safeParseJson` returns the input when the text is not valid JSON. `parser.ts` and `show.ts` both use the module. The module imports nothing. |
 | `src/redact.ts` | Opt-in secret redaction. `maybeRedactSecrets(text)` returns the text unchanged unless `EPISODIC_MEMORY_REDACT_SECRETS` is on. |
@@ -206,7 +206,7 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 | totalSourceFiles | 286 | repo-tools map |
 | totalClasses | 10 | repo-tools map |
 | totalInterfaces | 139 | repo-tools map |
-| totalFunctions | 344 | repo-tools map |
+| totalFunctions | 346 | repo-tools map |
 | totalConstants | 70 | repo-tools map |
 
 The tool names, the table names and the model name come from a direct reading of `src/mcp-server.ts`, `src/db.ts` and `src/embeddings.ts`. They are not `repo-tools map` metrics.

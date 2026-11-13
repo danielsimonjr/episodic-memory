@@ -440,7 +440,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 173
+      "loc": 175
     },
     {
       "file": "src/learn/learned-block.ts",
@@ -566,7 +566,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 149
+      "loc": 197
     },
     {
       "file": "src/logging.ts",
@@ -1315,7 +1315,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 147
+      "loc": 165
     },
     {
       "file": "test/learn/learned-block.test.ts",
@@ -1476,7 +1476,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 85
+      "loc": 163
     },
     {
       "file": "test/logging-append.test.ts",

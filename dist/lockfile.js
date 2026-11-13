@@ -125,6 +125,48 @@ export function acquireLock(lockPath, staleMs = DEFAULT_STALE_MS) {
     return stolen;
 }
 /**
+ * Refresh the lock file of a held lock at a fixed interval.
+ *
+ * A refreshed lock never looks stale while the holder runs. `acquireLock` treats a lock file older than the stale
+ * window as stale, also when its PID is alive. A holder that runs longer than the window must therefore refresh the
+ * file. The refresh sets the times of the open descriptor. The refresh therefore never touches a lock file that
+ * another process created after a takeover. The timer does not keep the process alive. `releaseLock` stops the
+ * timer. A second call replaces the timer of the first call.
+ *
+ * @param handle a lock that `acquireLock` returned
+ * @param intervalMs the time between two refreshes; the default is a quarter of the default stale window
+ */
+export function keepLockFresh(handle, intervalMs = DEFAULT_STALE_MS / 4) {
+    if (handle.heartbeat)
+        clearInterval(handle.heartbeat);
+    handle.heartbeat = setInterval(() => {
+        const now = new Date();
+        try {
+            fs.futimesSync(handle.fd, now, now);
+        }
+        catch {
+            // A failed refresh leaves the lock to age. The next refresh tries again.
+        }
+    }, intervalMs);
+    handle.heartbeat.unref();
+}
+/**
+ * Acquire a lock, with a refresh of its file until the release.
+ *
+ * Use the function for a lock whose holder can run longer than the stale window. The sync worker, the index
+ * commands, the backfill and the learn run are such holders. The function returns null when `acquireLock` returns
+ * null.
+ *
+ * @param lockPath the lock file path
+ * @param staleMs the stale window; the refresh runs four times in each window
+ */
+export function acquireRefreshedLock(lockPath, staleMs = DEFAULT_STALE_MS) {
+    const handle = acquireLock(lockPath, staleMs);
+    if (handle)
+        keepLockFresh(handle, staleMs / 4);
+    return handle;
+}
+/**
  * Release a lock that `acquireLock` returned.
  *
  * The function closes the file descriptor. The function then deletes the lock file only when
@@ -132,6 +174,11 @@ export function acquireLock(lockPath, staleMs = DEFAULT_STALE_MS) {
  * disk. Errors are ignored.
  */
 export function releaseLock(handle) {
+    // Stop the refresh first. After the close, the descriptor number can belong to another file.
+    if (handle.heartbeat) {
+        clearInterval(handle.heartbeat);
+        handle.heartbeat = undefined;
+    }
     try {
         fs.closeSync(handle.fd);
     }

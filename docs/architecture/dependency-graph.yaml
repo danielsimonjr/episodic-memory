@@ -4,7 +4,7 @@ metadata:
   language: typescript
   totalFiles: 286
   totalModules: 4
-  totalExports: 607
+  totalExports: 609
 modules:
   src:
     cli/digest-hook.js:
@@ -141,7 +141,7 @@ modules:
           typeOnly: false
         - file: src/lockfile.ts
           imports:
-            - acquireLock
+            - acquireRefreshedLock
             - releaseLock
           typeOnly: false
         - file: src/backfill.ts
@@ -781,7 +781,7 @@ modules:
           typeOnly: false
         - file: src/lockfile.ts
           imports:
-            - acquireLock
+            - acquireRefreshedLock
             - releaseLock
           typeOnly: false
         - file: src/logging.ts
@@ -1609,7 +1609,7 @@ modules:
       internalDependencies:
         - file: src/lockfile.ts
           imports:
-            - acquireLock
+            - acquireRefreshedLock
             - isLockHeld
             - releaseLock
           typeOnly: false
@@ -2255,6 +2255,8 @@ modules:
         - isProcessAlive
         - isLockHeld
         - acquireLock
+        - keepLockFresh
+        - acquireRefreshedLock
         - releaseLock
     src/logging.ts:
       externalDependencies: []
@@ -2711,7 +2713,7 @@ modules:
           typeOnly: false
         - file: src/lockfile.ts
           imports:
-            - acquireLock
+            - acquireRefreshedLock
             - releaseLock
           typeOnly: false
         - file: src/priority.ts
@@ -5645,8 +5647,10 @@ modules:
         - file: src/lockfile.ts
           imports:
             - acquireLock
+            - acquireRefreshedLock
             - releaseLock
             - isProcessAlive
+            - keepLockFresh
           typeOnly: false
         - file: test/test-utils.ts
           imports:
@@ -7015,8 +7019,8 @@ statistics:
   totalTypeScriptFiles: 286
   totalSourceFiles: 286
   totalModules: 4
-  totalLinesOfCode: 56672
-  totalExports: 607
+  totalLinesOfCode: 56818
+  totalExports: 609
   entryRoots: 6
   reachableFiles: 49
   dormantFiles: 60
@@ -7034,7 +7038,7 @@ statistics:
   typeOnlyFilesInCycles: 2
   totalClasses: 10
   totalInterfaces: 139
-  totalFunctions: 344
+  totalFunctions: 346
   totalTypeGuards: 11
   totalEnums: 0
   totalConstants: 70

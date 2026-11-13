@@ -6,7 +6,7 @@
 import { getArchiveDir, getConversationSourceDirs, getIndexDir } from './paths.js';
 import { shouldSkipReentrantSync } from './reentrancy.js';
 import { syncHeadline } from './sync-banner.js';
-import { acquireLock, releaseLock } from './lockfile.js';
+import { acquireRefreshedLock, releaseLock } from './lockfile.js';
 import { BACKGROUND_WORKER_ENV, lowerPriorityIfBackgroundWorker } from './priority.js';
 import { spawn } from 'child_process';
 import fs from 'fs';
@@ -105,7 +105,7 @@ if (isBackground) {
 // transformer and fan out summarizer subprocesses, pegging the CPU — the storm
 // behind the wedged orphans. Checked here, before the heavy imports below, so a
 // locked-out worker bails instantly. The index commands of index-cli take the same lock.
-const syncLock = acquireLock(getSyncLockPath());
+const syncLock = acquireRefreshedLock(getSyncLockPath());
 if (!syncLock) {
   console.error('episodic-memory: another sync or index command is running; skipping');
   process.exit(0);

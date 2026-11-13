@@ -127,7 +127,7 @@ The `skills` MCP tool (`skills-tool.ts`) lists, searches and loads active skills
 
 ## Concurrency, cost and process control
 
-- **One run at a time.** `withLearnLock` takes `.learn.lock` through the shared lock file code, so the same liveness and age rules as sync recover the lock of a crashed run. A held lock reports the pid of the holder.
+- **One run at a time.** `withLearnLock` takes `.learn.lock` through the shared lock file code, so the same liveness and age rules as sync recover the lock of a crashed run. A live run refreshes the lock file, so a run longer than the two-hour steal age keeps the lock. A held lock reports the pid of the holder.
 - **One subprocess limit.** Every agent subprocess goes through one global semaphore (`globalAgentSemaphore`). Depth does not multiply the number of processes. An awaited nested call reuses the slot of its caller, so nesting cannot deadlock.
 - **No orphan kills.** `.learn.pids` lists the live child processes. The session-start orphan reaper reads it and never ends a process of a live run. The reaper ignores the file when the process named in `.learn.lock` is not alive, so a killed run protects nothing. One tracker lists the processes for every concurrent agent of a run, at the `EPISODIC_MEMORY_LEARN_PID_POLL_MS` interval. A PID leaves the file when a listing no longer shows the PID, or when the last agent ends.
 - **Budget check first.** A command that spends model calls computes its baseline cost first and refuses to start when the baseline alone exceeds the call limit.

@@ -415,7 +415,7 @@ Every setting is read at call time and ignored when absent, not a positive numbe
 | `EPISODIC_MEMORY_LEARN_APPROVE` | `instructions` | Approval mode: `instructions` (instructions need `learn approve`; skills activate on validation), `all` (both need approval), `none` (both activate on validation) |
 | `EPISODIC_MEMORY_LEARN_MAX_CALLS` | `200` | Subprocess calls per run. The baseline is computed first; a run that cannot afford it refuses to start, and a run that spends past it stops with status `stopped` |
 | `EPISODIC_MEMORY_LEARN_MAX_USD` | `5` | USD cap recorded on each run and printed by `learn report` against what was spent. The SDK-level cap per subprocess is fixed at $1 |
-| `EPISODIC_MEMORY_LEARN_MAX_MINUTES` | `60` | Wall-clock a real run is expected to fit. Not a hard stop: it is the bound the lock's 2-hour stale timeout is reasoned from |
+| `EPISODIC_MEMORY_LEARN_MAX_MINUTES` | `60` | Wall-clock a real run is expected to fit. Not a hard stop. A live run refreshes its lock, so the 2-hour stale timeout of the lock reclaims only the lock of a stopped run |
 | `EPISODIC_MEMORY_LEARN_MAX_TASKS` | `120` | Tasks kept when generating a practice set |
 | `EPISODIC_MEMORY_LEARN_CONCURRENCY` | `3` | One global subprocess semaphore shared by every level, so depth never multiplies processes |
 | `EPISODIC_MEMORY_LEARN_ROUNDS` | `3` | Learner rounds per leaf before the loop gives up |

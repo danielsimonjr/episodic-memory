@@ -4,6 +4,8 @@
 export interface LockHandle {
     path: string;
     fd: number;
+    /** The refresh timer that `keepLockFresh` started. `releaseLock` stops the timer before the close. */
+    heartbeat?: NodeJS.Timeout;
 }
 /**
  * Return true when a process with the given PID exists.
@@ -25,6 +27,30 @@ export declare function isLockHeld(lockPath: string, staleMs?: number): boolean;
  * A lock file with no PID that is younger than 10 seconds also gives null.
  */
 export declare function acquireLock(lockPath: string, staleMs?: number): LockHandle | null;
+/**
+ * Refresh the lock file of a held lock at a fixed interval.
+ *
+ * A refreshed lock never looks stale while the holder runs. `acquireLock` treats a lock file older than the stale
+ * window as stale, also when its PID is alive. A holder that runs longer than the window must therefore refresh the
+ * file. The refresh sets the times of the open descriptor. The refresh therefore never touches a lock file that
+ * another process created after a takeover. The timer does not keep the process alive. `releaseLock` stops the
+ * timer. A second call replaces the timer of the first call.
+ *
+ * @param handle a lock that `acquireLock` returned
+ * @param intervalMs the time between two refreshes; the default is a quarter of the default stale window
+ */
+export declare function keepLockFresh(handle: LockHandle, intervalMs?: number): void;
+/**
+ * Acquire a lock, with a refresh of its file until the release.
+ *
+ * Use the function for a lock whose holder can run longer than the stale window. The sync worker, the index
+ * commands, the backfill and the learn run are such holders. The function returns null when `acquireLock` returns
+ * null.
+ *
+ * @param lockPath the lock file path
+ * @param staleMs the stale window; the refresh runs four times in each window
+ */
+export declare function acquireRefreshedLock(lockPath: string, staleMs?: number): LockHandle | null;
 /**
  * Release a lock that `acquireLock` returned.
  *

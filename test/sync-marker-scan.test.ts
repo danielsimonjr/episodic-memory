@@ -71,6 +71,78 @@ describe('shouldSkipConversation reads the whole file', () => {
   });
 });
 
+// A marker counts only in the text of a user or assistant message. A session that reads a file with the marker, for
+// example the source of this repo, has the marker in a tool input or a tool result. That session stays in the index.
+describe('scanExclusionMarkers counts only the text of a user or assistant message', () => {
+  let testDir: string;
+  let scanExclusionMarkers: (filePath: string) => 'marker' | 'clean' | 'unreadable';
+
+  beforeEach(async () => {
+    testDir = mkdtempSync(join(tmpdir(), 'em-marker-kind-'));
+    ({ scanExclusionMarkers } = await import('../src/exclusion-marker.js'));
+  });
+
+  afterEach(() => {
+    safeRmSync(testDir);
+  });
+
+  function scan(records: unknown[]): string {
+    const filePath = join(testDir, 'session.jsonl');
+    writeFileSync(filePath, records.map(r => JSON.stringify(r)).join('\n') + '\n');
+    return scanExclusionMarkers(filePath);
+  }
+
+  const M = DO_NOT_INDEX_MARKER;
+  const user = (content: unknown) => ({ type: 'user', message: { role: 'user', content } });
+  const assistant = (content: unknown) => ({ type: 'assistant', message: { role: 'assistant', content } });
+  const codex = (payload: unknown) => ({ type: 'response_item', timestamp: '2025-10-01T12:00:00Z', payload });
+
+  it('counts the marker in a user string, a user text block and an assistant text block', () => {
+    expect(scan([user(`Please forget this. ${M}`)])).toBe('marker');
+    expect(scan([user([{ type: 'text', text: `Forget this. ${M}` }])])).toBe('marker');
+    expect(scan([assistant([{ type: 'text', text: `I add the marker: ${M}` }])])).toBe('marker');
+  });
+
+  it('counts the marker in the text of a Codex user or assistant message', () => {
+    expect(scan([codex({ type: 'message', role: 'user', content: [{ type: 'input_text', text: M }] })])).toBe('marker');
+    expect(scan([codex({ type: 'message', role: 'assistant', content: [{ type: 'output_text', text: M }] })])).toBe('marker');
+  });
+
+  it('does not count the marker in a tool result, a tool input, a thinking block or a tool output record', () => {
+    expect(scan([user([{ type: 'tool_result', tool_use_id: 't1', content: `const MARKER = '${M}';` }])])).toBe('clean');
+    expect(scan([user([{ type: 'tool_result', tool_use_id: 't1', content: [{ type: 'text', text: M }] }])])).toBe('clean');
+    expect(scan([assistant([{ type: 'tool_use', id: 't1', name: 'Write', input: { content: M } }])])).toBe('clean');
+    expect(scan([assistant([{ type: 'thinking', thinking: `The source holds ${M}` }])])).toBe('clean');
+    // Only a block of type `text` is message text, as in the parser. A block of another type can carry a `text` field.
+    expect(scan([user([{ type: 'document', title: 'source', text: M }])])).toBe('clean');
+    expect(scan([{ ...user([{ type: 'tool_result', tool_use_id: 't1', content: 'ok' }]), toolUseResult: { stdout: M } }])).toBe('clean');
+  });
+
+  it('does not count the marker in a Codex tool call or tool output', () => {
+    expect(scan([codex({ type: 'function_call', name: 'shell', arguments: JSON.stringify({ cmd: `grep '${M}'` }) })])).toBe('clean');
+    expect(scan([codex({ type: 'function_call_output', call_id: 'c1', output: M })])).toBe('clean');
+    expect(scan([codex({ type: 'message', role: 'developer', content: [{ type: 'input_text', text: M }] })])).toBe('clean');
+  });
+
+  it('counts the marker in a line that does not parse, and finds a message marker after tool lines', () => {
+    const filePath = join(testDir, 'broken.jsonl');
+    writeFileSync(filePath, JSON.stringify(user('A question.')) + '\n{"type":"user","message":' + M + '\n');
+    expect(scanExclusionMarkers(filePath)).toBe('marker');
+    const tool = user([{ type: 'tool_result', tool_use_id: 't1', content: M }]);
+    expect(scan([tool, tool, assistant([{ type: 'text', text: 'Fine.' }]), user(`Now forget it. ${M}`)])).toBe('marker');
+  });
+
+  it('reads a message line that crosses a read chunk', () => {
+    const filePath = join(testDir, 'long-line.jsonl');
+    const text = 'x'.repeat(CHUNK - 40) + M + 'y'.repeat(CHUNK);
+    writeFileSync(filePath, JSON.stringify(user([{ type: 'tool_result', tool_use_id: 't1', content: text }])) + '\n' +
+      JSON.stringify(user(text)) + '\n');
+    expect(scanExclusionMarkers(filePath)).toBe('marker');
+    writeFileSync(filePath, JSON.stringify(user([{ type: 'tool_result', tool_use_id: 't1', content: text }])) + '\n');
+    expect(scanExclusionMarkers(filePath)).toBe('clean');
+  });
+});
+
 function transcript(text: string): string {
   return [
     JSON.stringify({
@@ -178,6 +250,23 @@ describe('sync honours the marker scan', () => {
     } finally {
       db.close();
     }
+  });
+
+  it('keeps the rows of a transcript that gains the marker only in a tool result', async () => {
+    writeFileSync(join(sourceDir, 'project-a', `${SESSION}.jsonl`), transcript('A question.'));
+    await syncConversations(sourceDir, destDir, { skipSummaries: true });
+    expect(indexedRows()).toBe(1);
+
+    const source = join(sourceDir, 'project-a', `${SESSION}.jsonl`);
+    const line = { type: 'user', uuid: 'u2', parentUuid: 'a1', timestamp: '2025-10-01T12:00:02Z', isSidechain: false,
+      message: { role: 'user', content: [{ type: 'tool_result', tool_use_id: 't1', content: `const MARKER = '${DO_NOT_INDEX_MARKER}';` }] } };
+    fs.appendFileSync(source, JSON.stringify(line) + '\n');
+    const later = new Date(Date.now() + 60_000);
+    fs.utimesSync(source, later, later);
+    const second = await syncConversations(sourceDir, destDir, { skipSummaries: true });
+    expect(second.copied).toBe(1);
+    expect(second.errors).toEqual([]);
+    expect(indexedRows()).toBe(1);
   });
 
   it('keeps the earlier rows of a transcript whose archive copy the scan cannot read (the control)', async () => {

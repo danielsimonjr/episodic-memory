@@ -27,7 +27,7 @@ Method: the size walk of section 7. A nested package counts once.
 | @modelcontextprotocol/server 2.0.0 | 1 (`src/mcp-server.ts`) | 3 | 7.6 | |
 | zod ^4.6.6 | 2 | 1 | 0.0 (shared with the MCP server) | 6.1 own |
 | onnxruntime-common 1.24.3 | 0 | 1 | 0.0 | hoist pin (section 3.5) |
-| marked ^16.4.0 | 1 (`src/show.ts`) | 1 | 0.4 | |
+| marked ^16.4.0 | 1 (`src/show.ts`) | 1 | 0.4 | Baseline row. `marked` is removed; `src/markdown-html.ts` replaces it. |
 | sqlite-vec ^0.1.7-alpha.2 (installed 0.1.9) | 1 (`src/db.ts`) | 2 | 0.3 | `vec0` extension in an optional platform package |
 
 Totals (same tree, same method):
@@ -408,7 +408,6 @@ The `onnxruntime-common` pin goes away only with B.
 |---|---|---|
 | `@modelcontextprotocol/server` | 7.6 exclusive | The MCP server (`src/mcp-server.ts`). The closure is 3 packages. |
 | `zod` | 0.0 exclusive (6.1 own) | The MCP server and 2 source files use `zod`. The Agent SDK declares `zod` as a peer. |
-| `marked` | 0.4 | One import in `src/show.ts`. The package ships its own types. |
 | `sqlite-vec` | 0.3 exclusive | Removed by section 3.6. |
 | `@huggingface/transformers` (after section 3.3) | 128.8 (estimate) | The embedding pipeline that the code runs. Option B is the only step that removes `@huggingface/transformers`. |
 | `@anthropic-ai/claude-agent-sdk` | 5.2 without the platform package (measured) | Three import sites. The plan can remove only the platform package (section 3.4). |
@@ -429,7 +428,7 @@ This plan owns the dependency list. Each cross-major bump has its own decision.
 | Bump | Saving | Verdict | Reason |
 |---|---|---|---|
 | `typescript` 5 to 6 | 0 (devDependency; off plugin hosts after section 3.2) | **DO LATER** | A compiler change alters `dist/`. The bump needs its own PR, a build check and a line-by-line read of the `dist/` diff. |
-| `marked` 16 to 18 | 0 | **DO LATER** | No size saving. One import site. The bump needs its own PR and an output check of `src/show.ts`. |
+| `marked` 16 to 18 | 0 | **MOOT** | `marked` is removed. `src/markdown-html.ts` renders the `show --html` output. |
 | `@types/node` 24 to 25 | 0 | **KEEP at 24** | The types follow the runtime floor and the CI Node version. Decide after section 3.6 sets the floor. |
 
 The removal of `@types/marked` in section 3.1 uses the types that `marked` 16 ships. That removal is not a major bump.

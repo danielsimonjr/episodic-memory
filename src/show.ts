@@ -1,5 +1,5 @@
-import { marked } from 'marked';
 import { extractContentText, safeParseJson } from './content-text.js';
+import { escapeHtml, markdownToHtml } from './markdown-html.js';
 
 interface ConversationMessage {
   uuid: string;
@@ -985,17 +985,6 @@ ${renderMarkdownSafely(markdown)}
 </html>`;
 }
 
-function escapeHtml(text: string): string {
-  const map: Record<string, string> = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;'
-  };
-  return text.replace(/[&<>"']/g, m => map[m]);
-}
-
 function isMarkdown(text: string): boolean {
   // Detect common markdown patterns
   const markdownPatterns = [
@@ -1017,11 +1006,9 @@ function isMarkdown(text: string): boolean {
 
 function renderMarkdownSafely(text: string): string {
   try {
-    const renderer = new marked.Renderer();
-    renderer.html = ({ text }) => escapeHtml(text);
-    return marked.parse(text, { async: false, renderer }) as string;
+    return markdownToHtml(text);
   } catch (error) {
-    // Fallback to escaped HTML if markdown parsing fails
+    // markdownToHtml never throws (test/markdown-html.test.ts), so this fallback is a guard only.
     return `<pre>${escapeHtml(text)}</pre>`;
   }
 }

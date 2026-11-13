@@ -2,9 +2,9 @@ metadata:
   name: episodic-memory
   schemaVersion: 2.0.0
   language: typescript
-  totalFiles: 295
+  totalFiles: 297
   totalModules: 4
-  totalExports: 629
+  totalExports: 631
 modules:
   src:
     cli/digest-hook.js:
@@ -2391,6 +2391,13 @@ modules:
         - rotateSyncLogIfNeeded
         - formatLogLine
         - appendLogLine
+    src/markdown-html.ts:
+      externalDependencies: []
+      nodeDependencies: []
+      internalDependencies: []
+      exports:
+        - escapeHtml
+        - markdownToHtml
     src/mcp-auth.ts:
       externalDependencies: []
       nodeDependencies:
@@ -2701,14 +2708,18 @@ modules:
           typeOnly: false
       exports: []
     src/show.ts:
-      externalDependencies:
-        - marked
+      externalDependencies: []
       nodeDependencies: []
       internalDependencies:
         - file: src/content-text.ts
           imports:
             - extractContentText
             - safeParseJson
+          typeOnly: false
+        - file: src/markdown-html.ts
+          imports:
+            - escapeHtml
+            - markdownToHtml
           typeOnly: false
       exports:
         - formatConversationAsMarkdown
@@ -6035,6 +6046,20 @@ modules:
             - rotateSyncLogIfNeeded
           typeOnly: false
       exports: []
+    test/markdown-html.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies: []
+      internalDependencies:
+        - file: src/markdown-html.ts
+          imports:
+            - markdownToHtml
+          typeOnly: false
+        - file: src/show.ts
+          imports:
+            - formatConversationAsHTML
+          typeOnly: false
+      exports: []
     test/mcp-auth.test.ts:
       externalDependencies:
         - vitest
@@ -7547,13 +7572,13 @@ modules:
           typeOnly: false
       exports: []
 statistics:
-  totalTypeScriptFiles: 295
-  totalSourceFiles: 295
+  totalTypeScriptFiles: 297
+  totalSourceFiles: 297
   totalModules: 4
-  totalLinesOfCode: 59124
-  totalExports: 629
+  totalLinesOfCode: 60585
+  totalExports: 631
   entryRoots: 6
-  reachableFiles: 51
+  reachableFiles: 52
   dormantFiles: 60
   orphanedFiles: 15
   testOnlyFiles: 45
@@ -7569,7 +7594,7 @@ statistics:
   typeOnlyFilesInCycles: 2
   totalClasses: 11
   totalInterfaces: 145
-  totalFunctions: 356
+  totalFunctions: 358
   totalTypeGuards: 11
   totalEnums: 0
   totalConstants: 70
@@ -7582,7 +7607,7 @@ reachability:
     - src/mcp-server.ts
     - test/setup-env.ts
     - test/global-setup.ts
-  reachableCount: 51
+  reachableCount: 52
   dormantCount: 60
   orphaned:
     - cli/digest-hook.js

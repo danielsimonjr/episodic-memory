@@ -1,25 +1,25 @@
 {
-  "totalFiles": 295,
+  "totalFiles": 297,
   "byDisposition": {
-    "reachable": 47,
+    "reachable": 48,
     "build-entry": 4,
     "test-only": 45,
     "orphan": 15,
-    "test": 180,
+    "test": 181,
     "tool": 3,
     "config": 1,
     "bench": 0,
     "example": 0
   },
   "byArea": {
-    "src": 111,
+    "src": 112,
     "tools": 3,
-    "tests": 180,
+    "tests": 181,
     "config": 1
   },
   "byPackage": {
-    "(root)": 193,
-    "episodic-memory": 102
+    "(root)": 194,
+    "episodic-memory": 103
   },
   "files": [
     {
@@ -576,6 +576,13 @@
       "loc": 91
     },
     {
+      "file": "src/markdown-html.ts",
+      "package": "episodic-memory",
+      "area": "src",
+      "disposition": "reachable",
+      "loc": 1059
+    },
+    {
       "file": "src/mcp-auth.ts",
       "package": "episodic-memory",
       "area": "src",
@@ -692,7 +699,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 1027
+      "loc": 1014
     },
     {
       "file": "src/sqlite.ts",
@@ -1521,6 +1528,13 @@
       "loc": 73
     },
     {
+      "file": "test/markdown-html.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 413
+    },
+    {
       "file": "test/mcp-auth.test.ts",
       "package": "(root)",
       "area": "tests",
@@ -1798,7 +1812,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 349
+      "loc": 351
     },
     {
       "file": "test/summarizer-prompt-budget.test.ts",

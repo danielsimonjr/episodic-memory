@@ -8,38 +8,38 @@ This report lists each source file that the map census finds, with a disposition
 
 **Language**: typescript
 
-**Total files**: 295
+**Total files**: 297
 
 ## Disposition counts
 
 | Disposition | Count | Meaning |
 | --- | --: | --- |
-| `reachable` | 47 | A `src`-area file that an entry root reaches. |
+| `reachable` | 48 | A `src`-area file that an entry root reaches. |
 | `build-entry` | 4 | A `src`-area file that is an entry root. |
 | `test-only` | 45 | A `src`-area file that only a test reaches. |
 | `orphan` | 15 | A `src`-area file that nothing reaches. Delete it, or wire it to a root. |
-| `test` | 180 | A file in a `test/` or `tests/` folder, or a `*.test.ts` or `*.spec.ts` file. |
+| `test` | 181 | A file in a `test/` or `tests/` folder, or a `*.test.ts` or `*.spec.ts` file. |
 | `tool` | 3 | A file in a `tools/` or `scripts/` folder outside `src/`. |
 | `config` | 1 | A `*.config.*` file of TypeScript or JavaScript. |
 | `example` | 0 | A file in `examples/` or `docs/`. |
 | `bench` | 0 | A file in `bench/` or `benchmarks/`, or a `*.bench.*` file. |
-| **Total** | **295** | |
+| **Total** | **297** | |
 
 ## Per-area counts
 
 | Area | Files |
 | --- | --: |
 | `config` | 1 |
-| `src` | 111 |
-| `tests` | 180 |
+| `src` | 112 |
+| `tests` | 181 |
 | `tools` | 3 |
 
 ## Per-package counts
 
 | Package | Files |
 | --- | --: |
-| `(root)` | 193 |
-| `episodic-memory` | 102 |
+| `(root)` | 194 |
+| `episodic-memory` | 103 |
 
 ## All files
 
@@ -124,6 +124,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/learn/validate.ts` | episodic-memory | src | test-only | 348 |
 | `src/lockfile.ts` | episodic-memory | src | reachable | 197 |
 | `src/logging.ts` | episodic-memory | src | reachable | 91 |
+| `src/markdown-html.ts` | episodic-memory | src | reachable | 1059 |
 | `src/mcp-auth.ts` | episodic-memory | src | reachable | 68 |
 | `src/mcp-schemas.ts` | episodic-memory | src | reachable | 274 |
 | `src/mcp-server.ts` | episodic-memory | src | build-entry | 163 |
@@ -140,7 +141,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/search-cli.ts` | episodic-memory | src | orphan | 122 |
 | `src/search.ts` | episodic-memory | src | reachable | 623 |
 | `src/show-cli.ts` | episodic-memory | src | orphan | 59 |
-| `src/show.ts` | episodic-memory | src | reachable | 1027 |
+| `src/show.ts` | episodic-memory | src | reachable | 1014 |
 | `src/sqlite.ts` | episodic-memory | src | reachable | 357 |
 | `src/stats-cli.ts` | episodic-memory | src | orphan | 32 |
 | `src/stats.ts` | episodic-memory | src | test-only | 190 |
@@ -259,6 +260,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/lockfile.test.ts` | (root) | tests | test | 163 |
 | `test/logging-append.test.ts` | (root) | tests | test | 27 |
 | `test/logging.test.ts` | (root) | tests | test | 73 |
+| `test/markdown-html.test.ts` | (root) | tests | test | 413 |
 | `test/mcp-auth.test.ts` | (root) | tests | test | 34 |
 | `test/mcp-protocol.test.ts` | (root) | tests | test | 329 |
 | `test/mcp-read-redaction.test.ts` | (root) | tests | test | 48 |
@@ -298,7 +300,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/summarizer-claude-path.test.ts` | (root) | tests | test | 158 |
 | `test/summarizer-gpu-reservation.test.ts` | (root) | tests | test | 119 |
 | `test/summarizer-ollama-fallback.test.ts` | (root) | tests | test | 83 |
-| `test/summarizer-options.test.ts` | (root) | tests | test | 349 |
+| `test/summarizer-options.test.ts` | (root) | tests | test | 351 |
 | `test/summarizer-prompt-budget.test.ts` | (root) | tests | test | 72 |
 | `test/summarizer-text.test.ts` | (root) | tests | test | 44 |
 | `test/sync-banner.test.ts` | (root) | tests | test | 34 |

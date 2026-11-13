@@ -4,7 +4,7 @@
 
 # episodic-memory - Dependency Graph
 
-**Version**: 1.10.0
+**Version**: 1.11.0
 
 This document provides a comprehensive dependency graph of all files, components, imports, functions, and variables in the codebase.
 
@@ -32,7 +32,7 @@ This document provides a comprehensive dependency graph of all files, components
 The codebase is organized into the following modules:
 
 - **cli**: 8 files
-- **root**: 69 files
+- **root**: 70 files
 - **entry**: 1 file
 - **learn**: 32 files
 - **vendor/onnxruntime-web-stub**: 1 file
@@ -757,6 +757,13 @@ The codebase is organized into the following modules:
 
 ---
 
+### `src/markdown-html.ts` - Markdown to HTML renderer for the transcript viewer. Node built-ins only.
+
+**Exports:**
+- Functions: `escapeHtml`, `markdownToHtml`
+
+---
+
 ### `src/mcp-auth.ts` - Optional MCP tool authorization.
 
 **Node.js Built-in Dependencies:**
@@ -999,15 +1006,11 @@ The codebase is organized into the following modules:
 
 ### `src/show.ts` - Format a conversation transcript as Markdown.
 
-**External Dependencies:**
-| Package | Import |
-|---------|--------|
-| `marked` | `marked` |
-
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
 | `./content-text.js` | `extractContentText, safeParseJson` | Import |
+| `./markdown-html.js` | `escapeHtml, markdownToHtml` | Import |
 
 **Exports:**
 - Functions: `formatConversationAsMarkdown`, `formatConversationAsHTML`
@@ -2148,7 +2151,7 @@ graph TD
         N15[constants]
         N16[content-text]
         N17[db]
-        N18[...59 more]
+        N18[...60 more]
     end
 
     subgraph Entry
@@ -2206,14 +2209,14 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 295 |
+| Total Source Files | 297 |
 | Subsystems | 5 |
-| Total Lines of Code | 59124 |
-| Total Exports | 629 |
+| Total Lines of Code | 60585 |
+| Total Exports | 631 |
 | Total Re-exports | 9 |
 | Total Classes | 11 |
 | Total Interfaces | 145 |
-| Total Functions | 356 |
+| Total Functions | 358 |
 | Total Type Guards | 11 |
 | Total Enums | 0 |
 | Type-only Imports | 114 |
@@ -2224,4 +2227,4 @@ graph TD
 
 ---
 
-*Version*: 1.10.0
+*Version*: 1.11.0

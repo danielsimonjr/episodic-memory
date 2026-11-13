@@ -1669,7 +1669,7 @@
         ]
       },
       "src/index-cli.ts": {
-        "description": "Check the arguments before any work. Without the check, an unknown command or option fell to the",
+        "description": "Check the arguments before any work.",
         "externalDependencies": [],
         "nodeDependencies": [
           {
@@ -1722,6 +1722,19 @@
             "file": "./prune.js",
             "imports": [
               "pruneProjects"
+            ]
+          },
+          {
+            "file": "./lockfile.js",
+            "imports": [
+              "acquireLock",
+              "releaseLock"
+            ]
+          },
+          {
+            "file": "./logging.js",
+            "imports": [
+              "getSyncLockPath"
             ]
           }
         ],

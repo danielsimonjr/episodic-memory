@@ -96,10 +96,10 @@ if (isBackground) {
 // sessions, compactions) otherwise stack overlapping syncs that each boot the
 // transformer and fan out summarizer subprocesses, pegging the CPU — the storm
 // behind the wedged orphans. Checked here, before the heavy imports below, so a
-// locked-out worker bails instantly.
+// locked-out worker bails instantly. The index commands of index-cli take the same lock.
 const syncLock = acquireLock(getSyncLockPath());
 if (!syncLock) {
-    console.error('episodic-memory: another sync is already running; skipping');
+    console.error('episodic-memory: another sync or index command is running; skipping');
     process.exit(0);
 }
 process.on('exit', () => releaseLock(syncLock));

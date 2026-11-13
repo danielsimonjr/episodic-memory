@@ -24,7 +24,12 @@ export declare function getSyncErrorsLogPath(): string;
  * Progress in the sync log would interleave with every session start.
  */
 export declare function getLearnLogPath(): string;
-/** Lock file serializing background syncs; lives beside the embedding-migration lock. */
+/**
+ * Return the path of the lock file that the sync worker, the index commands and the backfill share.
+ *
+ * The file sits in the index folder, beside the embedding-migration lock. The name is an on-disk contract. An
+ * installed sync of an older version must contend with the index commands of a newer version.
+ */
 export declare function getSyncLockPath(): string;
 /**
  * Rotate the sync log when it exceeds `maxBytes` so it can't grow without bound.

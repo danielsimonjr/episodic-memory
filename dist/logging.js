@@ -35,7 +35,12 @@ export function getSyncErrorsLogPath() {
 export function getLearnLogPath() {
     return path.join(getLogDir(), 'learn.log');
 }
-/** Lock file serializing background syncs; lives beside the embedding-migration lock. */
+/**
+ * Return the path of the lock file that the sync worker, the index commands and the backfill share.
+ *
+ * The file sits in the index folder, beside the embedding-migration lock. The name is an on-disk contract. An
+ * installed sync of an older version must contend with the index commands of a newer version.
+ */
 export function getSyncLockPath() {
     return path.join(getIndexDir(), '.sync.lock');
 }

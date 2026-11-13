@@ -311,6 +311,7 @@ export async function validateCandidate(
     meanTurnsAfter: mean(afterTotals.turns, afterTotals.measured),
     usdBefore: beforeTotals.measured === 0 ? null : beforeTotals.usd,
     usdAfter: afterTotals.measured === 0 ? null : afterTotals.usd,
+    gradedAfter: [...targeted, ...sample].filter(taskId => after.get(taskId)?.outcome === 'graded').length,
   };
 
   if (!keep) {

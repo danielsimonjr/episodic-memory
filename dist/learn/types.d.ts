@@ -48,6 +48,17 @@ export interface ValidationRecord {
     meanTurnsAfter: number | null;
     usdBefore: number | null;
     usdAfter: number | null;
+    /**
+     * The number of tasks with a graded attempt before the change. An errored or aborted attempt counts no task.
+     * Only a bootstrap record has this field, because only its two sides can grade different numbers of tasks.
+     * A validation and a merge-check grade one task set, so their records compare pass counts.
+     */
+    gradedBefore?: number;
+    /**
+     * The number of tasks with a graded attempt after the change. A record written before this field existed
+     * has no value.
+     */
+    gradedAfter?: number;
 }
 /** A procedure skill's step, proposed by the agent alongside the prose body. */
 export interface ProcedureStepSpec {

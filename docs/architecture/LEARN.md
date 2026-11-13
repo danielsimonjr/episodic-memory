@@ -111,7 +111,7 @@ The loop stops when a round keeps nothing, when the round limit is reached, or w
 
 ### Approval
 
-The approval mode (`EPISODIC_MEMORY_LEARN_APPROVE`) is `instructions` (default), `all` or `none`. A skill becomes `active` when it passes validation. Under the default, an instruction entry stays `candidate`, because it loads into every session. `learn approve <name>` shows the entry, its validation record and a diff against the version it revises. The command refuses an entry with no measurement or with a recorded regression. Then it activates the entry.
+The approval mode (`EPISODIC_MEMORY_LEARN_APPROVE`) is `instructions` (default), `all` or `none`. A skill becomes `active` when it passes validation. Under the default, an instruction entry stays `candidate`, because it loads into every session. `learn approve <name>` shows the entry, its validation record and a diff against the version it revises. The command refuses an entry with no measurement, with a recorded regression, or with a lower pass count. A human can still approve a measured candidate that misses the gain. A bootstrap run that measures no task stores no validation record. The record holds `gradedAfter`, the number of tasks with a graded attempt after the change. A bootstrap record also holds `gradedBefore`, the number before the change. When the two totals differ, the command compares the pass rates instead of the pass counts. Then the command activates the entry.
 
 ## Injection into sessions
 

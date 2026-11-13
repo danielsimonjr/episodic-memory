@@ -116,7 +116,7 @@ stop on: nothing kept, round limit, call budget
 final: solve the test split once with the final snapshot
 ```
 
-Under the default approval mode, instruction entries stay `candidate` because they load into every session. `learn approve` shows the entry, its validation record and a diff. It refuses an entry with no measurement or with a recorded regression. Then it activates the entry. `learned-block` then renders the active entries for each project and one shared row, and stores the result in `learning.sqlite`. The session-start hook reads that stored block. `learn export` writes the active skills as a tree of `SKILL.md` files.
+Under the default approval mode, instruction entries stay `candidate` because they load into every session. `learn approve` shows the entry, its validation record and a diff. It refuses an entry with no measurement, with a recorded regression, or with a lower pass count. Then the command activates the entry. `learned-block` then renders the active entries for each project and one shared row, and stores the result in `learning.sqlite`. The session-start hook reads that stored block. `learn export` writes the active skills as a tree of `SKILL.md` files.
 
 ## 7. Embedding migration
 

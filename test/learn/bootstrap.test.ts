@@ -601,6 +601,10 @@ describe('runBootstrap', () => {
     const skills = await store.listByStatus(['candidate'], ['skill']);
     expect(skills.map(entry => entry.slug)).toContain('navigation');
     expect(result.pending.length).toBeGreaterThan(0);
+    // A measured miss keeps its record, so `learn approve` can show it to a human.
+    expect(skills.every(entry => entry.validation !== null && entry.validation.meanTurnsAfter !== null)).toBe(true);
+    expect(skills.every(entry => entry.validation!.gradedAfter === entry.validation!.gradedBefore)).toBe(true);
+    expect(skills.every(entry => (entry.validation!.gradedAfter ?? 0) > 0)).toBe(true);
   });
 
   it('activates a skill with an equal pass rate and a 10 percent turn saving', async () => {
@@ -803,6 +807,26 @@ describe('runBootstrap', () => {
 
     expect(result.status).toBe('stopped');
     expect(getRun(learning, result.runId)!.status).toBe('stopped');
+  });
+
+  // A record that measured no task looked like a measurement to `learn approve`.
+  it('stores no validation record for a candidate that the run could not measure', async () => {
+    seedSignalTasks();
+    const agent = bootstrapAgent({ 'proj-a': [proposal({ slug: 'navigation' })] });
+    const text = fakeTextModel();
+
+    const result = await runBootstrap(dbs, {
+      runAgent: agent.fn as any,
+      model: 'test-model',
+      budget: new CallBudget(1),
+      textModel: text.fn,
+    });
+
+    expect(result.status).toBe('stopped');
+    const candidates = await store.listByStatus(['candidate'], ['skill', 'instruction']);
+    expect(candidates.length).toBeGreaterThan(0);
+    expect(result.pending).toEqual(expect.arrayContaining(candidates.map(entry => entry.id)));
+    expect(candidates.every(entry => entry.validation === null)).toBe(true);
   });
 
   it('generates tasks when none exist, then measures them', async () => {

@@ -158,7 +158,9 @@ interface SolveCall {
  */
 function fakeSolve(
   pass: (entries: Array<{ name: string; body: string; slug: string }>, task: LearningTask) => boolean,
-  journal?: string[]
+  journal?: string[],
+  outcomeOf: (entries: Array<{ name: string; body: string; slug: string }>, task: LearningTask) => AttemptRow['outcome'] = () =>
+    'graded'
 ) {
   const calls: SolveCall[] = [];
   const fn = async (solverDbs: LearnDbs, task: LearningTask, options: any): Promise<AttemptRow> => {
@@ -171,7 +173,8 @@ function fakeSolve(
       const entry = await solverDbs.store.getEntry(name);
       if (entry) entries.push({ name, body: entry.body, slug: entry.slug });
     }
-    const passed = pass(entries, task);
+    const outcome = outcomeOf(entries, task);
+    const passed = outcome === 'graded' && pass(entries, task);
     calls.push({
       taskId: task.id,
       split: task.split,
@@ -189,7 +192,7 @@ function fakeSolve(
       answer: passed ? `path: /archive/${task.project}/s-0.jsonl\nlines: 1-9` : 'not found',
       trace: [],
       cost: { turns: 3, inputTokens: 8, outputTokens: 4, usd: 0.01 },
-      outcome: 'graded' as const,
+      outcome,
     };
     const id = insertAttempt(solverDbs.learning, attempt);
     return { ...attempt, id, createdAt: new Date().toISOString() };
@@ -440,6 +443,8 @@ describe('runLearn', () => {
     );
     expect(active).toHaveLength(1);
     expect(active[0].version).toBe(3);
+    // The merge-check graded both child tasks after the merge.
+    expect(active[0].validation?.gradedAfter).toBe(2);
     expect(active[0].body).toContain(sourceOf.get(first.id)!);
     expect(active[0].body).toContain(sourceOf.get(second.id)!);
 
@@ -448,6 +453,49 @@ describe('runLearn', () => {
       [sourceOf.get(first.id)!, sourceOf.get(second.id)!].sort()
     );
     expect(result.merges[0].revertedTo).toBeNull();
+  });
+
+  // An errored re-solve stores an attempt row but grades no task, so the merge-check record counts one task.
+  it('counts only graded attempts in the merge-check record', async () => {
+    openFixture(['proj-a']);
+    const first = addTask({ project: 'proj-a' });
+    const second = addTask({ project: 'proj-a' });
+    const sourceOf = new Map([
+      [first.id, hexId('proj-a-0')],
+      [second.id, hexId('proj-a-1')],
+    ]);
+
+    const solve = fakeSolve(
+      (entries, task) => cites(entries, sourceOf.get(task.id)!),
+      undefined,
+      (entries, task) =>
+        task.id === second.id && entries.some(entry => entry.body.includes('merged')) ? 'error' : 'graded'
+    );
+    const learner = fakeLearner(prompt =>
+      promptTaskIds(prompt).map(id =>
+        proposalFor(id, 'proj-a', {
+          slug: 'release-map',
+          title: 'Release map',
+          body: `project proj-a: ${WORDS} work [#${sourceOf.get(id)}]`,
+        })
+      )
+    );
+    const text = fakeTextModel({
+      split: () => `- wrong project: ${first.id}\n- paraphrase not matched: ${second.id}\n`,
+      merge: prompt => `project proj-a: ${WORDS} merged [${marksIn(prompt).join(', ')}]\n`,
+    });
+
+    const result = await runLearn(dbs, {
+      ...common({ leafMax: 1, concurrency: 1 }),
+      solve: solve.fn,
+      runAgent: learner.fn,
+      textModel: text.fn,
+    });
+
+    expect(result.merges).toHaveLength(1);
+    const merged = await store.getEntry(result.merges[0].merged);
+    expect(merged?.validation?.sample).toHaveLength(2);
+    expect(merged?.validation?.gradedAfter).toBe(1);
   });
 
   it("reverts a merged entry that regresses a child's sample, and the reflection says so", async () => {

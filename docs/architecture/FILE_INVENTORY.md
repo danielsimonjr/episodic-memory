@@ -87,9 +87,9 @@ This report lists each source file that the map census finds, with a disposition
 | `src/indexer.ts` | episodic-memory | src | reachable | 417 |
 | `src/learn-cli.ts` | episodic-memory | src | orphan | 94 |
 | `src/learn/agent-runner.ts` | episodic-memory | src | test-only | 568 |
-| `src/learn/bootstrap.ts` | episodic-memory | src | test-only | 846 |
+| `src/learn/bootstrap.ts` | episodic-memory | src | test-only | 850 |
 | `src/learn/cited-ids.ts` | episodic-memory | src | test-only | 267 |
-| `src/learn/cli-main.ts` | episodic-memory | src | test-only | 864 |
+| `src/learn/cli-main.ts` | episodic-memory | src | test-only | 894 |
 | `src/learn/export.ts` | episodic-memory | src | test-only | 440 |
 | `src/learn/grade.ts` | episodic-memory | src | test-only | 318 |
 | `src/learn/knowledge-db.ts` | episodic-memory | src | test-only | 356 |
@@ -102,7 +102,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/learn/learn-lock.ts` | episodic-memory | src | test-only | 173 |
 | `src/learn/learned-block.ts` | episodic-memory | src | test-only | 89 |
 | `src/learn/learned-text-screen.ts` | episodic-memory | src | reachable | 206 |
-| `src/learn/learner.ts` | episodic-memory | src | test-only | 1327 |
+| `src/learn/learner.ts` | episodic-memory | src | test-only | 1328 |
 | `src/learn/learning-db.ts` | episodic-memory | src | test-only | 536 |
 | `src/learn/learning-store.ts` | episodic-memory | src | test-only | 123 |
 | `src/learn/pii-redactor.ts` | episodic-memory | src | reachable | 60 |
@@ -113,9 +113,9 @@ This report lists each source file that the map census finds, with a disposition
 | `src/learn/skills-tool.ts` | episodic-memory | src | reachable | 168 |
 | `src/learn/solver.ts` | episodic-memory | src | test-only | 300 |
 | `src/learn/tasks.ts` | episodic-memory | src | test-only | 533 |
-| `src/learn/types.ts` | episodic-memory | src | reachable | 216 |
+| `src/learn/types.ts` | episodic-memory | src | reachable | 227 |
 | `src/learn/usage.ts` | episodic-memory | src | test-only | 60 |
-| `src/learn/validate.ts` | episodic-memory | src | test-only | 358 |
+| `src/learn/validate.ts` | episodic-memory | src | test-only | 359 |
 | `src/lockfile.ts` | episodic-memory | src | reachable | 139 |
 | `src/logging.ts` | episodic-memory | src | test-only | 86 |
 | `src/mcp-auth.ts` | episodic-memory | src | reachable | 68 |
@@ -200,9 +200,9 @@ This report lists each source file that the map census finds, with a disposition
 | `test/index-cli-args.test.ts` | (root) | tests | test | 221 |
 | `test/integration.test.ts` | (root) | tests | test | 253 |
 | `test/learn/agent-runner.test.ts` | (root) | tests | test | 521 |
-| `test/learn/bootstrap.test.ts` | (root) | tests | test | 884 |
+| `test/learn/bootstrap.test.ts` | (root) | tests | test | 908 |
 | `test/learn/cited-ids.test.ts` | (root) | tests | test | 211 |
-| `test/learn/export.test.ts` | (root) | tests | test | 482 |
+| `test/learn/export.test.ts` | (root) | tests | test | 557 |
 | `test/learn/grade.test.ts` | (root) | tests | test | 237 |
 | `test/learn/knowledge-db.test.ts` | (root) | tests | test | 314 |
 | `test/learn/knowledge-gate.test.ts` | (root) | tests | test | 370 |
@@ -216,7 +216,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/learn/learn-lock.test.ts` | (root) | tests | test | 147 |
 | `test/learn/learned-block.test.ts` | (root) | tests | test | 146 |
 | `test/learn/learned-text-screen.test.ts` | (root) | tests | test | 368 |
-| `test/learn/learner.test.ts` | (root) | tests | test | 670 |
+| `test/learn/learner.test.ts` | (root) | tests | test | 718 |
 | `test/learn/learning-db.test.ts` | (root) | tests | test | 290 |
 | `test/learn/learning-store.test.ts` | (root) | tests | test | 271 |
 | `test/learn/prompts.test.ts` | (root) | tests | test | 261 |
@@ -234,7 +234,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/learn/skills-tool.test.ts` | (root) | tests | test | 233 |
 | `test/learn/solver.test.ts` | (root) | tests | test | 489 |
 | `test/learn/tasks.test.ts` | (root) | tests | test | 469 |
-| `test/learn/validate.test.ts` | (root) | tests | test | 444 |
+| `test/learn/validate.test.ts` | (root) | tests | test | 473 |
 | `test/lockfile.test.ts` | (root) | tests | test | 68 |
 | `test/logging-append.test.ts` | (root) | tests | test | 27 |
 | `test/logging.test.ts` | (root) | tests | test | 73 |

@@ -649,7 +649,8 @@ async function confirmOnTty(question: string): Promise<boolean> {
  *
  * Instructions stay `candidate` under the default approval mode, precisely because every session loads them.
  * So this command is the review.
- * The command refuses an entry with no measurement or with a recorded regression.
+ * The command refuses an entry with no measurement, with a recorded regression, or with a lower pass count.
+ * Spec rule 5 lets a human approve a measured candidate that misses the gain. A miss alone causes no refusal.
  * Then the command prints the entry, that measurement and a unified diff.
  * The diff runs against the version that the entry revises.
  * With no earlier version, the diff runs against an empty body.
@@ -689,10 +690,39 @@ async function commandApprove(dbs: LearnDbs, argv: string[], deps: LearnCliDeps)
     );
     return 1;
   }
-  if (entry.validation.regressions.length > 0) {
+  const validation = entry.validation;
+  // A record written before gradedAfter existed has a null meanTurnsAfter when no attempt occurs after the change.
+  const gradedAfter = validation.gradedAfter ?? (validation.meanTurnsAfter === null ? 0 : undefined);
+  if (gradedAfter === 0) {
     deps.stderr(
-      `episodic-memory learn: ${entry.id} regressed task(s) ${entry.validation.regressions.join(', ')}; ` +
+      `episodic-memory learn: ${entry.id} has a validation record that measured no task; ` +
+        'a candidate is approved only after a run measured it\n'
+    );
+    return 1;
+  }
+  if (validation.regressions.length > 0) {
+    deps.stderr(
+      `episodic-memory learn: ${entry.id} regressed task(s) ${validation.regressions.join(', ')}; ` +
         'refusing to approve\n'
+    );
+    return 1;
+  }
+  // A bootstrap record lists no per-task regression. Only the pass counts show a fall.
+  // When the graded totals differ, the check compares the pass rates, because one side has fewer graded tasks.
+  // Only a bootstrap record holds gradedBefore, so a validation or merge-check record compares the counts.
+  const { passedBefore, passedAfter, gradedBefore } = validation;
+  if (gradedBefore !== undefined && gradedAfter !== undefined && gradedBefore !== gradedAfter) {
+    if (passedAfter * gradedBefore < passedBefore * gradedAfter) {
+      deps.stderr(
+        `episodic-memory learn: ${entry.id} passed ${passedBefore} of ${gradedBefore} graded task(s) before the ` +
+          `change and ${passedAfter} of ${gradedAfter} after; refusing to approve\n`
+      );
+      return 1;
+    }
+  } else if (passedAfter < passedBefore) {
+    deps.stderr(
+      `episodic-memory learn: ${entry.id} passed ${passedBefore} task(s) before the change and ` +
+        `${passedAfter} after; refusing to approve\n`
     );
     return 1;
   }

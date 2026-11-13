@@ -954,6 +954,7 @@ function mergeCheckEvidence(kept, attemptsByChild, passedBeforeByChild) {
         meanTurnsAfter: turns.length === 0 ? null : turns.reduce((sum, turn) => sum + turn, 0) / turns.length,
         usdBefore: null,
         usdAfter: usd,
+        gradedAfter: sample.filter(taskId => after.get(taskId)?.outcome === 'graded').length,
     };
 }
 /**

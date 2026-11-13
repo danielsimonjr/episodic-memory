@@ -187,6 +187,23 @@ describe('exchange vectors on node:sqlite', () => {
       }
     });
 
+    it('keeps a vector that is already stored and copies only the missing one', () => {
+      for (const id of ['kept', 'new']) db.prepare('INSERT INTO exchanges (id) VALUES (?)').run(id);
+      db.prepare('INSERT INTO exchange_vectors VALUES (?, ?)').run('kept', blob(vector(40)));
+      writeShadow(db, [
+        ['kept', 1, 0, true, vector(41)],
+        ['new', 1, 1, true, vector(42)],
+      ]);
+      const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        expect(migrateVec0Vectors(db)).toBe(1);
+      } finally {
+        errors.mockRestore();
+      }
+      expect(floats(stored('kept')!.embedding)).toEqual(Array.from(vector(40)));
+      expect(floats(stored('new')!.embedding)).toEqual(Array.from(vector(42)));
+    });
+
     it('marks an exchange with no vector as stale, so the embedding migration embeds it again', () => {
       for (const id of ['a', 'missing']) db.prepare('INSERT INTO exchanges (id) VALUES (?)').run(id);
       writeShadow(db, [['a', 1, 0, true, vector(10)]]);

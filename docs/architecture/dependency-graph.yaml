@@ -2,9 +2,9 @@ metadata:
   name: episodic-memory
   schemaVersion: 2.0.0
   language: typescript
-  totalFiles: 266
+  totalFiles: 268
   totalModules: 4
-  totalExports: 589
+  totalExports: 592
 modules:
   src:
     cli/digest-hook.js:
@@ -5654,6 +5654,33 @@ modules:
             - withQueryPrefix
           typeOnly: false
       exports: []
+    test/real-sdk-guard.test.ts:
+      externalDependencies:
+        - '@anthropic-ai/claude-agent-sdk'
+        - vitest
+      nodeDependencies:
+        - fs
+      internalDependencies:
+        - file: src/summarizer.ts
+          imports:
+            - buildCodexSummarizerCommand
+            - callLearnModel
+            - runCodexCommand
+          typeOnly: false
+        - file: test/real-sdk-guard.ts
+          imports:
+            - REAL_SDK_MESSAGE
+            - takeRealSdkCalls
+          typeOnly: false
+      exports: []
+    test/real-sdk-guard.ts:
+      externalDependencies: []
+      nodeDependencies: []
+      internalDependencies: []
+      exports:
+        - REAL_SDK_MESSAGE
+        - guardQuery
+        - takeRealSdkCalls
     test/rebuild-native.test.ts:
       externalDependencies:
         - vitest
@@ -5777,12 +5804,19 @@ modules:
           typeOnly: false
       exports: []
     test/setup-env.ts:
-      externalDependencies: []
+      externalDependencies:
+        - vitest
       nodeDependencies: []
       internalDependencies:
         - file: test/test-env.ts
           imports:
             - TEST_ENV
+          typeOnly: false
+        - file: test/real-sdk-guard.ts
+          imports:
+            - REAL_SDK_MESSAGE
+            - takeRealSdkCalls
+            - '*'
           typeOnly: false
       exports: []
     test/show.test.ts:
@@ -6516,6 +6550,10 @@ modules:
           imports:
             - ConversationExchange
           typeOnly: false
+        - file: src/summarizer.ts
+          imports:
+            - '*'
+          typeOnly: false
       exports: []
     test/version-consistency.test.ts:
       externalDependencies:
@@ -6538,11 +6576,11 @@ modules:
           typeOnly: false
       exports: []
 statistics:
-  totalTypeScriptFiles: 266
-  totalSourceFiles: 266
+  totalTypeScriptFiles: 268
+  totalSourceFiles: 268
   totalModules: 4
-  totalLinesOfCode: 54432
-  totalExports: 589
+  totalLinesOfCode: 54535
+  totalExports: 592
   entryRoots: 6
   reachableFiles: 46
   dormantFiles: 59
@@ -6560,10 +6598,10 @@ statistics:
   typeOnlyFilesInCycles: 2
   totalClasses: 8
   totalInterfaces: 137
-  totalFunctions: 332
+  totalFunctions: 334
   totalTypeGuards: 10
   totalEnums: 0
-  totalConstants: 69
+  totalConstants: 70
   totalReExports: 8
 reachability:
   roots:

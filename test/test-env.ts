@@ -18,4 +18,6 @@ export const TEST_ENV: Readonly<Record<string, string>> = {
   // A test that does not set its own config directory writes to this folder, never to the live data.
   EPISODIC_MEMORY_CONFIG_DIR: join(tmpdir(), 'episodic-memory-test-config'),
   FLEET_GPU_RESERVATION: join(tmpdir(), 'episodic-memory-test-no-gpu-reservation.json'),
+  // A path that does not exist. A Codex summary in a test fails at once. The summary never starts a real Codex.
+  EPISODIC_MEMORY_CODEX_BIN: join(tmpdir(), 'episodic-memory-test-no-codex', 'codex'),
 };

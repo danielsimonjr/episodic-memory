@@ -333,7 +333,8 @@ The codebase is organized into the following modules:
 | `./ollama-backend.js` | `GpuReservedError` | Import |
 
 **Exports:**
-- Functions: `deferralDetail`
+- Classes: `ClaudeAuthError`
+- Functions: `isClaudeAuthFailure`, `deferralDetail`
 
 ---
 
@@ -1059,7 +1060,8 @@ The codebase is organized into the following modules:
 | `./api-endpoint.js` | `validateApiBaseUrl` | Import |
 | `./ollama-backend.js` | `summarizerBackend, callOllama, GpuReservedError, ollamaMaxPromptChars, OllamaCallOptions` | Import |
 | `./claude-bin.js` | `ClaudeBinError, claudeExecutableOption` | Import |
-| `./deferral.js` | `deferralDetail` | Import |
+| `./deferral.js` | `ClaudeAuthError, deferralDetail, isClaudeAuthFailure` | Import |
+| `./redact.js` | `redactSecrets` | Import |
 
 **Exports:**
 - Interfaces: `CodexSummarizerCommand`, `CallClaudeOptions`
@@ -2085,13 +2087,13 @@ The codebase is organized into the following modules:
 |------|--------------|------------|
 | `src/learn/types` | 1 file | 22 files |
 | `src/paths` | 0 files | 22 files |
+| `src/summarizer` | 9 files | 13 files |
 | `src/db` | 6 files | 15 files |
 | `src/learn/cli-main` | 20 files | 1 file |
-| `src/summarizer` | 8 files | 13 files |
 | `src/learn/bootstrap` | 14 files | 3 files |
 | `src/learn/learner` | 15 files | 1 file |
+| `src/redact` | 0 files | 16 files |
 | `src/learn/leaf-learner` | 14 files | 1 file |
-| `src/redact` | 0 files | 15 files |
 | `src/learn/solver` | 9 files | 5 files |
 | `src/sync` | 11 files | 2 files |
 | `src/topic-job` | 12 files | 1 file |
@@ -2228,17 +2230,17 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 277 |
+| Total Source Files | 278 |
 | Subsystems | 5 |
-| Total Lines of Code | 55188 |
-| Total Exports | 602 |
+| Total Lines of Code | 55477 |
+| Total Exports | 604 |
 | Total Re-exports | 8 |
-| Total Classes | 8 |
+| Total Classes | 9 |
 | Total Interfaces | 139 |
-| Total Functions | 342 |
-| Total Type Guards | 10 |
+| Total Functions | 343 |
+| Total Type Guards | 11 |
 | Total Enums | 0 |
-| Type-only Imports | 79 |
+| Type-only Imports | 80 |
 | Runtime Cyclic Components | 0 |
 | Type-only Cyclic Components | 1 |
 | Files in Runtime Cycles | 0 |

@@ -18,7 +18,7 @@ export interface SyncResult {
     summarized: number;
     summaryAttempts: number;
     pendingSummaries: number;
-    /** Set when this run deferred the summaries: another agent holds the shared GPU, or no usable Claude Code executable exists. */
+    /** Set when this run deferred the summaries (`src/deferral.ts` lists the causes). */
     summariesDeferred?: string;
     /**
      * Zero-byte -summary.txt files seen this run, and how many of those carry NO recorded reason.
@@ -68,7 +68,7 @@ export declare function extractSessionIdFromPath(filePath: string): string | nul
  *
  * Use `skipIndex` and `skipSummaries` to turn off the two later steps. The function skips the excluded projects. The function records an error for each file that fails and continues with the next file.
  *
- * When the Ollama summarizer is in use and another agent holds the shared GPU, the function writes no summary. When no usable Claude Code executable exists, the summaries stop at the first call. In both cases the reason is reported in `summariesDeferred`, and no attempt is counted. The function returns an empty result when `sourceDir` does not exist.
+ * When the Ollama summarizer is in use and another agent holds the shared GPU, the function writes no summary. When no usable Claude Code executable exists or the Claude Code login fails, the summaries stop at the first call. In both cases the reason is reported in `summariesDeferred`, and no attempt is counted. The function returns an empty result when `sourceDir` does not exist.
  */
 export declare function syncConversations(sourceDir: string, destDir: string, options?: SyncOptions): Promise<SyncResult>;
 /**

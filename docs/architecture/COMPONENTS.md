@@ -79,7 +79,7 @@ Summarizes archived conversations that `sync` cannot reach. It checks the GPU re
 
 ### `src/summarizer.ts`
 
-Produces conversation summaries. The default backend is the Claude Agent SDK. The SDK call runs with session persistence off. The SDK call offers no built-in tool and starts no MCP server. A second backend runs the Codex command. `getApiEnv` builds the environment for the SDK and always sets the reentrancy guard. `callDigestModel` and `callLearnModel` give the digest and the learner the same backend choice. `summarizeConversation` is the entry for one conversation.
+Produces conversation summaries. The default backend is the Claude Agent SDK. The SDK call runs with session persistence off. The SDK call offers no built-in tool and starts no MCP server. A second backend runs the Codex command. `getApiEnv` builds the environment for the SDK and always sets the reentrancy guard. `callDigestModel` and `callLearnModel` give the digest and the learner the same backend choice. `summarizeConversation` is the entry for one conversation. A failed SDK call throws an error that names the subtype, the status and the first 300 characters of the result text, after `redactSecrets`. A failed login throws `ClaudeAuthError` instead.
 
 ### `src/ollama-backend.ts`
 
@@ -97,7 +97,7 @@ The module chooses the Claude Code executable that the Agent SDK starts. The mod
 
 ### `src/deferral.ts`
 
-`deferralDetail(error)` returns the one-line reason of a deferral, or null for an ordinary failure. Two errors defer: `GpuReservedError` and `ClaudeBinError`. The summary loop of `sync`, the backfill, the digest job, the digest compression and the topic job stop at the first deferral. These steps count no attempt and write no failure record, so the queue is the same at the next run. `summarizeConversation` re-throws a deferral from a chunk or from the synthesis, so the function never stores a partial summary. On the Ollama backend, an unusable Claude fallback counts as no fallback: the Ollama error stands, and the attempt counts.
+`deferralDetail(error)` returns the one-line reason of a deferral, or null for an ordinary failure. Three errors defer: `GpuReservedError`, `ClaudeBinError` and `ClaudeAuthError`. `isClaudeAuthFailure(status, text)` finds a failed Claude Code login: status 401, a login phrase, or the `API Error: 401` form of the text. A bare "401" does not match, because a false match would defer the queue at every run. The summary loop of `sync`, the backfill, the digest job, the digest compression and the topic job stop at the first deferral. These steps count no attempt and write no failure record, so the queue is the same at the next run. `summarizeConversation` re-throws a deferral from a chunk or from the synthesis, so the function never stores a partial summary. On the Ollama backend, an unusable Claude fallback or a failed fallback login counts as no fallback: the Ollama error stands, and the attempt counts.
 
 ## Search and read
 
@@ -199,10 +199,10 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 277 | repo-tools map |
-| totalClasses | 8 | repo-tools map |
+| totalSourceFiles | 278 | repo-tools map |
+| totalClasses | 9 | repo-tools map |
 | totalInterfaces | 139 | repo-tools map |
-| totalFunctions | 342 | repo-tools map |
+| totalFunctions | 343 | repo-tools map |
 | totalConstants | 70 | repo-tools map |
 
 The tool names, the table names and the model name come from a direct reading of `src/mcp-server.ts`, `src/db.ts` and `src/embeddings.ts`. They are not `repo-tools map` metrics.

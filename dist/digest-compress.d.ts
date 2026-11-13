@@ -20,7 +20,7 @@ export interface CompressOptions {
 export interface CompressResult {
     created: number;
     failed: number;
-    /** Set when the run stopped for a deferral: another agent holds the shared GPU, or no usable Claude Code executable exists. Not a failure. */
+    /** Set when the run stopped for a deferral (`src/deferral.ts` lists the causes). Not a failure. */
     deferred?: string;
 }
 /**

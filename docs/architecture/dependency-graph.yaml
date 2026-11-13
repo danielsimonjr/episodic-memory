@@ -2,9 +2,9 @@ metadata:
   name: episodic-memory
   schemaVersion: 2.0.0
   language: typescript
-  totalFiles: 277
+  totalFiles: 278
   totalModules: 4
-  totalExports: 602
+  totalExports: 604
 modules:
   src:
     cli/digest-hook.js:
@@ -309,6 +309,8 @@ modules:
             - GpuReservedError
           typeOnly: false
       exports:
+        - ClaudeAuthError
+        - isClaudeAuthFailure
         - deferralDetail
     src/deps-health.ts:
       externalDependencies: []
@@ -2624,7 +2626,13 @@ modules:
           typeOnly: false
         - file: src/deferral.ts
           imports:
+            - ClaudeAuthError
             - deferralDetail
+            - isClaudeAuthFailure
+          typeOnly: false
+        - file: src/redact.ts
+          imports:
+            - redactSecrets
           typeOnly: false
       exports:
         - CodexSummarizerCommand
@@ -3237,6 +3245,35 @@ modules:
         - path
       internalDependencies:
         - file: src/backfill.ts
+          imports:
+            - '*'
+          typeOnly: false
+      exports: []
+    test/claude-auth-deferral.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - fs
+        - os
+        - path
+      internalDependencies:
+        - file: src/types.ts
+          imports:
+            - ConversationExchange
+          typeOnly: true
+        - file: test/test-utils.ts
+          imports:
+            - safeRmSync
+          typeOnly: false
+        - file: src/summarizer.ts
+          imports:
+            - '*'
+          typeOnly: false
+        - file: src/deferral.ts
+          imports:
+            - '*'
+          typeOnly: false
+        - file: src/sync.ts
           imports:
             - '*'
           typeOnly: false
@@ -6764,11 +6801,11 @@ modules:
           typeOnly: false
       exports: []
 statistics:
-  totalTypeScriptFiles: 277
-  totalSourceFiles: 277
+  totalTypeScriptFiles: 278
+  totalSourceFiles: 278
   totalModules: 4
-  totalLinesOfCode: 55188
-  totalExports: 602
+  totalLinesOfCode: 55477
+  totalExports: 604
   entryRoots: 6
   reachableFiles: 47
   dormantFiles: 61
@@ -6776,7 +6813,7 @@ statistics:
   testOnlyFiles: 46
   runtimeCircularDeps: 0
   typeOnlyCircularDeps: 1
-  totalTypeOnlyImports: 79
+  totalTypeOnlyImports: 80
   noImporterFileCount: 14
   unusedExportsCount: 117
   circularDepsTruncated: false
@@ -6784,10 +6821,10 @@ statistics:
   typeOnlyCyclicComponents: 1
   runtimeFilesInCycles: 0
   typeOnlyFilesInCycles: 2
-  totalClasses: 8
+  totalClasses: 9
   totalInterfaces: 139
-  totalFunctions: 342
-  totalTypeGuards: 10
+  totalFunctions: 343
+  totalTypeGuards: 11
   totalEnums: 0
   totalConstants: 70
   totalReExports: 8

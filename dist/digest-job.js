@@ -92,7 +92,7 @@ async function writeSessionEntries(db, model, now, result) {
         catch (err) {
             const deferred = deferralDetail(err);
             if (deferred !== null) {
-                // Another agent took the GPU during the run, or no usable Claude Code executable exists.
+                // A deferral (`src/deferral.ts` lists the causes), for example a GPU reservation that appeared during the run.
                 // Every further call would fail the same way.
                 result.deferred = deferred;
                 return;
@@ -123,7 +123,7 @@ async function writeSessionEntries(db, model, now, result) {
  *
  * The function returns at once, and writes nothing, when EPISODIC_MEMORY_DIGEST is not `1`.
  * The function also returns at once when EPISODIC_MEMORY_SUMMARIZER_GUARD is `1`, which marks a summarizer subprocess.
- * The job stops early when another agent holds the shared GPU, or when no usable Claude Code executable exists. It reports the reason in `deferred`.
+ * The job stops early at a deferral (`src/deferral.ts` lists the causes). It reports the reason in `deferred`.
  *
  * @param db the open index database
  * @param opts replaces the model call or the clock. Without it, the job uses the default summarizer call and the current time.

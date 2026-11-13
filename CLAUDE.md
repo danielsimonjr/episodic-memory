@@ -51,7 +51,7 @@ dependency, no `MEMORY_*` environment handling and no per-handle cache. Each ope
 - **TypeScript source** in `src/`, compiled to `dist/` by `tsc && esbuild`. **Both are committed.**
 - **CLI entry points** in `cli/` (Node.js wrappers — no bash).
 - **MCP server** is `dist/mcp-server.js`, launched by `cli/mcp-server-wrapper.js` from the plugin manifest.
-- **Tests** in `test/` with vitest (157 files, 1557 tests).
+- **Tests** in `test/` with vitest (158 files, 1576 tests).
 - **Generated files** in `dist/` AND `src/version.ts`. The latter is gitignored; never edit it.
 - **`bun.lock` is committed** — CI uses `bun install --frozen-lockfile` + `bun audit --audit-level=critical`. Do not commit `package-lock.json` (gitignored).
 
@@ -65,7 +65,7 @@ src/
   fs-retry.ts            # rename that retries a Windows sharing violation (EPERM, EBUSY); imports only fs
   summarizer.ts          # Claude Agent SDK calls; persistSession: false guard
   claude-bin.ts          # EPISODIC_MEMORY_CLAUDE_BIN: the Claude Code executable, probed against the SDK floor; Node built-ins only
-  deferral.ts            # deferralDetail: a GPU reservation or an unusable executable defers the model work
+  deferral.ts            # deferralDetail: a GPU reservation, an unusable executable or a failed login defers the model work
   db.ts                  # schema + migrations (cascade + embedding_version)
   paths.ts               # config/index/archive directory resolution
   parser.ts              # JSONL transcript → exchanges (cross-platform path-aware as of fork)
@@ -117,7 +117,7 @@ scripts/
 
 test/
   test-utils.ts          # createTestDb, safeRmSync (fork-added), suppressConsole, fixtures
-  *.test.ts              # 157 test files, 1557 tests
+  *.test.ts              # 158 test files, 1576 tests
   learn/                 # the Recursa suite; fakes for every model call
   fixtures/              # JSONL conversation fixtures
 
@@ -175,12 +175,12 @@ scheduled task. To roll back, remove the variable first. Then run `npm install -
 
 ### Current test state
 
-- **Full suite: 1557 tests in 157 files pass** in about 17 s of wall clock on Linux. Windows runs are slower.
+- **Full suite: 1576 tests in 158 files pass** in about 17 s of wall clock on Linux. Windows runs are slower.
   The suite no longer has the former `integration.test.ts` / `verify.test.ts` cold-embedding timeout flakes.
   `beforeAll` pre-warms the embedder once per worker. `vitest.config.ts` sets `hookTimeout: 30000`.
   The repair re-index test gets 60s. If you see a fresh timeout flake, suspect a new embedding-heavy hook
   without warm-up, not the old cold-start cause.
-- The learn tests are the bulk of the suite (`test/learn/`, 38 files; the other 119 test files sit directly in `test/`). The learn tests never reach a model: every agent and
+- The learn tests are the bulk of the suite (`test/learn/`, 38 files; the other 120 test files sit directly in `test/`). The learn tests never reach a model: every agent and
   text call is injectable and tests pass fakes. `test/test-env.ts` pins the Claude backend, a closed ollama URL,
   a temporary config directory and temporary Claude and Codex homes. `test/setup-env.ts` deletes every other `EPISODIC_MEMORY_*` variable of
   the machine. A local run therefore uses the CI settings and cannot reach a model or the live data.

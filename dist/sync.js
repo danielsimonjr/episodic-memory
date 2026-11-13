@@ -136,7 +136,7 @@ export function extractSessionIdFromPath(filePath) {
  *
  * Use `skipIndex` and `skipSummaries` to turn off the two later steps. The function skips the excluded projects. The function records an error for each file that fails and continues with the next file.
  *
- * When the Ollama summarizer is in use and another agent holds the shared GPU, the function writes no summary. When no usable Claude Code executable exists, the summaries stop at the first call. In both cases the reason is reported in `summariesDeferred`, and no attempt is counted. The function returns an empty result when `sourceDir` does not exist.
+ * When the Ollama summarizer is in use and another agent holds the shared GPU, the function writes no summary. When no usable Claude Code executable exists or the Claude Code login fails, the summaries stop at the first call. In both cases the reason is reported in `summariesDeferred`, and no attempt is counted. The function returns an empty result when `sourceDir` does not exist.
  */
 export async function syncConversations(sourceDir, destDir, options = {}) {
     const result = {
@@ -327,7 +327,7 @@ export async function syncConversations(sourceDir, destDir, options = {}) {
         for (const { path: filePath, sessionId } of toSummarize) {
             const deferred = await summarizeOneFile(filePath, sessionId, result, summarizeConversation);
             if (deferred) {
-                // A deferral: the GPU is reserved, or no usable Claude Code executable exists. Every further call would fail the same way.
+                // A deferral (`src/deferral.ts` lists the causes). Every further call would fail the same way.
                 result.summariesDeferred = deferred;
                 break;
             }
@@ -418,8 +418,8 @@ export async function summarizeOneFile(filePath, sessionId, result, summarize) {
         result.summarized++;
     }
     catch (error) {
-        // A deferral is not a failed summary: a GPU reservation that appeared during the run, or no usable
-        // Claude Code executable. Leave the queue as it is and take back the attempt counted before the call.
+        // A deferral is not a failed summary (`src/deferral.ts` lists the causes).
+        // Leave the queue as it is and take back the attempt counted before the call.
         const deferred = deferralDetail(error);
         if (deferred !== null) {
             result.summaryAttempts--;

@@ -38,7 +38,7 @@ export interface BackfillResult {
         file: string;
         error: string;
     }>;
-    /** Set when the run stopped for a deferral: another agent holds the shared GPU, or no usable Claude Code executable exists. Not a failure. */
+    /** Set when the run stopped for a deferral (`src/deferral.ts` lists the causes). Not a failure. */
     deferred?: string;
 }
 /**
@@ -60,7 +60,7 @@ export declare function selectBackfillCandidates(archiveDir: string, opts?: {
  * Each candidate goes through `summarizeOneFile`. The evidence matches the evidence from a sync.
  * With `dryRun`, the function counts the candidates and summarizes nothing.
  * With the Ollama backend, the function stops at once when another agent holds the shared GPU. The result then sets `deferred`.
- * A deferral during the run also stops the loop and sets `deferred`: a reservation that appears, or no usable Claude Code executable.
+ * A deferral during the run also stops the loop and sets `deferred`. `src/deferral.ts` lists the causes.
  *
  * @param archiveDir The archive directory, with one subdirectory per project.
  * @param opts The limit and dry-run settings. See `BackfillOptions`.

@@ -8,7 +8,8 @@ import { codexVersionRequirementMessage, parseCodexCliVersion, versionMeetsMinim
 import { validateApiBaseUrl } from './api-endpoint.js';
 import { summarizerBackend, callOllama, GpuReservedError, ollamaMaxPromptChars } from './ollama-backend.js';
 import { ClaudeBinError, claudeExecutableOption } from './claude-bin.js';
-import { deferralDetail } from './deferral.js';
+import { ClaudeAuthError, deferralDetail, isClaudeAuthFailure } from './deferral.js';
+import { redactSecrets } from './redact.js';
 /**
  * Build the environment for a summarization subprocess.
  *
@@ -209,6 +210,20 @@ function summarizerTimeoutMs() {
     const configured = Number(process.env.EPISODIC_MEMORY_API_TIMEOUT_MS);
     return Number.isFinite(configured) && configured > 0 ? configured : 120000;
 }
+/** The longest part of an SDK error text that an error message keeps. */
+const SDK_ERROR_TEXT_CHARS = 300;
+/**
+ * Make the SDK error text safe for a log line or a failure record: redact secrets, join the lines and cut the length.
+ */
+function sdkErrorText(text) {
+    const flat = redactSecrets(text).replace(/\s+/g, ' ').trim();
+    return flat.length > SDK_ERROR_TEXT_CHARS ? `${flat.slice(0, SDK_ERROR_TEXT_CHARS)}...` : flat;
+}
+/** The deferral of a failed Claude Code login. The detail names the status and the redacted text. */
+function claudeAuthError(status, text) {
+    const shown = sdkErrorText(text);
+    return new ClaudeAuthError(`the Claude Code login failed (status ${status ?? 'unknown'}${shown ? `: ${shown}` : ''}); run \`claude auth login\``);
+}
 async function callClaude(prompt, opts = {}) {
     const primaryModel = opts.model || process.env.EPISODIC_MEMORY_API_MODEL || 'haiku';
     const fallbackModel = opts.fallbackModel || process.env.EPISODIC_MEMORY_API_MODEL_FALLBACK || 'sonnet';
@@ -241,10 +256,15 @@ async function callClaude(prompt, opts = {}) {
                     // If fallback also fails, return error message
                     return result;
                 }
-                // The SDK signalled an error or returned no string result. Throw an error
-                // that names the subtype, so the caller can record the failure.
+                // The SDK signalled an error or returned no string result. A failed login defers the work.
+                // Any other error names the subtype, the status and the redacted text, so the failure record shows the cause.
                 if (m.is_error === true || typeof result !== 'string') {
-                    throw new Error(`Summarizer SDK call failed (subtype=${m.subtype ?? 'unknown'}).`);
+                    const text = typeof result === 'string' ? result : '';
+                    if (isClaudeAuthFailure(m.api_error_status, text))
+                        throw claudeAuthError(m.api_error_status, text);
+                    const shown = sdkErrorText(text);
+                    throw new Error(`Summarizer SDK call failed (subtype=${m.subtype ?? 'unknown'}, status=${m.api_error_status ?? 'none'})` +
+                        (shown ? `: ${shown}` : '.'));
                 }
                 return result;
             }
@@ -254,6 +274,10 @@ async function callClaude(prompt, opts = {}) {
     catch (err) {
         if (controller.signal.aborted) {
             throw new Error(`Summarizer SDK call timed out after ${timeoutMs}ms.`);
+        }
+        // The SDK can also throw on a failed login, for example when the Claude Code process exits.
+        if (err instanceof Error && !(err instanceof ClaudeAuthError) && isClaudeAuthFailure(undefined, err.message)) {
+            throw claudeAuthError(undefined, err.message);
         }
         throw err;
     }
@@ -266,8 +290,8 @@ async function callClaude(prompt, opts = {}) {
  *
  * EPISODIC_MEMORY_OLLAMA_FALLBACK_MODEL names the retry model (for example `haiku`). When the variable is unset or blank, the Ollama error propagates.
  * A `GpuReservedError` always propagates, because a reservation must defer the work and not move it.
- * When no usable Claude Code executable exists, the host has no fallback, and the Ollama error propagates. A deferral
- * there would hold back the whole queue behind one prompt that Ollama cannot answer.
+ * When no usable Claude Code executable exists or the Claude Code login fails, the host has no fallback, and the
+ * Ollama error propagates. A deferral there would hold back the whole queue behind one prompt that Ollama cannot answer.
  */
 async function callOllamaWithFallback(prompt, opts = {}) {
     try {
@@ -282,7 +306,7 @@ async function callOllamaWithFallback(prompt, opts = {}) {
             return await callClaude(prompt, { model: fallback, fallbackModel: fallback });
         }
         catch (fallbackError) {
-            if (fallbackError instanceof ClaudeBinError)
+            if (fallbackError instanceof ClaudeBinError || fallbackError instanceof ClaudeAuthError)
                 throw err;
             throw fallbackError;
         }
@@ -638,7 +662,7 @@ export function getCodexModel() {
  *
  * For more than 15 exchanges, the function summarizes each chunk of exchanges. The function then synthesizes the chunk summaries into one summary. The chunk size is 8 exchanges. A larger chunk size keeps the chunk count at 20 or less. The function logs a failed chunk and skips it. A failed synthesis returns the chunk summaries joined with a space. When no chunk succeeds, the function returns `Error: Unable to summarize conversation.` as the result.
  *
- * A deferral from a model call rejects the promise: a GpuReservedError, or a ClaudeBinError when no usable Claude Code executable exists.
+ * A deferral from a model call rejects the promise. `src/deferral.ts` lists the causes.
  *
  * The function writes its progress lines with console.log, so they go to stdout.
  *

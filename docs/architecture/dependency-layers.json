@@ -763,9 +763,15 @@
         ],
         "workspaceDependencies": [],
         "exports": [
+          "ClaudeAuthError",
+          "isClaudeAuthFailure",
           "deferralDetail"
         ],
+        "classes": [
+          "ClaudeAuthError"
+        ],
         "functions": [
+          "isClaudeAuthFailure",
           "deferralDetail"
         ]
       },
@@ -2681,7 +2687,15 @@
           {
             "file": "./deferral.js",
             "imports": [
-              "deferralDetail"
+              "ClaudeAuthError",
+              "deferralDetail",
+              "isClaudeAuthFailure"
+            ]
+          },
+          {
+            "file": "./redact.js",
+            "imports": [
+              "redactSecrets"
             ]
           }
         ],

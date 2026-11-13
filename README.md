@@ -207,6 +207,8 @@ export EPISODIC_MEMORY_CODEX_MODEL=gpt-5.5
 
 These settings only affect episodic-memory's summarization calls, not your interactive Claude Code or Codex sessions.
 
+When a Claude summary call fails, the failure record keeps the status and the first 300 characters of the error text. Secrets in the text are redacted. A failed Claude Code login (HTTP 401, for example an expired OAuth token) defers the summaries, the digest, the topic job and the backfill. These steps stop at the first failed call and count no attempt, so the queue waits for the next run. Run `claude auth login` to sign in again. On the Ollama backend, a failed login of the Claude fallback counts as no fallback, and the Ollama error stands.
+
 Codex summarization requires `codex-cli 0.130.0` or newer. If Codex app-server summarization is unavailable, sync logs the reason and falls back to transcript-text summarization.
 
 ### Claude Code executable (opt-in)

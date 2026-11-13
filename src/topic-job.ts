@@ -41,7 +41,7 @@ export interface TopicResult {
   stale: number;
   /** Failed model calls and edit faults. The next run retries them until the limit of failed calls. */
   failed: number;
-  /** The reason that the run stopped: another agent holds the shared GPU, or no usable Claude Code executable exists. The job counts this as a deferral. */
+  /** The reason of the deferral that stopped the run (`src/deferral.ts` lists the causes). */
   deferred?: string;
 }
 
@@ -263,7 +263,7 @@ async function organizeSession(
  *
  * The function returns at once, and writes nothing, when EPISODIC_MEMORY_TOPICS is not `1`, or when the summarizer
  * guard is set. It stores `since` on the first run, before the GPU check. It stops early when another agent holds
- * the shared GPU, or when no usable Claude Code executable exists. It reports the reason in `deferred`.
+ * the shared GPU, or at another deferral (`src/deferral.ts` lists the causes). It reports the reason in `deferred`.
  *
  * @param db the open index database
  * @param opts replaces the model call or the clock

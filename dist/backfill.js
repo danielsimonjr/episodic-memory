@@ -74,7 +74,7 @@ export function selectBackfillCandidates(archiveDir, opts = {}) {
  * Each candidate goes through `summarizeOneFile`. The evidence matches the evidence from a sync.
  * With `dryRun`, the function counts the candidates and summarizes nothing.
  * With the Ollama backend, the function stops at once when another agent holds the shared GPU. The result then sets `deferred`.
- * A deferral during the run also stops the loop and sets `deferred`: a reservation that appears, or no usable Claude Code executable.
+ * A deferral during the run also stops the loop and sets `deferred`. `src/deferral.ts` lists the causes.
  *
  * @param archiveDir The archive directory, with one subdirectory per project.
  * @param opts The limit and dry-run settings. See `BackfillOptions`.

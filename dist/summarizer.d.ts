@@ -170,7 +170,7 @@ export declare function getCodexModel(): string | undefined;
  *
  * For more than 15 exchanges, the function summarizes each chunk of exchanges. The function then synthesizes the chunk summaries into one summary. The chunk size is 8 exchanges. A larger chunk size keeps the chunk count at 20 or less. The function logs a failed chunk and skips it. A failed synthesis returns the chunk summaries joined with a space. When no chunk succeeds, the function returns `Error: Unable to summarize conversation.` as the result.
  *
- * A deferral from a model call rejects the promise: a GpuReservedError, or a ClaudeBinError when no usable Claude Code executable exists.
+ * A deferral from a model call rejects the promise. `src/deferral.ts` lists the causes.
  *
  * The function writes its progress lines with console.log, so they go to stdout.
  *

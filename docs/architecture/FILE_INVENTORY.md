@@ -8,7 +8,7 @@ This report lists each source file that the map census finds, with a disposition
 
 **Language**: typescript
 
-**Total files**: 277
+**Total files**: 278
 
 ## Disposition counts
 
@@ -18,12 +18,12 @@ This report lists each source file that the map census finds, with a disposition
 | `build-entry` | 4 | A `src`-area file that is an entry root. |
 | `test-only` | 46 | A `src`-area file that only a test reaches. |
 | `orphan` | 15 | A `src`-area file that nothing reaches. Delete it, or wire it to a root. |
-| `test` | 164 | A file in a `test/` or `tests/` folder, or a `*.test.ts` or `*.spec.ts` file. |
+| `test` | 165 | A file in a `test/` or `tests/` folder, or a `*.test.ts` or `*.spec.ts` file. |
 | `tool` | 4 | A file in a `tools/` or `scripts/` folder outside `src/`. |
 | `config` | 1 | A `*.config.*` file of TypeScript or JavaScript. |
 | `example` | 0 | A file in `examples/` or `docs/`. |
 | `bench` | 0 | A file in `bench/` or `benchmarks/`, or a `*.bench.*` file. |
-| **Total** | **277** | |
+| **Total** | **278** | |
 
 ## Per-area counts
 
@@ -31,14 +31,14 @@ This report lists each source file that the map census finds, with a disposition
 | --- | --: |
 | `config` | 1 |
 | `src` | 108 |
-| `tests` | 164 |
+| `tests` | 165 |
 | `tools` | 4 |
 
 ## Per-package counts
 
 | Package | Files |
 | --- | --: |
-| `(root)` | 178 |
+| `(root)` | 179 |
 | `episodic-memory` | 99 |
 
 ## All files
@@ -67,7 +67,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/constants.ts` | episodic-memory | src | reachable | 93 |
 | `src/content-text.ts` | episodic-memory | src | reachable | 33 |
 | `src/db.ts` | episodic-memory | src | reachable | 546 |
-| `src/deferral.ts` | episodic-memory | src | reachable | 21 |
+| `src/deferral.ts` | episodic-memory | src | reachable | 60 |
 | `src/deps-health.ts` | episodic-memory | src | test-only | 149 |
 | `src/digest-compress.ts` | episodic-memory | src | test-only | 137 |
 | `src/digest-db.ts` | episodic-memory | src | reachable | 259 |
@@ -142,7 +142,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/show.ts` | episodic-memory | src | reachable | 1027 |
 | `src/stats-cli.ts` | episodic-memory | src | orphan | 32 |
 | `src/stats.ts` | episodic-memory | src | test-only | 172 |
-| `src/summarizer.ts` | episodic-memory | src | reachable | 837 |
+| `src/summarizer.ts` | episodic-memory | src | reachable | 865 |
 | `src/sync-banner.ts` | episodic-memory | src | test-only | 33 |
 | `src/sync-cli.ts` | episodic-memory | src | orphan | 248 |
 | `src/sync.ts` | episodic-memory | src | test-only | 534 |
@@ -163,6 +163,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/backfill-cli-gpu-reservation.test.ts` | (root) | tests | test | 51 |
 | `test/backfill-gpu-reservation.test.ts` | (root) | tests | test | 125 |
 | `test/backfill.test.ts` | (root) | tests | test | 122 |
+| `test/claude-auth-deferral.test.ts` | (root) | tests | test | 222 |
 | `test/claude-bin-deferral.test.ts` | (root) | tests | test | 180 |
 | `test/claude-bin.test.ts` | (root) | tests | test | 230 |
 | `test/claude-e2e-script.test.ts` | (root) | tests | test | 25 |

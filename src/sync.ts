@@ -55,7 +55,7 @@ export interface SyncResult {
   // "Summarized: 0" is ambiguous between "nothing needed doing" and "the queue is stalled",
   // and those two states are the ones that matter most.
   pendingSummaries: number;
-  /** Set when this run deferred the summaries: another agent holds the shared GPU, or no usable Claude Code executable exists. */
+  /** Set when this run deferred the summaries (`src/deferral.ts` lists the causes). */
   summariesDeferred?: string;
   /**
    * Zero-byte -summary.txt files seen this run, and how many of those carry NO recorded reason.
@@ -186,7 +186,7 @@ export function extractSessionIdFromPath(filePath: string): string | null {
  *
  * Use `skipIndex` and `skipSummaries` to turn off the two later steps. The function skips the excluded projects. The function records an error for each file that fails and continues with the next file.
  *
- * When the Ollama summarizer is in use and another agent holds the shared GPU, the function writes no summary. When no usable Claude Code executable exists, the summaries stop at the first call. In both cases the reason is reported in `summariesDeferred`, and no attempt is counted. The function returns an empty result when `sourceDir` does not exist.
+ * When the Ollama summarizer is in use and another agent holds the shared GPU, the function writes no summary. When no usable Claude Code executable exists or the Claude Code login fails, the summaries stop at the first call. In both cases the reason is reported in `summariesDeferred`, and no attempt is counted. The function returns an empty result when `sourceDir` does not exist.
  */
 export async function syncConversations(
   sourceDir: string,
@@ -402,7 +402,7 @@ export async function syncConversations(
     for (const { path: filePath, sessionId } of toSummarize) {
       const deferred = await summarizeOneFile(filePath, sessionId, result, summarizeConversation);
       if (deferred) {
-        // A deferral: the GPU is reserved, or no usable Claude Code executable exists. Every further call would fail the same way.
+        // A deferral (`src/deferral.ts` lists the causes). Every further call would fail the same way.
         result.summariesDeferred = deferred;
         break;
       }
@@ -496,8 +496,8 @@ export async function summarizeOneFile(
     try { fs.unlinkSync(summaryFailPath(filePath)); } catch {} // clear any prior failure record
     result.summarized++;
   } catch (error) {
-    // A deferral is not a failed summary: a GPU reservation that appeared during the run, or no usable
-    // Claude Code executable. Leave the queue as it is and take back the attempt counted before the call.
+    // A deferral is not a failed summary (`src/deferral.ts` lists the causes).
+    // Leave the queue as it is and take back the attempt counted before the call.
     const deferred = deferralDetail(error);
     if (deferred !== null) {
       result.summaryAttempts--;

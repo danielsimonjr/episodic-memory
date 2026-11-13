@@ -1,11 +1,11 @@
 {
-  "totalFiles": 277,
+  "totalFiles": 278,
   "byDisposition": {
     "reachable": 43,
     "build-entry": 4,
     "test-only": 46,
     "orphan": 15,
-    "test": 164,
+    "test": 165,
     "tool": 4,
     "config": 1,
     "bench": 0,
@@ -14,11 +14,11 @@
   "byArea": {
     "src": 108,
     "tools": 4,
-    "tests": 164,
+    "tests": 165,
     "config": 1
   },
   "byPackage": {
-    "(root)": 178,
+    "(root)": 179,
     "episodic-memory": 99
   },
   "files": [
@@ -181,7 +181,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 21
+      "loc": 60
     },
     {
       "file": "src/deps-health.ts",
@@ -706,7 +706,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 837
+      "loc": 865
     },
     {
       "file": "src/sync-banner.ts",
@@ -847,6 +847,13 @@
       "area": "tests",
       "disposition": "test",
       "loc": 122
+    },
+    {
+      "file": "test/claude-auth-deferral.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 222
     },
     {
       "file": "test/claude-bin-deferral.test.ts",

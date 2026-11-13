@@ -1,7 +1,7 @@
 {
   "metadata": {
     "totalSourceFiles": 108,
-    "totalTestFiles": 157,
+    "totalTestFiles": 158,
     "testedCount": 85,
     "untestedCount": 23,
     "coveragePercent": "78.7",
@@ -208,6 +208,7 @@
       "test/verify.test.ts"
     ],
     "src/deferral.ts": [
+      "test/claude-auth-deferral.test.ts",
       "test/claude-bin-deferral.test.ts"
     ],
     "src/deps-health.ts": [
@@ -603,6 +604,7 @@
       "test/stats.test.ts"
     ],
     "src/summarizer.ts": [
+      "test/claude-auth-deferral.test.ts",
       "test/claude-bin-deferral.test.ts",
       "test/ollama-plain-reply.test.ts",
       "test/real-sdk-guard.test.ts",
@@ -621,6 +623,7 @@
     ],
     "src/sync-cli.ts": [],
     "src/sync.ts": [
+      "test/claude-auth-deferral.test.ts",
       "test/claude-bin-deferral.test.ts",
       "test/dangling-project-link.test.ts",
       "test/exclude-nested.test.ts",
@@ -659,6 +662,7 @@
       "test/topic-validate.test.ts"
     ],
     "src/types.ts": [
+      "test/claude-auth-deferral.test.ts",
       "test/claude-bin-deferral.test.ts",
       "test/codex-transcripts.test.ts",
       "test/cross-harness-recall.test.ts",
@@ -701,6 +705,12 @@
     ],
     "test/backfill.test.ts": [
       "src/backfill.ts"
+    ],
+    "test/claude-auth-deferral.test.ts": [
+      "src/types.ts",
+      "src/summarizer.ts",
+      "src/deferral.ts",
+      "src/sync.ts"
     ],
     "test/claude-bin-deferral.test.ts": [
       "src/types.ts",

@@ -1224,7 +1224,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 672
+      "loc": 718
     },
     {
       "file": "test/learn/learning-db.test.ts",

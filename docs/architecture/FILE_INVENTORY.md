@@ -216,7 +216,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/learn/learn-lock.test.ts` | (root) | tests | test | 147 |
 | `test/learn/learned-block.test.ts` | (root) | tests | test | 146 |
 | `test/learn/learned-text-screen.test.ts` | (root) | tests | test | 368 |
-| `test/learn/learner.test.ts` | (root) | tests | test | 672 |
+| `test/learn/learner.test.ts` | (root) | tests | test | 718 |
 | `test/learn/learning-db.test.ts` | (root) | tests | test | 290 |
 | `test/learn/learning-store.test.ts` | (root) | tests | test | 271 |
 | `test/learn/prompts.test.ts` | (root) | tests | test | 261 |

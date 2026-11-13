@@ -32,7 +32,7 @@ This document provides a comprehensive dependency graph of all files, components
 The codebase is organized into the following modules:
 
 - **cli**: 8 files
-- **root**: 64 files
+- **root**: 65 files
 - **entry**: 1 file
 - **learn**: 30 files
 - **vendor/onnxruntime-web-stub**: 1 file
@@ -605,6 +605,19 @@ The codebase is organized into the following modules:
 
 ---
 
+### `src/fs-retry.ts` - Retry of the file operations that a Windows sharing violation stops for a moment.
+
+**Node.js Built-in Dependencies:**
+| Module | Import |
+|--------|--------|
+| `fs` | `default` |
+
+**Exports:**
+- Functions: `retryDelayMs`, `sleepSync`, `isSharingViolation`, `renameWithRetry`
+- Constants: `RETRY_ATTEMPTS`
+
+---
+
 ### `src/fts-query.ts` - Turn free text into an FTS5 query in which each word must match.
 
 **Exports:**
@@ -1091,6 +1104,7 @@ The codebase is organized into the following modules:
 | `./gpu-reservation.js` | `gpuReservationBlock` | Import |
 | `./ollama-backend.js` | `summarizerBackend` | Import |
 | `./deferral.js` | `deferralDetail` | Import |
+| `./fs-retry.js` | `renameWithRetry` | Import |
 | `./db.js` | `*` | Import |
 | `./embeddings.js` | `*` | Import |
 | `./parser.js` | `*` | Import |
@@ -1451,6 +1465,7 @@ The codebase is organized into the following modules:
 | File | Imports | Type |
 |------|---------|------|
 | `../paths.js` | `getSuperpowersDir` | Import |
+| `../fs-retry.js` | `renameWithRetry, retryDelayMs, sleepSync, RETRY_ATTEMPTS` | Import |
 | `../redact.js` | `redactSecrets` | Import |
 | `./learned-text-screen.js` | `screenLearnedText` | Import |
 | `./learn-inject.js` | `redactKeepingMarks, RedactFn` | Import |
@@ -2036,11 +2051,11 @@ The codebase is organized into the following modules:
 | `src/learn/leaf-learner` | 14 files | 1 file |
 | `src/redact` | 0 files | 15 files |
 | `src/learn/solver` | 9 files | 5 files |
+| `src/sync` | 11 files | 2 files |
 | `src/topic-job` | 12 files | 1 file |
 | `src/digest-job` | 10 files | 2 files |
 | `src/mcp-tools` | 10 files | 2 files |
 | `src/sync-cli` | 12 files | 0 files |
-| `src/sync` | 10 files | 2 files |
 | `src/types` | 0 files | 12 files |
 | `src/learn/learn-config` | 0 files | 11 files |
 | `src/learn/learning-db` | 2 files | 9 files |
@@ -2064,8 +2079,8 @@ The codebase is organized into the following modules:
 | `src/deferral` | 2 files | 5 files |
 | `src/digest-prompts` | 4 files | 3 files |
 | `src/digest-validate` | 1 file | 6 files |
+| `src/learn/export` | 6 files | 1 file |
 | `src/learn-cli` | 7 files | 0 files |
-| `src/reentrancy` | 0 files | 7 files |
 
 ---
 
@@ -2113,7 +2128,7 @@ graph TD
         N15[constants]
         N16[db]
         N17[deferral]
-        N18[...54 more]
+        N18[...55 more]
     end
 
     subgraph Entry
@@ -2173,15 +2188,15 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 263 |
+| Total Source Files | 265 |
 | Subsystems | 5 |
-| Total Lines of Code | 53544 |
-| Total Exports | 580 |
+| Total Lines of Code | 53674 |
+| Total Exports | 585 |
 | Total Re-exports | 8 |
 | Total Classes | 8 |
 | Total Interfaces | 137 |
-| Total Functions | 325 |
-| Total Type Guards | 9 |
+| Total Functions | 329 |
+| Total Type Guards | 10 |
 | Total Enums | 0 |
 | Type-only Imports | 79 |
 | Runtime Cyclic Components | 0 |

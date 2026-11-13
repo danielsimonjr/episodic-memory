@@ -21,6 +21,7 @@
 import fs from 'fs';
 import path from 'path';
 import { getSuperpowersDir } from '../paths.js';
+import { renameWithRetry, retryDelayMs, sleepSync, RETRY_ATTEMPTS } from '../fs-retry.js';
 import { redactSecrets } from '../redact.js';
 import { screenLearnedText } from './learned-text-screen.js';
 import { redactKeepingMarks, type RedactFn } from './learn-inject.js';
@@ -48,18 +49,8 @@ export interface ExportOptions {
 /** The default root, a sibling of `learned/` under the config dir. */
 const DEFAULT_ROOT_NAME = 'learned-skills';
 
-/** Rename/remove attempts, and the same backoff the tests' `safeRmSync` uses. */
-const ATTEMPTS = 5;
-
 /** A directory name for a project key. `*` (the global scope) becomes `global`. */
 const GLOBAL_DIR = 'global';
-
-function sleep(ms: number): void {
-  const start = Date.now();
-  while (Date.now() - start < ms) {
-    // Spin: the callers are synchronous, so there is nothing to await here.
-  }
-}
 
 /**
  * A portable directory name for a project key.
@@ -123,31 +114,14 @@ function isInsideConfigDir(target: string): boolean {
   return rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel));
 }
 
-/** Rename, retrying the Windows sharing violations; rethrow anything else. */
-function renameWithRetry(from: string, to: string): void {
-  let lastError: unknown;
-  for (let attempt = 0; attempt < ATTEMPTS; attempt += 1) {
-    try {
-      fs.renameSync(from, to);
-      return;
-    } catch (error) {
-      const code = (error as NodeJS.ErrnoException).code;
-      if (code !== 'EPERM' && code !== 'EBUSY') throw error;
-      lastError = error;
-      sleep(20 * 2 ** attempt);
-    }
-  }
-  throw lastError;
-}
-
 /** Best-effort recursive remove with the same backoff. Never throws. */
 function removeTree(target: string): void {
-  for (let attempt = 0; attempt < ATTEMPTS; attempt += 1) {
+  for (let attempt = 0; attempt < RETRY_ATTEMPTS; attempt += 1) {
     try {
       fs.rmSync(target, { recursive: true, force: true });
       return;
     } catch {
-      sleep(20 * 2 ** attempt);
+      sleepSync(retryDelayMs(attempt));
     }
   }
   try {

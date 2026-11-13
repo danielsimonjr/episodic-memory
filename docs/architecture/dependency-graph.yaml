@@ -2,9 +2,9 @@ metadata:
   name: episodic-memory
   schemaVersion: 2.0.0
   language: typescript
-  totalFiles: 263
+  totalFiles: 265
   totalModules: 4
-  totalExports: 580
+  totalExports: 585
 modules:
   src:
     cli/digest-hook.js:
@@ -684,6 +684,17 @@ modules:
         - formatExchangeEmbeddingText
         - generateExchangeEmbedding
         - generateExchangeEmbeddings
+    src/fs-retry.ts:
+      externalDependencies: []
+      nodeDependencies:
+        - fs
+      internalDependencies: []
+      exports:
+        - RETRY_ATTEMPTS
+        - retryDelayMs
+        - sleepSync
+        - isSharingViolation
+        - renameWithRetry
     src/fts-query.ts:
       externalDependencies: []
       nodeDependencies: []
@@ -1168,6 +1179,13 @@ modules:
         - file: src/paths.ts
           imports:
             - getSuperpowersDir
+          typeOnly: false
+        - file: src/fs-retry.ts
+          imports:
+            - renameWithRetry
+            - retryDelayMs
+            - sleepSync
+            - RETRY_ATTEMPTS
           typeOnly: false
         - file: src/redact.ts
           imports:
@@ -2650,6 +2668,10 @@ modules:
         - file: src/deferral.ts
           imports:
             - deferralDetail
+          typeOnly: false
+        - file: src/fs-retry.ts
+          imports:
+            - renameWithRetry
           typeOnly: false
         - file: src/db.ts
           imports:
@@ -5942,6 +5964,29 @@ modules:
         - url
       internalDependencies: []
       exports: []
+    test/sync-copy-retry.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - fs
+        - os
+        - path
+      internalDependencies:
+        - file: src/sync.ts
+          imports:
+            - syncConversations
+          typeOnly: false
+        - file: src/fs-retry.ts
+          imports:
+            - renameWithRetry
+            - RETRY_ATTEMPTS
+          typeOnly: false
+        - file: test/test-utils.ts
+          imports:
+            - suppressConsole
+            - safeRmSync
+          typeOnly: false
+      exports: []
     test/sync-empty-summary-audit.test.ts:
       externalDependencies:
         - vitest
@@ -6463,21 +6508,21 @@ modules:
           typeOnly: false
       exports: []
 statistics:
-  totalTypeScriptFiles: 263
-  totalSourceFiles: 263
+  totalTypeScriptFiles: 265
+  totalSourceFiles: 265
   totalModules: 4
-  totalLinesOfCode: 53544
-  totalExports: 580
+  totalLinesOfCode: 53674
+  totalExports: 585
   entryRoots: 6
   reachableFiles: 46
-  dormantFiles: 58
+  dormantFiles: 59
   orphanedFiles: 15
-  testOnlyFiles: 43
+  testOnlyFiles: 44
   runtimeCircularDeps: 0
   typeOnlyCircularDeps: 1
   totalTypeOnlyImports: 79
   noImporterFileCount: 14
-  unusedExportsCount: 114
+  unusedExportsCount: 115
   circularDepsTruncated: false
   runtimeCyclicComponents: 0
   typeOnlyCyclicComponents: 1
@@ -6485,10 +6530,10 @@ statistics:
   typeOnlyFilesInCycles: 2
   totalClasses: 8
   totalInterfaces: 137
-  totalFunctions: 325
-  totalTypeGuards: 9
+  totalFunctions: 329
+  totalTypeGuards: 10
   totalEnums: 0
-  totalConstants: 67
+  totalConstants: 68
   totalReExports: 8
 reachability:
   roots:
@@ -6499,7 +6544,7 @@ reachability:
     - test/setup-env.ts
     - test/global-setup.ts
   reachableCount: 46
-  dormantCount: 58
+  dormantCount: 59
   orphaned:
     - cli/digest-hook.js
     - cli/episodic-memory.js
@@ -6527,6 +6572,7 @@ reachability:
     - src/digest-prompts.ts
     - src/doctor-learn.ts
     - src/doctor.ts
+    - src/fs-retry.ts
     - src/learn/agent-runner.ts
     - src/learn/bootstrap.ts
     - src/learn/cited-ids.ts

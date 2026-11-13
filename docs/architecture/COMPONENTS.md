@@ -60,6 +60,12 @@ Holds `EMBEDDING_VERSION`. It finds rows with an older version and re-embeds the
 
 `syncConversations(sourceDir, destDir, options)` is the core of ingest. The function walks the source folders and copies a transcript only when it is newer than the archive copy. It queues new files for indexing and queues missing summaries. It skips summarizer conversations and excluded projects. Summary work runs in this order: fresh work, then retries, then retries of legacy empty summaries. A deferral (see `src/deferral.ts`) stops the summary loop and sets `summariesDeferred`. The function returns a `SyncResult` with counts. `summarizeOneFile` summarizes a single archive file.
 
+The copy writes a temporary file. The copy renames the temporary file over the archive copy with `renameWithRetry` (see `src/fs-retry.ts`). When every attempt fails, the copy removes the temporary file. The copy then records one error for the transcript.
+
+### `src/fs-retry.ts`
+
+On Windows, another process can hold a file open for a moment. A rename over that file then fails with `EPERM` or `EBUSY`. `renameWithRetry(from, to)` tries the rename `RETRY_ATTEMPTS` (5) times. The waits between attempts grow from 20 ms to 160 ms. Any other error stops the retry at once. `sleepSync` waits with `Atomics.wait`. The wait does not use the CPU. `src/sync.ts` and `src/learn/export.ts` use this module.
+
 ### `src/backfill.ts`
 
 Summarizes archived conversations that `sync` cannot reach. It checks the GPU reservation and the summarizer backend first.
@@ -192,10 +198,10 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 263 | repo-tools map |
+| totalSourceFiles | 265 | repo-tools map |
 | totalClasses | 8 | repo-tools map |
 | totalInterfaces | 137 | repo-tools map |
-| totalFunctions | 325 | repo-tools map |
-| totalConstants | 67 | repo-tools map |
+| totalFunctions | 329 | repo-tools map |
+| totalConstants | 68 | repo-tools map |
 
 The tool names, the table names and the model name come from a direct reading of `src/mcp-server.ts`, `src/db.ts` and `src/embeddings.ts`. They are not `repo-tools map` metrics.

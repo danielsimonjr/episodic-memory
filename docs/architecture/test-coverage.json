@@ -1,17 +1,17 @@
 {
   "metadata": {
-    "totalSourceFiles": 104,
-    "totalTestFiles": 148,
-    "testedCount": 81,
+    "totalSourceFiles": 105,
+    "totalTestFiles": 149,
+    "testedCount": 82,
     "untestedCount": 23,
-    "coveragePercent": "77.9",
+    "coveragePercent": "78.1",
     "effectiveCoverage": {
       "policyLoaded": false,
-      "activeFiles": 104,
-      "testedActive": 81,
+      "activeFiles": 105,
+      "testedActive": 82,
       "activeUntested": 23,
       "excludedTotal": 0,
-      "percent": "77.9",
+      "percent": "78.1",
       "breakdown": {
         "active_untested": 23
       }
@@ -66,6 +66,7 @@
     "src/doctor.ts",
     "src/embedding-migration.ts",
     "src/embeddings.ts",
+    "src/fs-retry.ts",
     "src/gpu-reservation.ts",
     "src/indexer.ts",
     "src/learn/agent-runner.ts",
@@ -264,6 +265,9 @@
       "test/multi-concept.test.ts",
       "test/query-prefix.test.ts",
       "test/verify.test.ts"
+    ],
+    "src/fs-retry.ts": [
+      "test/sync-copy-retry.test.ts"
     ],
     "src/fts-query.ts": [],
     "src/gpu-reservation.ts": [
@@ -596,6 +600,7 @@
     "src/sync.ts": [
       "test/claude-bin-deferral.test.ts",
       "test/exclude-nested.test.ts",
+      "test/sync-copy-retry.test.ts",
       "test/sync-empty-summary-audit.test.ts",
       "test/sync-gpu-reservation.test.ts",
       "test/sync-helpers.test.ts",
@@ -1188,6 +1193,10 @@
       "src/logging.ts"
     ],
     "test/sync-cli-reentrancy.test.ts": [],
+    "test/sync-copy-retry.test.ts": [
+      "src/sync.ts",
+      "src/fs-retry.ts"
+    ],
     "test/sync-empty-summary-audit.test.ts": [
       "src/sync.ts"
     ],

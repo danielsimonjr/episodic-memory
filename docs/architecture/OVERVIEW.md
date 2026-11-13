@@ -41,15 +41,15 @@ All figures below come from `repo-tools map` and cover the whole repository. The
 
 | Metric | Value | Scope |
 |---|---|---|
-| Source files | 263 | whole repository |
-| Lines of code | 53544 | whole repository |
-| Exports | 580 | whole repository |
+| Source files | 265 | whole repository |
+| Lines of code | 53674 | whole repository |
+| Exports | 585 | whole repository |
 | Modules (areas) | 4 | `src`, `tools`, `tests`, `config` |
 | Entry roots | 6 | `src/index.ts`, `src/node-floor.ts`, `src/index-cli.ts`, `src/mcp-server.ts`, `test/setup-env.ts`, `test/global-setup.ts` (vitest loads the two test files by their paths in `vitest.config.ts`) |
 | Runtime circular dependencies | 0 | whole repository |
 | Type-only circular dependencies | 1 | whole repository |
 
-Files per area, from `file-inventory.json`: `src` 104, `tests` 154, `tools` 4, `config` 1.
+Files per area, from `file-inventory.json`: `src` 105, `tests` 155, `tools` 4, `config` 1.
 
 ## Reading the reachability counts
 
@@ -60,7 +60,7 @@ The graph parser follows static imports. The parser does not follow four links t
 3. `package.json` names four `bin` entries. Two of them (`./cli/search-conversations`, `./cli/mcp-server`) have no file extension, and `repo-tools map` cannot resolve them to a file. The parser therefore sees no importer of `cli/forward-child.js` except `cli/search-conversations.js`, which is an orphan too.
 4. The `onnxruntime-web` override of `package.json` points the installer at `vendor/onnxruntime-web-stub`. No source file imports the stub. Only `test/onnxruntime-web-stub.test.ts` loads the stub.
 
-The result is 15 files that the map reports as orphaned and 58 as dormant. Most of them are live. The map is correct about the static graph. The map cannot see the process boundaries. Do not delete a file only because the map lists it. Read `unused-analysis.md` and confirm with a search first.
+The result is 15 files that the map reports as orphaned and 59 as dormant. Most of them are live. The map is correct about the static graph. The map cannot see the process boundaries. Do not delete a file only because the map lists it. Read `unused-analysis.md` and confirm with a search first.
 
 ## Where to read next
 
@@ -78,12 +78,12 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 263 | repo-tools map |
-| totalLinesOfCode | 53544 | repo-tools map |
-| totalExports | 580 | repo-tools map |
+| totalSourceFiles | 265 | repo-tools map |
+| totalLinesOfCode | 53674 | repo-tools map |
+| totalExports | 585 | repo-tools map |
 | totalModules | 4 | repo-tools map |
 | entryRoots | 6 | repo-tools map |
 | orphanedFiles | 15 | repo-tools map |
-| dormantFiles | 58 | repo-tools map |
+| dormantFiles | 59 | repo-tools map |
 | runtimeCircularDeps | 0 | repo-tools map |
 | typeOnlyCircularDeps | 1 | repo-tools map |

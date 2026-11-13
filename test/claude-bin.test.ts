@@ -197,6 +197,25 @@ describe('claudeExecutableOption', () => {
     expect(claudeExecutableOption({ env: {}, sdkDir, spawn })).toEqual({});
   });
 
+  // A cold start under a virus scan can pass the bound once. A cached timeout would defer every call of the process.
+  it('does not keep a timed-out probe: the next call probes again and can pass', () => {
+    quiet();
+    const bin = fakeBin('2.1.318\n');
+    let calls = 0;
+    const spawn = ((...args: unknown[]) => {
+      calls += 1;
+      if (calls === 1) {
+        return { error: Object.assign(new Error('spawnSync ETIMEDOUT'), { code: 'ETIMEDOUT' }), status: null, stdout: '' };
+      }
+      return (spawnSync as (...a: unknown[]) => unknown)(...args);
+    }) as unknown as typeof spawnSync;
+    const env = { [CLAUDE_BIN_ENV]: bin };
+    const sdkDir = fakeSdk();
+    expect(() => claudeExecutableOption({ env, sdkDir, spawn })).toThrow(/timed out/);
+    expect(claudeExecutableOption({ env, sdkDir, spawn })).toEqual({ pathToClaudeCodeExecutable: bin });
+    expect(calls).toBe(2);
+  });
+
   it('keeps a failed probe: a second call throws again without a second line or a second run', () => {
     const err = quiet();
     const counted = vi.fn((...args: unknown[]) => (spawnSync as (...a: unknown[]) => unknown)(...args));

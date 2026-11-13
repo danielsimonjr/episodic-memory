@@ -2,7 +2,7 @@
 
 ### Added
 - **A host can drop the 269 MB bundled Claude Code binary (opt-in, `EPISODIC_MEMORY_CLAUDE_BIN`).** The Agent SDK starts the binary of its platform package, for example `@anthropic-ai/claude-agent-sdk-win32-x64`. A host that sets the variable to an absolute path of its own Claude Code binary uses that binary instead.
-  - `src/claude-bin.ts` runs `<path> --version` once per process, with a bound of 10 seconds. The version must be at or above the floor in the SDK `manifest.json`, because an older binary can delete session records.
+  - `src/claude-bin.ts` runs `<path> --version` once per process, with a bound of 10 seconds. A timeout is not kept, so a slow cold start retries at the next call. The version must be at or above the floor in the SDK `manifest.json`, because an older binary can delete session records.
   - When the probe passes, `ensureDeps` removes every `claude-agent-sdk-<platform>-<arch>` platform package. Another package with the same prefix stays. One call removed 269,231,840 bytes from an install at the `bun.lock` versions. With the variable unset, nothing changes.
   - When no usable executable exists, the summaries, the digest, the topic step and the backfill defer (`src/deferral.ts`), as they do for a GPU reservation. They count no attempt and write no failure record. The learn commands that start Claude Code exit 1 before the lock.
   - On the Ollama backend, an unusable Claude fallback counts as no fallback. The Ollama error stands and the attempt counts, so one transcript that Ollama cannot summarize does not hold back the queue.

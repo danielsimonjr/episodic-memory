@@ -60,7 +60,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/archive-path.ts` | episodic-memory | src | reachable | 212 |
 | `src/backfill-cli.ts` | episodic-memory | src | orphan | 107 |
 | `src/backfill.ts` | episodic-memory | src | test-only | 164 |
-| `src/claude-bin.ts` | episodic-memory | src | reachable | 225 |
+| `src/claude-bin.ts` | episodic-memory | src | reachable | 233 |
 | `src/codex-hook-trust.ts` | episodic-memory | src | test-only | 157 |
 | `src/codex-support.ts` | episodic-memory | src | reachable | 66 |
 | `src/constants.ts` | episodic-memory | src | reachable | 93 |
@@ -159,7 +159,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/backfill-gpu-reservation.test.ts` | (root) | tests | test | 125 |
 | `test/backfill.test.ts` | (root) | tests | test | 122 |
 | `test/claude-bin-deferral.test.ts` | (root) | tests | test | 180 |
-| `test/claude-bin.test.ts` | (root) | tests | test | 211 |
+| `test/claude-bin.test.ts` | (root) | tests | test | 230 |
 | `test/claude-e2e-script.test.ts` | (root) | tests | test | 25 |
 | `test/codex-doctor.test.ts` | (root) | tests | test | 154 |
 | `test/codex-e2e-script.test.ts` | (root) | tests | test | 24 |

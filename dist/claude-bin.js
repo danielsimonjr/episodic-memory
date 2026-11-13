@@ -15,7 +15,10 @@ import { createRequire } from 'module';
 import { dirname, extname, isAbsolute, join } from 'path';
 /** The variable that names the Claude Code executable. Unset or blank selects the bundled binary. */
 export const CLAUDE_BIN_ENV = 'EPISODIC_MEMORY_CLAUDE_BIN';
-/** The default bound of the `--version` probe. A `--version` call returns in well under one second. */
+/**
+ * The default bound of the `--version` probe. A warm probe took less than 200 ms on Windows. A cold start under a
+ * virus scan can take longer, so a timeout is not kept and the next call probes again.
+ */
 export const PROBE_TIMEOUT_MS = 10_000;
 const SDK_PACKAGE = '@anthropic-ai/claude-agent-sdk';
 /** Extensions that run under node. The SDK also treats these as scripts. */
@@ -29,21 +32,24 @@ const REFUSED_EXTENSIONS = new Set(['.cmd', '.bat', '.ps1', '.ts', '.tsx', '.jsx
 export class ClaudeBinError extends Error {
     /** The one-line reason. The sync banner shows the line. */
     detail;
-    constructor(detail) {
+    /** True for a probe timeout. The next call probes again, because a cold start can pass the bound once. */
+    transient;
+    constructor(detail, transient = false) {
         super(detail);
         this.name = 'ClaudeBinError';
         this.detail = detail;
+        this.transient = transient;
     }
 }
 const reported = new Set();
 const probes = new Map();
 /** Write the line once per process, then return the error to throw. */
-function failure(detail) {
+function failure(detail, transient = false) {
     if (!reported.has(detail)) {
         reported.add(detail);
         console.error(`episodic-memory: ${detail}`);
     }
-    return new ClaudeBinError(detail);
+    return new ClaudeBinError(detail, transient);
 }
 /**
  * Return the directory of the installed SDK package.
@@ -141,7 +147,7 @@ export function probeClaudeBin(path, floor, options = {}) {
     });
     if (r.error) {
         const timedOut = r.error.code === 'ETIMEDOUT';
-        throw failure(`${name} --version ${timedOut ? `timed out after ${timeoutMs} ms` : `failed: ${r.error.message}`}`);
+        throw failure(`${name} --version ${timedOut ? `timed out after ${timeoutMs} ms` : `failed: ${r.error.message}`}`, timedOut);
     }
     if (r.status !== 0)
         throw failure(`${name} --version ended with exit code ${r.status}`);
@@ -161,6 +167,7 @@ export function probeClaudeBin(path, floor, options = {}) {
  * - The variable is unset or blank, and the platform package is absent: a `ClaudeBinError`. The line names the
  *   variable. The run never falls back to a path that is not on disk.
  * - The variable is set: the path is probed once per process, and `{ pathToClaudeCodeExecutable }` is returned.
+ *   A probe that timed out is not kept, so the next call probes again.
  *
  * @throws ClaudeBinError when no usable executable exists. The module writes each line to stderr once per process.
  */
@@ -189,7 +196,8 @@ export function claudeExecutableOption(options = {}) {
         return { pathToClaudeCodeExecutable: path };
     }
     catch (error) {
-        if (error instanceof ClaudeBinError)
+        // A timeout is not kept: the next call probes again. Every other failure is kept for the process.
+        if (error instanceof ClaudeBinError && !error.transient)
             probes.set(key, { error });
         throw error;
     }

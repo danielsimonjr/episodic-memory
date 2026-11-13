@@ -12,7 +12,10 @@
 import { spawnSync } from 'child_process';
 /** The variable that names the Claude Code executable. Unset or blank selects the bundled binary. */
 export declare const CLAUDE_BIN_ENV = "EPISODIC_MEMORY_CLAUDE_BIN";
-/** The default bound of the `--version` probe. A `--version` call returns in well under one second. */
+/**
+ * The default bound of the `--version` probe. A warm probe took less than 200 ms on Windows. A cold start under a
+ * virus scan can take longer, so a timeout is not kept and the next call probes again.
+ */
 export declare const PROBE_TIMEOUT_MS = 10000;
 /**
  * The Claude Code executable is unusable. The error is a deferral: the summary, digest and topic loops stop, and no
@@ -21,7 +24,9 @@ export declare const PROBE_TIMEOUT_MS = 10000;
 export declare class ClaudeBinError extends Error {
     /** The one-line reason. The sync banner shows the line. */
     readonly detail: string;
-    constructor(detail: string);
+    /** True for a probe timeout. The next call probes again, because a cold start can pass the bound once. */
+    readonly transient: boolean;
+    constructor(detail: string, transient?: boolean);
 }
 /** The test seams and settings of the probe and the resolver. */
 export interface ClaudeBinOptions {
@@ -82,6 +87,7 @@ export declare function probeClaudeBin(path: string, floor: string, options?: Pi
  * - The variable is unset or blank, and the platform package is absent: a `ClaudeBinError`. The line names the
  *   variable. The run never falls back to a path that is not on disk.
  * - The variable is set: the path is probed once per process, and `{ pathToClaudeCodeExecutable }` is returned.
+ *   A probe that timed out is not kept, so the next call probes again.
  *
  * @throws ClaudeBinError when no usable executable exists. The module writes each line to stderr once per process.
  */

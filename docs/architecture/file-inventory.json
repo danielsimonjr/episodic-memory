@@ -132,7 +132,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 225
+      "loc": 233
     },
     {
       "file": "src/codex-hook-trust.ts",
@@ -825,7 +825,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 211
+      "loc": 230
     },
     {
       "file": "test/claude-e2e-script.test.ts",

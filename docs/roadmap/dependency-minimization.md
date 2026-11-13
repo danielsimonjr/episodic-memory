@@ -270,7 +270,8 @@ Discriminators:
    - A `.js` or `.mjs` path runs under `process.execPath`. A native path runs directly.
    - The probe captures the child output with `stdio: ['ignore', 'pipe', 'pipe']`. The probe writes only through `console.error`.
    - The probe parses `^\d+\.\d+\.\d+` from stdout. The compare is a numeric compare of three parts.
-   - The probe has a timeout of 10 seconds (`PROBE_TIMEOUT_MS`). A `--version` call returns in well under one second.
+   - The probe has a timeout of 10 seconds (`PROBE_TIMEOUT_MS`). A warm probe took less than 200 ms on Windows.
+   - A timeout is not kept, because a cold start under a virus scan can pass the bound once. The next call probes again. Every other failure is kept for the process.
    - The floor is the `version` field of `@anthropic-ai/claude-agent-sdk/manifest.json`. The module reads the file at run time. The manifest is in the SDK package, not in the platform package, so the manifest stays on disk.
    - A failed probe, a timeout or a version below the floor is an error. The error writes one stderr line. The line names the path, the found version and the floor. The run stops.
    - The probe does not run for the bundled binary.

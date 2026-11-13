@@ -86,7 +86,7 @@ The module chooses the Claude Code executable that the Agent SDK starts. The mod
 - When the variable is unset and the platform package is absent, the function throws a `ClaudeBinError`. The error line names the variable. The run never falls back to a path that is not on disk.
 - When the variable is set, the function returns `{ pathToClaudeCodeExecutable }` after one probe per process.
 
-`probeClaudeBin` refuses a relative path, a `.cmd`, `.bat` or `.ps1` shim, and a script that needs a loader. `probeClaudeBin` runs `<path> --version` with piped output and a bound of `PROBE_TIMEOUT_MS` (10 seconds). A `.js` or `.mjs` path runs under the running node. The version must be at or above the floor. `sdkFloor` reads the floor from the `version` field of the SDK `manifest.json`, which names the bundled release. The floor is mandatory: an older binary can delete session records (`test/agent-sdk-floor.test.ts`). Each failure line goes to stderr once per process.
+`probeClaudeBin` refuses a relative path, a `.cmd`, `.bat` or `.ps1` shim, and a script that needs a loader. `probeClaudeBin` runs `<path> --version` with piped output and a bound of `PROBE_TIMEOUT_MS` (10 seconds). A `.js` or `.mjs` path runs under the running node. The version must be at or above the floor. `sdkFloor` reads the floor from the `version` field of the SDK `manifest.json`, which names the bundled release. The floor is mandatory: an older binary can delete session records (`test/agent-sdk-floor.test.ts`). Each failure line goes to stderr once per process. A failure is kept for the process, except a timeout: the next call probes again.
 
 ### `src/deferral.ts`
 

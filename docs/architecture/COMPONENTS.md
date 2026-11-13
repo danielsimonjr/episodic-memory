@@ -202,7 +202,7 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 | totalSourceFiles | 274 | repo-tools map |
 | totalClasses | 8 | repo-tools map |
 | totalInterfaces | 139 | repo-tools map |
-| totalFunctions | 340 | repo-tools map |
+| totalFunctions | 341 | repo-tools map |
 | totalConstants | 70 | repo-tools map |
 
 The tool names, the table names and the model name come from a direct reading of `src/mcp-server.ts`, `src/db.ts` and `src/embeddings.ts`. They are not `repo-tools map` metrics.

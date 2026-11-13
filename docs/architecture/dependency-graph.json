@@ -5,7 +5,7 @@
     "language": "typescript",
     "totalFiles": 274,
     "totalModules": 4,
-    "totalExports": 600
+    "totalExports": 601
   },
   "modules": {
     "src": {
@@ -1219,6 +1219,7 @@
               "extractSummary",
               "formatConversationText",
               "getApiEnv",
+              "getCodexModel",
               "promptBudgetChars",
               "resolveLearnModels",
               "runCodexCommand",
@@ -3824,6 +3825,7 @@
           "resolveLearnModels",
           "callLearnModel",
           "runCodexCommand",
+          "getCodexModel",
           "summarizeConversation"
         ]
       },
@@ -8995,6 +8997,7 @@
               "buildCodexSummarizerCommand",
               "buildSummarizerQueryOptions",
               "getApiEnv",
+              "getCodexModel",
               "resolveLearnModels",
               "runCodexCommand",
               "shouldSkipReentrantSync",
@@ -9986,8 +9989,8 @@
     "totalTypeScriptFiles": 274,
     "totalSourceFiles": 274,
     "totalModules": 4,
-    "totalLinesOfCode": 54737,
-    "totalExports": 600,
+    "totalLinesOfCode": 54771,
+    "totalExports": 601,
     "entryRoots": 6,
     "reachableFiles": 47,
     "dormantFiles": 61,
@@ -10005,7 +10008,7 @@
     "typeOnlyFilesInCycles": 2,
     "totalClasses": 8,
     "totalInterfaces": 139,
-    "totalFunctions": 340,
+    "totalFunctions": 341,
     "totalTypeGuards": 10,
     "totalEnums": 0,
     "totalConstants": 70,

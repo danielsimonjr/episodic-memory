@@ -1068,7 +1068,7 @@ The codebase is organized into the following modules:
   ```text
   getApiEnv, formatConversationText, extractSummary, buildSummarizerQueryOptions,
   buildCodexSummaryPrompt, buildCodexSummarizerCommand, callDigestModel, promptBudgetChars,
-  resolveLearnModels, callLearnModel, runCodexCommand, summarizeConversation
+  resolveLearnModels, callLearnModel, runCodexCommand, getCodexModel, summarizeConversation
   ```
 
 
@@ -2230,12 +2230,12 @@ graph TD
 |----------|-------|
 | Total Source Files | 274 |
 | Subsystems | 5 |
-| Total Lines of Code | 54737 |
-| Total Exports | 600 |
+| Total Lines of Code | 54771 |
+| Total Exports | 601 |
 | Total Re-exports | 8 |
 | Total Classes | 8 |
 | Total Interfaces | 139 |
-| Total Functions | 340 |
+| Total Functions | 341 |
 | Total Type Guards | 10 |
 | Total Enums | 0 |
 | Type-only Imports | 79 |

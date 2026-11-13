@@ -2695,6 +2695,7 @@
           "resolveLearnModels",
           "callLearnModel",
           "runCodexCommand",
+          "getCodexModel",
           "summarizeConversation"
         ],
         "interfaces": [
@@ -2713,6 +2714,7 @@
           "resolveLearnModels",
           "callLearnModel",
           "runCodexCommand",
+          "getCodexModel",
           "summarizeConversation"
         ]
       },

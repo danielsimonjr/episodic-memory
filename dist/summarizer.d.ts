@@ -150,6 +150,14 @@ export declare function callLearnModel(prompt: string): Promise<string>;
  */
 export declare function runCodexCommand(command: CodexSummarizerCommand): Promise<string>;
 /**
+ * Return the model for the Codex `thread/fork` request. The value comes from `EPISODIC_MEMORY_CODEX_MODEL`.
+ *
+ * The function does not read the model of the conversation history. The Codex app server refuses some history models, for example `gpt-5.2-codex`.
+ * A `-codex` model also needs an API key. As a result, a ChatGPT login gets a 400 error for the model.
+ * When the variable is unset or empty, the function returns `undefined`. The fork then sends no model. Codex uses the model of its configuration.
+ */
+export declare function getCodexModel(): string | undefined;
+/**
  * Summarize one conversation and return the summary text.
  *
  * The function returns `Trivial conversation with no substantive content.` without a model call when the conversation has no exchanges.

@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [1.9.0] - 2026-11-13
+
 ### Added
 - **`EPISODIC_MEMORY_SKIP_SUMMARIES=1` turns off the summary step of a sync.** The sync still copies and indexes the conversations. The sync writes no summary. The sync prints `Summaries: skipped`. The new `buildSyncOptionsFromEnv` of `src/sync.ts` reads the variable. Only the exact value `1` turns the switch on. A summary only decorates a search result, so the switch does not change what a search finds. The switch does not affect the digest, the topic step and `backfill`. `sync --help` lists the variable. Ported from upstream c8d0e3f.
 - **`EPISODIC_MEMORY_DISABLE_AUTO_SYNC=1` stops the sync that the SessionStart hook starts.** `sync --background` then writes one stderr line. The command exits 0 and starts no worker. A sync in the foreground still runs, so a manual `episodic-memory sync` and a scheduled task are not affected. Only the exact value `1` turns the switch on. `sync --help` lists the variable. Ported from upstream fd8f839.

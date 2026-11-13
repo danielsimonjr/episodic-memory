@@ -161,7 +161,7 @@ Each `src/*-cli.ts` file is one command. A shim in `cli/` or the umbrella dispat
 
 | Command | Source | Note |
 |---|---|---|
-| `sync` | `src/sync-cli.ts` | Checks the guard before it imports the native stack. Supports `--background`. |
+| `sync` | `src/sync-cli.ts` | Checks the guard before it imports the native stack. Supports `--background`. With `EPISODIC_MEMORY_DISABLE_AUTO_SYNC=1`, `--background` exits 0. The command starts no worker. |
 | `index` | `src/index-cli.ts` | Subcommands `index-all`, `index-session`, `index-cleanup`, `verify`, `repair`, `rebuild`, `prune` and `vacuum`. `index-cli` checks the arguments before any work. `index-cli` exits 2 for an unknown command or option, or for an option of another command. `rebuild` runs only with `--yes`. After the argument check, `index-cli` takes the sync lock (`getSyncLockPath`). When a live holder has the lock, `index-cli` exits 75 and does no work. |
 | `search` | `src/search-cli.ts` | Prints search results. |
 | `show` | `src/show-cli.ts` | Prints one conversation. |
@@ -203,7 +203,7 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 286 | repo-tools map |
+| totalSourceFiles | 287 | repo-tools map |
 | totalClasses | 10 | repo-tools map |
 | totalInterfaces | 139 | repo-tools map |
 | totalFunctions | 346 | repo-tools map |

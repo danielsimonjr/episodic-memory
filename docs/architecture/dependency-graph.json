@@ -3,7 +3,7 @@
     "name": "episodic-memory",
     "schemaVersion": "2.0.0",
     "language": "typescript",
-    "totalFiles": 286,
+    "totalFiles": 287,
     "totalModules": 4,
     "totalExports": 609
   },
@@ -9436,6 +9436,36 @@
         ],
         "exports": []
       },
+      "test/sync-cli-disable-auto-sync.test.ts": {
+        "externalDependencies": [
+          "vitest"
+        ],
+        "nodeDependencies": [
+          "child_process",
+          "fs",
+          "os",
+          "path",
+          "url"
+        ],
+        "internalDependencies": [
+          {
+            "file": "test/test-utils.ts",
+            "imports": [
+              "safeRmSync"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/logging.ts",
+            "imports": [
+              "getSyncLockPath",
+              "getSyncLogPath"
+            ],
+            "typeOnly": false
+          }
+        ],
+        "exports": []
+      },
       "test/sync-cli-lock.test.ts": {
         "externalDependencies": [
           "vitest"
@@ -10521,10 +10551,10 @@
     }
   },
   "statistics": {
-    "totalTypeScriptFiles": 286,
-    "totalSourceFiles": 286,
+    "totalTypeScriptFiles": 287,
+    "totalSourceFiles": 287,
     "totalModules": 4,
-    "totalLinesOfCode": 56870,
+    "totalLinesOfCode": 56967,
     "totalExports": 609,
     "entryRoots": 6,
     "reachableFiles": 49,

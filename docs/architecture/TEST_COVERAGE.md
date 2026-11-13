@@ -9,7 +9,7 @@
 | Metric | Count |
 |--------|-------|
 | Total Source Files | 109 |
-| Total Test Files | 165 |
+| Total Test Files | 166 |
 | Source Files with Tests | 85 |
 | Source Files without Tests | 24 |
 | Coverage (raw, direct-import) | **78.0%** |
@@ -116,7 +116,7 @@ The following 24 source files are not directly imported by any test file:
 | `learn/types.ts` | `doctor.test.ts`, `bootstrap.test.ts`, `cited-ids.test.ts`, `export.test.ts`, `grade.test.ts`, `knowledge-db.test.ts`, `knowledge-gate.test.ts`, `knowledge-store.test.ts`, `leaf-learner.test.ts`, `learn-cli.test.ts`, `learn-inject.test.ts`, `learned-block.test.ts`, `learner.test.ts`, `learning-db.test.ts`, `prompts.test.ts`, `relay-findings.test.ts`, `relay-task6-findings.test.ts`, `relay-task8-challenger.test.ts`, `relay-task9-findings.test.ts`, `report.test.ts`, `sdk-tools.test.ts`, `skills-tool.test.ts`, `solver.test.ts`, `validate.test.ts` |
 | `learn/validate.ts` | `validate.test.ts` |
 | `src/lockfile.ts` | `index-cli-sync-lock.test.ts`, `learn-cli.test.ts`, `lockfile.test.ts` |
-| `src/logging.ts` | `doctor.test.ts`, `logging-append.test.ts`, `logging.test.ts`, `sync-cli-lock.test.ts`, `sync-hook-logging.test.ts` |
+| `src/logging.ts` | `doctor.test.ts`, `logging-append.test.ts`, `logging.test.ts`, `sync-cli-disable-auto-sync.test.ts`, `sync-cli-lock.test.ts`, `sync-hook-logging.test.ts` |
 | `src/mcp-auth.ts` | `mcp-auth.test.ts` |
 | `src/mcp-schemas.ts` | `mcp-schemas.test.ts`, `topic-tool.test.ts` |
 | `src/mcp-tools.ts` | `digest-mcp.test.ts`, `learn-handlers.test.ts`, `mcp-tools.test.ts`, `topic-tool.test.ts` |
@@ -285,6 +285,7 @@ The following 24 source files are not directly imported by any test file:
 | `test/summarizer-text.test.ts` | 2 files |
 | `test/sync-banner.test.ts` | 1 files |
 | `test/sync-cli-args.test.ts` | 0 files |
+| `test/sync-cli-disable-auto-sync.test.ts` | 1 files |
 | `test/sync-cli-lock.test.ts` | 1 files |
 | `test/sync-cli-reentrancy.test.ts` | 0 files |
 | `test/sync-copy-retry.test.ts` | 2 files |

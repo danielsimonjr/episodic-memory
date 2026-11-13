@@ -43,6 +43,10 @@ Safe to run multiple times - subsequent runs are fast no-ops.
 OPTIONS:
   --background    Run sync in background (for hooks, returns immediately)
 
+ENVIRONMENT:
+  EPISODIC_MEMORY_DISABLE_AUTO_SYNC=1   sync --background exits 0 and starts no sync. A sync in the
+                                        foreground still runs.
+
 EXAMPLES:
   # Sync all new conversations
   episodic-memory sync
@@ -68,6 +72,15 @@ if (unknown.length > 0) {
 
 // Check if running in background mode
 const isBackground = args.includes('--background');
+
+// The off switch of the automatic sync. Ported from upstream fd8f839.
+// The SessionStart hook starts `sync --background`. EPISODIC_MEMORY_DISABLE_AUTO_SYNC=1 stops that sync.
+// A sync in the foreground still runs, so a scheduled task or a manual `sync` is not affected.
+// Only the exact value 1 turns the switch on.
+if (isBackground && process.env.EPISODIC_MEMORY_DISABLE_AUTO_SYNC === '1') {
+  console.error('episodic-memory: auto-sync is off (EPISODIC_MEMORY_DISABLE_AUTO_SYNC=1); skipping the background sync');
+  process.exit(0);
+}
 
 // If background mode, fork the process and exit immediately
 if (isBackground) {

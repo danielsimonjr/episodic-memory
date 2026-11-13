@@ -142,7 +142,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/show.ts` | episodic-memory | src | reachable | 1027 |
 | `src/stats-cli.ts` | episodic-memory | src | orphan | 32 |
 | `src/stats.ts` | episodic-memory | src | test-only | 172 |
-| `src/summarizer.ts` | episodic-memory | src | reachable | 832 |
+| `src/summarizer.ts` | episodic-memory | src | reachable | 837 |
 | `src/sync-banner.ts` | episodic-memory | src | test-only | 33 |
 | `src/sync-cli.ts` | episodic-memory | src | orphan | 248 |
 | `src/sync.ts` | episodic-memory | src | test-only | 536 |
@@ -284,7 +284,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/summarizer-claude-path.test.ts` | (root) | tests | test | 158 |
 | `test/summarizer-gpu-reservation.test.ts` | (root) | tests | test | 119 |
 | `test/summarizer-ollama-fallback.test.ts` | (root) | tests | test | 83 |
-| `test/summarizer-options.test.ts` | (root) | tests | test | 331 |
+| `test/summarizer-options.test.ts` | (root) | tests | test | 349 |
 | `test/summarizer-prompt-budget.test.ts` | (root) | tests | test | 72 |
 | `test/summarizer-text.test.ts` | (root) | tests | test | 44 |
 | `test/sync-banner.test.ts` | (root) | tests | test | 34 |

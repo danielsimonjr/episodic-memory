@@ -79,7 +79,7 @@ Summarizes archived conversations that `sync` cannot reach. It checks the GPU re
 
 ### `src/summarizer.ts`
 
-Produces conversation summaries. The default backend is the Claude Agent SDK, called with session persistence off. A second backend runs the Codex command. `getApiEnv` builds the environment for the SDK and always sets the reentrancy guard. `callDigestModel` and `callLearnModel` give the digest and the learner the same backend choice. `summarizeConversation` is the entry for one conversation.
+Produces conversation summaries. The default backend is the Claude Agent SDK. The SDK call runs with session persistence off. The SDK call offers no built-in tool and starts no MCP server. A second backend runs the Codex command. `getApiEnv` builds the environment for the SDK and always sets the reentrancy guard. `callDigestModel` and `callLearnModel` give the digest and the learner the same backend choice. `summarizeConversation` is the entry for one conversation.
 
 ### `src/ollama-backend.ts`
 

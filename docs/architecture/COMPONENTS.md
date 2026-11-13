@@ -83,7 +83,7 @@ Summarizes archived conversations that `sync` cannot reach. It checks the GPU re
 
 ### `src/summarizer.ts`
 
-Produces conversation summaries. The default backend is the Claude Agent SDK. The SDK call runs with session persistence off. The SDK call offers no built-in tool and starts no MCP server. A second backend runs the Codex command. `getApiEnv` builds the environment for the SDK and always sets the reentrancy guard. `callDigestModel` and `callLearnModel` give the digest and the learner the same backend choice. `summarizeConversation` is the entry for one conversation. A failed SDK call throws an error that names the subtype, the status and the first 300 characters of the result text, after `redactSecrets`. A failed login throws `ClaudeAuthError` instead.
+Produces conversation summaries. The default backend is the Claude Agent SDK. The SDK call runs with session persistence off. The SDK call offers no built-in tool and starts no MCP server. A second backend runs the Codex command. A Codex app-server that exits or stops reading its input makes the call reject with an error. The error does not stop the process. `getApiEnv` builds the environment for the SDK and always sets the reentrancy guard. `callDigestModel` and `callLearnModel` give the digest and the learner the same backend choice. `summarizeConversation` is the entry for one conversation. A failed SDK call throws an error that names the subtype, the status and the first 300 characters of the result text, after `redactSecrets`. A failed login throws `ClaudeAuthError` instead.
 
 ### `src/ollama-backend.ts`
 
@@ -119,7 +119,7 @@ Renders an archived conversation as markdown or HTML, with an optional line rang
 
 ### `src/stats.ts` and `src/doctor.ts`
 
-`stats` counts rows, projects and sizes. A conversation counts as summarized only when its summary file holds one byte or more, because an empty file is a sentinel of the sync. `doctor` checks dependencies, the database, the embedding version, the Node.js version, the Codex hook trust and the learned-knowledge section (`doctor-learn.ts`).
+`stats` counts rows, projects and sizes. A conversation counts as summarized only when its summary file holds one byte or more, because an empty file is a sentinel of the sync. `doctor` checks dependencies, the database, the embedding version, the Node.js version, the Codex hook trust and the learned-knowledge section (`doctor-learn.ts`). The hook trust check reports `unknown` at once when the Codex app-server fails, exits or stops reading its input.
 
 ## Digest
 
@@ -203,7 +203,7 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 290 | repo-tools map |
+| totalSourceFiles | 291 | repo-tools map |
 | totalClasses | 10 | repo-tools map |
 | totalInterfaces | 139 | repo-tools map |
 | totalFunctions | 347 | repo-tools map |

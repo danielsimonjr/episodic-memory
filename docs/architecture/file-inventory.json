@@ -1,11 +1,11 @@
 {
-  "totalFiles": 290,
+  "totalFiles": 291,
   "byDisposition": {
     "reachable": 45,
     "build-entry": 4,
     "test-only": 45,
     "orphan": 15,
-    "test": 176,
+    "test": 177,
     "tool": 4,
     "config": 1,
     "bench": 0,
@@ -14,11 +14,11 @@
   "byArea": {
     "src": 109,
     "tools": 4,
-    "tests": 176,
+    "tests": 177,
     "config": 1
   },
   "byPackage": {
-    "(root)": 190,
+    "(root)": 191,
     "episodic-memory": 100
   },
   "files": [
@@ -146,7 +146,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 157
+      "loc": 163
     },
     {
       "file": "src/codex-support.ts",
@@ -713,7 +713,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 865
+      "loc": 870
     },
     {
       "file": "src/sync-banner.ts",
@@ -819,6 +819,13 @@
       "area": "tests",
       "disposition": "test",
       "loc": 88
+    },
+    {
+      "file": "test/app-server-stdin-error.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 107
     },
     {
       "file": "test/archive-path-edges.test.ts",

@@ -493,8 +493,12 @@ export async function runCodexCommand(command) {
                 child.kill('SIGTERM');
             }
         };
-        // Guard stdin writes: writing to a dead child can throw EPIPE synchronously on
-        // some platforms. Without the guard, that error is an uncaught exception.
+        // A write to a child that has exited usually fails later, as an 'error' event on stdin (EPIPE).
+        // Without this listener, that event is an uncaught exception, and it stops the whole process.
+        child.stdin.on('error', error => {
+            finish(new Error(`Codex app-server stopped reading its input: ${error.message}`, { cause: error }));
+        });
+        // A write can also throw at once, for example after the stream ends.
         const safeWrite = (payload) => {
             try {
                 child.stdin.write(payload);

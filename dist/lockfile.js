@@ -81,6 +81,7 @@ function isLockStealable(lockPath, staleMs) {
  *
  * The function uses the rule that `acquireLock` uses to steal a lock.
  * A missing file, a dead holder and a lock older than `staleMs` all give false.
+ * A file with no PID gives true for 10 seconds, because its holder can still be writing the PID.
  */
 export function isLockHeld(lockPath, staleMs = DEFAULT_STALE_MS) {
     return !isLockStealable(lockPath, staleMs);
@@ -88,6 +89,7 @@ export function isLockHeld(lockPath, staleMs = DEFAULT_STALE_MS) {
 /**
  * Acquire an exclusive lock at `lockPath`.
  * Returns a handle, or null if a live, non-stale holder exists.
+ * A lock file with no PID that is younger than 10 seconds also gives null.
  */
 export function acquireLock(lockPath, staleMs = DEFAULT_STALE_MS) {
     fs.mkdirSync(path.dirname(lockPath), { recursive: true });

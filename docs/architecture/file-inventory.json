@@ -538,7 +538,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 147
+      "loc": 149
     },
     {
       "file": "src/logging.ts",

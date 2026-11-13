@@ -118,7 +118,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/learn/types.ts` | episodic-memory | src | reachable | 227 |
 | `src/learn/usage.ts` | episodic-memory | src | test-only | 60 |
 | `src/learn/validate.ts` | episodic-memory | src | test-only | 359 |
-| `src/lockfile.ts` | episodic-memory | src | reachable | 147 |
+| `src/lockfile.ts` | episodic-memory | src | reachable | 149 |
 | `src/logging.ts` | episodic-memory | src | test-only | 86 |
 | `src/mcp-auth.ts` | episodic-memory | src | reachable | 68 |
 | `src/mcp-schemas.ts` | episodic-memory | src | reachable | 274 |

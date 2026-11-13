@@ -2190,7 +2190,7 @@ graph TD
 |----------|-------|
 | Total Source Files | 266 |
 | Subsystems | 5 |
-| Total Lines of Code | 54430 |
+| Total Lines of Code | 54432 |
 | Total Exports | 589 |
 | Total Re-exports | 8 |
 | Total Classes | 8 |

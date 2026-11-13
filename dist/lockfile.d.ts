@@ -16,11 +16,13 @@ export declare function isProcessAlive(pid: number): boolean;
  *
  * The function uses the rule that `acquireLock` uses to steal a lock.
  * A missing file, a dead holder and a lock older than `staleMs` all give false.
+ * A file with no PID gives true for 10 seconds, because its holder can still be writing the PID.
  */
 export declare function isLockHeld(lockPath: string, staleMs?: number): boolean;
 /**
  * Acquire an exclusive lock at `lockPath`.
  * Returns a handle, or null if a live, non-stale holder exists.
+ * A lock file with no PID that is younger than 10 seconds also gives null.
  */
 export declare function acquireLock(lockPath: string, staleMs?: number): LockHandle | null;
 /**

@@ -1,7 +1,7 @@
 {
   "metadata": {
     "totalSourceFiles": 108,
-    "totalTestFiles": 156,
+    "totalTestFiles": 157,
     "testedCount": 85,
     "untestedCount": 23,
     "coveragePercent": "78.7",
@@ -291,7 +291,8 @@
       "test/incremental-indexing.test.ts",
       "test/indexer-db-close.test.ts",
       "test/learn/learn-handlers.test.ts",
-      "test/search-metadata-filters.test.ts"
+      "test/search-metadata-filters.test.ts",
+      "test/vanished-transcript.test.ts"
     ],
     "src/learn/agent-runner.ts": [
       "test/learn/agent-runner.test.ts"
@@ -555,7 +556,8 @@
       "test/learn/learn-lock.test.ts",
       "test/learn/learning-store.test.ts",
       "test/learn/skills-tool.test.ts",
-      "test/paths.test.ts"
+      "test/paths.test.ts",
+      "test/vanished-transcript.test.ts"
     ],
     "src/priority.ts": [
       "test/priority.test.ts"
@@ -1322,6 +1324,10 @@
     ],
     "test/topic-validate.test.ts": [
       "src/topic-validate.ts"
+    ],
+    "test/vanished-transcript.test.ts": [
+      "src/paths.ts",
+      "src/indexer.ts"
     ],
     "test/verify.test.ts": [
       "src/verify.ts",

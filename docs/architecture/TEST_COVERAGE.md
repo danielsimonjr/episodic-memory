@@ -9,7 +9,7 @@
 | Metric | Count |
 |--------|-------|
 | Total Source Files | 108 |
-| Total Test Files | 156 |
+| Total Test Files | 157 |
 | Source Files with Tests | 85 |
 | Source Files without Tests | 23 |
 | Coverage (raw, direct-import) | **78.7%** |
@@ -83,7 +83,7 @@ The following 23 source files are not directly imported by any test file:
 | `src/embeddings.ts` | `embedding-migration.test.ts`, `embeddings-format.test.ts`, `indexer-db-close.test.ts`, `integration.test.ts`, `multi-concept.test.ts`, `query-prefix.test.ts`, `verify.test.ts` |
 | `src/fs-retry.ts` | `sync-copy-retry.test.ts` |
 | `src/gpu-reservation.ts` | `gpu-reservation.test.ts` |
-| `src/indexer.ts` | `dangling-project-link.test.ts`, `exclude-nested.test.ts`, `incremental-indexing.test.ts`, `indexer-db-close.test.ts`, `learn-handlers.test.ts`, `search-metadata-filters.test.ts` |
+| `src/indexer.ts` | `dangling-project-link.test.ts`, `exclude-nested.test.ts`, `incremental-indexing.test.ts`, `indexer-db-close.test.ts`, `learn-handlers.test.ts`, `search-metadata-filters.test.ts`, `vanished-transcript.test.ts` |
 | `learn/agent-runner.ts` | `agent-runner.test.ts` |
 | `learn/bootstrap.ts` | `bootstrap.test.ts`, `relay-task7-findings.test.ts` |
 | `learn/cited-ids.ts` | `cited-ids.test.ts`, `relay-challenger.test.ts` |
@@ -123,7 +123,7 @@ The following 23 source files are not directly imported by any test file:
 | `src/ollama-backend.ts` | `backfill-gpu-reservation.test.ts`, `claude-bin-deferral.test.ts`, `digest-gpu-reservation.test.ts`, `gpu-reservation.test.ts`, `ollama-backend.test.ts`, `ollama-plain-reply.test.ts`, `summarizer-gpu-reservation.test.ts`, `summarizer-ollama-fallback.test.ts`, `summarizer-prompt-budget.test.ts`, `sync-gpu-reservation.test.ts`, `topic-job.test.ts` |
 | `src/orphan-reaper.ts` | `orphan-reaper.test.ts` |
 | `src/parser.ts` | `codex-transcripts.test.ts`, `integration.test.ts`, `parser-tool-result.test.ts`, `parser.test.ts` |
-| `src/paths.ts` | `codex-transcripts.test.ts`, `dangling-project-link.test.ts`, `knowledge-db.test.ts`, `knowledge-store.test.ts`, `learn-cli.test.ts`, `learn-lock.test.ts`, `learning-store.test.ts`, `skills-tool.test.ts`, `paths.test.ts` |
+| `src/paths.ts` | `codex-transcripts.test.ts`, `dangling-project-link.test.ts`, `knowledge-db.test.ts`, `knowledge-store.test.ts`, `learn-cli.test.ts`, `learn-lock.test.ts`, `learning-store.test.ts`, `skills-tool.test.ts`, `paths.test.ts`, `vanished-transcript.test.ts` |
 | `src/priority.ts` | `priority.test.ts` |
 | `src/prune.ts` | `prune.test.ts` |
 | `src/redact.ts` | `mcp-read-redaction.test.ts`, `redact-patterns.test.ts`, `security-speed-helpers.test.ts` |
@@ -303,5 +303,6 @@ The following 23 source files are not directly imported by any test file:
 | `test/topic-prompts.test.ts` | 6 files |
 | `test/topic-tool.test.ts` | 5 files |
 | `test/topic-validate.test.ts` | 1 files |
+| `test/vanished-transcript.test.ts` | 2 files |
 | `test/verify.test.ts` | 5 files |
 | `test/version-consistency.test.ts` | 0 files |

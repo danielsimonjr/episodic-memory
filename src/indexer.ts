@@ -37,6 +37,23 @@ function sessionIdForSummary(exchanges: ConversationExchange[]): string | undefi
 }
 
 /**
+ * Run the copy and the parse of one listed transcript. Return `null` when the transcript is gone.
+ *
+ * Claude Code can delete a transcript after the walk lists the transcript. The copy or the parse then fails with ENOENT.
+ * The function logs the file name. The function returns `null`. As a result, the caller skips the file.
+ * Any other error propagates.
+ */
+async function skipIfVanished<T>(file: string, work: () => Promise<T>): Promise<T | null> {
+  try {
+    return await work();
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException)?.code !== 'ENOENT') throw error;
+    console.log(`  Skipped ${file} (the file disappeared: ${(error as Error).message})`);
+    return null;
+  }
+}
+
+/**
  * Index the conversations in every source folder.
  *
  * The function opens the index and loads the embedding model before it scans. Each file is copied to the archive when no copy exists, and then parsed. Files without exchanges are skipped. Unless `noSummaries` is set, the function writes a summary for each conversation that has none.
@@ -110,15 +127,16 @@ export async function indexConversations(
         const sourcePath = path.join(projectPath, file);
         const archivePath = path.join(projectArchive, file);
 
-        // Copy to archive (ensure parent dirs exist for subagent files)
-        if (!fs.existsSync(archivePath)) {
-          fs.mkdirSync(path.dirname(archivePath), { recursive: true });
-          fs.copyFileSync(sourcePath, archivePath);
-          console.log(`  Archived: ${file}`);
-        }
-
-        // Parse conversation
-        const exchanges = await parseConversation(sourcePath, project, archivePath);
+        // Copy to archive (ensure parent dirs exist for subagent files), then parse the conversation.
+        const exchanges = await skipIfVanished(file, async () => {
+          if (!fs.existsSync(archivePath)) {
+            fs.mkdirSync(path.dirname(archivePath), { recursive: true });
+            fs.copyFileSync(sourcePath, archivePath);
+            console.log(`  Archived: ${file}`);
+          }
+          return parseConversation(sourcePath, project, archivePath);
+        });
+        if (exchanges === null) continue;
 
         if (exchanges.length === 0) {
           console.log(`  Skipped ${file} (no exchanges)`);
@@ -242,16 +260,16 @@ export async function indexSession(sessionId: string, concurrency: number = 1, n
 
         const archivePath = path.join(projectArchive, file);
 
-        // Archive (ensure parent dirs exist for subagent files)
-        if (!fs.existsSync(archivePath)) {
-          fs.mkdirSync(path.dirname(archivePath), { recursive: true });
-          fs.copyFileSync(sourcePath, archivePath);
-        }
+        // Archive (ensure parent dirs exist for subagent files), then parse and summarize.
+        const exchanges = await skipIfVanished(file, async () => {
+          if (!fs.existsSync(archivePath)) {
+            fs.mkdirSync(path.dirname(archivePath), { recursive: true });
+            fs.copyFileSync(sourcePath, archivePath);
+          }
+          return parseConversation(sourcePath, project, archivePath);
+        });
 
-        // Parse and summarize
-        const exchanges = await parseConversation(sourcePath, project, archivePath);
-
-        if (exchanges.length > 0) {
+        if (exchanges && exchanges.length > 0) {
           // Generate summary (unless --no-summaries)
           const summaryPath = archivePath.replace('.jsonl', '-summary.txt');
           if (!noSummaries && !fs.existsSync(summaryPath)) {
@@ -342,16 +360,19 @@ export async function indexUnprocessed(concurrency: number = 1, noSummaries: boo
         // Transcript JSONLs are append-only, so MAX(line_end) tells us where to resume.
         const maxIndexedLine = getMaxIndexedLine(db, archivePath);
 
-        // Ensure parent dirs exist for subagent files
-        fs.mkdirSync(path.dirname(archivePath), { recursive: true });
+        const exchanges = await skipIfVanished(file, async () => {
+          // Ensure parent dirs exist for subagent files
+          fs.mkdirSync(path.dirname(archivePath), { recursive: true });
 
-        // Refresh the archive when the source may have grown beyond what we've seen.
-        if (!fs.existsSync(archivePath) || maxIndexedLine > 0) {
-          fs.copyFileSync(sourcePath, archivePath);
-        }
+          // Refresh the archive when the source may have grown beyond what we've seen.
+          if (!fs.existsSync(archivePath) || maxIndexedLine > 0) {
+            fs.copyFileSync(sourcePath, archivePath);
+          }
 
-        // Parse and filter to exchanges past the high-water mark
-        const exchanges = await parseConversation(sourcePath, project, archivePath);
+          // Parse; the filter below keeps the exchanges past the high-water mark.
+          return parseConversation(sourcePath, project, archivePath);
+        });
+        if (exchanges === null) continue;
         const newExchanges = maxIndexedLine > 0
           ? exchanges.filter(e => e.lineStart > maxIndexedLine)
           : exchanges;

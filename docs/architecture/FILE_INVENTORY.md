@@ -104,7 +104,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/learn/learn-config.ts` | episodic-memory | src | reachable | 134 |
 | `src/learn/learn-handlers.ts` | episodic-memory | src | test-only | 225 |
 | `src/learn/learn-inject.ts` | episodic-memory | src | reachable | 291 |
-| `src/learn/learn-lock.ts` | episodic-memory | src | test-only | 173 |
+| `src/learn/learn-lock.ts` | episodic-memory | src | test-only | 175 |
 | `src/learn/learned-block.ts` | episodic-memory | src | test-only | 78 |
 | `src/learn/learned-text-screen.ts` | episodic-memory | src | reachable | 206 |
 | `src/learn/learner.ts` | episodic-memory | src | test-only | 1328 |
@@ -122,7 +122,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/learn/types.ts` | episodic-memory | src | reachable | 227 |
 | `src/learn/usage.ts` | episodic-memory | src | test-only | 60 |
 | `src/learn/validate.ts` | episodic-memory | src | test-only | 348 |
-| `src/lockfile.ts` | episodic-memory | src | reachable | 149 |
+| `src/lockfile.ts` | episodic-memory | src | reachable | 197 |
 | `src/logging.ts` | episodic-memory | src | reachable | 91 |
 | `src/mcp-auth.ts` | episodic-memory | src | reachable | 68 |
 | `src/mcp-schemas.ts` | episodic-memory | src | reachable | 274 |
@@ -229,7 +229,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/learn/learn-config.test.ts` | (root) | tests | test | 157 |
 | `test/learn/learn-handlers.test.ts` | (root) | tests | test | 258 |
 | `test/learn/learn-inject.test.ts` | (root) | tests | test | 310 |
-| `test/learn/learn-lock.test.ts` | (root) | tests | test | 147 |
+| `test/learn/learn-lock.test.ts` | (root) | tests | test | 165 |
 | `test/learn/learned-block.test.ts` | (root) | tests | test | 146 |
 | `test/learn/learned-text-screen.test.ts` | (root) | tests | test | 368 |
 | `test/learn/learner.test.ts` | (root) | tests | test | 718 |
@@ -252,7 +252,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/learn/solver.test.ts` | (root) | tests | test | 489 |
 | `test/learn/tasks.test.ts` | (root) | tests | test | 469 |
 | `test/learn/validate.test.ts` | (root) | tests | test | 473 |
-| `test/lockfile.test.ts` | (root) | tests | test | 85 |
+| `test/lockfile.test.ts` | (root) | tests | test | 163 |
 | `test/logging-append.test.ts` | (root) | tests | test | 27 |
 | `test/logging.test.ts` | (root) | tests | test | 73 |
 | `test/mcp-auth.test.ts` | (root) | tests | test | 34 |

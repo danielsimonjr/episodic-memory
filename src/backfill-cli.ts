@@ -2,7 +2,7 @@
 import { getArchiveDir } from './paths.js';
 import { getSyncLockPath } from './logging.js';
 import { shouldSkipReentrantSync } from './reentrancy.js';
-import { acquireLock, releaseLock } from './lockfile.js';
+import { acquireRefreshedLock, releaseLock } from './lockfile.js';
 
 const args = process.argv.slice(2);
 
@@ -65,7 +65,7 @@ console.log(`Backfilling archive ${archiveDir} (batch ${batch}${limit ? `, limit
 for (;;) {
   const want = limit ? Math.min(batch, limit - done) : batch;
   if (want <= 0) break;
-  const lock = acquireLock(getSyncLockPath());
+  const lock = acquireRefreshedLock(getSyncLockPath());
   if (!lock) {
     console.log('  sync is running; waiting 30 s');
     await sleep(30000);

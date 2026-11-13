@@ -203,7 +203,7 @@ The codebase is organized into the following modules:
 | `./paths.js` | `getArchiveDir` | Import |
 | `./logging.js` | `getSyncLockPath` | Import |
 | `./reentrancy.js` | `shouldSkipReentrantSync` | Import |
-| `./lockfile.js` | `acquireLock, releaseLock` | Import |
+| `./lockfile.js` | `acquireRefreshedLock, releaseLock` | Import |
 | `./backfill.js` | `*` | Import |
 
 ---
@@ -688,7 +688,7 @@ The codebase is organized into the following modules:
 | `./db.js` | `initDatabase, getFreelistInfo, vacuumDatabase` | Import |
 | `./paths.js` | `getDbPath, getArchiveDir, getExcludedProjects, statIfExists` | Import |
 | `./prune.js` | `pruneProjects` | Import |
-| `./lockfile.js` | `acquireLock, releaseLock` | Import |
+| `./lockfile.js` | `acquireRefreshedLock, releaseLock` | Import |
 | `./logging.js` | `getSyncLockPath` | Import |
 
 ---
@@ -749,7 +749,7 @@ The codebase is organized into the following modules:
 
 **Exports:**
 - Interfaces: `LockHandle`
-- Functions: `isProcessAlive`, `isLockHeld`, `acquireLock`, `releaseLock`
+- Functions: `isProcessAlive`, `isLockHeld`, `acquireLock`, `keepLockFresh`, `acquireRefreshedLock`, `releaseLock`
 
 ---
 
@@ -1120,7 +1120,7 @@ The codebase is organized into the following modules:
 | `./paths.js` | `getArchiveDir, getConversationSourceDirs, getIndexDir` | Import |
 | `./reentrancy.js` | `shouldSkipReentrantSync` | Import |
 | `./sync-banner.js` | `syncHeadline` | Import |
-| `./lockfile.js` | `acquireLock, releaseLock` | Import |
+| `./lockfile.js` | `acquireRefreshedLock, releaseLock` | Import |
 | `./priority.js` | `BACKGROUND_WORKER_ENV, lowerPriorityIfBackgroundWorker` | Import |
 | `./logging.js` | `formatLogLine, getSyncLogPath, getSyncLockPath, rotateSyncLogIfNeeded` | Import |
 | `./sync.js` | `*` | Import |
@@ -1721,7 +1721,7 @@ The codebase is organized into the following modules:
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
-| `../lockfile.js` | `acquireLock, isLockHeld, releaseLock` | Import |
+| `../lockfile.js` | `acquireRefreshedLock, isLockHeld, releaseLock` | Import |
 | `../paths.js` | `getIndexDir` | Import |
 
 **Exports:**
@@ -2255,12 +2255,12 @@ graph TD
 |----------|-------|
 | Total Source Files | 286 |
 | Subsystems | 5 |
-| Total Lines of Code | 56672 |
-| Total Exports | 607 |
+| Total Lines of Code | 56818 |
+| Total Exports | 609 |
 | Total Re-exports | 8 |
 | Total Classes | 10 |
 | Total Interfaces | 139 |
-| Total Functions | 344 |
+| Total Functions | 346 |
 | Total Type Guards | 11 |
 | Total Enums | 0 |
 | Type-only Imports | 82 |

@@ -388,7 +388,7 @@
           {
             "file": "./lockfile.js",
             "imports": [
-              "acquireLock",
+              "acquireRefreshedLock",
               "releaseLock"
             ]
           },
@@ -1727,7 +1727,7 @@
           {
             "file": "./lockfile.js",
             "imports": [
-              "acquireLock",
+              "acquireRefreshedLock",
               "releaseLock"
             ]
           },
@@ -1918,6 +1918,8 @@
           "isProcessAlive",
           "isLockHeld",
           "acquireLock",
+          "keepLockFresh",
+          "acquireRefreshedLock",
           "releaseLock"
         ],
         "interfaces": [
@@ -1927,6 +1929,8 @@
           "isProcessAlive",
           "isLockHeld",
           "acquireLock",
+          "keepLockFresh",
+          "acquireRefreshedLock",
           "releaseLock"
         ]
       },
@@ -2849,7 +2853,7 @@
           {
             "file": "./lockfile.js",
             "imports": [
-              "acquireLock",
+              "acquireRefreshedLock",
               "releaseLock"
             ]
           },
@@ -4808,7 +4812,7 @@
           {
             "file": "../lockfile.js",
             "imports": [
-              "acquireLock",
+              "acquireRefreshedLock",
               "isLockHeld",
               "releaseLock"
             ]

@@ -10,7 +10,7 @@ import {
   retire,
 } from '../../src/learn/knowledge-db.js';
 import { writeLearnedBlocks } from '../../src/learn/learned-block.js';
-import type Database from 'better-sqlite3';
+import type { Database } from '../../src/sqlite.js';
 import type { NewKnowledgeEntry } from '../../src/learn/types.js';
 import { safeRmSync, suppressConsole } from '../test-utils.js';
 
@@ -39,7 +39,7 @@ function nk(over: Partial<NewKnowledgeEntry> = {}): NewKnowledgeEntry {
 describe('writeLearnedBlocks', () => {
   let configDir: string;
   let store: KnowledgeStore;
-  let learningDb: Database.Database;
+  let learningDb: Database;
   const savedConfig = process.env.EPISODIC_MEMORY_CONFIG_DIR;
 
   beforeEach(() => {

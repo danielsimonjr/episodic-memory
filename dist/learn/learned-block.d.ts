@@ -6,7 +6,7 @@
  * store to list active entries, and it writes `learning.sqlite`. The hook never
  * imports it — it reads the rows this function wrote (spec §6.3).
  */
-import type Database from 'better-sqlite3';
+import type { Database } from '../sqlite.js';
 import type { KnowledgeStore } from './knowledge-store.js';
 import { type RedactFn, type ScreenFn } from './learn-inject.js';
 /**
@@ -16,7 +16,7 @@ import { type RedactFn, type ScreenFn } from './learn-inject.js';
  * previous text for that project. `rendered_at` is rewritten so a later reader
  * can tell how stale the text is.
  */
-export declare function writeLearnedBlocks(store: KnowledgeStore, learningDb: Database.Database, maxChars: number, opts?: {
+export declare function writeLearnedBlocks(store: KnowledgeStore, learningDb: Database, maxChars: number, opts?: {
     screen?: ScreenFn;
     redact?: RedactFn;
 }): Promise<void>;

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import Database from 'better-sqlite3';
+import { Database } from '../../src/sqlite.js';
 import { createHash } from 'node:crypto';
 import fs from 'fs';
 import os from 'os';
@@ -32,7 +32,7 @@ function hexId(label: string): string {
   return createHash('sha256').update(label).digest('hex').slice(0, 32);
 }
 
-function indexFixture(projects: string[] = ['proj-a'], perProject = 30): Database.Database {
+function indexFixture(projects: string[] = ['proj-a'], perProject = 30): Database {
   const db = new Database(':memory:');
   db.exec(`
     CREATE TABLE exchanges (
@@ -214,8 +214,8 @@ function fakeTextModel() {
 }
 
 let dir: string;
-let learning: Database.Database;
-let index: Database.Database;
+let learning: Database;
+let index: Database;
 let store: KnowledgeStore;
 let dbs: LearnDbs;
 const savedConfig = process.env.EPISODIC_MEMORY_CONFIG_DIR;
@@ -269,7 +269,7 @@ function truth(project = 'proj-a'): TaskTruth {
 }
 
 /** Insert two signal train tasks and return their prompts. */
-function seedSignalTasks(learningDb: Database.Database = learning): string[] {
+function seedSignalTasks(learningDb: Database = learning): string[] {
   const runId = createRun(learningDb, { phase: 'improve', seed: 1, budget: {} });
   const prompts = ['Where was the release build discussed?', 'When did the native module work happen?'];
   for (const [i, prompt] of prompts.entries()) {

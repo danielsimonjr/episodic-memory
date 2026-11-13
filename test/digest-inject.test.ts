@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import Database from 'better-sqlite3';
+import { Database } from '../src/sqlite.js';
 import { ensureDigestSchema, insertDigestEntry, supersede, type DigestTier } from '../src/digest-db.js';
 import { buildDigestText, projectKeyFromCwd } from '../src/digest-inject.js';
 
-let db: Database.Database;
+let db: Database;
 
 function add(tier: DigestTier, start: string, text: string, over: { handoff?: boolean; project?: string } = {}) {
   return insertDigestEntry(db, {

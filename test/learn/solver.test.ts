@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import Database from 'better-sqlite3';
+import { Database } from '../../src/sqlite.js';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -104,10 +104,10 @@ function fakeAgent(answer: string, over: Partial<{
 
 describe('solveTask', () => {
   let configDir: string;
-  let learning: Database.Database;
+  let learning: Database;
   let store: KnowledgeStore;
   let dbs: LearnDbs;
-  let index: Database.Database;
+  let index: Database;
   let activeId: string;
   const pids = { added: [] as number[], removed: [] as number[], add(p: number) { this.added.push(p); }, remove(p: number) { this.removed.push(p); } };
 
@@ -349,10 +349,10 @@ describe('CallBudget', () => {
 
 describe('solveMany', () => {
   let configDir: string;
-  let learning: Database.Database;
+  let learning: Database;
   let store: KnowledgeStore;
   let dbs: LearnDbs;
-  let index: Database.Database;
+  let index: Database;
 
   beforeEach(() => {
     configDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'em-solve-many-')));

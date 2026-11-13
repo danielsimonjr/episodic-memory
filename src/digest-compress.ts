@@ -1,4 +1,4 @@
-import type Database from 'better-sqlite3';
+import type { Database } from './sqlite.js';
 import { callDigestModel } from './summarizer.js';
 import { deferralDetail } from './deferral.js';
 import { buildCompressPrompt } from './digest-prompts.js';
@@ -64,7 +64,7 @@ function groupBy(entries: DigestEntry[], keyOf: (e: DigestEntry) => string): Map
 }
 
 async function mergeGroup(
-  db: Database.Database,
+  db: Database,
   model: (p: string) => Promise<string>,
   group: DigestEntry[],
   tier: Exclude<DigestTier, 'session'>,
@@ -111,7 +111,7 @@ async function mergeGroup(
  * Merge many day entries of a finished week into one week entry.
  * The compression step marks the originals as superseded and never deletes them.
  */
-export async function compressDigest(db: Database.Database, opts: CompressOptions = {}): Promise<CompressResult> {
+export async function compressDigest(db: Database, opts: CompressOptions = {}): Promise<CompressResult> {
   const result: CompressResult = { created: 0, failed: 0 };
   const model = opts.model ?? callDigestModel;
   const now = (opts.now ?? new Date()).toISOString();

@@ -69,6 +69,15 @@ describe('Database adapter over node:sqlite', () => {
       expect(db.open).toBe(false);
     });
 
+    it('reports the path it opened as name', () => {
+      const db = new Database(file);
+      try {
+        expect(db.name).toBe(file);
+      } finally {
+        db.close();
+      }
+    });
+
     it('reports open and inTransaction', () => {
       const db = new Database(file);
       expect(db.open).toBe(true);

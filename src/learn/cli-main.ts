@@ -15,7 +15,7 @@
  * produce a file a human can read, and progress lines must never land in it.
  */
 
-import type Database from 'better-sqlite3';
+import type { Database } from '../sqlite.js';
 import path from 'path';
 import { getSuperpowersDir } from '../paths.js';
 import { ClaudeBinError, claudeExecutableOption } from '../claude-bin.js';
@@ -142,7 +142,7 @@ function closeDbs(dbs: LearnDbs): void {
  * Bootstrap solves the same set twice, once with an empty snapshot and once with the candidates.
  * The bootstrap multiplier is therefore 2.
  */
-export function baselineCallCount(db: Database.Database, times = 1): number {
+export function baselineCallCount(db: Database, times = 1): number {
   return listTasks(db, { split: 'train', kinds: SIGNAL_KINDS, tiers: SIGNAL_TIERS }).length * times;
 }
 

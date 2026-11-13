@@ -26,7 +26,7 @@
 import fs from 'fs';
 import path from 'path';
 import { createHash, randomUUID } from 'node:crypto';
-import Database from 'better-sqlite3';
+import { Database } from '../sqlite.js';
 import { getKnowledgeDbPath } from '../paths.js';
 import { redactPii } from './pii-redactor.js';
 import type {
@@ -638,10 +638,10 @@ interface NewEntity {
  * The class takes no file lock. The learn CLI uses `withLearnLock` to serialize its runs. A read-only store rejects every write. Call `close` to release the database handle. A second call does nothing.
  */
 export class KnowledgeStore {
-  private readonly db: Database.Database;
+  private readonly db: Database;
   private closed = false;
 
-  private constructor(db: Database.Database) {
+  private constructor(db: Database) {
     this.db = db;
   }
 

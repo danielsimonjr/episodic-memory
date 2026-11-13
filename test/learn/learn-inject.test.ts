@@ -287,13 +287,13 @@ describe('learn-inject module graph', () => {
     }));
     const runtime = imports.filter(i => !i.typeOnly).map(i => i.specifier);
     expect(runtime.sort()).toEqual(['../redact.js', './learned-text-screen.js']);
-    // `better-sqlite3` and `./types.js` are the only other edges, both type-only,
+    // `../sqlite.js` and `./types.js` are the only other edges, both type-only,
     // so the compiled module imports nothing but the screen and redact.
     const typeOnly = imports.filter(i => i.typeOnly).map(i => i.specifier).sort();
-    expect(typeOnly).toEqual(['./types.js', 'better-sqlite3']);
-    // `better-sqlite3` is the only package in the graph, and only as a type.
+    expect(typeOnly).toEqual(['../sqlite.js', './types.js']);
+    // The graph imports no package.
     const packages = imports.filter(i => !i.specifier.startsWith('.') && !i.specifier.startsWith('/'));
-    expect(packages).toEqual([{ typeOnly: true, specifier: 'better-sqlite3' }]);
+    expect(packages).toEqual([]);
     // The doc comment may name a forbidden module; only imports matter.
     const specifiers = imports.map(i => i.specifier);
     for (const forbidden of ['./knowledge-db.js', './knowledge-store.js']) {

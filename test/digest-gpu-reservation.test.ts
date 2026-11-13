@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import type Database from 'better-sqlite3';
+import type { Database } from '../src/sqlite.js';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -9,7 +9,7 @@ import { compressDigest } from '../src/digest-compress.js';
 import { ensureDigestSchema, insertDigestEntry } from '../src/digest-db.js';
 import { GpuReservedError } from '../src/ollama-backend.js';
 import { ClaudeBinError } from '../src/claude-bin.js';
-import BetterSqlite3 from 'better-sqlite3';
+import { Database as BetterSqlite3 } from '../src/sqlite.js';
 import { SUMMARIZER_GUARD_ENV } from '../src/reentrancy.js';
 import { safeRmSync, suppressConsole } from './test-utils.js';
 
@@ -30,7 +30,7 @@ for (const k of KEYS) saved[k] = process.env[k];
 
 describe('runDigest under a GPU reservation', () => {
   const dir = path.join(os.tmpdir(), 'digest-gpu-' + Date.now());
-  let db: Database.Database;
+  let db: Database;
 
   beforeEach(() => {
     fs.mkdirSync(dir, { recursive: true });
@@ -161,7 +161,7 @@ describe('runDigest under a GPU reservation', () => {
 });
 
 describe('compressDigest under a GPU reservation', () => {
-  let cdb: BetterSqlite3.Database;
+  let cdb: BetterSqlite3;
   const NOW_C = new Date('2026-10-20T12:00:00.000Z');
 
   function addSession(n: number, day: string) {

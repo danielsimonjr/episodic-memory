@@ -851,7 +851,7 @@ Part summaries:
 ${chunkSummaries.map((s, i) => `${i + 1}. ${s}`).join('\n')}
 
 Good:
-<summary>Built conversation search system with JavaScript, sqlite-vec, and local embeddings. Implemented hierarchical summarization for long conversations. System archives conversations permanently and provides semantic search via CLI.</summary>
+<summary>Built conversation search system with JavaScript, SQLite, and local embeddings. Implemented hierarchical summarization for long conversations. System archives conversations permanently and provides semantic search via CLI.</summary>
 
 Bad:
 <summary>This conversation synthesizes several topics discussed across multiple parts...</summary>

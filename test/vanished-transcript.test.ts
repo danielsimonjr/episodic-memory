@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import Database from 'better-sqlite3';
+import { Database } from '../src/sqlite.js';
 import { safeRmSync, suppressConsole } from './test-utils.js';
 
 // Claude Code can delete a transcript after the index walk lists the transcript and before the copy.

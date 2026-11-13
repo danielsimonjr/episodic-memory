@@ -174,6 +174,9 @@ function isThenable(value: unknown): value is PromiseLike<unknown> {
  */
 export class Database {
   private readonly db: DatabaseSync;
+
+  /** The path that the constructor opened. */
+  readonly name: string;
   private savepointCount = 0;
 
   /**
@@ -182,6 +185,7 @@ export class Database {
    */
   constructor(path: string, options: DatabaseOptions = {}) {
     const { DatabaseSync: Native } = loadSqlite();
+    this.name = path;
     this.db = new Native(path, {
       readOnly: !!options.readonly,
       enableForeignKeyConstraints: true,

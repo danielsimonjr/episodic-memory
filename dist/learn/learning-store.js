@@ -12,7 +12,7 @@
  * `ensureLearningSchema` in `learning-db.ts` creates the `learning_*` tables (runs,
  * tasks and attempts).
  */
-import Database from 'better-sqlite3';
+import { Database } from '../sqlite.js';
 import fs from 'fs';
 import path from 'path';
 import { getLearningDbPath, tryChmod } from '../paths.js';

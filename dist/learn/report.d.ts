@@ -15,7 +15,7 @@
  * run with a single snapshot reports the same rate on both sides, because a
  * fabricated "before" of zero would read as a spectacular gain.
  */
-import type Database from 'better-sqlite3';
+import type { Database } from '../sqlite.js';
 import { type LearningRun, type PassRate } from './learning-db.js';
 import type { KnowledgeEntry, LearnDbs } from './types.js';
 /** One merged entry, as `runLearn` recorded it on the run's metrics. */
@@ -77,6 +77,6 @@ export interface ReportModel {
  */
 export declare function buildReport(dbs: LearnDbs, runId: string): Promise<ReportModel>;
 /** The latest run id, for a CLI that was given no `--run`. */
-export declare function latestRunId(db: Database.Database): string | null;
+export declare function latestRunId(db: Database): string | null;
 /** Render a model as a human report or as JSON. */
 export declare function formatReport(model: ReportModel, json: boolean): string;

@@ -1,4 +1,4 @@
-import type Database from 'better-sqlite3';
+import type { Database } from './sqlite.js';
 /** A staged edit: the validated text of each written document, and the slugs to delete. */
 export interface TopicEdit {
     /** The validated text of each written document. Every paragraph has an identifier. */
@@ -55,7 +55,7 @@ export interface TopicRange {
     to?: string;
 }
 /** The schema of the topic tables. The function creates each table when it does not exist. */
-export declare function ensureTopicSchema(db: Database.Database): void;
+export declare function ensureTopicSchema(db: Database): void;
 /**
  * Install one edit and rebuild the derived tables of the project, in one transaction.
  *
@@ -70,14 +70,14 @@ export declare function ensureTopicSchema(db: Database.Database): void;
  * @param edit the validated texts and the deleted slugs
  * @param expectedUpdatedAt the `updated_at` that each shown document had when the prompt was built, by slug
  */
-export declare function installTopicEdit(db: Database.Database, project: string, edit: TopicEdit, expectedUpdatedAt: ReadonlyMap<string, string>): 'installed' | 'stale';
+export declare function installTopicEdit(db: Database, project: string, edit: TopicEdit, expectedUpdatedAt: ReadonlyMap<string, string>): 'installed' | 'stale';
 /**
  * List the documents of a project with their title and unit count, by slug.
  *
  * @param db the open index database
  * @param project the project key
  */
-export declare function listTopicDocs(db: Database.Database, project: string): {
+export declare function listTopicDocs(db: Database, project: string): {
     slug: string;
     title: string;
     unitCount: number;
@@ -90,7 +90,7 @@ export declare function listTopicDocs(db: Database.Database, project: string): {
  * @param slug the slug of the document
  * @returns the text and its `updated_at`, or null when the document does not exist
  */
-export declare function readTopicDoc(db: Database.Database, project: string, slug: string): {
+export declare function readTopicDoc(db: Database, project: string, slug: string): {
     slug: string;
     text: string;
     updatedAt: string;
@@ -107,7 +107,7 @@ export declare function readTopicDoc(db: Database.Database, project: string, slu
  * @param query the words to search for
  * @param opts `project` limits the search to one project. `from` and `to` set the range. `limit` caps the result.
  */
-export declare function searchTopicUnits(db: Database.Database, query: string, opts?: {
+export declare function searchTopicUnits(db: Database, query: string, opts?: {
     project?: string;
     from?: string;
     to?: string;
@@ -120,7 +120,7 @@ export declare function searchTopicUnits(db: Database.Database, query: string, o
  * @param project the project key
  * @param unitId the identifier of the unit
  */
-export declare function topicLinks(db: Database.Database, project: string, unitId: string): {
+export declare function topicLinks(db: Database, project: string, unitId: string): {
     outgoing: TopicLinkedUnit[];
     backlinks: TopicLinkedUnit[];
 } | null;
@@ -134,7 +134,7 @@ export declare function topicLinks(db: Database.Database, project: string, unitI
  * @param project the project key
  * @param range the optional bounds, inclusive
  */
-export declare function topicTimeline(db: Database.Database, project: string, range?: TopicRange): TopicEvent[];
+export declare function topicTimeline(db: Database, project: string, range?: TopicRange): TopicEvent[];
 /**
  * Read the progress row of one session.
  *
@@ -143,7 +143,7 @@ export declare function topicTimeline(db: Database.Database, project: string, ra
  * @param sessionId the session id
  * @returns the row, or null when the session has no row
  */
-export declare function getTopicSession(db: Database.Database, project: string, sessionId: string): TopicSession | null;
+export declare function getTopicSession(db: Database, project: string, sessionId: string): TopicSession | null;
 /**
  * Set the status of a session and its last error. The attempt count does not change.
  *
@@ -153,7 +153,7 @@ export declare function getTopicSession(db: Database.Database, project: string, 
  * @param status the new status
  * @param error the error text, or null
  */
-export declare function setTopicSessionStatus(db: Database.Database, project: string, sessionId: string, status: 'done' | 'rejected', error?: string | null): void;
+export declare function setTopicSessionStatus(db: Database, project: string, sessionId: string, status: 'done' | 'rejected', error?: string | null): void;
 /**
  * Count one failed model call for a session and return the new count.
  *
@@ -164,7 +164,7 @@ export declare function setTopicSessionStatus(db: Database.Database, project: st
  * @param sessionId the session id
  * @param error the error text of the failed call
  */
-export declare function recordTopicFailedCall(db: Database.Database, project: string, sessionId: string, error: string): number;
+export declare function recordTopicFailedCall(db: Database, project: string, sessionId: string, error: string): number;
 /**
  * Read a value of the topic meta table.
  *
@@ -172,7 +172,7 @@ export declare function recordTopicFailedCall(db: Database.Database, project: st
  * @param key the key to read
  * @returns the value, or null when the key is not set
  */
-export declare function getTopicMeta(db: Database.Database, key: string): string | null;
+export declare function getTopicMeta(db: Database, key: string): string | null;
 /**
  * Set a value of the topic meta table. The function replaces an earlier value.
  *
@@ -180,4 +180,4 @@ export declare function getTopicMeta(db: Database.Database, key: string): string
  * @param key the key to set
  * @param value the new value
  */
-export declare function setTopicMeta(db: Database.Database, key: string, value: string): void;
+export declare function setTopicMeta(db: Database, key: string, value: string): void;

@@ -1,4 +1,4 @@
-import type Database from 'better-sqlite3';
+import type { Database } from './sqlite.js';
 import type { ConversationExchange } from './types.js';
 import { shouldSkipReentrantSync } from './reentrancy.js';
 import { gpuReservationBlock } from './gpu-reservation.js';
@@ -68,7 +68,7 @@ interface TopicLimits {
 
 /** The state of one run that the session steps share. */
 interface Run {
-  db: Database.Database;
+  db: Database;
   model: (prompt: string) => Promise<string>;
   result: TopicResult;
 }
@@ -91,7 +91,7 @@ function topicLimits(): TopicLimits {
  * Return the `since` time. The first run stores it. EPISODIC_MEMORY_TOPICS_SINCE replaces `now` on that run,
  * and an invalid value is ignored.
  */
-function sinceTime(db: Database.Database, now: Date): string {
+function sinceTime(db: Database, now: Date): string {
   const stored = getTopicMeta(db, 'since');
   if (stored !== null) return stored;
   const raw = process.env.EPISODIC_MEMORY_TOPICS_SINCE;
@@ -105,7 +105,7 @@ function sinceTime(db: Database.Database, now: Date): string {
 }
 
 /** The sessions that started at or after `since`, have no done or rejected row, and oldest first. */
-function candidateSessions(db: Database.Database, since: string): SessionRow[] {
+function candidateSessions(db: Database, since: string): SessionRow[] {
   return db
     .prepare(
       `SELECT e.project AS project, e.session_id AS session_id, MIN(e.timestamp) AS start, MAX(e.timestamp) AS end
@@ -123,7 +123,7 @@ function candidateSessions(db: Database.Database, since: string): SessionRow[] {
 }
 
 /** The stored documents of a project by slug, as the prompt needs them. buildTopicPrompt sorts them by update time. */
-function storedDocs(db: Database.Database, project: string): TopicPromptDoc[] {
+function storedDocs(db: Database, project: string): TopicPromptDoc[] {
   const rows = db
     .prepare('SELECT slug, text, updated_at FROM topic_doc WHERE project = ? ORDER BY slug')
     .all(project) as StoredDocRow[];
@@ -134,7 +134,7 @@ function storedDocs(db: Database.Database, project: string): TopicPromptDoc[] {
   });
 }
 
-function exchangeExists(db: Database.Database, project: string, id: string): boolean {
+function exchangeExists(db: Database, project: string, id: string): boolean {
   return db.prepare('SELECT 1 FROM exchanges WHERE project = ? AND id = ?').get(project, id) !== undefined;
 }
 
@@ -268,7 +268,7 @@ async function organizeSession(
  * @param db the open index database
  * @param opts replaces the model call or the clock
  */
-export async function runTopics(db: Database.Database, opts: TopicOptions = {}): Promise<TopicResult> {
+export async function runTopics(db: Database, opts: TopicOptions = {}): Promise<TopicResult> {
   const result: TopicResult = { installed: 0, empty: 0, rejected: 0, skipped: 0, stale: 0, failed: 0 };
   if (!topicsEnabled() || shouldSkipReentrantSync()) return result;
   ensureTopicSchema(db);

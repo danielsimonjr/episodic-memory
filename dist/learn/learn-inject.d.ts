@@ -12,7 +12,7 @@
  * re-redacted on the way out, because the text was written by a model reading
  * untrusted archive content.
  */
-import type Database from 'better-sqlite3';
+import type { Database } from '../sqlite.js';
 import type { KnowledgeEntry, KnowledgeKind } from './types.js';
 /** Replace email, phone, SSN, card, and IPv4 shapes with `[redacted]`. */
 export declare function redactPii(text: string): string;
@@ -78,7 +78,7 @@ export declare function capLearnedBlock(text: string, maxChars: number): string;
  * Empty when absent or
  * when every line is dropped.
  */
-export declare function readLearnedBlock(learningDb: Database.Database, project: string): string;
+export declare function readLearnedBlock(learningDb: Database, project: string): string;
 /**
  * Read the stored block for a project and cap it at `maxChars`.
  *
@@ -86,4 +86,4 @@ export declare function readLearnedBlock(learningDb: Database.Database, project:
  * The cap runs on the screened text.
  * So a drop can never leave a half-line or an unclosed fence behind.
  */
-export declare function readLearnedBlockCapped(learningDb: Database.Database, project: string, maxChars: number): string;
+export declare function readLearnedBlockCapped(learningDb: Database, project: string, maxChars: number): string;

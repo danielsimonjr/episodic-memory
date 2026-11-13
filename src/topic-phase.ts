@@ -1,4 +1,4 @@
-import type Database from 'better-sqlite3';
+import type { Database } from './sqlite.js';
 import { shouldSkipReentrantSync } from './reentrancy.js';
 import { topicsEnabled } from './constants.js';
 import type { TopicOptions, TopicResult } from './topic-job.js';
@@ -11,10 +11,10 @@ import type { TopicOptions, TopicResult } from './topic-job.js';
  *
  * @param opts the job options, and an open database. Without a database, the step opens and closes its own.
  */
-export async function runTopicPhase(opts: TopicOptions & { db?: Database.Database } = {}): Promise<TopicResult | null> {
+export async function runTopicPhase(opts: TopicOptions & { db?: Database } = {}): Promise<TopicResult | null> {
   if (!topicsEnabled() || shouldSkipReentrantSync()) return null;
   const owned = !opts.db;
-  let db: Database.Database | undefined;
+  let db: Database | undefined;
   try {
     const { runTopics } = await import('./topic-job.js');
     db = opts.db ?? (await import('./db.js')).initDatabase();

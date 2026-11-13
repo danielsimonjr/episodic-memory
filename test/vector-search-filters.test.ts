@@ -5,9 +5,8 @@ import { tmpdir } from 'os';
 import type { ConversationExchange } from '../src/types.js';
 import { safeRmSync } from './test-utils.js';
 
-// vec0 runs the KNN step before the WHERE clause. A filter that keeps only far rows then left the search
-// empty: the KNN step took the nearest rows, and the filter dropped all of them. The search must apply the
-// filter first. The fixed query vector and the fixed row vectors put each row at a known distance.
+// A search that takes the nearest rows before it applies the WHERE clause can return no row: the filter can
+// drop every near row. The search must apply the filter first. The fixed query vector and the fixed row vectors put each row at a known distance.
 const DIM = 384;
 const QUERY = Array.from({ length: DIM }, (_, i) => (i === 0 ? 1 : 0));
 
@@ -20,7 +19,7 @@ vi.mock('../src/embeddings.js', async (importOriginal) => {
   };
 });
 
-const { initDatabase, insertExchange } = await import('../src/db.js');
+const { initDatabase, insertExchange, openDatabaseReadonly } = await import('../src/db.js');
 const { searchConversations } = await import('../src/search.js');
 
 /** A row vector at L2 distance `d` from the query vector. */
@@ -115,7 +114,24 @@ describe('vector search applies the filters before the nearest rows are taken', 
     expect(await ids({ limit: 3 })).toEqual(['r7', 'r8', 'r9']);
   });
 
-  it('accepts a limit above the KNN cap of sqlite-vec', async () => {
+  it('falls back to the text search on a read-only file that has no vector table yet', async () => {
+    seed(dated);
+    const raw = initDatabase();
+    raw.exec('DROP TABLE exchange_vectors');
+    raw.close();
+    const db = openDatabaseReadonly();
+    const notices: string[] = [];
+    try {
+      const results = await searchConversations('question', { mode: 'both', db, limit: 3, onNotice: m => notices.push(m) });
+      expect(results.length).toBeGreaterThan(0);
+      expect(notices.join(' ')).toMatch(/Vector search is unavailable/);
+      await expect(searchConversations('question', { mode: 'vector', db })).rejects.toThrow(/exchange_vectors/);
+    } finally {
+      db.close();
+    }
+  });
+
+  it('accepts a limit of 2000', async () => {
     seed(dated);
     expect(await ids({ limit: 2000 })).toHaveLength(10);
   });

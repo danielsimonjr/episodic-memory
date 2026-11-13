@@ -3,8 +3,7 @@ import { mkdtempSync, writeFileSync, rmSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { getIndexStats } from '../src/stats.js';
-import Database from 'better-sqlite3';
-import * as sqliteVec from 'sqlite-vec';
+import { Database } from '../src/sqlite.js';
 
 describe('stats command', () => {
   let testDir: string;
@@ -35,7 +34,6 @@ describe('stats command', () => {
   it('should count conversations and exchanges', async () => {
     // Create and initialize database
     const db = new Database(dbPath);
-    sqliteVec.load(db);
 
     db.exec(`
       CREATE TABLE exchanges (
@@ -101,7 +99,6 @@ describe('stats command', () => {
 
   it('should track date range', async () => {
     const db = new Database(dbPath);
-    sqliteVec.load(db);
 
     db.exec(`
       CREATE TABLE exchanges (
@@ -132,7 +129,6 @@ describe('stats command', () => {
 
   it('should count projects', async () => {
     const db = new Database(dbPath);
-    sqliteVec.load(db);
 
     db.exec(`
       CREATE TABLE exchanges (

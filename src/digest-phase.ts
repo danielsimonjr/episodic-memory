@@ -1,4 +1,4 @@
-import type Database from 'better-sqlite3';
+import type { Database } from './sqlite.js';
 import { digestEnabled, runDigest, type DigestOptions, type DigestResult } from './digest-job.js';
 import { initDatabase } from './db.js';
 
@@ -8,10 +8,10 @@ import { initDatabase } from './db.js';
  * Never throws, so a failure cannot stop the sync. With the flag off, the digest step does nothing.
  * The digest step logs and swallows any failure, so the next run retries.
  */
-export async function runDigestPhase(opts: DigestOptions & { db?: Database.Database } = {}): Promise<DigestResult | null> {
+export async function runDigestPhase(opts: DigestOptions & { db?: Database } = {}): Promise<DigestResult | null> {
   if (!digestEnabled()) return null;
   const owned = !opts.db;
-  let db: Database.Database | undefined;
+  let db: Database | undefined;
   try {
     db = opts.db ?? initDatabase();
     const r = await runDigest(db, opts);

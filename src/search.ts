@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import { Database } from './sqlite.js';
 import { initDatabase, getSharedReaderDatabase } from './db.js';
 import { initEmbeddings, generateQueryEmbedding, EmbeddingsUnavailableError } from './embeddings.js';
 import { SearchResult, ConversationExchange, MultiConceptResult } from './types.js';
@@ -76,7 +76,7 @@ export interface SearchOptions {
    * Reuse an open DB handle (MCP hot path). When omitted, opens and closes
    * a one-shot connection (CLI behavior).
    */
-  db?: Database.Database;
+  db?: Database;
   /**
    * Receive a notice about a search step that did not run.
    *
@@ -128,17 +128,14 @@ function buildSearchFilters(options: SearchOptions): { sql: string; params: unkn
   };
 }
 
-/** The largest `k` that a KNN query of sqlite-vec accepts. A larger `k` makes the query throw. */
-const VEC_KNN_MAX_K = 4096;
-
 /**
  * Find the nearest exchanges with an exact scan of the rows that pass the filters.
  *
- * vec0 takes the nearest rows before it applies a WHERE clause. A filter can therefore drop every row of a KNN
- * query. This scan applies the filters first and then sorts the remaining rows by distance.
+ * The scan computes `vec_distance_l2` for each row that passes the filters, then sorts the rows by distance.
+ * The scan reads `exchange_vectors`. Every vector search uses this scan.
  */
 function exactVectorSearch(
-  db: Database.Database,
+  db: Database,
   embedding: Buffer,
   filterClause: string,
   filterParams: unknown[],
@@ -151,7 +148,7 @@ function exactVectorSearch(
         ${EXCHANGE_SELECT_COLUMNS},
         vec_distance_l2(vec.embedding, ?) AS distance
       FROM exchanges AS e
-      JOIN vec_exchanges AS vec ON vec.id = e.id
+      JOIN exchange_vectors AS vec ON vec.id = e.id
       WHERE e.is_sidechain = 0
         ${filterClause}
       ORDER BY distance ASC
@@ -217,7 +214,7 @@ function exchangeFromRow(row: any): ConversationExchange {
  * Therefore:               cos(u, v) = 1 - d^2 / 2.
  *
  * `src/embeddings.ts` passes `normalize: true` to its one pipeline call, so every vector that the module returns has unit length.
- * The `vec_exchanges` table declares no `distance_metric`, so sqlite-vec returns the L2 distance that the identity applies to.
+ * `vec_distance_l2` returns the L2 distance that the identity applies to.
  */
 export function l2DistanceToCosineSimilarity(distance: number): number {
   const similarity = 1 - (distance * distance) / 2;
@@ -268,7 +265,7 @@ function buildLikeClause(query: string): { sql: string; params: string[] } {
 }
 
 function resolveSearchDb(options: SearchOptions): {
-  db: Database.Database;
+  db: Database;
   ownsConnection: boolean;
 } {
   if (options.db) {
@@ -280,6 +277,12 @@ function resolveSearchDb(options: SearchOptions): {
   return { db: initDatabase(), ownsConnection: true };
 }
 
+/** Sends the notice that a `both` search uses the text results only. */
+function sendVectorNotice(options: SearchOptions, reason: string): void {
+  const notice = `Vector search is unavailable (${reason}). The results come from the text search only.`;
+  (options.onNotice ?? ((message: string) => console.error(`episodic-memory: ${message}`)))(notice);
+}
+
 /**
  * Searches the indexed conversations for a query, and returns the matching exchanges.
  *
@@ -287,6 +290,7 @@ function resolveSearchDb(options: SearchOptions): {
  * Sidechain exchanges never match. The function throws when `after` or `before` is not in `YYYY-MM-DD` format.
  * When the embedding backend cannot load, a `vector` search throws `EmbeddingsUnavailableError`.
  * A `both` search then returns the text results. The search then sends a notice to `options.onNotice`.
+ * A `both` search on a file without the `exchange_vectors` table does the same.
  * The function closes a connection that the function opens. The function leaves a connection from `options.db` or the shared reader open.
  *
  * @param query The text to search for.
@@ -318,41 +322,23 @@ export async function searchConversations(
       } catch (error) {
         if (mode !== 'both' || !(error instanceof EmbeddingsUnavailableError)) throw error;
         vectorRan = false;
-        const notice = `Vector search is unavailable (${error.message}). The results come from the text search only.`;
-        (options.onNotice ?? ((message: string) => console.error(`episodic-memory: ${message}`)))(notice);
+        sendVectorNotice(options, error.message);
       }
     }
 
     if (vectorRan) {
-      // Vector similarity search. vec0 takes the nearest rows before it applies WHERE.
-      // A filtered search therefore uses the exact scan, which applies the filters first.
+      // Vector similarity search. The exact scan applies the filters before it ranks the rows.
       const queryEmbedding = await generateQueryEmbedding(query);
       const embedding = Buffer.from(new Float32Array(queryEmbedding).buffer);
-
-      if (filterClause) {
+      try {
         results = exactVectorSearch(db, embedding, filterClause, filterParams, limit);
-      } else {
-        // The KNN query takes extra rows, because the sidechain clause can drop some of them.
-        const k = Math.min(limit * 3, VEC_KNN_MAX_K);
-        const knnStmt = db.prepare(`
-          SELECT
-            ${EXCHANGE_SELECT_COLUMNS},
-            vec.distance
-          FROM vec_exchanges AS vec
-          JOIN exchanges AS e ON vec.id = e.id
-          WHERE vec.embedding MATCH ?
-            AND k = ?
-            AND e.is_sidechain = 0
-          ORDER BY vec.distance ASC
-        `);
-        results = knnStmt.all(embedding, k).slice(0, limit);
-        // Too few rows remain, and the KNN query did not read every row. The sidechain clause dropped some rows.
-        if (results.length < limit) {
-          const total = (db.prepare('SELECT COUNT(*) AS n FROM vec_exchanges').get() as { n: number }).n;
-          if (k < total) {
-            results = exactVectorSearch(db, embedding, '', [], limit);
-          }
+      } catch (error) {
+        // A read-only connection to a file that no write open has migrated yet has no vector table.
+        if (mode !== 'both' || !(error instanceof Error) || !error.message.includes('no such table: exchange_vectors')) {
+          throw error;
         }
+        vectorRan = false;
+        sendVectorNotice(options, error.message);
       }
     }
 

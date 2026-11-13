@@ -13,7 +13,7 @@
  * tasks and attempts).
  */
 
-import Database from 'better-sqlite3';
+import { Database } from '../sqlite.js';
 import fs from 'fs';
 import path from 'path';
 import { getLearningDbPath, tryChmod } from '../paths.js';
@@ -54,7 +54,7 @@ function applySecureFileMode(dbPath: string): void {
  * The function creates `knowledge_snapshot` and `learned_block`, and then the `learning_*` tables.
  * Running the function again has no effect.
  */
-export function migrateLearningSchema(db: Database.Database): void {
+export function migrateLearningSchema(db: Database): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS knowledge_snapshot (
       id INTEGER PRIMARY KEY,
@@ -83,7 +83,7 @@ export function migrateLearningSchema(db: Database.Database): void {
  * never migrates. The hook opens the file read-only, and the file may pre-date a
  * schema change. SQLite refuses DDL on a read-only connection.
  */
-export function openLearningDb(options: OpenLearningDbOptions = {}): Database.Database {
+export function openLearningDb(options: OpenLearningDbOptions = {}): Database {
   const readonly = options.readonly === true;
   const migrate = readonly ? false : options.migrate !== false;
   const dbPath = options.path ?? getLearningDbPath();

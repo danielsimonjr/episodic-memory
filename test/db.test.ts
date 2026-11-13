@@ -5,7 +5,7 @@ import { safeRmSync, suppressConsole } from './test-utils.js';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import Database from 'better-sqlite3';
+import { Database } from '../src/sqlite.js';
 
 // Suppress console output for clean test runs
 const restoreConsole = suppressConsole();

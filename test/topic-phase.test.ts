@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import Database from 'better-sqlite3';
+import { Database } from '../src/sqlite.js';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -13,7 +13,7 @@ suppressConsole();
 const KEYS = ['TEST_DB_PATH', 'EPISODIC_MEMORY_TOPICS', 'EPISODIC_MEMORY_TOPICS_SINCE', 'FLEET_GPU_RESERVATION', SUMMARIZER_GUARD_ENV];
 const saved: Record<string, string | undefined> = {};
 
-function topicTables(db: Database.Database): string[] {
+function topicTables(db: Database): string[] {
   return (db.prepare("SELECT name FROM sqlite_master WHERE name LIKE 'topic_%'").all() as { name: string }[]).map(r => r.name);
 }
 

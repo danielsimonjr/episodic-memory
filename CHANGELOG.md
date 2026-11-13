@@ -1,9 +1,15 @@
 ## [Unreleased]
 
+### Changed
+- **The index stores its vectors in a plain table, `exchange_vectors`, and needs no SQLite extension.** Each row holds one 384-wide vector of 32-bit floats, and the row goes with its exchange. A registered SQL function `vec_distance_l2` ranks the rows, so every vector search is an exact scan that applies the filters first. The first write open of an index from an earlier version copies the vectors of the old `vec_exchanges` table into the new table. The copy reads the old shadow tables directly and copies only valid slots. An open with nothing to copy takes no write lock. An exchange without a vector counts as stale, so the embedding migration embeds it again. The old vec0 tables stay in the file, so version 1.10.0 can still read the same file after a rollback. A vector that is written after the upgrade has no copy in the old tables. A 1.10.0 rollback therefore finds those exchanges by text only. Every module now imports the adapter, not better-sqlite3.
+- **`insertExchange` is atomic and checks the vector width first.** A vector that does not hold 384 numbers throws before any write.
+- **A `both` search on a read-only connection to a file without `exchange_vectors` falls back to the text search**, with the same notice as a missing embedder.
+
 ### Added
 - **`src/sqlite.ts`, a database adapter over `node:sqlite`.** The adapter gives the better-sqlite3 method names that the code uses: `prepare` with `run`, `get`, `all` and `iterate`, `exec`, `pragma`, `transaction` with `immediate`, `deferred` and `exclusive`, `function` and `close`. A nested transaction uses a savepoint. The adapter binds `undefined` as NULL. The adapter binds a safe integer as an SQL integer, so an FTS5 `rowid = ?` condition holds on SQLite 3.54. better-sqlite3 binds every number as a real, so `'v' || ?` with 7 now gives `v7`, not `v7.0`. The adapter refuses an async transaction function. The adapter hides the experimental warning that Node 22 writes when `node:sqlite` loads. No other module uses the adapter yet.
 
 ### Fixed
+- **`prune` reports the vectors that it deletes.** It reported the number of exchanges before.
 - **A deleted conversation leaves no digest line behind.** The sync, the `index` commands, `index --repair` and `prune` delete the index rows of a conversation. A digest line that an earlier run built from the conversation stayed. The session-start hook could inject that line into every new session. These commands now remove each digest line that cites a deleted exchange, in active and in superseded entries. The commands replace the full-text row of each changed entry. The commands delete an entry with no line left. The entries that the deleted entry superseded become active again, so the next compression merges those entries again. The step calls no model. The new module `src/derived-text.ts` holds `removeDerivedText`. `deleteExchangesForArchive` now returns the ids of the deleted exchanges, not their number. Topic documents built from the conversation still stay. A todo row tracks these documents.
 
 ## [1.10.0] - 2026-11-13

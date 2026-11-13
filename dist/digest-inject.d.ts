@@ -1,4 +1,4 @@
-import type Database from 'better-sqlite3';
+import type { Database } from './sqlite.js';
 /** The default digest character limit. `digestMaxChars` uses the default value when the environment value is not a positive integer. */
 export declare const DEFAULT_DIGEST_MAX_CHARS = 6000;
 /** The archive project key for a working directory: every non-alphanumeric character becomes a hyphen. */
@@ -18,6 +18,6 @@ export declare function digestMaxChars(): number;
  * drops an entry whose lines are all gone. The learn solver passes a task's
  * source exchange ids here so the digest cannot hand back its answer.
  */
-export declare function buildDigestText(db: Database.Database, project: string, maxChars: number, opts?: {
+export declare function buildDigestText(db: Database, project: string, maxChars: number, opts?: {
     hideExchangeIds?: string[];
 }): string;

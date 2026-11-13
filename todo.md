@@ -31,7 +31,7 @@ items move between sections as state changes.
 ## Active queue
 
 - [ ] **Run on node:sqlite: drop better-sqlite3 and sqlite-vec.** One branch `deps/node-sqlite`, four slices: the adapter `src/sqlite.ts`; the type swap, the `exchange_vectors` table, the distance function and the vec0 migration; the dependency and repair removal; the docs. Node floor 22.16.0, CI on 22.16.0 and 24.
-  - [ ] S1: the adapter `src/sqlite.ts` and its tests
+  - [x] S1: the adapter `src/sqlite.ts` and its tests
   - [ ] S2: type swap, vector table, migration, search
   - [ ] S3: dependency and repair removal, CI matrix, floor
   - [ ] S4: docs

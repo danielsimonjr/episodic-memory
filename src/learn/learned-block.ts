@@ -7,7 +7,7 @@
  * imports it — it reads the rows this function wrote (spec §6.3).
  */
 
-import type Database from 'better-sqlite3';
+import type { Database } from '../sqlite.js';
 import { redactSecrets } from '../redact.js';
 import type { KnowledgeStore } from './knowledge-store.js';
 import { redactPii, renderLearnedBlock, type RedactFn, type ScreenFn } from './learn-inject.js';
@@ -23,7 +23,7 @@ import { compareByProjectAndKind } from './entry-order.js';
  */
 export async function writeLearnedBlocks(
   store: KnowledgeStore,
-  learningDb: Database.Database,
+  learningDb: Database,
   maxChars: number,
   opts: { screen?: ScreenFn; redact?: RedactFn } = {}
 ): Promise<void> {

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { mkdtempSync, writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import type Database from 'better-sqlite3';
+import type { Database } from '../src/sqlite.js';
 import { initDatabase, insertExchange } from '../src/db.js';
 import { buildFtsMatchQuery, searchConversations } from '../src/search.js';
 import type { ConversationExchange } from '../src/types.js';
@@ -68,7 +68,7 @@ describe('text search with several words', () => {
     safeRmSync(testDir);
   });
 
-  async function ids(query: string, db?: Database.Database): Promise<string[]> {
+  async function ids(query: string, db?: Database): Promise<string[]> {
     const results = await searchConversations(query, { mode: 'text', limit: 10, db });
     return results.map(r => r.exchange.id).sort();
   }

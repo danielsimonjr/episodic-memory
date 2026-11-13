@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import Database from 'better-sqlite3';
+import { Database } from '../src/sqlite.js';
 import { safeRmSync, seedDigest, suppressConsole } from './test-utils.js';
 
 // The tests index with a fixed vector, so no test loads the embedding model.
@@ -158,7 +158,7 @@ describe('the index and verify commands honour the DO NOT INDEX marker', () => {
     const db = initDatabase();
     try {
       const count = (table: string) => (db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get() as { n: number }).n;
-      return { exchanges: count('exchanges'), vectors: count('vec_exchanges'), text: count('exchanges_fts') };
+      return { exchanges: count('exchanges'), vectors: count('exchange_vectors'), text: count('exchanges_fts') };
     } finally {
       db.close();
     }

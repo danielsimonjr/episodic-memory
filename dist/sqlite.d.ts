@@ -62,6 +62,8 @@ export type Transaction<F extends (...args: never[]) => unknown> = F & {
  */
 export declare class Database {
     private readonly db;
+    /** The path that the constructor opened. */
+    readonly name: string;
     private savepointCount;
     /**
      * Open the database file at `path`. Use the readonly option to refuse writes.

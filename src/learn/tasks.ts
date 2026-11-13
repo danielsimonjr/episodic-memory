@@ -22,7 +22,7 @@
  */
 
 import path from 'path';
-import type Database from 'better-sqlite3';
+import type { Database } from '../sqlite.js';
 import type { ConversationExchange } from '../types.js';
 import { redactSecrets } from '../redact.js';
 import { screenLearnedText } from './learned-text-screen.js';
@@ -115,7 +115,7 @@ function exchangeFromRow(row: ExchangeRow): ConversationExchange {
  * trivially findable.
  */
 export function selectSourceExchanges(
-  indexDb: Database.Database,
+  indexDb: Database,
   options: SelectSourceOptions
 ): ConversationExchange[] {
   const minPerProject = options.minPerProject ?? MIN_PER_PROJECT;
@@ -178,7 +178,7 @@ function sourceRef(exchange: ConversationExchange): SourceRef {
 }
 
 /** Every exchange of the same session, so truth can span a date range and a multi task. */
-function sessionSiblings(indexDb: Database.Database, exchange: ConversationExchange): ExchangeRow[] {
+function sessionSiblings(indexDb: Database, exchange: ConversationExchange): ExchangeRow[] {
   if (!exchange.sessionId) return [];
   return indexDb
     .prepare(
@@ -336,8 +336,8 @@ interface DraftTask {
  * contributes no tasks.
  */
 export async function generateTasks(
-  learningDb: Database.Database,
-  indexDb: Database.Database,
+  learningDb: Database,
+  indexDb: Database,
   options: GenerateTasksOptions
 ): Promise<GenerateTasksResult> {
   const model = options.model ?? callLearnModel;
@@ -469,7 +469,7 @@ interface AddressRow {
 }
 
 /** True when some indexed exchange sits at `ref`'s path with an overlapping range. */
-function addressResolves(indexDb: Database.Database, ref: SourceRef): boolean {
+function addressResolves(indexDb: Database, ref: SourceRef): boolean {
   const rows = indexDb
     .prepare('SELECT archive_path, line_start, line_end FROM exchanges WHERE archive_path = ?')
     .all(ref.path) as AddressRow[];
@@ -495,8 +495,8 @@ function overlaps(aStart: number, aEnd: number, bStart: number, bEnd: number): b
  * The `stale` mark excludes the task from reads and metrics, rather than scoring it as a failure.
  */
 export function checkTasks(
-  learningDb: Database.Database,
-  indexDb: Database.Database
+  learningDb: Database,
+  indexDb: Database
 ): { stale: number[] } {
   const rows = learningDb
     .prepare("SELECT id, truth FROM learning_task WHERE status = 'ok' ORDER BY id")

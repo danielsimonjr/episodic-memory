@@ -1,4 +1,4 @@
-import type Database from 'better-sqlite3';
+import type { Database } from './sqlite.js';
 import type { ConversationExchange } from './types.js';
 /** Options for runDigest. The fields let tests replace the model call and the clock. */
 export interface DigestOptions {
@@ -42,7 +42,7 @@ export interface ExchangeRow {
 /** Map an exchange row to the public shape. */
 export declare function toExchange(r: ExchangeRow): ConversationExchange;
 /** The exchanges of one session, oldest first. */
-export declare function sessionExchanges(db: Database.Database, project: string, sessionId: string): ConversationExchange[];
+export declare function sessionExchanges(db: Database, project: string, sessionId: string): ConversationExchange[];
 /** Tell whether a session is trivial: one exchange that is `/exit` or is shorter than 100 characters. */
 export declare function isTrivial(exchanges: ConversationExchange[]): boolean;
 /**
@@ -55,4 +55,4 @@ export declare function isTrivial(exchanges: ConversationExchange[]): boolean;
  * @param db the open index database
  * @param opts replaces the model call or the clock. Without it, the job uses the default summarizer call and the current time.
  */
-export declare function runDigest(db: Database.Database, opts?: DigestOptions): Promise<DigestResult>;
+export declare function runDigest(db: Database, opts?: DigestOptions): Promise<DigestResult>;

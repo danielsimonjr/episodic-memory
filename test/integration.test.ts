@@ -5,7 +5,7 @@ import { searchConversations } from '../src/search.js';
 import { parseConversationFile } from '../src/parser.js';
 import { createTestDb, getFixturePath, safeRmSync } from './test-utils.js';
 import { indexTestFiles } from './test-indexer.js';
-import type Database from 'better-sqlite3';
+import type { Database } from '../src/sqlite.js';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
@@ -63,13 +63,13 @@ describe('Integration Tests', () => {
       db.close();
     });
 
-    it('should store embeddings in vec_exchanges table', async () => {
+    it('should store embeddings in the exchange_vectors table', async () => {
       const fixturePath = getFixturePath('short-conversation.jsonl');
 
       await indexTestFiles([fixturePath]);
 
       const db = initDatabase();
-      const vecCount = db.prepare('SELECT COUNT(*) as count FROM vec_exchanges').get() as { count: number };
+      const vecCount = db.prepare('SELECT COUNT(*) as count FROM exchange_vectors').get() as { count: number };
       expect(vecCount.count).toBeGreaterThan(0);
       db.close();
     });

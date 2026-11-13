@@ -7,7 +7,7 @@
  * Additive only: nothing in this module deletes an entry. A revision inserts a
  * new version and marks the older one `supersededBy`; retirement sets `status`.
  */
-import type Database from 'better-sqlite3';
+import type { Database } from '../sqlite.js';
 import { entryName, procedureIdFor, rootName, type KnowledgeStore } from './knowledge-store.js';
 import { type KnowledgeEntry, type KnowledgeKind, type KnowledgeStatus, type NewKnowledgeEntry, type ValidationRecord } from './types.js';
 /** A proposal whose body matches the latest version of the same key. */
@@ -72,13 +72,13 @@ export declare function searchKnowledge(store: KnowledgeStore, query: string, pr
  * retro-actively included: a snapshot is a point-in-time set, which is what
  * makes before/after comparison meaningful.
  */
-export declare function createSnapshot(learningDb: Database.Database, runId: string, entryNames?: string[], store?: KnowledgeStore): Promise<number>;
+export declare function createSnapshot(learningDb: Database, runId: string, entryNames?: string[], store?: KnowledgeStore): Promise<number>;
 /**
  * Read a snapshot's entry names.
  *
  * Synchronous: this runs against `learning.sqlite`, not the knowledge store.
  */
-export declare function getSnapshot(learningDb: Database.Database, id: number): string[];
+export declare function getSnapshot(learningDb: Database, id: number): string[];
 /** Re-exported so callers do not need the adapter module for these names. */
 export { entryName, rootName, procedureIdFor };
 /** The set of statuses that count as live. */

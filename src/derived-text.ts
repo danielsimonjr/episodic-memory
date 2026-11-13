@@ -1,4 +1,4 @@
-import type Database from 'better-sqlite3';
+import type { Database } from './sqlite.js';
 import { citedExchangeIds } from './digest-db.js';
 
 /** The counts of one call of `removeDerivedText`. */
@@ -46,7 +46,7 @@ export function dropLinesCiting(
 }
 
 /** Tell whether the database holds a table or a virtual table of this name. */
-function hasTable(db: Database.Database, name: string): boolean {
+function hasTable(db: Database, name: string): boolean {
   return db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?").get(name) !== undefined;
 }
 
@@ -65,7 +65,7 @@ function hasTable(db: Database.Database, name: string): boolean {
  * @param db The open database connection to change.
  * @param ids The ids of the exchanges that the index deleted.
  */
-export function removeDerivedText(db: Database.Database, ids: readonly string[]): DerivedTextResult {
+export function removeDerivedText(db: Database, ids: readonly string[]): DerivedTextResult {
   const result: DerivedTextResult = { digestLinesRemoved: 0, digestEntriesDeleted: 0 };
   if (ids.length === 0 || !hasTable(db, 'digest_entry')) return result;
   const removed = new Set(ids);

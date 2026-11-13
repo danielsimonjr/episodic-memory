@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { spawnSync } from 'child_process';
-import Database from 'better-sqlite3';
+import { Database } from '../../src/sqlite.js';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -26,7 +26,7 @@ const LONG_USER = 'How do I make the release build stop rewriting the bundled na
 const LONG_ASSISTANT =
   'The wrapper now verifies a sentinel file in node_modules before it declares the dependency tree healthy. '.repeat(3);
 
-function indexDbWith(count: number, project = 'proj-a'): Database.Database {
+function indexDbWith(count: number, project = 'proj-a'): Database {
   const db = new Database(':memory:');
   db.exec(`
     CREATE TABLE exchanges (
@@ -116,8 +116,8 @@ function capture() {
 }
 
 let dir: string;
-let learning: Database.Database;
-let index: Database.Database;
+let learning: Database;
+let index: Database;
 let store: KnowledgeStore;
 let dbs: LearnDbs;
 const savedConfig = process.env.EPISODIC_MEMORY_CONFIG_DIR;

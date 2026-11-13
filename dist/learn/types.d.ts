@@ -6,7 +6,7 @@
  * database handle. `src/learn/knowledge-store.ts` is the only module that knows
  * how an entry is laid out on disk; every other module sees the shapes declared here.
  */
-import type Database from 'better-sqlite3';
+import type { Database } from '../sqlite.js';
 import type { KnowledgeStore } from './knowledge-store.js';
 /**
  * The kind of a learned entry.
@@ -113,8 +113,8 @@ export interface ProposedEntry {
 /** One handle bundle, shared by every function from the solver onward. */
 export interface LearnDbs {
     store: KnowledgeStore;
-    learning: Database.Database;
-    index: Database.Database;
+    learning: Database;
+    index: Database;
 }
 /** Truth for a generated task: where the answer lives. */
 export interface TaskTruth {

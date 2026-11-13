@@ -12,7 +12,7 @@ import fs from 'fs';
 import path from 'path';
 import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
-import type Database from 'better-sqlite3';
+import type { Database } from './sqlite.js';
 import { getSuperpowersDir } from './paths.js';
 import type { KnowledgeStore } from './learn/knowledge-store.js';
 import type { KnowledgeKind, KnowledgeStatus } from './learn/types.js';
@@ -233,8 +233,8 @@ export async function collectLearnDoctorSection(): Promise<LearnDoctorSection> {
   if (!section.present) return section;
 
   let openedStore: KnowledgeStore | null = null;
-  let learning: Database.Database | null = null;
-  let index: Database.Database | null = null;
+  let learning: Database | null = null;
+  let index: Database | null = null;
 
   try {
     // `openKnowledgeStore` creates `learned/` and `knowledge.db`. Doctor must
@@ -268,7 +268,7 @@ export async function collectLearnDoctorSection(): Promise<LearnDoctorSection> {
         if (fs.existsSync(dbPath)) {
           // Read-only and unmigrated. `initDatabase()` would open a writer,
           // run migrations, and (via `openDatabase`) create a missing file.
-          const Database = (await import('better-sqlite3')).default;
+          const Database = (await import('./sqlite.js')).Database;
           index = new Database(dbPath, { readonly: true, fileMustExist: true });
           const statement = index.prepare('SELECT id FROM exchanges WHERE id = ?');
           for (const id of ids) {
@@ -313,7 +313,7 @@ export async function collectLearnDoctorSection(): Promise<LearnDoctorSection> {
 
   // The trace is plain sqlite, read-only and un-migrated: doctor never changes it.
   try {
-    const Database = (await import('better-sqlite3')).default;
+    const Database = (await import('./sqlite.js')).Database;
     learning = new Database(learningDb, { readonly: true });
     const row = learning
       .prepare('SELECT id, phase, status, metrics FROM learning_run ORDER BY started_at DESC, rowid DESC LIMIT 1')

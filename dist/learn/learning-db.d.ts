@@ -17,7 +17,7 @@
  *
  * Additive only: nothing here deletes a run, task or attempt.
  */
-import type Database from 'better-sqlite3';
+import type { Database } from '../sqlite.js';
 import type { AttemptOutcome, AttemptRow, LearningKind, LearningTier, TaskStatus, TaskTruth } from './types.js';
 /** One generated task, as `learning_task` stores it. */
 export interface LearningTask {
@@ -108,31 +108,31 @@ export declare const SIGNAL_KINDS: LearningKind[];
 /** The task tiers that carry the learning signal. `passRate` uses them when the caller sets `signalOnly`. Callers of `listTasks` pass them with `SIGNAL_KINDS`. */
 export declare const SIGNAL_TIERS: LearningTier[];
 /** Create the `learning_*` tables. Idempotent; called from `migrateLearningSchema`. */
-export declare function ensureLearningSchema(db: Database.Database): void;
+export declare function ensureLearningSchema(db: Database): void;
 /**
  * Create a run in the `running` state and return its id.
  *
  * The function sets the start time to the current time and stores the budget as JSON.
  */
-export declare function createRun(db: Database.Database, input: CreateRunInput): string;
+export declare function createRun(db: Database, input: CreateRunInput): string;
 /**
  * Set the status of a run, its finish time and its metrics.
  *
  * The function sets the finish time to the current time and stores the metrics as JSON.
  */
-export declare function finishRun(db: Database.Database, id: string, status: LearningRun['status'], metrics?: Record<string, unknown>): void;
+export declare function finishRun(db: Database, id: string, status: LearningRun['status'], metrics?: Record<string, unknown>): void;
 /**
  * Append one rejection to the rejections list of a run.
  *
  * The function does nothing when no run has the id.
  */
-export declare function addRejection(db: Database.Database, runId: string, rejection: RunRejection): void;
+export declare function addRejection(db: Database, runId: string, rejection: RunRejection): void;
 /** Return the run with this id, or null when no run has the id. */
-export declare function getRun(db: Database.Database, id: string): LearningRun | null;
+export declare function getRun(db: Database, id: string): LearningRun | null;
 /** The newest run by start time, or null when none exists. */
-export declare function latestRun(db: Database.Database): LearningRun | null;
+export declare function latestRun(db: Database): LearningRun | null;
 /** Insert one task row and return the new task id. */
-export declare function insertTask(db: Database.Database, task: Omit<LearningTask, 'id'>): number;
+export declare function insertTask(db: Database, task: Omit<LearningTask, 'id'>): number;
 /**
  * The only task read path.
  *
@@ -140,9 +140,9 @@ export declare function insertTask(db: Database.Database, task: Omit<LearningTas
  * held-out split. The function excludes stale rows unless the caller sets
  * `includeStale`. The `--check` command and `learn report` want to see them.
  */
-export declare function listTasks(db: Database.Database, options: ListTasksOptions): LearningTask[];
+export declare function listTasks(db: Database, options: ListTasksOptions): LearningTask[];
 /** Mark tasks stale. Additive: the row stays, and `includeStale` can still read it. */
-export declare function markStale(db: Database.Database, ids: number[]): void;
+export declare function markStale(db: Database, ids: number[]): void;
 /** `insertAttempt` redacts `learning_attempt.answer` and shortens it to `MAX_ANSWER_CHARS` characters, so one runaway answer cannot bloat the trace. */
 export declare const MAX_ANSWER_CHARS = 4000;
 /**
@@ -150,13 +150,13 @@ export declare const MAX_ANSWER_CHARS = 4000;
  *
  * The function redacts the answer, caps its length and stamps the creation time.
  */
-export declare function insertAttempt(db: Database.Database, attempt: Omit<AttemptRow, 'id' | 'createdAt'>): number;
+export declare function insertAttempt(db: Database, attempt: Omit<AttemptRow, 'id' | 'createdAt'>): number;
 /**
  * Return the attempts of one run that match the options. An empty `taskIds` list returns no attempts.
  */
-export declare function listAttempts(db: Database.Database, options: ListAttemptsOptions): AttemptRow[];
+export declare function listAttempts(db: Database, options: ListAttemptsOptions): AttemptRow[];
 /** True only when every id names a stored attempt (and the list is non-empty). */
-export declare function attemptsExist(db: Database.Database, ids: number[]): boolean;
+export declare function attemptsExist(db: Database, ids: number[]): boolean;
 /**
  * The pass rate of one snapshot of one run.
  *
@@ -165,7 +165,7 @@ export declare function attemptsExist(db: Database.Database, ids: number[]): boo
  * stale tasks never contribute. `signalOnly` restricts the count to `locate`/`when`/`multi` at
  * tiers 2 and 3. The metric decides whether to keep an edit (spec §7 rule 5).
  */
-export declare function passRate(db: Database.Database, runId: string, snapshotId: number, options: {
+export declare function passRate(db: Database, runId: string, snapshotId: number, options: {
     split: 'train' | 'test';
     signalOnly: boolean;
 }): PassRate;

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import Database from 'better-sqlite3';
+import { Database } from '../src/sqlite.js';
 import { syncConversations } from '../src/sync.js';
 import { indexConversations, indexSession, indexUnprocessed } from '../src/indexer.js';
 import { verifyIndex } from '../src/verify.js';

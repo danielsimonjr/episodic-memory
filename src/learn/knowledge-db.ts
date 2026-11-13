@@ -8,7 +8,7 @@
  * new version and marks the older one `supersededBy`; retirement sets `status`.
  */
 
-import type Database from 'better-sqlite3';
+import type { Database } from '../sqlite.js';
 import {
   entryName,
   procedureIdFor,
@@ -277,7 +277,7 @@ export async function searchKnowledge(
  * makes before/after comparison meaningful.
  */
 export async function createSnapshot(
-  learningDb: Database.Database,
+  learningDb: Database,
   runId: string,
   entryNames?: string[],
   store?: KnowledgeStore
@@ -304,7 +304,7 @@ export async function createSnapshot(
  *
  * Synchronous: this runs against `learning.sqlite`, not the knowledge store.
  */
-export function getSnapshot(learningDb: Database.Database, id: number): string[] {
+export function getSnapshot(learningDb: Database, id: number): string[] {
   const row = learningDb
     .prepare('SELECT entry_names FROM knowledge_snapshot WHERE id = ?')
     .get(id) as { entry_names: string } | undefined;

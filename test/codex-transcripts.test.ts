@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import Database from 'better-sqlite3';
+import { Database } from '../src/sqlite.js';
 import { getConversationSourceDirs } from '../src/paths.js';
 import { parseConversation } from '../src/parser.js';
 import { initDatabase, insertExchange } from '../src/db.js';

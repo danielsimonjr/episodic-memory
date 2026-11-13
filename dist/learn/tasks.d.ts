@@ -20,7 +20,7 @@
  * - **Truth is an address**, not a copied transcript, so a re-index that moves a
  *   line marks the task stale instead of silently wrong.
  */
-import type Database from 'better-sqlite3';
+import type { Database } from '../sqlite.js';
 import type { ConversationExchange } from '../types.js';
 import type { LearningKind, LearningTier } from './types.js';
 /**
@@ -53,7 +53,7 @@ export interface SelectSourceOptions {
  * A one-line exchange has nothing to locate, and a project with a dozen exchanges makes a task
  * trivially findable.
  */
-export declare function selectSourceExchanges(indexDb: Database.Database, options: SelectSourceOptions): ConversationExchange[];
+export declare function selectSourceExchanges(indexDb: Database, options: SelectSourceOptions): ConversationExchange[];
 /**
  * The paraphrase prompt.
  *
@@ -110,7 +110,7 @@ export interface GenerateTasksResult {
  * fails the learned-text screen. An exchange whose whole answer is unusable
  * contributes no tasks.
  */
-export declare function generateTasks(learningDb: Database.Database, indexDb: Database.Database, options: GenerateTasksOptions): Promise<GenerateTasksResult>;
+export declare function generateTasks(learningDb: Database, indexDb: Database, options: GenerateTasksOptions): Promise<GenerateTasksResult>;
 /**
  * Mark every task whose source address does not resolve.
  *
@@ -119,7 +119,7 @@ export declare function generateTasks(learningDb: Database.Database, indexDb: Da
  * lines. A pruned project loses the path entirely. The function marks both cases `stale`.
  * The `stale` mark excludes the task from reads and metrics, rather than scoring it as a failure.
  */
-export declare function checkTasks(learningDb: Database.Database, indexDb: Database.Database): {
+export declare function checkTasks(learningDb: Database, indexDb: Database): {
     stale: number[];
 };
 export {};

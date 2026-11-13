@@ -218,7 +218,7 @@ export async function collectLearnDoctorSection() {
                 if (fs.existsSync(dbPath)) {
                     // Read-only and unmigrated. `initDatabase()` would open a writer,
                     // run migrations, and (via `openDatabase`) create a missing file.
-                    const Database = (await import('better-sqlite3')).default;
+                    const Database = (await import('./sqlite.js')).Database;
                     index = new Database(dbPath, { readonly: true, fileMustExist: true });
                     const statement = index.prepare('SELECT id FROM exchanges WHERE id = ?');
                     for (const id of ids) {
@@ -266,7 +266,7 @@ export async function collectLearnDoctorSection() {
     section.unresolvedSources.sort((left, right) => left.id < right.id ? -1 : left.id > right.id ? 1 : 0);
     // The trace is plain sqlite, read-only and un-migrated: doctor never changes it.
     try {
-        const Database = (await import('better-sqlite3')).default;
+        const Database = (await import('./sqlite.js')).Database;
         learning = new Database(learningDb, { readonly: true });
         const row = learning
             .prepare('SELECT id, phase, status, metrics FROM learning_run ORDER BY started_at DESC, rowid DESC LIMIT 1')

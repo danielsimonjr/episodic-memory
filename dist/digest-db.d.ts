@@ -1,4 +1,4 @@
-import type Database from 'better-sqlite3';
+import type { Database } from './sqlite.js';
 /** The tier of a digest entry: `session`, `day` or `week`. */
 export type DigestTier = 'session' | 'day' | 'week';
 /**
@@ -28,26 +28,26 @@ type NewDigestEntry = Omit<DigestEntry, 'id' | 'createdAt' | 'supersededBy'>;
  * Running the function again has no effect. The module never deletes an entry.
  * The supersede function marks a replaced entry instead.
  */
-export declare function ensureDigestSchema(db: Database.Database): void;
+export declare function ensureDigestSchema(db: Database): void;
 /**
  * Insert one digest entry and its full-text row in one transaction.
  *
  * The function sets created_at to the current time and returns the new id.
  * The function returns null, and writes nothing, when an entry with the same tier, project and periodStart already exists.
  */
-export declare function insertDigestEntry(db: Database.Database, e: NewDigestEntry): number | null;
+export declare function insertDigestEntry(db: Database, e: NewDigestEntry): number | null;
 /**
  * List the active entries of one project, newest period first.
  *
  * An entry is active while no other entry supersedes it. The list includes handoff notes.
  */
-export declare function listActiveEntries(db: Database.Database, project: string): DigestEntry[];
+export declare function listActiveEntries(db: Database, project: string): DigestEntry[];
 /**
  * List the active entries of one tier for all projects. The compression step reads this list.
  *
  * The list excludes handoff notes and sorts by project, then by period start, oldest first.
  */
-export declare function listActiveByTier(db: Database.Database, tier: DigestTier): DigestEntry[];
+export declare function listActiveByTier(db: Database, tier: DigestTier): DigestEntry[];
 /**
  * Mark entries as replaced by another entry. The rows stay in the table.
  *
@@ -57,7 +57,7 @@ export declare function listActiveByTier(db: Database.Database, tier: DigestTier
  * @param ids the entries to mark
  * @param byId the id of the replacing entry
  */
-export declare function supersede(db: Database.Database, ids: number[], byId: number): void;
+export declare function supersede(db: Database, ids: number[], byId: number): void;
 /**
  * List the exchange ids that the mark groups of a digest line cite.
  *
@@ -92,7 +92,7 @@ export declare function hideCitedLines(text: string, hideExchangeIds?: string[])
  * @param limit the maximum number of entries to fetch. Hidden lines can make the result shorter.
  * @param opts `hideExchangeIds` lists exchange ids. The function removes the lines that cite them and drops each entry with no line left.
  */
-export declare function searchDigest(db: Database.Database, query: string, project?: string, limit?: number, opts?: {
+export declare function searchDigest(db: Database, query: string, project?: string, limit?: number, opts?: {
     hideExchangeIds?: string[];
 }): DigestEntry[];
 export {};

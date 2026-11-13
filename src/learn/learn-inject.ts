@@ -13,7 +13,7 @@
  * untrusted archive content.
  */
 
-import type Database from 'better-sqlite3';
+import type { Database } from '../sqlite.js';
 import type { KnowledgeEntry, KnowledgeKind } from './types.js';
 import { screenLearnedText } from './learned-text-screen.js';
 import { redactSecrets } from '../redact.js';
@@ -220,7 +220,7 @@ export function capLearnedBlock(text: string, maxChars: number): string {
   return kept.join('\n') + '\n' + LEARNED_FENCE_CLOSE + '\n';
 }
 
-function storedBlock(learningDb: Database.Database, project: string): string | null {
+function storedBlock(learningDb: Database, project: string): string | null {
   const row = learningDb
     .prepare('SELECT text FROM learned_block WHERE project = ?')
     .get(project) as { text: string } | undefined;
@@ -235,7 +235,7 @@ function storedBlock(learningDb: Database.Database, project: string): string | n
  * Empty when absent or
  * when every line is dropped.
  */
-export function readLearnedBlock(learningDb: Database.Database, project: string): string {
+export function readLearnedBlock(learningDb: Database, project: string): string {
   let text: string | null = null;
   try {
     text = storedBlock(learningDb, project);
@@ -283,7 +283,7 @@ export function readLearnedBlock(learningDb: Database.Database, project: string)
  * So a drop can never leave a half-line or an unclosed fence behind.
  */
 export function readLearnedBlockCapped(
-  learningDb: Database.Database,
+  learningDb: Database,
   project: string,
   maxChars: number
 ): string {

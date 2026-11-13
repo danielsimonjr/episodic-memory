@@ -27,7 +27,7 @@ async function buildDigest(cwd) {
   const dbPath = getDbPath();
   if (!fs.existsSync(dbPath)) return '';
 
-  const { default: Database } = await import('better-sqlite3');
+  const { Database } = await import('../dist/sqlite.js');
   const { buildDigestText, projectKeyFromCwd, digestMaxChars } = await import('../dist/digest-inject.js');
   const db = new Database(dbPath, { readonly: true, fileMustExist: true });
   try {

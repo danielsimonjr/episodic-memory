@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { spawnSync } from 'child_process';
-import Database from 'better-sqlite3';
+import { Database } from '../../src/sqlite.js';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';

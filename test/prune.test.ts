@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import Database from 'better-sqlite3';
+import { Database } from '../src/sqlite.js';
 import { mkdtempSync, rmSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
@@ -8,7 +8,7 @@ import { pruneProjects } from '../src/prune.js';
 import { ensureDigestSchema, insertDigestEntry } from '../src/digest-db.js';
 import type { ConversationExchange } from '../src/types.js';
 
-/** vec_exchanges is declared FLOAT[384] and vec0 rejects zero-length vectors. */
+/** exchange_vectors holds 384-wide vectors and refuses any other width. */
 const EMBEDDING = new Array(384).fill(0.1);
 
 /**
@@ -19,12 +19,11 @@ const EMBEDDING = new Array(384).fill(0.1);
  *
  * Two traps this must respect:
  *   - tool_calls has an FK to exchanges, so deletion order matters (see #81).
- *   - vec_exchanges is a vec0 virtual table. A client without the extension loaded
- *     silently skips it, leaving orphaned vectors. initDatabase() loads sqlite-vec.
+ *   - exchange_vectors has an FK to exchanges, so its rows go before the exchanges.
  */
 describe('pruneProjects', () => {
   let testDir: string;
-  let db: Database.Database;
+  let db: Database;
 
   beforeEach(() => {
     testDir = mkdtempSync(join(tmpdir(), 'em-prune-'));
@@ -66,7 +65,7 @@ describe('pruneProjects', () => {
     return {
       exchanges: (db.prepare('SELECT COUNT(*) n FROM exchanges').get() as { n: number }).n,
       toolCalls: (db.prepare('SELECT COUNT(*) n FROM tool_calls').get() as { n: number }).n,
-      vectors: (db.prepare('SELECT COUNT(*) n FROM vec_exchanges_rowids').get() as { n: number }).n,
+      vectors: (db.prepare('SELECT COUNT(*) n FROM exchange_vectors').get() as { n: number }).n,
     };
   }
 
@@ -95,7 +94,7 @@ describe('pruneProjects', () => {
     expect(counts().toolCalls).toBe(1);
   });
 
-  it('deletes the vec0 vectors too, leaving no orphans', () => {
+  it('deletes the vectors too, leaving no orphans', () => {
     seed('a1', 'noisy');
     seed('a2', 'noisy');
     seed('b1', 'keep');

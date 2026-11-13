@@ -1,4 +1,4 @@
-import type Database from 'better-sqlite3';
+import type { Database } from './sqlite.js';
 /**
  * Options for `compressDigest`. Each field is optional and replaces its default.
  */
@@ -28,4 +28,4 @@ export interface CompressResult {
  * Merge many day entries of a finished week into one week entry.
  * The compression step marks the originals as superseded and never deletes them.
  */
-export declare function compressDigest(db: Database.Database, opts?: CompressOptions): Promise<CompressResult>;
+export declare function compressDigest(db: Database, opts?: CompressOptions): Promise<CompressResult>;

@@ -25,7 +25,7 @@
 import fs from 'fs';
 import path from 'path';
 import { createHash, randomUUID } from 'node:crypto';
-import Database from 'better-sqlite3';
+import { Database } from '../sqlite.js';
 import { getKnowledgeDbPath } from '../paths.js';
 import { redactPii } from './pii-redactor.js';
 /** The exact observation key prefix for each field the store parses back. */

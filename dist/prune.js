@@ -5,9 +5,8 @@ import { removeDerivedText } from './derived-text.js';
  * The exclude list stops indexing of new rows, but does not remove rows that are already in the index.
  *
  * An empty list returns at once and changes nothing. With `dryRun`, the function counts the rows and deletes nothing.
- * Otherwise, the function deletes the rows in one transaction from four tables: `tool_calls`, `vec_exchanges`, `exchanges_fts` and `exchanges`.
+ * Otherwise, the function deletes the rows in one transaction from four tables: `tool_calls`, `exchange_vectors`, `exchanges_fts` and `exchanges`.
  * A database without an `exchanges_fts` table is pruned too. The function then skips that delete.
- * The connection must load the sqlite-vec extension, as `openDatabase` does.
  *
  * @param db The open database connection to change.
  * @param projects The project names to remove, as stored in the `project` column.
@@ -44,16 +43,17 @@ export function pruneProjects(db, projects, options = {}) {
         .get(...projects);
     result.toolCallsDeleted = toolRow.n;
     result.exchangesDeleted = ids.length;
-    result.vectorsDeleted = ids.length;
+    result.vectorsDeleted = db
+        .prepare(`SELECT COUNT(*) AS n FROM exchange_vectors
+       WHERE id IN (SELECT id FROM exchanges WHERE project IN (${placeholders}))`)
+        .get(...projects).n;
     if (dryRun)
         return result;
     const delTools = db.prepare(`DELETE FROM tool_calls
      WHERE exchange_id IN (SELECT id FROM exchanges WHERE project IN (${placeholders}))`);
-    // vec0 virtual tables support neither JOIN nor subquery in DELETE, so vectors go one
-    // id at a time. This requires the sqlite-vec extension to be loaded on the connection —
-    // initDatabase() does that. A client without it (e.g. Python's stock sqlite3) silently
-    // skips the vec table and leaves orphaned vectors behind.
-    const delVec = db.prepare('DELETE FROM vec_exchanges WHERE id = ?');
+    // Vectors live in a plain table, so one statement removes the vectors of the projects.
+    const delVectors = db.prepare(`DELETE FROM exchange_vectors
+     WHERE id IN (SELECT id FROM exchanges WHERE project IN (${placeholders}))`);
     // Very old databases opened without migrate have no FTS table. Skip that delete then.
     const hasFts = db.prepare("SELECT 1 FROM sqlite_master WHERE name = 'exchanges_fts'").get() !== undefined;
     const delFts = hasFts ? db.prepare('DELETE FROM exchanges_fts WHERE id = ?') : null;
@@ -61,8 +61,8 @@ export function pruneProjects(db, projects, options = {}) {
     // tool_calls first: it carries an FK to exchanges (see #81).
     const run = db.transaction(() => {
         delTools.run(...projects);
+        delVectors.run(...projects);
         for (const id of ids) {
-            delVec.run(id);
             delFts?.run(id);
         }
         delExchanges.run(...projects);

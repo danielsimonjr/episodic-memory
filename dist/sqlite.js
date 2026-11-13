@@ -100,6 +100,8 @@ function isThenable(value) {
  */
 export class Database {
     db;
+    /** The path that the constructor opened. */
+    name;
     savepointCount = 0;
     /**
      * Open the database file at `path`. Use the readonly option to refuse writes.
@@ -107,6 +109,7 @@ export class Database {
      */
     constructor(path, options = {}) {
         const { DatabaseSync: Native } = loadSqlite();
+        this.name = path;
         this.db = new Native(path, {
             readOnly: !!options.readonly,
             enableForeignKeyConstraints: true,

@@ -65,6 +65,40 @@ describe('stats command', () => {
     expect(stats.conversationsWithoutSummaries).toBe(1);
   });
 
+  it('counts only a summary file of one byte or more as a summary', async () => {
+    // The sync writes an empty -summary.txt for a conversation with no exchanges, and when the sync gives up after
+    // EPISODIC_MEMORY_MAX_SUMMARY_ATTEMPTS. Such a file is a sentinel, not a summary. Ported from upstream de11f90.
+    const db = new Database(dbPath);
+    db.exec(`
+      CREATE TABLE exchanges (
+        id TEXT PRIMARY KEY,
+        project TEXT NOT NULL,
+        timestamp TEXT NOT NULL,
+        user_message TEXT NOT NULL,
+        assistant_message TEXT NOT NULL,
+        archive_path TEXT NOT NULL,
+        line_start INTEGER NOT NULL,
+        line_end INTEGER NOT NULL
+      )
+    `);
+    const insert = db.prepare(`
+      INSERT INTO exchanges (id, project, timestamp, user_message, assistant_message, archive_path, line_start, line_end)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    for (const name of ['real', 'empty', 'none']) {
+      insert.run(`id-${name}`, 'p', '2025-10-01T12:00:00Z', 'u', 'a', join(testDir, `${name}.jsonl`), 1, 2);
+    }
+    db.close();
+    writeFileSync(join(testDir, 'real-summary.txt'), 'A real summary.');
+    writeFileSync(join(testDir, 'empty-summary.txt'), '');
+
+    const stats = await getIndexStats(dbPath);
+
+    expect(stats.totalConversations).toBe(3);
+    expect(stats.conversationsWithSummaries).toBe(1);
+    expect(stats.conversationsWithoutSummaries).toBe(2);
+  });
+
   it('should track date range', async () => {
     const db = new Database(dbPath);
     sqliteVec.load(db);

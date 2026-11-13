@@ -480,6 +480,7 @@ episodic-memory sync
 ### `episodic-memory stats`
 
 Display index statistics including conversation counts, date ranges, and project breakdown.
+A conversation counts as summarized only when its summary file holds text. The sync writes an empty summary file for a conversation with no exchanges, and for a summary that the sync gave up on.
 
 ```bash
 episodic-memory stats

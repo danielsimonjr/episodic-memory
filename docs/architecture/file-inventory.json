@@ -706,7 +706,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 172
+      "loc": 190
     },
     {
       "file": "src/summarizer.ts",
@@ -1714,7 +1714,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 135
+      "loc": 169
     },
     {
       "file": "test/summarizer-api-env.test.ts",

@@ -119,7 +119,7 @@ Renders an archived conversation as markdown or HTML, with an optional line rang
 
 ### `src/stats.ts` and `src/doctor.ts`
 
-`stats` counts rows, projects and sizes. `doctor` checks dependencies, the database, the embedding version, the Node.js version, the Codex hook trust and the learned-knowledge section (`doctor-learn.ts`).
+`stats` counts rows, projects and sizes. A conversation counts as summarized only when its summary file holds one byte or more, because an empty file is a sentinel of the sync. `doctor` checks dependencies, the database, the embedding version, the Node.js version, the Codex hook trust and the learned-knowledge section (`doctor-learn.ts`).
 
 ## Digest
 

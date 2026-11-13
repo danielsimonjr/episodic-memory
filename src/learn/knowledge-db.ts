@@ -23,6 +23,7 @@ import {
   type NewKnowledgeEntry,
   type ValidationRecord,
 } from './types.js';
+import { compareByProjectAndKind } from './entry-order.js';
 
 /** A proposal whose body matches the latest version of the same key. */
 export class DuplicateEntry extends Error {
@@ -44,9 +45,6 @@ export class InvalidEntryName extends Error {
     this.name = 'InvalidEntryName';
   }
 }
-
-/** The order `listActive` returns kinds in. */
-const KIND_ORDER: Record<KnowledgeKind, number> = { instruction: 0, skill: 1, reflection: 2 };
 
 /**
  * Insert a new candidate entry.
@@ -233,7 +231,7 @@ export async function listActive(
         wanted.includes(entry.kind) &&
         (entry.project === project || entry.project === '*')
     )
-    .sort(compareEntries);
+    .sort(compareByProjectAndKind);
 }
 
 /** Candidate entries, optionally filtered by kind. */
@@ -242,7 +240,7 @@ export async function listCandidates(
   kind?: KnowledgeKind
 ): Promise<KnowledgeEntry[]> {
   const entries = await store.listByStatus(['candidate'], kind ? [kind] : undefined);
-  return entries.sort(compareEntries);
+  return entries.sort(compareByProjectAndKind);
 }
 
 /** One entry by entity name, or null. */
@@ -322,19 +320,6 @@ export function getSnapshot(learningDb: Database.Database, id: number): string[]
 // ---------------------------------------------------------------------------
 // helpers
 // ---------------------------------------------------------------------------
-
-function compareEntries(a: KnowledgeEntry, b: KnowledgeEntry): number {
-  // Project rows before '*' rows.
-  const aGlobal = a.project === '*' ? 1 : 0;
-  const bGlobal = b.project === '*' ? 1 : 0;
-  if (aGlobal !== bGlobal) return aGlobal - bGlobal;
-
-  const kindDiff = KIND_ORDER[a.kind] - KIND_ORDER[b.kind];
-  if (kindDiff !== 0) return kindDiff;
-
-  if (a.project !== b.project) return a.project < b.project ? -1 : 1;
-  return a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0;
-}
 
 function confidencePriority(confidence: NewKnowledgeEntry['confidence']): number {
   return confidence === 'high' ? 8 : confidence === 'medium' ? 5 : 3;

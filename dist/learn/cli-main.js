@@ -30,6 +30,7 @@ import { isValidSlug } from './types.js';
 import { BudgetExhausted, CallBudget, solveMany } from './solver.js';
 import { runLearn } from './learner.js';
 import { LEARN_USAGE } from './usage.js';
+import { compareByProject } from './entry-order.js';
 export { LEARN_USAGE };
 const IMPLEMENTED = new Set([
     'tasks',
@@ -400,15 +401,6 @@ async function commandImprove(dbs, argv, deps) {
         return 0;
     });
 }
-function compareForStatus(a, b) {
-    const aGlobal = a.project === '*' ? 1 : 0;
-    const bGlobal = b.project === '*' ? 1 : 0;
-    if (aGlobal !== bGlobal)
-        return aGlobal - bGlobal;
-    if (a.project !== b.project)
-        return a.project < b.project ? -1 : 1;
-    return a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0;
-}
 async function commandStatus(dbs, deps) {
     const entries = await dbs.store.listByStatus(['candidate', 'active', 'retired']);
     const lines = [`EPISODIC_MEMORY_LEARN=${learnEnabled() ? 'on' : 'off'}`];
@@ -423,7 +415,7 @@ async function commandStatus(dbs, deps) {
         lines.push('  none');
     for (const key of [...counts.keys()].sort())
         lines.push(`  ${key}: ${counts.get(key)}`);
-    const candidates = entries.filter(entry => entry.status === 'candidate').sort(compareForStatus);
+    const candidates = entries.filter(entry => entry.status === 'candidate').sort(compareByProject);
     lines.push('');
     lines.push(`candidates awaiting approval (${candidates.length}):`);
     for (const entry of candidates) {

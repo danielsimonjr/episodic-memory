@@ -1,34 +1,16 @@
 #!/usr/bin/env node
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { spawn } from 'child_process';
+import { runChild } from './forward-child.js';
 import { realpathSync } from 'fs';
 import { createInterface } from 'readline';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(realpathSync(__filename));
 
-function runScript(command, args) {
-  return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [join(__dirname, '../dist/index-cli.js'), command, ...args], {
-      stdio: 'inherit'
-    });
-
-    // The exit code goes to the caller: 2 means a refused argument. 1 means a failed command or a stop by a signal.
-    child.on('exit', (code, signal) => {
-      if (code === 0) {
-        resolve();
-      } else {
-        const error = new Error(code === null ? `Command ended by signal ${signal}` : `Command failed with exit code ${code}`);
-        error.exitCode = code ?? 1;
-        reject(error);
-      }
-    });
-
-    child.on('error', (err) => {
-      reject(new Error(`Failed to run command: ${err.message}`));
-    });
-  });
+/** Run one index-cli command, and wait for the child. */
+function runIndexCli(command, args) {
+  return runChild(join(__dirname, '../dist/index-cli.js'), [command, ...args]);
 }
 
 function askConfirmation(question) {
@@ -115,23 +97,23 @@ async function main() {
         break;
 
       case undefined:
-        await runScript('index-all', args);
+        await runIndexCli('index-all', args);
         break;
 
       case '--session':
-        await runScript('index-session', args);
+        await runIndexCli('index-session', args);
         break;
 
       case '--cleanup':
-        await runScript('index-cleanup', args);
+        await runIndexCli('index-cleanup', args);
         break;
 
       case '--verify':
-        await runScript('verify', args);
+        await runIndexCli('verify', args);
         break;
 
       case '--repair':
-        await runScript('repair', args);
+        await runIndexCli('repair', args);
         break;
 
       case '--rebuild':
@@ -141,7 +123,7 @@ async function main() {
         // --yes, so only the answer yes or an explicit --yes can start the delete.
         const confirmed = args.includes('--yes') || await askConfirmation('Are you sure? [yes/NO]: ');
         if (confirmed) {
-          await runScript('rebuild', args.includes('--yes') ? args : ['--yes', ...args]);
+          await runIndexCli('rebuild', args.includes('--yes') ? args : ['--yes', ...args]);
         } else {
           console.log('Cancelled');
         }
@@ -150,7 +132,7 @@ async function main() {
       // Every other argument goes to index-cli unchanged. index-cli runs its own commands (prune, vacuum and
       // the rest), runs index-all when there is no command, and refuses an unknown argument.
       default:
-        await runScript(command, args);
+        await runIndexCli(command, args);
         break;
     }
   } catch (error) {

@@ -2,6 +2,7 @@ import fs from 'fs';
 import readline from 'readline';
 import path from 'path';
 import crypto from 'crypto';
+import { extractContentText, safeParseJson } from './content-text.js';
 async function detectConversationHarness(filePath) {
     const fileStream = fs.createReadStream(filePath);
     const rl = readline.createInterface({
@@ -224,26 +225,6 @@ async function parseClaudeConversation(filePath, projectName, archivePath) {
     finalizeExchange();
     return exchanges;
 }
-function extractTextFromContent(content) {
-    if (typeof content === 'string') {
-        return content;
-    }
-    if (!Array.isArray(content)) {
-        return '';
-    }
-    return content
-        .filter(block => block && typeof block === 'object' && typeof block.text === 'string')
-        .map(block => block.text)
-        .join('\n');
-}
-function safeParseJson(value) {
-    try {
-        return JSON.parse(value);
-    }
-    catch {
-        return value;
-    }
-}
 function stringifyToolOutput(output) {
     if (output === undefined || output === null) {
         return undefined;
@@ -251,7 +232,7 @@ function stringifyToolOutput(output) {
     if (typeof output === 'string') {
         return output;
     }
-    const text = extractTextFromContent(output);
+    const text = extractContentText(output);
     if (text.trim()) {
         return text;
     }
@@ -415,7 +396,7 @@ async function parseCodexConversation(filePath, projectName, archivePath) {
                 continue;
             }
             if (payload.type === 'message') {
-                const text = extractTextFromContent(payload.content);
+                const text = extractContentText(payload.content);
                 if (!text.trim()) {
                     continue;
                 }

@@ -52,7 +52,7 @@ dependency, no `MEMORY_*` environment handling and no per-handle cache: a write 
 - **TypeScript source** in `src/`, compiled to `dist/` by `tsc && esbuild`. **Both are committed.**
 - **CLI entry points** in `cli/` (Node.js wrappers — no bash).
 - **MCP server** is `dist/mcp-server.js`, launched by `cli/mcp-server-wrapper.js` from the plugin manifest.
-- **Tests** in `test/` with vitest (151 files, 1512 tests).
+- **Tests** in `test/` with vitest (154 files, 1533 tests).
 - **Generated files** in `dist/` AND `src/version.ts`. The latter is gitignored; never edit it.
 - **`bun.lock` is committed** — CI uses `bun install --frozen-lockfile` + `bun audit --audit-level=critical`. Do not commit `package-lock.json` (gitignored).
 
@@ -70,6 +70,7 @@ src/
   db.ts                  # schema + migrations (cascade + embedding_version)
   paths.ts               # config/index/archive directory resolution
   parser.ts              # JSONL transcript → exchanges (cross-platform path-aware as of fork)
+  content-text.ts        # text of a message content, and JSON parse with a fallback; shared by parser.ts and show.ts; imports nothing
   mcp-server.ts          # MCP tool surface (search, read, digest, skills, topics)
   mcp-schemas.ts         # Zod input schemas for the MCP tools; imports only topic-time.ts eagerly
   mcp-tools.ts           # tool handlers; imports learn/skills-tool.js and topic-tool.js lazily
@@ -93,6 +94,8 @@ src/
     knowledge-db.ts      # snapshots, activation, supersede over the store
     learning-store.ts    # learned/learning.sqlite handle; hook opens it read-only
     learning-db.ts       # runs, tasks, attempts, pass rates
+    entry-order.ts       # the two sort orders of learned entries; imports nothing
+    prng.ts              # mulberry32, the seeded generator of the task split and the validation sample; imports nothing
     skills-tool.ts       # the `skills` MCP tool body
     tasks.ts / grade.ts  # self-practice task generation and deterministic grading
     solver.ts / agent-runner.ts / sdk-tools.ts / semaphore.ts / prompts.ts
@@ -102,7 +105,7 @@ src/
 cli/
   episodic-memory.js     # umbrella CLI dispatcher
   mcp-server-wrapper.js  # ensures deps are installed (sentinel check as of fork)
-  forward-child.js       # runs one script as a child; a signal stop exits 1; shared by the forwarding entry points
+  forward-child.js       # runs one script as a child; a signal stop exits 1; runChild waits for the child; shared by the entry points
   *.js                   # subcommand entry points
 
 vendor/
@@ -115,7 +118,7 @@ scripts/
 
 test/
   test-utils.ts          # createTestDb, safeRmSync (fork-added), suppressConsole, fixtures
-  *.test.ts              # 151 test files, 1512 tests
+  *.test.ts              # 154 test files, 1533 tests
   learn/                 # the Recursa suite; fakes for every model call
   fixtures/              # JSONL conversation fixtures
 
@@ -173,12 +176,12 @@ scheduled task. To roll back, remove the variable first. Then run `npm install -
 
 ### Current test state
 
-- **Full suite: 1512 tests in 151 files pass** (~17s wall clock on Linux;
+- **Full suite: 1533 tests in 154 files pass** (~17s wall clock on Linux;
   Windows runs are slower). The former `integration.test.ts` / `verify.test.ts` cold-embedding
   timeout flakes were fixed: the embedder is pre-warmed once per worker in `beforeAll`,
   `vitest.config.ts` sets `hookTimeout: 30000`, and the repair re-index test gets 60s. If you see a fresh
   timeout flake, suspect a new embedding-heavy hook without warm-up rather than the old cold-start cause.
-- The learn tests are the bulk of the suite (`test/learn/`, 36 files; the other 115 test files sit directly in `test/`). The learn tests never reach a model: every agent and
+- The learn tests are the bulk of the suite (`test/learn/`, 38 files; the other 116 test files sit directly in `test/`). The learn tests never reach a model: every agent and
   text call is injectable and tests pass fakes. `test/test-env.ts` pins the Claude backend, a closed ollama URL
   and a temporary config directory. `test/setup-env.ts` deletes every other `EPISODIC_MEMORY_*` variable of
   the machine. A local run therefore uses the CI settings and cannot reach a model or the live data.
@@ -209,7 +212,7 @@ Static imports load these modules at server start:
 Dynamic imports load these modules only inside a branch:
 
 - `search`: `search.ts`, `embeddings.ts`
-- `read`: `show.ts`
+- `read`: `show.ts`, `content-text.ts`
 - `digest`: `digest-tool.ts`, `digest-inject.ts`, `digest-validate.ts`
 - `skills`: `learn/skills-tool.ts`, `digest-inject.ts`, `learn/knowledge-store.ts`, `learn/learn-inject.ts`, `learn/learned-text-screen.ts`, `learn/pii-redactor.ts`
 - `topics`: `topic-tool.ts`, `topic-db.ts`, `topic-format.ts`, `digest-inject.ts`, `digest-validate.ts`

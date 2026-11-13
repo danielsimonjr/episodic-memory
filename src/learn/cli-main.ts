@@ -50,6 +50,7 @@ import { BudgetExhausted, CallBudget, solveMany, type SolveOptions } from './sol
 import { runLearn } from './learner.js';
 import { LEARN_USAGE } from './usage.js';
 import type { LearnDbs } from './types.js';
+import { compareByProject } from './entry-order.js';
 
 /** Exit code for a subcommand a later task fills in. Distinct from a failure. */
 
@@ -485,17 +486,6 @@ async function commandImprove(dbs: LearnDbs, argv: string[], deps: LearnCliDeps)
   });
 }
 
-function compareForStatus(
-  a: { project: string; slug: string },
-  b: { project: string; slug: string }
-): number {
-  const aGlobal = a.project === '*' ? 1 : 0;
-  const bGlobal = b.project === '*' ? 1 : 0;
-  if (aGlobal !== bGlobal) return aGlobal - bGlobal;
-  if (a.project !== b.project) return a.project < b.project ? -1 : 1;
-  return a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0;
-}
-
 async function commandStatus(dbs: LearnDbs, deps: LearnCliDeps): Promise<number> {
   const entries = await dbs.store.listByStatus(['candidate', 'active', 'retired']);
   const lines: string[] = [`EPISODIC_MEMORY_LEARN=${learnEnabled() ? 'on' : 'off'}`];
@@ -511,7 +501,7 @@ async function commandStatus(dbs: LearnDbs, deps: LearnCliDeps): Promise<number>
   if (entries.length === 0) lines.push('  none');
   for (const key of [...counts.keys()].sort()) lines.push(`  ${key}: ${counts.get(key)}`);
 
-  const candidates = entries.filter(entry => entry.status === 'candidate').sort(compareForStatus);
+  const candidates = entries.filter(entry => entry.status === 'candidate').sort(compareByProject);
   lines.push('');
   lines.push(`candidates awaiting approval (${candidates.length}):`);
   for (const entry of candidates) {

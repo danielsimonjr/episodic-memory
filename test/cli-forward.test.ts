@@ -98,6 +98,57 @@ describe('forward', () => {
   });
 });
 
+describe('runChild', () => {
+  /** Run `runChild` in a child node, and print `ok` or the exit code and message of the rejection. */
+  const runChildIn = (script: string, args: string[] = [], command?: string) => {
+    const call = command === undefined
+      ? `m.runChild(${JSON.stringify(script)}, ${JSON.stringify(args)})`
+      : `m.runChild(${JSON.stringify(script)}, ${JSON.stringify(args)}, ${JSON.stringify(command)})`;
+    const code = `import(${JSON.stringify(FORWARD_URL)}).then(m => ${call})` +
+      `.then(() => console.log('ok'), e => console.log(JSON.stringify({ exitCode: e.exitCode, message: e.message })))`;
+    return spawnSync(process.execPath, ['--input-type=module', '-e', code], { encoding: 'utf-8', timeout: 30000 });
+  };
+
+  it('resolves when the child exits 0, and passes the arguments', () => {
+    const out = join(home, 'args.txt');
+    const script = fixture('args.mjs', `import { writeFileSync } from 'fs';\nwriteFileSync(${JSON.stringify(out)}, process.argv.slice(2).join(' '));\n`);
+    expect(runChildIn(script, ['a', 'b c']).stdout.trim()).toBe('ok');
+    expect(readFileSync(out, 'utf-8')).toBe('a b c');
+  });
+
+  it('rejects with the exit code of a child that fails', () => {
+    const script = fixture('exit3.mjs', 'process.exit(3);\n');
+    expect(JSON.parse(runChildIn(script).stdout)).toEqual({ exitCode: 3, message: 'Command failed with exit code 3' });
+  });
+
+  it('rejects with exit code 1 when a signal stops the child', () => {
+    const script = fixture('killself.mjs', "process.kill(process.pid, 'SIGKILL');\nsetTimeout(() => {}, 60000);\n");
+    const result = JSON.parse(runChildIn(script).stdout);
+    expect(result.exitCode).toBe(1);
+    // Windows ends a process that SIGKILL stops with exit code 1 and reports no signal. POSIX reports the signal.
+    if (process.platform === 'win32') {
+      expect(result.message).toBe('Command failed with exit code 1');
+    } else {
+      expect(result.message).toBe('Command ended by signal SIGKILL');
+    }
+  });
+
+  it('rejects when the child cannot start', () => {
+    const script = fixture('never.mjs', 'process.exit(0);\n');
+    const result = JSON.parse(runChildIn(script, [], join(home, 'no-such-node.exe')).stdout);
+    expect(result.message).toMatch(/^Failed to run command: /);
+  });
+
+  it('is the only runner of episodic-memory.js and index-conversations.js', () => {
+    for (const entry of ['episodic-memory.js', 'index-conversations.js']) {
+      const source = readFileSync(join(CLI, entry), 'utf-8');
+      expect(source, entry).toMatch(/import \{[^}]*\brunChild\b[^}]*\} from '\.\/forward-child\.js'/);
+      expect(source, entry).not.toContain('function runScript');
+      expect(source, entry).not.toContain("from 'child_process'");
+    }
+  });
+});
+
 describe('the cli entry points', () => {
   const run = (entry: string, args: string[]) =>
     spawnSync(process.execPath, [join(CLI, entry), ...args], { env: isolatedEnv(), encoding: 'utf-8', timeout: 30000 });

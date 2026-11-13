@@ -2285,6 +2285,29 @@ Please report this to https://github.com/markedjs/marked.`, e) {
   }
 });
 
+// src/content-text.ts
+function extractContentText(content) {
+  if (typeof content === "string") {
+    return content;
+  }
+  if (!Array.isArray(content)) {
+    return "";
+  }
+  return content.filter((block) => block && typeof block === "object" && typeof block.text === "string").map((block) => block.text).join("\n");
+}
+function safeParseJson(value) {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+}
+var init_content_text = __esm({
+  "src/content-text.ts"() {
+    "use strict";
+  }
+});
+
 // src/show.ts
 var show_exports = {};
 __export(show_exports, {
@@ -2993,22 +3016,6 @@ function isCodexRollout(lines) {
   }
   return false;
 }
-function extractCodexText(content) {
-  if (typeof content === "string") {
-    return content;
-  }
-  if (!Array.isArray(content)) {
-    return "";
-  }
-  return content.filter((block) => block && typeof block === "object" && typeof block.text === "string").map((block) => block.text).join("\n");
-}
-function safeParseJson(value) {
-  try {
-    return JSON.parse(value);
-  } catch {
-    return value;
-  }
-}
 function codexToolInput(payload) {
   if (typeof payload.arguments === "string") {
     return safeParseJson(payload.arguments);
@@ -3031,7 +3038,7 @@ function codexToolOutput(payload) {
   if (typeof payload.output === "string") {
     return payload.output;
   }
-  const text = extractCodexText(payload.output);
+  const text = extractContentText(payload.output);
   return text.trim() ? text : JSON.stringify(payload.output, null, 2);
 }
 function formatCodexToolInputMarkdown(input2) {
@@ -3114,7 +3121,7 @@ function formatCodexConversationAsMarkdown(lines) {
     const timestamp = entry.timestamp ? new Date(entry.timestamp).toLocaleString() : "";
     const anchor2 = payload.call_id || `msg-${i}`;
     if (payload.type === "message") {
-      const text = extractCodexText(payload.content);
+      const text = extractContentText(payload.content);
       if (!text.trim()) {
         continue;
       }
@@ -3152,7 +3159,7 @@ ${result}
 `;
       }
     } else if (payload.type === "reasoning") {
-      const text = extractCodexText(payload.summary);
+      const text = extractContentText(payload.summary);
       if (text.trim()) {
         output2 += `### **Reasoning Summary** (${timestamp}) {#${anchor2}}
 
@@ -3252,6 +3259,7 @@ var init_show = __esm({
   "src/show.ts"() {
     "use strict";
     init_marked_esm();
+    init_content_text();
   }
 });
 

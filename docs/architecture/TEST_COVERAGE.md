@@ -8,11 +8,11 @@
 
 | Metric | Count |
 |--------|-------|
-| Total Source Files | 105 |
-| Total Test Files | 151 |
-| Source Files with Tests | 82 |
+| Total Source Files | 108 |
+| Total Test Files | 154 |
+| Source Files with Tests | 85 |
 | Source Files without Tests | 23 |
-| Coverage (raw, direct-import) | **78.1%** |
+| Coverage (raw, direct-import) | **78.7%** |
 ---
 
 ## Source Files Not Imported By A Test
@@ -65,6 +65,7 @@ The following 23 source files are not directly imported by any test file:
 | `src/codex-hook-trust.ts` | `codex-doctor.test.ts`, `codex-hook-trust.test.ts` |
 | `src/codex-support.ts` | `codex-support-extra.test.ts`, `codex-support.test.ts` |
 | `src/constants.ts` | `constants.test.ts`, `digest-prompts.test.ts`, `embeddings-format.test.ts`, `oversized-message-guard.test.ts`, `sync-helpers.test.ts`, `topic-prompts.test.ts` |
+| `src/content-text.ts` | `content-text.test.ts` |
 | `src/db.ts` | `codex-transcripts.test.ts`, `cross-harness-recall.test.ts`, `db-helpers.test.ts`, `db.test.ts`, `digest-db.test.ts`, `digest-gpu-reservation.test.ts`, `digest-hook.test.ts`, `digest-job.test.ts`, `digest-mcp.test.ts`, `digest-prompt-budget.test.ts`, `doctor.test.ts`, `embedding-migration-helpers.test.ts`, `integration.test.ts`, `learn-handlers.test.ts`, `mcp-tools.test.ts`, `oversized-message-guard.test.ts`, `prune.test.ts`, `sync-incremental-and-db.test.ts`, `tool-calls-cascade.test.ts`, `topic-job.test.ts`, `topic-phase.test.ts`, `topic-tool.test.ts`, `verify.test.ts` |
 | `src/deferral.ts` | `claude-bin-deferral.test.ts` |
 | `src/deps-health.ts` | `deps-health.test.ts`, `ensure-deps-repair.test.ts` |
@@ -87,6 +88,7 @@ The following 23 source files are not directly imported by any test file:
 | `learn/bootstrap.ts` | `bootstrap.test.ts`, `relay-task7-findings.test.ts` |
 | `learn/cited-ids.ts` | `cited-ids.test.ts`, `relay-challenger.test.ts` |
 | `learn/cli-main.ts` | `export.test.ts`, `learn-cli.test.ts`, `relay-task6-findings.test.ts` |
+| `learn/entry-order.ts` | `entry-order.test.ts` |
 | `learn/export.ts` | `export.test.ts` |
 | `learn/grade.ts` | `grade.test.ts`, `relay-task4-findings.test.ts` |
 | `learn/knowledge-db.ts` | `doctor.test.ts`, `export.test.ts`, `knowledge-db.test.ts`, `knowledge-store.test.ts`, `leaf-learner.test.ts`, `learn-cli.test.ts`, `learned-block.test.ts`, `learner.test.ts`, `relay-task8-challenger.test.ts`, `relay-task9-findings.test.ts`, `report.test.ts`, `skills-tool.test.ts`, `solver.test.ts`, `validate.test.ts` |
@@ -102,6 +104,7 @@ The following 23 source files are not directly imported by any test file:
 | `learn/learner.ts` | `learner.test.ts`, `relay-task9-findings.test.ts` |
 | `learn/learning-db.ts` | `doctor.test.ts`, `bootstrap.test.ts`, `leaf-learner.test.ts`, `learn-cli.test.ts`, `learner.test.ts`, `learning-db.test.ts`, `relay-task4-findings.test.ts`, `relay-task6-findings.test.ts`, `relay-task8-challenger.test.ts`, `relay-task9-findings.test.ts`, `report.test.ts`, `solver.test.ts`, `tasks.test.ts`, `validate.test.ts` |
 | `learn/learning-store.ts` | `digest-hook.test.ts`, `doctor.test.ts`, `bootstrap.test.ts`, `export.test.ts`, `knowledge-db.test.ts`, `leaf-learner.test.ts`, `learn-cli.test.ts`, `learn-inject.test.ts`, `learned-block.test.ts`, `learner.test.ts`, `learning-db.test.ts`, `learning-store.test.ts`, `relay-task4-findings.test.ts`, `relay-task6-findings.test.ts`, `relay-task8-challenger.test.ts`, `relay-task9-findings.test.ts`, `report.test.ts`, `solver.test.ts`, `tasks.test.ts`, `validate.test.ts` |
+| `learn/prng.ts` | `prng.test.ts` |
 | `learn/prompts.ts` | `prompts.test.ts` |
 | `learn/report.ts` | `report.test.ts` |
 | `learn/sdk-tools.ts` | `agent-runner.test.ts`, `bootstrap.test.ts`, `sdk-tools.test.ts` |
@@ -166,6 +169,7 @@ The following 23 source files are not directly imported by any test file:
 | `test/codex-support.test.ts` | 1 files |
 | `test/codex-transcripts.test.ts` | 4 files |
 | `test/constants.test.ts` | 1 files |
+| `test/content-text.test.ts` | 1 files |
 | `test/cosine-similarity.test.ts` | 1 files |
 | `test/cross-harness-recall.test.ts` | 3 files |
 | `test/db-helpers.test.ts` | 2 files |
@@ -197,6 +201,7 @@ The following 23 source files are not directly imported by any test file:
 | `learn/agent-runner.test.ts` | 4 files |
 | `learn/bootstrap.test.ts` | 7 files |
 | `learn/cited-ids.test.ts` | 2 files |
+| `learn/entry-order.test.ts` | 1 files |
 | `learn/export.test.ts` | 6 files |
 | `learn/grade.test.ts` | 2 files |
 | `learn/knowledge-db.test.ts` | 5 files |
@@ -214,6 +219,7 @@ The following 23 source files are not directly imported by any test file:
 | `learn/learner.test.ts` | 7 files |
 | `learn/learning-db.test.ts` | 3 files |
 | `learn/learning-store.test.ts` | 3 files |
+| `learn/prng.test.ts` | 1 files |
 | `learn/prompts.test.ts` | 2 files |
 | `learn/relay-challenger.test.ts` | 2 files |
 | `learn/relay-findings.test.ts` | 3 files |

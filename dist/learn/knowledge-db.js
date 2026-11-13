@@ -9,6 +9,7 @@
  */
 import { entryName, procedureIdFor, rootName, } from './knowledge-store.js';
 import { isValidSlug, } from './types.js';
+import { compareByProjectAndKind } from './entry-order.js';
 /** A proposal whose body matches the latest version of the same key. */
 export class DuplicateEntry extends Error {
     kind;
@@ -31,8 +32,6 @@ export class InvalidEntryName extends Error {
         this.name = 'InvalidEntryName';
     }
 }
-/** The order `listActive` returns kinds in. */
-const KIND_ORDER = { instruction: 0, skill: 1, reflection: 2 };
 /**
  * Insert a new candidate entry.
  *
@@ -188,12 +187,12 @@ export async function listActive(store, kinds, project) {
         .filter(entry => entry.supersededBy === null &&
         wanted.includes(entry.kind) &&
         (entry.project === project || entry.project === '*'))
-        .sort(compareEntries);
+        .sort(compareByProjectAndKind);
 }
 /** Candidate entries, optionally filtered by kind. */
 export async function listCandidates(store, kind) {
     const entries = await store.listByStatus(['candidate'], kind ? [kind] : undefined);
-    return entries.sort(compareEntries);
+    return entries.sort(compareByProjectAndKind);
 }
 /** One entry by entity name, or null. */
 export async function getEntry(store, name) {
@@ -254,19 +253,6 @@ export function getSnapshot(learningDb, id) {
 // ---------------------------------------------------------------------------
 // helpers
 // ---------------------------------------------------------------------------
-function compareEntries(a, b) {
-    // Project rows before '*' rows.
-    const aGlobal = a.project === '*' ? 1 : 0;
-    const bGlobal = b.project === '*' ? 1 : 0;
-    if (aGlobal !== bGlobal)
-        return aGlobal - bGlobal;
-    const kindDiff = KIND_ORDER[a.kind] - KIND_ORDER[b.kind];
-    if (kindDiff !== 0)
-        return kindDiff;
-    if (a.project !== b.project)
-        return a.project < b.project ? -1 : 1;
-    return a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0;
-}
 function confidencePriority(confidence) {
     return confidence === 'high' ? 8 : confidence === 'medium' ? 5 : 3;
 }

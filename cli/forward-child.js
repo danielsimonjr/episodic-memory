@@ -26,3 +26,32 @@ export function forward(scriptPath, args = process.argv.slice(2), command = proc
   });
   child.on('exit', code => process.exit(exitCodeFor(code)));
 }
+
+/**
+ * Run one Node script as a child with the same terminal, and wait for the child.
+ * The promise resolves when the child exits 0. Otherwise the promise rejects with an error. The `exitCode` of the
+ * error is the code of the child, or 1 when a signal stops the child. A child that cannot start rejects with an error, and the
+ * error then has no `exitCode`. The caller gives the exit code to the user. Exit code 2 means a refused argument.
+ * Exit code 1 means a failed command or a stop by a signal.
+ *
+ * @param scriptPath - the script that the child runs
+ * @param args - the arguments of the child
+ * @param command - the executable that runs the script; default: the Node of this process
+ */
+export function runChild(scriptPath, args, command = process.execPath) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, [scriptPath, ...args], { stdio: 'inherit' });
+    child.on('exit', (code, signal) => {
+      if (code === 0) {
+        resolve();
+        return;
+      }
+      const error = new Error(code === null ? `Command ended by signal ${signal}` : `Command failed with exit code ${code}`);
+      error.exitCode = exitCodeFor(code);
+      reject(error);
+    });
+    child.on('error', err => {
+      reject(new Error(`Failed to run command: ${err.message}`));
+    });
+  });
+}

@@ -3,6 +3,7 @@ import readline from 'readline';
 import path from 'path';
 import { ConversationExchange, ConversationHarness, ToolCall } from './types.js';
 import crypto from 'crypto';
+import { extractContentText, safeParseJson } from './content-text.js';
 
 interface JSONLMessage {
   type: string;
@@ -302,28 +303,6 @@ async function parseClaudeConversation(
   return exchanges;
 }
 
-function extractTextFromContent(content: unknown): string {
-  if (typeof content === 'string') {
-    return content;
-  }
-  if (!Array.isArray(content)) {
-    return '';
-  }
-
-  return content
-    .filter(block => block && typeof block === 'object' && typeof (block as any).text === 'string')
-    .map(block => (block as any).text)
-    .join('\n');
-}
-
-function safeParseJson(value: string): unknown {
-  try {
-    return JSON.parse(value);
-  } catch {
-    return value;
-  }
-}
-
 function stringifyToolOutput(output: unknown): string | undefined {
   if (output === undefined || output === null) {
     return undefined;
@@ -332,7 +311,7 @@ function stringifyToolOutput(output: unknown): string | undefined {
     return output;
   }
 
-  const text = extractTextFromContent(output);
+  const text = extractContentText(output);
   if (text.trim()) {
     return text;
   }
@@ -519,7 +498,7 @@ async function parseCodexConversation(
       }
 
       if (payload.type === 'message') {
-        const text = extractTextFromContent(payload.content);
+        const text = extractContentText(payload.content);
         if (!text.trim()) {
           continue;
         }

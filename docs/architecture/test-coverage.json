@@ -1,17 +1,17 @@
 {
   "metadata": {
-    "totalSourceFiles": 105,
-    "totalTestFiles": 151,
-    "testedCount": 82,
+    "totalSourceFiles": 108,
+    "totalTestFiles": 154,
+    "testedCount": 85,
     "untestedCount": 23,
-    "coveragePercent": "78.1",
+    "coveragePercent": "78.7",
     "effectiveCoverage": {
       "policyLoaded": false,
-      "activeFiles": 105,
-      "testedActive": 82,
+      "activeFiles": 108,
+      "testedActive": 85,
       "activeUntested": 23,
       "excludedTotal": 0,
-      "percent": "78.1",
+      "percent": "78.7",
       "breakdown": {
         "active_untested": 23
       }
@@ -51,6 +51,7 @@
     "src/codex-hook-trust.ts",
     "src/codex-support.ts",
     "src/constants.ts",
+    "src/content-text.ts",
     "src/db.ts",
     "src/deferral.ts",
     "src/deps-health.ts",
@@ -73,6 +74,7 @@
     "src/learn/bootstrap.ts",
     "src/learn/cited-ids.ts",
     "src/learn/cli-main.ts",
+    "src/learn/entry-order.ts",
     "src/learn/export.ts",
     "src/learn/grade.ts",
     "src/learn/knowledge-db.ts",
@@ -88,6 +90,7 @@
     "src/learn/learner.ts",
     "src/learn/learning-db.ts",
     "src/learn/learning-store.ts",
+    "src/learn/prng.ts",
     "src/learn/prompts.ts",
     "src/learn/report.ts",
     "src/learn/sdk-tools.ts",
@@ -174,6 +177,9 @@
       "test/oversized-message-guard.test.ts",
       "test/sync-helpers.test.ts",
       "test/topic-prompts.test.ts"
+    ],
+    "src/content-text.ts": [
+      "test/content-text.test.ts"
     ],
     "src/db.ts": [
       "test/codex-transcripts.test.ts",
@@ -299,6 +305,9 @@
       "test/learn/learn-cli.test.ts",
       "test/learn/relay-task6-findings.test.ts"
     ],
+    "src/learn/entry-order.ts": [
+      "test/learn/entry-order.test.ts"
+    ],
     "src/learn/export.ts": [
       "test/learn/export.test.ts"
     ],
@@ -418,6 +427,9 @@
       "test/learn/validate.test.ts"
     ],
     "src/learn/pii-redactor.ts": [],
+    "src/learn/prng.ts": [
+      "test/learn/prng.test.ts"
+    ],
     "src/learn/prompts.ts": [
       "test/learn/prompts.test.ts"
     ],
@@ -719,6 +731,9 @@
     "test/constants.test.ts": [
       "src/constants.ts"
     ],
+    "test/content-text.test.ts": [
+      "src/content-text.ts"
+    ],
     "test/cosine-similarity.test.ts": [
       "src/search.ts"
     ],
@@ -865,6 +880,9 @@
       "src/learn/cited-ids.ts",
       "src/learn/types.ts"
     ],
+    "test/learn/entry-order.test.ts": [
+      "src/learn/entry-order.ts"
+    ],
     "test/learn/export.test.ts": [
       "src/learn/export.ts",
       "src/learn/knowledge-store.ts",
@@ -969,6 +987,9 @@
       "src/paths.ts",
       "src/learn/learning-store.ts",
       "src/learn/knowledge-store.ts"
+    ],
+    "test/learn/prng.test.ts": [
+      "src/learn/prng.ts"
     ],
     "test/learn/prompts.test.ts": [
       "src/learn/prompts.ts",

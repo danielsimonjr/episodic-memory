@@ -316,6 +316,7 @@ export async function syncConversations(
   // Index copied files (unless skipIndex is set)
   if (!options.skipIndex && filesToIndex.length > 0) {
     const { initDatabase, insertExchange, getMaxIndexedLine, deleteExchangesForArchive } = await import('./db.js');
+    const { removeDerivedText } = await import('./derived-text.js');
     const { initEmbeddings, generateExchangeEmbeddings } = await import('./embeddings.js');
     const { parseConversation } = await import('./parser.js');
 
@@ -350,8 +351,13 @@ export async function syncConversations(
             // scans the file again.
             const markerScan = scanExclusionMarkers(file);
             if (markerScan === 'marker') {
-              const removed = deleteExchangesForArchive(db, file);
-              if (removed > 0) console.log(`  Removed ${removed} indexed exchange(s) of ${file} (exclusion marker)`);
+              const ids = deleteExchangesForArchive(db, file);
+              if (ids.length > 0) {
+                const derived = removeDerivedText(db, ids);
+                console.log(
+                  `  Removed ${ids.length} indexed exchange(s) and ${derived.digestLinesRemoved} digest line(s) of ${file} (exclusion marker)`
+                );
+              }
               continue;
             }
             if (markerScan === 'unreadable') {

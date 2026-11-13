@@ -163,11 +163,14 @@ export async function repairIndex(issues: VerificationResult): Promise<void> {
   const db = initDatabase();
   await initEmbeddings();
 
-  // Remove orphaned entries first
+  // Remove orphaned entries first, then the digest lines that cite them
   for (const orphan of issues.orphaned) {
     console.log(`Removing orphaned entry: ${orphan.uuid}`);
     deleteExchange(db, orphan.uuid);
   }
+  const { removeDerivedText } = await import('./derived-text.js');
+  const derived = removeDerivedText(db, issues.orphaned.map(orphan => orphan.uuid));
+  if (derived.digestLinesRemoved > 0) console.log(`Removed ${derived.digestLinesRemoved} digest line(s) of the orphaned entries`);
 
   // Re-index missing and outdated conversations
   const toReindex = [

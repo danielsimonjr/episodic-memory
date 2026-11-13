@@ -1,3 +1,4 @@
+import { removeDerivedText } from './derived-text.js';
 /**
  * Removes every indexed row that belongs to a set of projects.
  *
@@ -67,5 +68,6 @@ export function pruneProjects(db, projects, options = {}) {
         delExchanges.run(...projects);
     });
     run();
+    removeDerivedText(db, ids);
     return result;
 }

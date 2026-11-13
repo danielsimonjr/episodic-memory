@@ -3,7 +3,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import Database from 'better-sqlite3';
-import { safeRmSync, suppressConsole } from './test-utils.js';
+import { safeRmSync, seedDigest, suppressConsole } from './test-utils.js';
 
 // The tests index with a fixed vector, so no test loads the embedding model.
 vi.mock('../src/embeddings.js', async (importOriginal) => {
@@ -199,6 +199,17 @@ describe('the index and verify commands honour the DO NOT INDEX marker', () => {
     expect(tableCounts()).toEqual(ONE_CONVERSATION);
   }, 60000);
 
+  it('indexSession removes the digest lines of a conversation that gains the marker', async () => {
+    writeUnmarkedSources();
+    await indexConversations(undefined, undefined, 1, true);
+    const digestLines = seedDigest(dbPath);
+    expect(digestLines()).toHaveLength(2);
+
+    addMarker(MARKED);
+    await indexSession(MARKED, 1, true);
+    expect(digestLines()).toEqual([expect.stringContaining(`Fact of ${CLEAN} [#`)]);
+  }, 60000);
+
   it('indexSession removes the earlier rows of a marked conversation that has no exchanges', async () => {
     // The source holds only a user line with the marker, so the parse gives no exchanges. Rows of the archive path stay
     // from an earlier run. The marker check must run before the check for an empty conversation.
@@ -255,7 +266,7 @@ describe('the index and verify commands honour the DO NOT INDEX marker', () => {
     expect(issues.corrupted).toEqual([]);
   }, 60000);
 
-  it('verifyIndex reports the rows of an excluded file as orphaned, and the repair deletes them without a summary', async () => {
+  it('verifyIndex reports the rows of an excluded file as orphaned, and the repair deletes them and their digest lines without a summary', async () => {
     fs.mkdirSync(archiveProject, { recursive: true });
     const marked = path.join(archiveProject, `${MARKED}.jsonl`);
     fs.writeFileSync(marked, transcript(MARKED, `A private question. ${MARKER}`), 'utf-8');
@@ -269,6 +280,8 @@ describe('the index and verify commands honour the DO NOT INDEX marker', () => {
       db.close();
     }
     expect(indexedSessions()).toEqual([MARKED]);
+    const digestLines = seedDigest(dbPath);
+    expect(digestLines()).toHaveLength(1);
 
     const issues = await verifyIndex();
     expect(issues.orphaned.map(o => path.basename(o.path, '.jsonl'))).toEqual([MARKED]);
@@ -276,6 +289,7 @@ describe('the index and verify commands honour the DO NOT INDEX marker', () => {
 
     await repairIndex(issues);
     expect(indexedSessions()).toEqual([]);
+    expect(digestLines()).toEqual([]);
     expect(vi.mocked(summarizeConversation)).not.toHaveBeenCalled();
   }, 60000);
 

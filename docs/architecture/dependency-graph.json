@@ -3,9 +3,9 @@
     "name": "episodic-memory",
     "schemaVersion": "2.0.0",
     "language": "typescript",
-    "totalFiles": 291,
+    "totalFiles": 293,
     "totalModules": 4,
-    "totalExports": 612
+    "totalExports": 616
   },
   "modules": {
     "src": {
@@ -459,6 +459,26 @@
           "onnxBindingState",
           "nodeModulesIsHealthy",
           "repairPlan"
+        ]
+      },
+      "src/derived-text.ts": {
+        "externalDependencies": [
+          "better-sqlite3"
+        ],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "src/digest-db.ts",
+            "imports": [
+              "citedExchangeIds"
+            ],
+            "typeOnly": false
+          }
+        ],
+        "exports": [
+          "DerivedTextResult",
+          "dropLinesCiting",
+          "removeDerivedText"
         ]
       },
       "src/digest-compress.ts": {
@@ -1318,6 +1338,13 @@
               "insertExchange",
               "getMaxIndexedLine",
               "deleteExchangesForArchive"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/derived-text.ts",
+            "imports": [
+              "removeDerivedText"
             ],
             "typeOnly": false
           },
@@ -3621,7 +3648,15 @@
           "better-sqlite3"
         ],
         "nodeDependencies": [],
-        "internalDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "src/derived-text.ts",
+            "imports": [
+              "removeDerivedText"
+            ],
+            "typeOnly": false
+          }
+        ],
         "exports": [
           "PruneResult",
           "PruneOptions",
@@ -4081,6 +4116,13 @@
           },
           {
             "file": "src/db.ts",
+            "imports": [
+              "*"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/derived-text.ts",
             "imports": [
               "*"
             ],
@@ -4581,6 +4623,13 @@
           },
           {
             "file": "src/summarizer.ts",
+            "imports": [
+              "*"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/derived-text.ts",
             "imports": [
               "*"
             ],
@@ -5418,6 +5467,35 @@
             "file": "test/test-utils.ts",
             "imports": [
               "safeRmSync"
+            ],
+            "typeOnly": false
+          }
+        ],
+        "exports": []
+      },
+      "test/derived-text.test.ts": {
+        "externalDependencies": [
+          "better-sqlite3",
+          "vitest"
+        ],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "src/digest-db.ts",
+            "imports": [
+              "ensureDigestSchema",
+              "insertDigestEntry",
+              "supersede",
+              "searchDigest",
+              "DigestEntry"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/derived-text.ts",
+            "imports": [
+              "dropLinesCiting",
+              "removeDerivedText"
             ],
             "typeOnly": false
           }
@@ -6365,6 +6443,7 @@
             "file": "test/test-utils.ts",
             "imports": [
               "safeRmSync",
+              "seedDigest",
               "suppressConsole"
             ],
             "typeOnly": false
@@ -8922,6 +9001,14 @@
             "typeOnly": false
           },
           {
+            "file": "src/digest-db.ts",
+            "imports": [
+              "ensureDigestSchema",
+              "insertDigestEntry"
+            ],
+            "typeOnly": false
+          },
+          {
             "file": "src/types.ts",
             "imports": [
               "ConversationExchange"
@@ -9950,6 +10037,7 @@
             "file": "test/test-utils.ts",
             "imports": [
               "safeRmSync",
+              "seedDigest",
               "suppressConsole"
             ],
             "typeOnly": false
@@ -10167,14 +10255,24 @@
           "os",
           "path"
         ],
-        "internalDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "src/digest-db.ts",
+            "imports": [
+              "ensureDigestSchema",
+              "insertDigestEntry"
+            ],
+            "typeOnly": false
+          }
+        ],
         "exports": [
           "suppressConsole",
           "createTestDb",
           "safeRmSync",
           "getFixturePath",
           "readFixture",
-          "countLines"
+          "countLines",
+          "seedDigest"
         ]
       },
       "test/text-search-multiword.test.ts": {
@@ -10739,13 +10837,13 @@
     }
   },
   "statistics": {
-    "totalTypeScriptFiles": 291,
-    "totalSourceFiles": 291,
+    "totalTypeScriptFiles": 293,
+    "totalSourceFiles": 293,
     "totalModules": 4,
-    "totalLinesOfCode": 57872,
-    "totalExports": 612,
+    "totalLinesOfCode": 58191,
+    "totalExports": 616,
     "entryRoots": 6,
-    "reachableFiles": 49,
+    "reachableFiles": 50,
     "dormantFiles": 60,
     "orphanedFiles": 15,
     "testOnlyFiles": 45,
@@ -10753,15 +10851,15 @@
     "typeOnlyCircularDeps": 1,
     "totalTypeOnlyImports": 84,
     "noImporterFileCount": 14,
-    "unusedExportsCount": 116,
+    "unusedExportsCount": 115,
     "circularDepsTruncated": false,
     "runtimeCyclicComponents": 0,
     "typeOnlyCyclicComponents": 1,
     "runtimeFilesInCycles": 0,
     "typeOnlyFilesInCycles": 2,
     "totalClasses": 10,
-    "totalInterfaces": 139,
-    "totalFunctions": 348,
+    "totalInterfaces": 140,
+    "totalFunctions": 351,
     "totalTypeGuards": 11,
     "totalEnums": 0,
     "totalConstants": 71,
@@ -10776,7 +10874,7 @@
       "test/setup-env.ts",
       "test/global-setup.ts"
     ],
-    "reachableCount": 49,
+    "reachableCount": 50,
     "dormantCount": 60,
     "orphaned": [
       "cli/digest-hook.js",

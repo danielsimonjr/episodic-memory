@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { initDatabase, insertExchange, getMaxIndexedLine, deleteExchangesForArchive } from './db.js';
+import { removeDerivedText } from './derived-text.js';
 import { parseConversation } from './parser.js';
 import { initEmbeddings, generateExchangeEmbedding, generateExchangeEmbeddings } from './embeddings.js';
 import { summarizeConversation } from './summarizer.js';
@@ -36,8 +37,10 @@ function excludedByMarker(db, file, sourcePath, archivePath) {
     if (scan === 'clean')
         return false;
     if (scan === 'marker') {
-        const removed = deleteExchangesForArchive(db, archivePath);
-        console.log(`  Skipped ${file} (exclusion marker${removed > 0 ? `; removed ${removed} indexed exchange(s)` : ''})`);
+        const ids = deleteExchangesForArchive(db, archivePath);
+        const derived = removeDerivedText(db, ids);
+        const removed = ids.length > 0 ? `; removed ${ids.length} indexed exchange(s) and ${derived.digestLinesRemoved} digest line(s)` : '';
+        console.log(`  Skipped ${file} (exclusion marker${removed})`);
     }
     else {
         console.log(`  Skipped ${file} (the marker scan could not read the file)`);

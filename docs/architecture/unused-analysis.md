@@ -10,9 +10,9 @@
 - **Dormant files**: 60
   - **Orphaned (reachable from nothing)**: 15
   - **Test-only (only a test reaches them)**: 45
-- **Potentially unused exports**: 116
+- **Potentially unused exports**: 115
   - **Unreferenced anywhere**: 4
-  - **Referenced in their own module**: 112
+  - **Referenced in their own module**: 111
   - **Not classified**: 0
 
 ## Caveats
@@ -134,7 +134,6 @@ No other file imports these names, but their own module uses them.
 - `src/api-endpoint.ts`: `ApiBaseUrlValidation`
 - `src/deps-health.ts`: `nativeAddonPresent`
 - `src/digest-compress.ts`: `CompressOptions`, `CompressResult`
-- `src/digest-db.ts`: `citedExchangeIds`
 - `src/digest-inject.ts`: `DEFAULT_DIGEST_MAX_CHARS`
 - `src/digest-job.ts`: `ExchangeRow`, `toExchange`
 - `src/digest-prompts.ts`: `BuiltPrompt`

@@ -5,6 +5,7 @@ import { join } from 'path';
 import { tmpdir } from 'os';
 import { initDatabase, insertExchange } from '../src/db.js';
 import { pruneProjects } from '../src/prune.js';
+import { ensureDigestSchema, insertDigestEntry } from '../src/digest-db.js';
 import type { ConversationExchange } from '../src/types.js';
 
 /** vec_exchanges is declared FLOAT[384] and vec0 rejects zero-length vectors. */
@@ -105,6 +106,29 @@ describe('pruneProjects', () => {
     // the invariant that matters: one vector per exchange, always
     expect(after.vectors).toBe(after.exchanges);
     expect(after.vectors).toBe(1);
+  });
+
+  it('removes the digest lines that cite a pruned exchange, and keeps the other lines', () => {
+    seed('a1', 'gone');
+    seed('b1', 'kept');
+    ensureDigestSchema(db);
+    insertDigestEntry(db, {
+      tier: 'session', project: 'kept', periodStart: '2026-07-29T00:00:00.000Z', periodEnd: '2026-07-29T00:05:00.000Z',
+      text: 'Gone fact [#a1]\nKept fact [#b1]', sources: ['a1', 'b1'], model: 'haiku', handoff: false,
+    });
+    pruneProjects(db, ['gone']);
+    expect(db.prepare('SELECT text FROM digest_entry').all()).toEqual([{ text: 'Kept fact [#b1]' }]);
+  });
+
+  it('a dry run keeps the digest lines', () => {
+    seed('a1', 'gone');
+    ensureDigestSchema(db);
+    insertDigestEntry(db, {
+      tier: 'session', project: 'gone', periodStart: '2026-07-29T00:00:00.000Z', periodEnd: '2026-07-29T00:05:00.000Z',
+      text: 'Gone fact [#a1]', sources: ['a1'], model: 'haiku', handoff: false,
+    });
+    pruneProjects(db, ['gone'], { dryRun: true });
+    expect(db.prepare('SELECT text FROM digest_entry').all()).toEqual([{ text: 'Gone fact [#a1]' }]);
   });
 
   it('dry-run reports what would go without deleting anything', () => {

@@ -1112,7 +1112,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/sync.ts` - True when the conversation should be excluded from indexing / summarization.
+### `src/sync.ts` - Tell whether the conversation must stay out of the index and out of the summaries.
 
 **Node.js Built-in Dependencies:**
 | Module | Import |
@@ -2232,9 +2232,9 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 282 |
+| Total Source Files | 283 |
 | Subsystems | 5 |
-| Total Lines of Code | 56067 |
+| Total Lines of Code | 56262 |
 | Total Exports | 605 |
 | Total Re-exports | 8 |
 | Total Classes | 10 |

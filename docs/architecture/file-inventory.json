@@ -1,11 +1,11 @@
 {
-  "totalFiles": 282,
+  "totalFiles": 283,
   "byDisposition": {
     "reachable": 43,
     "build-entry": 4,
     "test-only": 46,
     "orphan": 15,
-    "test": 169,
+    "test": 170,
     "tool": 4,
     "config": 1,
     "bench": 0,
@@ -14,11 +14,11 @@
   "byArea": {
     "src": 108,
     "tools": 4,
-    "tests": 169,
+    "tests": 170,
     "config": 1
   },
   "byPackage": {
-    "(root)": 183,
+    "(root)": 184,
     "episodic-memory": 99
   },
   "files": [
@@ -727,7 +727,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 570
+      "loc": 603
     },
     {
       "file": "src/topic-db.ts",
@@ -1805,7 +1805,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 40
+      "loc": 41
     },
     {
       "file": "test/sync-hook-gpu-reservation.test.ts",
@@ -1834,6 +1834,13 @@
       "area": "tests",
       "disposition": "test",
       "loc": 187
+    },
+    {
+      "file": "test/sync-marker-scan.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 161
     },
     {
       "file": "test/sync-pending-and-legacy-retry.test.ts",

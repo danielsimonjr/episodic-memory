@@ -1,7 +1,7 @@
 {
   "metadata": {
     "totalSourceFiles": 108,
-    "totalTestFiles": 162,
+    "totalTestFiles": 163,
     "testedCount": 85,
     "untestedCount": 23,
     "coveragePercent": "78.7",
@@ -279,6 +279,7 @@
       "test/multi-concept.test.ts",
       "test/query-prefix.test.ts",
       "test/sync-embeddings-unavailable.test.ts",
+      "test/sync-marker-scan.test.ts",
       "test/vector-search-filters.test.ts",
       "test/verify.test.ts"
     ],
@@ -640,6 +641,7 @@
       "test/sync-gpu-reservation.test.ts",
       "test/sync-helpers.test.ts",
       "test/sync-incremental-and-db.test.ts",
+      "test/sync-marker-scan.test.ts",
       "test/sync-pending-and-legacy-retry.test.ts",
       "test/sync-session-id.test.ts",
       "test/sync-summary-retry.test.ts",
@@ -1297,6 +1299,10 @@
       "src/db.ts",
       "src/search.ts",
       "src/types.ts"
+    ],
+    "test/sync-marker-scan.test.ts": [
+      "src/embeddings.ts",
+      "src/sync.ts"
     ],
     "test/sync-pending-and-legacy-retry.test.ts": [
       "src/sync.ts"

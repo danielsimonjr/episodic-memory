@@ -141,8 +141,13 @@ export function buildSummarizerQueryOptions(args) {
         // SDK loads the user's filesystem settings. Those settings start the configured
         // MCP servers and run SessionStart hooks inside the summary subprocess.
         // `mcpServers: {}` adds a second guard that starts no MCP server.
+        // `strictMcpConfig: true` makes the subprocess ignore every other MCP configuration:
+        // the project `.mcp.json`, the user settings and the plugins.
+        // `tools: []` offers no built-in tool. A summary call therefore cannot run a command or edit a file.
         settingSources: [],
         mcpServers: {},
+        strictMcpConfig: true,
+        tools: [],
         systemPrompt: 'Write concise, factual summaries. Output ONLY the summary - no preamble, no "Here is", no "I will". Your output will be indexed directly.',
     };
 }

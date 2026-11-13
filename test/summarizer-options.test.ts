@@ -70,6 +70,24 @@ describe('buildSummarizerQueryOptions', () => {
     expect(opts.mcpServers).toEqual({});
   });
 
+  it('offers no built-in tool (tools: []), so a summary call cannot run a command or edit a file', () => {
+    const opts = buildSummarizerQueryOptions({ model: 'haiku' });
+    expect(opts.tools).toEqual([]);
+  });
+
+  it('sets strictMcpConfig, so the subprocess ignores the project .mcp.json, the plugins and the user MCP configuration', () => {
+    const opts = buildSummarizerQueryOptions({ model: 'haiku' });
+    expect(opts.strictMcpConfig).toBe(true);
+  });
+
+  it('keeps the isolation options when a Claude Code executable is given', () => {
+    const opts = buildSummarizerQueryOptions({ model: 'haiku', executable: { pathToClaudeCodeExecutable: '/opt/claude' } });
+    expect(opts.tools).toEqual([]);
+    expect(opts.strictMcpConfig).toBe(true);
+    expect(opts.settingSources).toEqual([]);
+    expect(opts.mcpServers).toEqual({});
+  });
+
   it('names no executable unless the caller passes one, so the SDK runs the bundled binary', () => {
     expect('pathToClaudeCodeExecutable' in buildSummarizerQueryOptions({ model: 'haiku' })).toBe(false);
     expect('pathToClaudeCodeExecutable' in buildSummarizerQueryOptions({ model: 'haiku', executable: {} })).toBe(false);

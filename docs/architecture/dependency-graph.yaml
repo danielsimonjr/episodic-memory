@@ -2,9 +2,9 @@ metadata:
   name: episodic-memory
   schemaVersion: 2.0.0
   language: typescript
-  totalFiles: 261
+  totalFiles: 263
   totalModules: 4
-  totalExports: 578
+  totalExports: 580
 modules:
   src:
     cli/digest-hook.js:
@@ -34,6 +34,14 @@ modules:
         - url
       internalDependencies: []
       exports: []
+    cli/forward-child.js:
+      externalDependencies: []
+      nodeDependencies:
+        - child_process
+      internalDependencies: []
+      exports:
+        - exitCodeFor
+        - forward
     cli/index-conversations.js:
       externalDependencies: []
       nodeDependencies:
@@ -60,11 +68,14 @@ modules:
     cli/search-conversations.js:
       externalDependencies: []
       nodeDependencies:
-        - child_process
         - fs
         - path
         - url
-      internalDependencies: []
+      internalDependencies:
+        - file: cli/forward-child.js
+          imports:
+            - forward
+          typeOnly: false
       exports: []
     cli/sync-hook.js:
       externalDependencies: []
@@ -3195,6 +3206,21 @@ modules:
         - fs
         - path
       internalDependencies: []
+      exports: []
+    test/cli-forward.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - child_process
+        - fs
+        - os
+        - path
+        - url
+      internalDependencies:
+        - file: test/test-utils.ts
+          imports:
+            - safeRmSync
+          typeOnly: false
       exports: []
     test/codex-doctor.test.ts:
       externalDependencies:
@@ -6437,21 +6463,21 @@ modules:
           typeOnly: false
       exports: []
 statistics:
-  totalTypeScriptFiles: 261
-  totalSourceFiles: 261
+  totalTypeScriptFiles: 263
+  totalSourceFiles: 263
   totalModules: 4
-  totalLinesOfCode: 53399
-  totalExports: 578
+  totalLinesOfCode: 53544
+  totalExports: 580
   entryRoots: 6
   reachableFiles: 46
-  dormantFiles: 57
-  orphanedFiles: 14
+  dormantFiles: 58
+  orphanedFiles: 15
   testOnlyFiles: 43
   runtimeCircularDeps: 0
   typeOnlyCircularDeps: 1
   totalTypeOnlyImports: 79
   noImporterFileCount: 14
-  unusedExportsCount: 113
+  unusedExportsCount: 114
   circularDepsTruncated: false
   runtimeCyclicComponents: 0
   typeOnlyCyclicComponents: 1
@@ -6459,7 +6485,7 @@ statistics:
   typeOnlyFilesInCycles: 2
   totalClasses: 8
   totalInterfaces: 137
-  totalFunctions: 323
+  totalFunctions: 325
   totalTypeGuards: 9
   totalEnums: 0
   totalConstants: 67
@@ -6473,10 +6499,11 @@ reachability:
     - test/setup-env.ts
     - test/global-setup.ts
   reachableCount: 46
-  dormantCount: 57
+  dormantCount: 58
   orphaned:
     - cli/digest-hook.js
     - cli/episodic-memory.js
+    - cli/forward-child.js
     - cli/index-conversations.js
     - cli/mcp-server-wrapper.js
     - cli/search-conversations.js

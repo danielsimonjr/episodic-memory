@@ -7,12 +7,12 @@
 ## Summary
 
 - **Files with no in-repo importer**: 14
-- **Dormant files**: 57
-  - **Orphaned (reachable from nothing)**: 14
+- **Dormant files**: 58
+  - **Orphaned (reachable from nothing)**: 15
   - **Test-only (only a test reaches them)**: 43
-- **Potentially unused exports**: 113
+- **Potentially unused exports**: 114
   - **Unreferenced anywhere**: 4
-  - **Referenced in their own module**: 109
+  - **Referenced in their own module**: 110
   - **Not classified**: 0
 
 ## Caveats
@@ -29,6 +29,7 @@ Source files that no root and no test reaches. Verify each one before you delete
 
 - `cli/digest-hook.js`
 - `cli/episodic-memory.js`
+- `cli/forward-child.js`
 - `cli/index-conversations.js`
 - `cli/mcp-server-wrapper.js`
 - `cli/search-conversations.js`
@@ -127,6 +128,7 @@ No other file imports these names, and their own module does not use them.
 
 No other file imports these names, but their own module uses them.
 
+- `cli/forward-child.js`: `exitCodeFor`
 - `src/api-endpoint.ts`: `ApiBaseUrlValidation`
 - `src/deps-health.ts`: `nativeAddonPresent`
 - `src/digest-compress.ts`: `CompressOptions`, `CompressResult`

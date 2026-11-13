@@ -159,7 +159,7 @@ Each `src/*-cli.ts` file is one command. A shim in `cli/` or the umbrella dispat
 | `backfill` | `src/backfill-cli.ts` | Summarizes the archive backlog. |
 | `learn` | `src/learn-cli.ts` | Runs the learned-knowledge commands. |
 
-The shims in `cli/` are `episodic-memory.js` (dispatcher), `index-conversations.js`, `search-conversations.js`, `sync-hook.js`, `digest-hook.js`, `mcp-server-wrapper.js` and `ensure-deps.js`. `episodic-memory.js` and `index-conversations.js` start a child process and exit with its exit code. A refused argument (code 2) therefore reaches the caller.
+The shims in `cli/` are `episodic-memory.js` (dispatcher), `index-conversations.js`, `search-conversations.js`, `sync-hook.js`, `digest-hook.js`, `mcp-server-wrapper.js`, `ensure-deps.js` and `forward-child.js`. `episodic-memory.js` and `index-conversations.js` start a child process and exit with its exit code. A refused argument (code 2) therefore reaches the caller. `forward-child.js` runs one script as a child. `forward-child.js` then exits with the exit code of the child. When a signal stops the child, `forward-child.js` exits 1. When the child cannot start, `forward-child.js` prints one line and exits 1. `search-conversations.js` and the four files with no extension (`episodic-memory`, `index-conversations`, `mcp-server`, `search-conversations`) use `forward-child.js`.
 
 `ensure-deps.js` runs before the MCP server and the sync hook start. `ensureDeps` repairs `node_modules` when `repairPlan` reports a missing package or binding. On every call, `pruneOptionalWeight` then removes the `onnxruntime-node` binding directories of the other platforms and architectures. The process loads only the `bin/napi-v6/<platform>/<arch>` directory of the running pair. When `EPISODIC_MEMORY_CLAUDE_BIN` is set and its probe passes, `pruneOptionalWeight` also removes every `@anthropic-ai/claude-agent-sdk-<platform>-<arch>` platform package. The SDK package itself stays, and so does another package with the same prefix. A failed probe removes nothing. The prune is best effort. If a removal fails, the function writes one stderr line and stops the prune. The prune never stops the start.
 
@@ -192,10 +192,10 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 261 | repo-tools map |
+| totalSourceFiles | 263 | repo-tools map |
 | totalClasses | 8 | repo-tools map |
 | totalInterfaces | 137 | repo-tools map |
-| totalFunctions | 323 | repo-tools map |
+| totalFunctions | 325 | repo-tools map |
 | totalConstants | 67 | repo-tools map |
 
 The tool names, the table names and the model name come from a direct reading of `src/mcp-server.ts`, `src/db.ts` and `src/embeddings.ts`. They are not `repo-tools map` metrics.

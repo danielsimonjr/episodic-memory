@@ -109,6 +109,28 @@
         "workspaceDependencies": [],
         "exports": []
       },
+      "cli/forward-child.js": {
+        "description": "The exit code of a forwarding entry point for one child status.",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "child_process",
+            "imports": [
+              "spawn"
+            ]
+          }
+        ],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "exitCodeFor",
+          "forward"
+        ],
+        "functions": [
+          "exitCodeFor",
+          "forward"
+        ]
+      },
       "cli/index-conversations.js": {
         "description": "index-conversations.js module",
         "externalDependencies": [],
@@ -191,7 +213,7 @@
         "exports": []
       },
       "cli/search-conversations.js": {
-        "description": "search-conversations.js module",
+        "description": "realpathSync resolves an npm bin symlink to this file. The code then finds dist/ next to the real cli/.",
         "externalDependencies": [],
         "nodeDependencies": [
           {
@@ -208,19 +230,20 @@
             ]
           },
           {
-            "module": "child_process",
-            "imports": [
-              "spawn"
-            ]
-          },
-          {
             "module": "fs",
             "imports": [
               "realpathSync"
             ]
           }
         ],
-        "internalDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./forward-child.js",
+            "imports": [
+              "forward"
+            ]
+          }
+        ],
         "workspaceDependencies": [],
         "exports": []
       },
@@ -5660,6 +5683,7 @@
         "cli/digest-hook.js",
         "cli/ensure-deps.js",
         "cli/episodic-memory.js",
+        "cli/forward-child.js",
         "cli/index-conversations.js",
         "cli/mcp-server-wrapper.js",
         "cli/search-conversations.js",

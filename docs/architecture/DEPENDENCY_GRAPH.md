@@ -31,7 +31,7 @@ This document provides a comprehensive dependency graph of all files, components
 
 The codebase is organized into the following modules:
 
-- **cli**: 7 files
+- **cli**: 8 files
 - **root**: 64 files
 - **entry**: 1 file
 - **learn**: 30 files
@@ -80,6 +80,18 @@ The codebase is organized into the following modules:
 
 ---
 
+### `cli/forward-child.js` - The exit code of a forwarding entry point for one child status.
+
+**Node.js Built-in Dependencies:**
+| Module | Import |
+|--------|--------|
+| `child_process` | `spawn` |
+
+**Exports:**
+- Functions: `exitCodeFor`, `forward`
+
+---
+
 ### `cli/index-conversations.js` - index-conversations.js module
 
 **Node.js Built-in Dependencies:**
@@ -110,15 +122,19 @@ The codebase is organized into the following modules:
 
 ---
 
-### `cli/search-conversations.js` - search-conversations.js module
+### `cli/search-conversations.js` - realpathSync resolves an npm bin symlink to this file. The code then finds dist/ next to the real cli/.
 
 **Node.js Built-in Dependencies:**
 | Module | Import |
 |--------|--------|
 | `url` | `fileURLToPath` |
 | `path` | `dirname, join` |
-| `child_process` | `spawn` |
 | `fs` | `realpathSync` |
+
+**Internal Dependencies:**
+| File | Imports | Type |
+|------|---------|------|
+| `./forward-child.js` | `forward` | Import |
 
 ---
 
@@ -2079,73 +2095,75 @@ graph TD
         N0[digest-hook.js]
         N1[ensure-deps.js]
         N2[episodic-memory.js]
-        N3[index-conversations.js]
-        N4[mcp-server-wrapper.js]
-        N5[search-conversations.js]
-        N6[sync-hook.js]
+        N3[forward-child.js]
+        N4[index-conversations.js]
+        N5[mcp-server-wrapper.js]
+        N6[search-conversations.js]
+        N7[sync-hook.js]
     end
 
     subgraph Root
-        N7[api-endpoint]
-        N8[archive-path]
-        N9[backfill-cli]
-        N10[backfill]
-        N11[claude-bin]
-        N12[codex-hook-trust]
-        N13[codex-support]
-        N14[constants]
-        N15[db]
-        N16[deferral]
-        N17[...54 more]
+        N8[api-endpoint]
+        N9[archive-path]
+        N10[backfill-cli]
+        N11[backfill]
+        N12[claude-bin]
+        N13[codex-hook-trust]
+        N14[codex-support]
+        N15[constants]
+        N16[db]
+        N17[deferral]
+        N18[...54 more]
     end
 
     subgraph Entry
-        N18[index]
+        N19[index]
     end
 
     subgraph Learn
-        N19[agent-runner]
-        N20[bootstrap]
-        N21[cited-ids]
-        N22[cli-main]
-        N23[export]
-        N24[grade]
-        N25[knowledge-db]
-        N26[knowledge-gate]
-        N27[knowledge-store]
-        N28[leaf-learner]
-        N29[...20 more]
+        N20[agent-runner]
+        N21[bootstrap]
+        N22[cited-ids]
+        N23[cli-main]
+        N24[export]
+        N25[grade]
+        N26[knowledge-db]
+        N27[knowledge-gate]
+        N28[knowledge-store]
+        N29[leaf-learner]
+        N30[...20 more]
     end
 
     subgraph Vendor/onnxruntime-web-stub
-        N30[index.js]
+        N31[index.js]
     end
 
-    N4 --> N1
-    N6 --> N1
-    N9 --> N10
-    N15 --> N14
-    N16 --> N11
-    N18 --> N15
-    N19 --> N11
-    N20 --> N25
-    N20 --> N26
-    N20 --> N21
-    N20 --> N19
-    N22 --> N11
-    N22 --> N25
-    N22 --> N23
-    N22 --> N27
-    N22 --> N15
-    N22 --> N20
-    N25 --> N27
-    N26 --> N21
-    N28 --> N20
-    N28 --> N26
-    N28 --> N21
-    N28 --> N25
-    N28 --> N19
-    N28 --> N24
+    N5 --> N1
+    N6 --> N3
+    N7 --> N1
+    N10 --> N11
+    N16 --> N15
+    N17 --> N12
+    N19 --> N16
+    N20 --> N12
+    N21 --> N26
+    N21 --> N27
+    N21 --> N22
+    N21 --> N20
+    N23 --> N12
+    N23 --> N26
+    N23 --> N24
+    N23 --> N28
+    N23 --> N16
+    N23 --> N21
+    N26 --> N28
+    N27 --> N22
+    N29 --> N21
+    N29 --> N27
+    N29 --> N22
+    N29 --> N26
+    N29 --> N20
+    N29 --> N25
 ```
 
 ---
@@ -2155,14 +2173,14 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 261 |
+| Total Source Files | 263 |
 | Subsystems | 5 |
-| Total Lines of Code | 53399 |
-| Total Exports | 578 |
+| Total Lines of Code | 53544 |
+| Total Exports | 580 |
 | Total Re-exports | 8 |
 | Total Classes | 8 |
 | Total Interfaces | 137 |
-| Total Functions | 323 |
+| Total Functions | 325 |
 | Total Type Guards | 9 |
 | Total Enums | 0 |
 | Type-only Imports | 79 |

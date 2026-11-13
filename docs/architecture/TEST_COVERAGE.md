@@ -8,21 +8,22 @@
 
 | Metric | Count |
 |--------|-------|
-| Total Source Files | 103 |
-| Total Test Files | 147 |
+| Total Source Files | 104 |
+| Total Test Files | 148 |
 | Source Files with Tests | 81 |
-| Source Files without Tests | 22 |
-| Coverage (raw, direct-import) | **78.6%** |
+| Source Files without Tests | 23 |
+| Coverage (raw, direct-import) | **77.9%** |
 ---
 
 ## Source Files Not Imported By A Test
 
-The following 22 source files are not directly imported by any test file:
+The following 23 source files are not directly imported by any test file:
 
 ### root/
 
 - `cli/digest-hook.js`
 - `cli/episodic-memory.js`
+- `cli/forward-child.js`
 - `cli/index-conversations.js`
 - `cli/mcp-server-wrapper.js`
 - `cli/search-conversations.js`
@@ -154,6 +155,7 @@ The following 22 source files are not directly imported by any test file:
 | `test/claude-bin-deferral.test.ts` | 6 files |
 | `test/claude-bin.test.ts` | 1 files |
 | `test/claude-e2e-script.test.ts` | 0 files |
+| `test/cli-forward.test.ts` | 0 files |
 | `test/codex-doctor.test.ts` | 2 files |
 | `test/codex-e2e-script.test.ts` | 0 files |
 | `test/codex-hook-trust.test.ts` | 1 files |

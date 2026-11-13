@@ -107,7 +107,7 @@ The dispatcher takes a command as its first argument.
 | Module | Exports |
 |---|---|
 | `types` | `ToolCall`, `ConversationHarness`, `ConversationExchange`, `SearchResult`, `MultiConceptResult` |
-| `db` | `OpenDatabaseOptions`, `migrateSchema`, `migrateToolCallsCascade`, `ensureFts`, `upsertExchangeFts`, `deleteExchangeFts`, `openDatabase`, `initDatabase`, `getSharedReaderDatabase`, `closeSharedReaderDatabase`, `insertExchange`, `getAllExchanges`, `getFileLastIndexed`, `getMaxIndexedLine`, `getFreelistInfo`, `vacuumDatabase`, `deleteExchange` |
+| `db` | `OpenDatabaseOptions`, `migrateSchema`, `migrateToolCallsCascade`, `ensureFts`, `upsertExchangeFts`, `deleteExchangeFts`, `openDatabase`, `initDatabase`, `getSharedReaderDatabase`, `closeSharedReaderDatabase`, `insertExchange`, `getAllExchanges`, `getFileLastIndexed`, `getMaxIndexedLine`, `getFreelistInfo`, `vacuumDatabase`, `deleteExchange`, `deleteExchangesForArchive` |
 | `embeddings` | `BGE_QUERY_PREFIX`, `initEmbeddings`, `generateEmbeddings`, `generateEmbedding`, `withQueryPrefix`, `generateQueryEmbedding`, `formatExchangeEmbeddingText`, `generateExchangeEmbedding`, `generateExchangeEmbeddings` |
 | `indexer` | `indexConversations`, `indexSession`, `indexUnprocessed` |
 | `parser` | `parseConversation`, `parseConversationFile` |

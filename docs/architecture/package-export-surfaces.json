@@ -15,6 +15,7 @@
       "closeSharedReaderDatabase",
       "deleteExchange",
       "deleteExchangeFts",
+      "deleteExchangesForArchive",
       "ensureFts",
       "extractSummary",
       "findJsonlFiles",

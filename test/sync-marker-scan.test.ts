@@ -136,6 +136,69 @@ describe('sync honours the marker scan', () => {
     expect(indexedRows()).toBe(0);
   });
 
+  // A transcript can gain the marker after a sync indexed its first exchanges. The next sync copies the file again,
+  // because the source is newer. The sync then removes the earlier rows from every table.
+  const OTHER = '9f8e7d6c-1111-4222-8333-444455556666';
+
+  function addMarker(sessionId: string): void {
+    const source = join(sourceDir, 'project-a', `${sessionId}.jsonl`);
+    const line = { type: 'user', uuid: 'u2', parentUuid: 'a1', timestamp: '2025-10-01T12:00:02Z', isSidechain: false, message: { role: 'user', content: `Keep this private. ${DO_NOT_INDEX_MARKER}` } };
+    fs.appendFileSync(source, JSON.stringify(line) + '\n');
+    // The copy compares times. A later time on the source makes the next sync copy the file again.
+    const later = new Date(Date.now() + 60_000);
+    fs.utimesSync(source, later, later);
+  }
+
+  async function tableCounts(): Promise<{ exchanges: number; vectors: number; text: number }> {
+    const { initDatabase } = await import('../src/db.js');
+    const db = initDatabase();
+    try {
+      const count = (table: string) => (db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get() as { n: number }).n;
+      return { exchanges: count('exchanges'), vectors: count('vec_exchanges'), text: count('exchanges_fts') };
+    } finally {
+      db.close();
+    }
+  }
+
+  it('removes the earlier rows of a transcript that gains the marker, and keeps the rows of the other transcript', async () => {
+    writeFileSync(join(sourceDir, 'project-a', `${SESSION}.jsonl`), transcript('A question.'));
+    writeFileSync(join(sourceDir, 'project-a', `${OTHER}.jsonl`), transcript('A plain question.'));
+    await syncConversations(sourceDir, destDir, { skipSummaries: true });
+    expect(indexedRows()).toBe(2);
+
+    addMarker(SESSION);
+    const second = await syncConversations(sourceDir, destDir, { skipSummaries: true });
+    expect(second.copied).toBe(1);
+    expect(second.errors).toEqual([]);
+    expect(await tableCounts()).toEqual({ exchanges: 1, vectors: 1, text: 1 });
+    const db = new Database(dbPath, { readonly: true });
+    try {
+      const paths = (db.prepare('SELECT archive_path FROM exchanges').all() as Array<{ archive_path: string }>).map(r => r.archive_path);
+      expect(paths).toEqual([join(destDir, 'project-a', `${OTHER}.jsonl`)]);
+    } finally {
+      db.close();
+    }
+  });
+
+  it('keeps the earlier rows of a transcript whose archive copy the scan cannot read (the control)', async () => {
+    writeFileSync(join(sourceDir, 'project-a', `${SESSION}.jsonl`), transcript('A question.'));
+    await syncConversations(sourceDir, destDir, { skipSummaries: true });
+    expect(indexedRows()).toBe(1);
+
+    addMarker(SESSION);
+    const archiveCopy = join(destDir, 'project-a', `${SESSION}.jsonl`);
+    const realOpen = fs.openSync;
+    vi.spyOn(fs, 'openSync').mockImplementation(((file: fs.PathLike, ...rest: unknown[]) => {
+      if (String(file) === archiveCopy) {
+        throw Object.assign(new Error('EBUSY: resource busy or locked'), { code: 'EBUSY' });
+      }
+      return (realOpen as (...args: unknown[]) => number)(file, ...rest);
+    }) as typeof fs.openSync);
+    const second = await syncConversations(sourceDir, destDir, { skipSummaries: true });
+    expect(second.errors.map(e => e.file)).toEqual([archiveCopy]);
+    expect(indexedRows()).toBe(1);
+  });
+
   it('records an error for an archive copy that the scan cannot read, and indexes the file at the next sync', async () => {
     writeFileSync(join(sourceDir, 'project-a', `${SESSION}.jsonl`), transcript('A plain question.'));
     const archiveCopy = join(destDir, 'project-a', `${SESSION}.jsonl`);

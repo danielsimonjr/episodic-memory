@@ -1,7 +1,7 @@
 {
   "metadata": {
     "totalSourceFiles": 109,
-    "totalTestFiles": 165,
+    "totalTestFiles": 166,
     "testedCount": 85,
     "untestedCount": 24,
     "coveragePercent": "78.0",
@@ -518,6 +518,7 @@
       "test/doctor.test.ts",
       "test/logging-append.test.ts",
       "test/logging.test.ts",
+      "test/sync-cli-disable-auto-sync.test.ts",
       "test/sync-cli-lock.test.ts",
       "test/sync-hook-logging.test.ts"
     ],
@@ -1286,6 +1287,9 @@
       "src/sync-banner.ts"
     ],
     "test/sync-cli-args.test.ts": [],
+    "test/sync-cli-disable-auto-sync.test.ts": [
+      "src/logging.ts"
+    ],
     "test/sync-cli-lock.test.ts": [
       "src/logging.ts"
     ],

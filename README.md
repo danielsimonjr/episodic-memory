@@ -470,6 +470,8 @@ Features:
 - Idempotent - safe to call repeatedly
 - Background hook output is written to `~/.config/superpowers/logs/episodic-memory.log` unless `EPISODIC_MEMORY_CONFIG_DIR` changes the memory directory
 
+To stop the sync that the SessionStart hook starts, set `EPISODIC_MEMORY_DISABLE_AUTO_SYNC=1`. `sync --background` then exits 0. The command starts no sync. A sync in the foreground still runs, for example a manual `episodic-memory sync` or a scheduled task. Only the value `1` turns the switch on. Set the variable where the Claude Code process inherits it, because the hook gets the environment of that process.
+
 **Usage in Claude Code:**
 Add to `.claude/hooks/session-end`:
 ```bash

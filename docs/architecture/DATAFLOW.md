@@ -9,7 +9,7 @@ The host fires the session-start event. `hooks/hooks.json` runs two commands, in
 1. `cli/sync-hook.js` checks the dependency health (`deps-health`). It ends leftover summarizer processes (`orphan-reaper` and the PIDs that `learn/learn-lock` records). It checks the GPU reservation when a local backend is selected. Then it starts `episodic-memory sync --background` as a detached child and returns at once. A spawn failure goes to the hook log (`logging`).
 2. `cli/digest-hook.js` imports only the digest and learned-block modules. The hook opens the database and builds the digest text for the current project (`digest-inject`). The hook adds the learned block (`learn/learn-inject`) and prints both for the host to inject. The hook never opens the knowledge store.
 
-The hook returns before the background sync does its work. The session never waits for indexing.
+The hook returns before the background sync does its work. The session never waits for indexing. With `EPISODIC_MEMORY_DISABLE_AUTO_SYNC=1`, `sync --background` exits 0 before the command starts the worker, so the session start syncs nothing.
 
 ## 2. Sync and index
 
@@ -137,7 +137,7 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 286 | repo-tools map |
+| totalSourceFiles | 287 | repo-tools map |
 | runtimeCircularDeps | 0 | repo-tools map |
 
 The step orders above come from a direct reading of `src/sync.ts`, `src/search.ts`, `src/digest-job.ts`, `src/learn/learner.ts` and `cli/sync-hook.js`. They are not `repo-tools map` metrics.

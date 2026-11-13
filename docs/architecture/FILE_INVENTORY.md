@@ -8,7 +8,7 @@ This report lists each source file that the map census finds, with a disposition
 
 **Language**: typescript
 
-**Total files**: 286
+**Total files**: 287
 
 ## Disposition counts
 
@@ -18,12 +18,12 @@ This report lists each source file that the map census finds, with a disposition
 | `build-entry` | 4 | A `src`-area file that is an entry root. |
 | `test-only` | 45 | A `src`-area file that only a test reaches. |
 | `orphan` | 15 | A `src`-area file that nothing reaches. Delete it, or wire it to a root. |
-| `test` | 172 | A file in a `test/` or `tests/` folder, or a `*.test.ts` or `*.spec.ts` file. |
+| `test` | 173 | A file in a `test/` or `tests/` folder, or a `*.test.ts` or `*.spec.ts` file. |
 | `tool` | 4 | A file in a `tools/` or `scripts/` folder outside `src/`. |
 | `config` | 1 | A `*.config.*` file of TypeScript or JavaScript. |
 | `example` | 0 | A file in `examples/` or `docs/`. |
 | `bench` | 0 | A file in `bench/` or `benchmarks/`, or a `*.bench.*` file. |
-| **Total** | **286** | |
+| **Total** | **287** | |
 
 ## Per-area counts
 
@@ -31,14 +31,14 @@ This report lists each source file that the map census finds, with a disposition
 | --- | --: |
 | `config` | 1 |
 | `src` | 109 |
-| `tests` | 172 |
+| `tests` | 173 |
 | `tools` | 4 |
 
 ## Per-package counts
 
 | Package | Files |
 | --- | --: |
-| `(root)` | 186 |
+| `(root)` | 187 |
 | `episodic-memory` | 100 |
 
 ## All files
@@ -145,7 +145,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/stats.ts` | episodic-memory | src | test-only | 190 |
 | `src/summarizer.ts` | episodic-memory | src | reachable | 865 |
 | `src/sync-banner.ts` | episodic-memory | src | test-only | 33 |
-| `src/sync-cli.ts` | episodic-memory | src | orphan | 248 |
+| `src/sync-cli.ts` | episodic-memory | src | orphan | 261 |
 | `src/sync.ts` | episodic-memory | src | test-only | 548 |
 | `src/topic-db.ts` | episodic-memory | src | reachable | 521 |
 | `src/topic-format.ts` | episodic-memory | src | reachable | 462 |
@@ -296,6 +296,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/summarizer-text.test.ts` | (root) | tests | test | 44 |
 | `test/sync-banner.test.ts` | (root) | tests | test | 34 |
 | `test/sync-cli-args.test.ts` | (root) | tests | test | 49 |
+| `test/sync-cli-disable-auto-sync.test.ts` | (root) | tests | test | 84 |
 | `test/sync-cli-lock.test.ts` | (root) | tests | test | 46 |
 | `test/sync-cli-reentrancy.test.ts` | (root) | tests | test | 35 |
 | `test/sync-copy-retry.test.ts` | (root) | tests | test | 110 |

@@ -18,3 +18,8 @@ coverage/
 # dual lockfiles drift and CI only freezes bun.lock.
 package-lock.json
 npm-shrinkwrap.json
+
+# Transient files of the dependency repair (cli/ensure-deps.js) in a plugin root.
+.episodic-memory-repair.lock
+.episodic-memory-onnx-repair-failed
+.onnxruntime-node.repair-backup/

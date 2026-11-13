@@ -16,6 +16,11 @@ import path from 'path';
 /** Default age after which a lock is stealable regardless of PID liveness. */
 const DEFAULT_STALE_MS = 60 * 60 * 1000; // 1 hour
 /**
+ * The age after which a lock file with no valid PID is stealable. The holder creates the file and
+ * then writes the PID of the process, so a file with no PID can belong to a holder that is still writing.
+ */
+const EMPTY_LOCK_GRACE_MS = 10 * 1000;
+/**
  * Return true when a process with the given PID exists.
  *
  * The check sends signal 0. Signal 0 tests whether the process exists and delivers nothing. A process that exists but cannot be signaled counts as alive. The PID must be greater than zero.
@@ -49,8 +54,9 @@ function tryCreate(lockPath) {
  */
 function isLockStealable(lockPath, staleMs) {
     // Age-based staleness first — covers PID reuse.
+    let ageMs;
     try {
-        const ageMs = Date.now() - fs.statSync(lockPath).mtimeMs;
+        ageMs = Date.now() - fs.statSync(lockPath).mtimeMs;
         if (ageMs > staleMs)
             return true;
     }
@@ -65,8 +71,9 @@ function isLockStealable(lockPath, staleMs) {
     catch {
         return true;
     }
+    // A file with no PID yet can belong to a holder after the holder creates the file and before the holder writes the PID.
     if (!Number.isFinite(holderPid) || holderPid <= 0)
-        return true;
+        return ageMs > EMPTY_LOCK_GRACE_MS;
     return !isProcessAlive(holderPid);
 }
 /**
@@ -74,6 +81,7 @@ function isLockStealable(lockPath, staleMs) {
  *
  * The function uses the rule that `acquireLock` uses to steal a lock.
  * A missing file, a dead holder and a lock older than `staleMs` all give false.
+ * A file with no PID gives true for 10 seconds, because its holder can still be writing the PID.
  */
 export function isLockHeld(lockPath, staleMs = DEFAULT_STALE_MS) {
     return !isLockStealable(lockPath, staleMs);
@@ -81,6 +89,7 @@ export function isLockHeld(lockPath, staleMs = DEFAULT_STALE_MS) {
 /**
  * Acquire an exclusive lock at `lockPath`.
  * Returns a handle, or null if a live, non-stale holder exists.
+ * A lock file with no PID that is younger than 10 seconds also gives null.
  */
 export function acquireLock(lockPath, staleMs = DEFAULT_STALE_MS) {
     fs.mkdirSync(path.dirname(lockPath), { recursive: true });

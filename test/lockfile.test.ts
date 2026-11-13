@@ -51,6 +51,23 @@ describe('lockfile', () => {
     expect(a).toBeNull();
   });
 
+  // The holder creates the file, then writes its PID. A second process that reads the file between
+  // the two steps sees no PID. The file is then a lock that its holder is still writing.
+  it('does NOT steal a fresh lock file that holds no PID yet', () => {
+    fs.writeFileSync(lockPath, '');
+    expect(acquireLock(lockPath, ONE_HOUR)).toBeNull();
+    expect(fs.readFileSync(lockPath, 'utf-8')).toBe('');
+  });
+
+  it('steals a lock file with no PID once the file is older than the write grace', () => {
+    fs.writeFileSync(lockPath, '');
+    const old = new Date(Date.now() - 60 * 1000);
+    fs.utimesSync(lockPath, old, old);
+    const a = acquireLock(lockPath, ONE_HOUR);
+    expect(a).not.toBeNull();
+    releaseLock(a!);
+  });
+
   it('releaseLock does not delete a lock now owned by a different process (post-steal safety)', () => {
     const a = acquireLock(lockPath);
     expect(a).not.toBeNull();

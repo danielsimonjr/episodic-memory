@@ -70,6 +70,8 @@ describe('general doctor report', () => {
     expect(report.text).toContain('3 exchange(s)');
     expect(report.text).toContain('Recent hook errors:');
     expect(report.text).toContain('node_modules: unhealthy');
+    // `npm install` does not restore one missing file inside an installed package.
+    expect(report.text).toContain('delete node_modules/onnxruntime-node first');
   });
 
   it('treats unknown node_modules as non-fatal', () => {

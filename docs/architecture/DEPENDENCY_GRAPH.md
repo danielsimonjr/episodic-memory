@@ -59,11 +59,11 @@ The codebase is organized into the following modules:
 | Module | Import |
 |--------|--------|
 | `child_process` | `spawnSync` |
-| `fs` | `existsSync, readdirSync, rmSync` |
+| `fs` | `existsSync, readdirSync, rmSync, statSync, writeFileSync` |
 | `path` | `join` |
 
 **Exports:**
-- Functions: `pruneOptionalWeight`, `ensureDeps`
+- Functions: `pruneOptionalWeight`, `ensureDeps`, `depsRepairLogEntry`
 - Constants: `NPM_INSTALL_ARGS`
 
 ---
@@ -151,7 +151,7 @@ The codebase is organized into the following modules:
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
-| `./ensure-deps.js` | `ensureDeps` | Import |
+| `./ensure-deps.js` | `depsRepairLogEntry, ensureDeps` | Import |
 
 ---
 
@@ -327,12 +327,12 @@ The codebase is organized into the following modules:
 **Node.js Built-in Dependencies:**
 | Module | Import |
 |--------|--------|
-| `fs` | `existsSync` |
-| `path` | `join` |
+| `fs` | `existsSync, readdirSync` |
+| `path` | `dirname, join` |
 
 **Exports:**
-- Functions: `nativeAddonPresent`, `nodeModulesIsHealthy`, `repairPlan`
-- Constants: `NATIVE_ADDON`, `JS_SENTINELS`, `DEP_SENTINELS`
+- Functions: `nativeAddonPresent`, `onnxBindingPath`, `onnxBindingState`, `nodeModulesIsHealthy`, `repairPlan`
+- Constants: `NATIVE_ADDON`, `JS_SENTINELS`, `ONNX_BINDING`, `DEP_SENTINELS`
 
 ---
 
@@ -2188,14 +2188,14 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 265 |
+| Total Source Files | 266 |
 | Subsystems | 5 |
-| Total Lines of Code | 53674 |
-| Total Exports | 585 |
+| Total Lines of Code | 54432 |
+| Total Exports | 589 |
 | Total Re-exports | 8 |
 | Total Classes | 8 |
 | Total Interfaces | 137 |
-| Total Functions | 329 |
+| Total Functions | 332 |
 | Total Type Guards | 10 |
 | Total Enums | 0 |
 | Type-only Imports | 79 |

@@ -52,7 +52,7 @@ dependency, no `MEMORY_*` environment handling and no per-handle cache: a write 
 - **TypeScript source** in `src/`, compiled to `dist/` by `tsc && esbuild`. **Both are committed.**
 - **CLI entry points** in `cli/` (Node.js wrappers — no bash).
 - **MCP server** is `dist/mcp-server.js`, launched by `cli/mcp-server-wrapper.js` from the plugin manifest.
-- **Tests** in `test/` via vitest (149 files, 1474 tests).
+- **Tests** in `test/` via vitest (150 files, 1507 tests).
 - **Generated files** in `dist/` AND `src/version.ts`. The latter is gitignored; never edit it.
 - **`bun.lock` is committed** — CI uses `bun install --frozen-lockfile` + `bun audit --audit-level=critical`. Do not commit `package-lock.json` (gitignored).
 
@@ -115,7 +115,7 @@ scripts/
 
 test/
   test-utils.ts          # createTestDb, safeRmSync (fork-added), suppressConsole, fixtures
-  *.test.ts              # 149 test files, 1474 tests
+  *.test.ts              # 150 test files, 1507 tests
   learn/                 # the Recursa suite; fakes for every model call
   fixtures/              # JSONL conversation fixtures
 
@@ -173,12 +173,12 @@ scheduled task. To roll back, remove the variable first. Then run `npm install -
 
 ### Current test state
 
-- **Full suite: 1474 tests in 149 files pass** (~17s wall clock on Linux;
+- **Full suite: 1507 tests in 150 files pass** (~17s wall clock on Linux;
   Windows runs are slower). The former `integration.test.ts` / `verify.test.ts` cold-embedding
   timeout flakes were fixed: the embedder is pre-warmed once per worker in `beforeAll`,
   `vitest.config.ts` sets `hookTimeout: 30000`, and the repair re-index test gets 60s. If you see a fresh
   timeout flake, suspect a new embedding-heavy hook without warm-up rather than the old cold-start cause.
-- The learn tests are the bulk of it (`test/learn/`, 36 files; the other 113 test files sit directly in `test/`). They never reach a model: every agent and
+- The learn tests are the bulk of the suite (`test/learn/`, 36 files; the other 114 test files sit directly in `test/`). They never reach a model: every agent and
   text call is injectable and tests pass fakes. `test/test-env.ts` pins the Claude backend, a closed ollama URL
   and a temporary config directory. `test/setup-env.ts` deletes every other `EPISODIC_MEMORY_*` variable of
   the machine. A local run therefore uses the CI settings and cannot reach a model or the live data.
@@ -418,9 +418,13 @@ cd ~/.claude/plugins/cache/<marketplace>/episodic-memory/<version>
 npm install --omit=dev --no-audit --no-fund
 # If transformers errors on onnxruntime-common:
 npm install --no-save onnxruntime-common@1.24.3
+# If the first search fails because onnxruntime_binding.node is missing (npm does not restore one file):
+rm -rf node_modules/onnxruntime-node && npm install --omit=dev --no-audit --no-fund
 ```
 
 (Plugin cache installs use **npm**, not Bun — matching the MCP wrapper.)
+
+The check also finds a missing `onnxruntime-node` binding. The wrapper then moves `node_modules/onnxruntime-node` aside and installs it again. When that reinstall fails, the wrapper puts the old directory back, writes `.episodic-memory-onnx-repair-failed` in the plugin root, and starts the server without vector search. The next attempt waits 24 hours. Delete the marker file to retry at the next start.
 
 Then `/reload-plugins`. If still failing, you're hitting Claude Code's per-session failure cache — see gotcha #7.
 

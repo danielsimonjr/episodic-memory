@@ -10,8 +10,8 @@ These modules import nothing from the repository, or only other leaf modules. A 
 |---|---|
 | `src/reentrancy.ts` | Exports `SUMMARIZER_GUARD_ENV` and `shouldSkipReentrantSync()`. A child process that the summarizer started carries the variable, and `sync` exits when it sees it. |
 | `src/node-floor.ts` | Holds the minimum Node.js version. `assertNodeFloor()` exits with one line on standard error when the runtime is older. |
-| `src/deps-health.ts` | Checks that `node_modules` is complete. It tests for sentinel files, not only for the folder. The MCP wrapper, the sync hook and `doctor` share it. |
-| `src/lockfile.ts` | A cross-process file lock. A lock is stale when its holder process is gone or when the lock is older than a set age. `isLockHeld` answers the same question without taking the lock. |
+| `src/deps-health.ts` | Checks that `node_modules` is complete. The module tests for sentinel files and for the native bindings of better-sqlite3 and `onnxruntime-node`, not only for the folder. The MCP wrapper, the sync hook and `doctor` share the module. |
+| `src/lockfile.ts` | A cross-process file lock. A lock is stale when its holder process is gone or when the lock is older than a set age. The holder writes the PID after the holder creates the file, so a file with no PID is stale only after 10 seconds. `isLockHeld` answers the same question without taking the lock. |
 | `src/constants.ts` | The marker text that identifies summarizer conversations, and the length cap for indexed text (`truncateForIndex`). |
 | `src/redact.ts` | Opt-in secret redaction. `maybeRedactSecrets(text)` returns the text unchanged unless `EPISODIC_MEMORY_REDACT_SECRETS` is on. |
 | `src/paths.ts` | Resolves every directory and file the plugin uses: the config directory, the archive, the index, the database, the learned-knowledge files, and the exclusion list. It creates directories with mode `0o700`. `findJsonlFiles` walks a project folder. |
@@ -167,7 +167,7 @@ Each `src/*-cli.ts` file is one command. A shim in `cli/` or the umbrella dispat
 
 The shims in `cli/` are `episodic-memory.js` (dispatcher), `index-conversations.js`, `search-conversations.js`, `sync-hook.js`, `digest-hook.js`, `mcp-server-wrapper.js`, `ensure-deps.js` and `forward-child.js`. `episodic-memory.js` and `index-conversations.js` start a child process and exit with its exit code. A refused argument (code 2) therefore reaches the caller. `forward-child.js` runs one script as a child. `forward-child.js` then exits with the exit code of the child. When a signal stops the child, `forward-child.js` exits 1. When the child cannot start, `forward-child.js` prints one line and exits 1. `search-conversations.js` and the four files with no extension (`episodic-memory`, `index-conversations`, `mcp-server`, `search-conversations`) use `forward-child.js`.
 
-`ensure-deps.js` runs before the MCP server and the sync hook start. `ensureDeps` repairs `node_modules` when `repairPlan` reports a missing package or binding. On every call, `pruneOptionalWeight` then removes the `onnxruntime-node` binding directories of the other platforms and architectures. The process loads only the `bin/napi-v6/<platform>/<arch>` directory of the running pair. When `EPISODIC_MEMORY_CLAUDE_BIN` is set and its probe passes, `pruneOptionalWeight` also removes every `@anthropic-ai/claude-agent-sdk-<platform>-<arch>` platform package. The SDK package itself stays, and so does another package with the same prefix. A failed probe removes nothing. The prune is best effort. If a removal fails, the function writes one stderr line and stops the prune. The prune never stops the start.
+`ensure-deps.js` runs before the MCP server and the sync hook start. `ensureDeps` repairs `node_modules` when `repairPlan` reports a missing package or binding. The repair runs under a lock file in the plugin root. The MCP wrapper and the sync hook therefore do not repair one tree at the same time. A process waits up to 5 minutes while another live process holds the lock. The process stops waiting when the tree needs no repair. When the process cannot create the lock file, the process repairs without the lock. The repair has three steps, in this order. The first step is `npm install` for a missing package. The second step is a reinstall of `onnxruntime-node` for a missing binding. The third step is `npm rebuild better-sqlite3` for a missing better-sqlite3 binding. Before each step, `ensureDeps` calls `repairPlan` again. `npm install` does not restore one missing file inside an installed package. The reinstall therefore moves `node_modules/onnxruntime-node` aside and installs the package again. When the binding is still missing, the reinstall puts the old directory back and writes a failure marker in the plugin root. The next attempt waits 24 hours. A process stop during the reinstall leaves the directory in the plugin root. The next repair moves the directory back first. A failed reinstall does not stop the start: `ensureDeps` returns `onnx-missing`, and the server starts without vector search. The sync hook writes the log line that `depsRepairLogEntry` gives for the result. `onnxBindingState` returns `unshipped` when the installed version has no binding for the running pair, or uses a layout that the check does not know. A reinstall cannot help there, so `repairPlan` reports no repair. On every call, `pruneOptionalWeight` then removes the `onnxruntime-node` binding directories of the other platforms and architectures. The process loads only the `bin/napi-v6/<platform>/<arch>` directory of the running pair. When `EPISODIC_MEMORY_CLAUDE_BIN` is set and its probe passes, `pruneOptionalWeight` also removes every `@anthropic-ai/claude-agent-sdk-<platform>-<arch>` platform package. The SDK package itself stays, and so does another package with the same prefix. A failed probe removes nothing. The prune is best effort. If a removal fails, the function writes one stderr line and stops the prune. The prune never stops the start.
 
 ## Hooks
 
@@ -198,10 +198,10 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 265 | repo-tools map |
+| totalSourceFiles | 266 | repo-tools map |
 | totalClasses | 8 | repo-tools map |
 | totalInterfaces | 137 | repo-tools map |
-| totalFunctions | 329 | repo-tools map |
-| totalConstants | 68 | repo-tools map |
+| totalFunctions | 332 | repo-tools map |
+| totalConstants | 69 | repo-tools map |
 
 The tool names, the table names and the model name come from a direct reading of `src/mcp-server.ts`, `src/db.ts` and `src/embeddings.ts`. They are not `repo-tools map` metrics.

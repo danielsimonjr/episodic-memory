@@ -41,6 +41,7 @@ function makeHealthy(root: string): void {
   touch(join(nm, 'better-sqlite3', 'lib', 'index.js'));
   touch(join(nm, '@huggingface', 'transformers', 'package.json'));
   touch(join(nm, 'onnxruntime-common', 'package.json'));
+  touch(join(nm, 'onnxruntime-node', 'package.json'));
   touch(join(nm, 'better-sqlite3', 'prebuilds', `${process.platform}-${process.arch}.node`));
 }
 

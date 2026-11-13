@@ -1532,7 +1532,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 413
+      "loc": 417
     },
     {
       "file": "test/mcp-auth.test.ts",

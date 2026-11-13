@@ -1149,7 +1149,7 @@ The codebase is organized into the following modules:
 | `./gpu-reservation.js` | `gpuReservationBlock` | Import |
 | `./ollama-backend.js` | `summarizerBackend` | Import |
 | `./deferral.js` | `deferralDetail` | Import |
-| `./fs-retry.js` | `renameWithRetry` | Import |
+| `./fs-retry.js` | `renameWithRetry, isSharingViolation` | Import |
 | `./db.js` | `*` | Import |
 | `./embeddings.js` | `*` | Import |
 | `./parser.js` | `*` | Import |
@@ -1158,6 +1158,7 @@ The codebase is organized into the following modules:
 **Exports:**
 - Interfaces: `SyncResult`, `SyncOptions`
 - Functions: `buildSyncOptionsFromEnv`, `isTerminalFailRecord`, `extractSessionIdFromPath`, `syncConversations`, `summarizeOneFile`
+- Constants: `ARCHIVE_RENAME_ATTEMPTS`
 
 ---
 
@@ -2255,8 +2256,8 @@ graph TD
 |----------|-------|
 | Total Source Files | 289 |
 | Subsystems | 5 |
-| Total Lines of Code | 57230 |
-| Total Exports | 610 |
+| Total Lines of Code | 57299 |
+| Total Exports | 611 |
 | Total Re-exports | 8 |
 | Total Classes | 10 |
 | Total Interfaces | 139 |

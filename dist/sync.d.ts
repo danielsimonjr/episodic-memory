@@ -65,6 +65,13 @@ export declare function buildSyncOptionsFromEnv(env: NodeJS.ProcessEnv): SyncOpt
  */
 export declare function isTerminalFailRecord(filePath: string): boolean;
 /**
+ * Attempts of the rename that replaces an archive copy. The waits are 20 ms to 1.28 s, 2.54 s in total.
+ *
+ * On Windows an open handle on the archive copy stops the rename. A reader such as the `read` tool or a search
+ * can hold the copy for longer than the 300 ms of the default attempts.
+ */
+export declare const ARCHIVE_RENAME_ATTEMPTS = 8;
+/**
  * Return the session id from a transcript file name, or `null` when the name has none.
  *
  * The session id is the last UUID in the file name, without the `.jsonl` extension. The match ignores case.

@@ -4,7 +4,7 @@ metadata:
   language: typescript
   totalFiles: 289
   totalModules: 4
-  totalExports: 610
+  totalExports: 611
 modules:
   src:
     cli/digest-hook.js:
@@ -2790,6 +2790,7 @@ modules:
         - file: src/fs-retry.ts
           imports:
             - renameWithRetry
+            - isSharingViolation
           typeOnly: false
         - file: src/db.ts
           imports:
@@ -2813,6 +2814,7 @@ modules:
         - SyncOptions
         - buildSyncOptionsFromEnv
         - isTerminalFailRecord
+        - ARCHIVE_RENAME_ATTEMPTS
         - extractSessionIdFromPath
         - syncConversations
         - summarizeOneFile
@@ -6401,6 +6403,7 @@ modules:
       externalDependencies:
         - vitest
       nodeDependencies:
+        - child_process
         - fs
         - os
         - path
@@ -6408,6 +6411,7 @@ modules:
         - file: src/sync.ts
           imports:
             - syncConversations
+            - ARCHIVE_RENAME_ATTEMPTS
           typeOnly: false
         - file: src/fs-retry.ts
           imports:
@@ -7091,8 +7095,8 @@ statistics:
   totalTypeScriptFiles: 289
   totalSourceFiles: 289
   totalModules: 4
-  totalLinesOfCode: 57230
-  totalExports: 610
+  totalLinesOfCode: 57299
+  totalExports: 611
   entryRoots: 6
   reachableFiles: 49
   dormantFiles: 60
@@ -7102,7 +7106,7 @@ statistics:
   typeOnlyCircularDeps: 1
   totalTypeOnlyImports: 83
   noImporterFileCount: 14
-  unusedExportsCount: 117
+  unusedExportsCount: 116
   circularDepsTruncated: false
   runtimeCyclicComponents: 0
   typeOnlyCyclicComponents: 1
@@ -7113,7 +7117,7 @@ statistics:
   totalFunctions: 347
   totalTypeGuards: 11
   totalEnums: 0
-  totalConstants: 70
+  totalConstants: 71
   totalReExports: 8
 reachability:
   roots:

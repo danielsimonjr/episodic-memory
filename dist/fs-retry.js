@@ -22,19 +22,20 @@ export function isSharingViolation(error) {
     return code === 'EPERM' || code === 'EBUSY';
 }
 /**
- * Rename `from` to `to`. Retry a sharing violation up to `RETRY_ATTEMPTS` times.
+ * Rename `from` to `to`. Retry a sharing violation up to `attempts` times.
  *
+ * @param attempts the number of attempts. The default value is `RETRY_ATTEMPTS`. The wait doubles after each failed attempt.
  * @throws the last `EPERM` or `EBUSY` error when every attempt fails
  * @throws any other error at once
  */
-export function renameWithRetry(from, to) {
+export function renameWithRetry(from, to, attempts = RETRY_ATTEMPTS) {
     for (let attempt = 0;; attempt += 1) {
         try {
             fs.renameSync(from, to);
             return;
         }
         catch (error) {
-            if (!isSharingViolation(error) || attempt + 1 >= RETRY_ATTEMPTS)
+            if (!isSharingViolation(error) || attempt + 1 >= attempts)
                 throw error;
             sleepSync(retryDelayMs(attempt));
         }

@@ -7,9 +7,10 @@ export declare function sleepSync(ms: number): void;
 /** True for the error codes of a Windows sharing violation. */
 export declare function isSharingViolation(error: unknown): boolean;
 /**
- * Rename `from` to `to`. Retry a sharing violation up to `RETRY_ATTEMPTS` times.
+ * Rename `from` to `to`. Retry a sharing violation up to `attempts` times.
  *
+ * @param attempts the number of attempts. The default value is `RETRY_ATTEMPTS`. The wait doubles after each failed attempt.
  * @throws the last `EPERM` or `EBUSY` error when every attempt fails
  * @throws any other error at once
  */
-export declare function renameWithRetry(from: string, to: string): void;
+export declare function renameWithRetry(from: string, to: string, attempts?: number): void;

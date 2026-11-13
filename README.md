@@ -665,6 +665,8 @@ Search indexed conversations using semantic similarity or exact text matching.
 
 Every result carries the archive path and line range that `read` takes.
 
+On some hosts the embedding backend cannot load. A `both` search then returns the text results only. The markdown result starts with a `Note:` line. The line names the missing vector step. The JSON result has a `notices` array. These text results have no similarity. A `vector` search and a multi-concept search fail in that case, because both searches need the embeddings.
+
 #### `read`
 
 Display a conversation, or a line range of one, in readable markdown format.

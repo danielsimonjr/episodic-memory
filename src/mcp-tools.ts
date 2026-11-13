@@ -80,7 +80,9 @@ export async function handleToolCall(name: string, args: unknown): Promise<McpTo
           resultText = await formatMultiConceptResults(results, params.query);
         }
       } else {
+        const notices: string[] = [];
         const options: SearchOptions = {
+          onNotice: (message) => notices.push(message),
           mode: params.mode,
           limit: params.limit,
           after: params.after,
@@ -105,12 +107,14 @@ export async function handleToolCall(name: string, args: unknown): Promise<McpTo
               })),
               count: results.length,
               mode: params.mode,
+              ...(notices.length > 0 ? { notices } : {}),
             },
             null,
             2
           );
         } else {
-          resultText = await formatResults(results);
+          const noticeLines = notices.map((notice) => `Note: ${notice}\n\n`).join('');
+          resultText = noticeLines + (await formatResults(results));
         }
       }
 

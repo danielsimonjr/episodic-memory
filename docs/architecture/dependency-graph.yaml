@@ -2,7 +2,7 @@ metadata:
   name: episodic-memory
   schemaVersion: 2.0.0
   language: typescript
-  totalFiles: 288
+  totalFiles: 289
   totalModules: 4
   totalExports: 610
 modules:
@@ -2536,6 +2536,7 @@ modules:
           imports:
             - initEmbeddings
             - generateQueryEmbedding
+            - EmbeddingsUnavailableError
           typeOnly: false
         - file: src/types.ts
           imports:
@@ -6051,6 +6052,39 @@ modules:
         - url
       internalDependencies: []
       exports: []
+    test/search-embeddings-unavailable.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - fs
+        - os
+        - path
+      internalDependencies:
+        - file: src/types.ts
+          imports:
+            - ConversationExchange
+          typeOnly: true
+        - file: test/test-utils.ts
+          imports:
+            - safeRmSync
+          typeOnly: false
+        - file: src/embeddings.ts
+          imports:
+            - '*'
+          typeOnly: false
+        - file: src/db.ts
+          imports:
+            - '*'
+          typeOnly: false
+        - file: src/search.ts
+          imports:
+            - '*'
+          typeOnly: false
+        - file: src/mcp-tools.ts
+          imports:
+            - '*'
+          typeOnly: false
+      exports: []
     test/search-metadata-filters.test.ts:
       externalDependencies:
         - better-sqlite3
@@ -7054,10 +7088,10 @@ modules:
           typeOnly: false
       exports: []
 statistics:
-  totalTypeScriptFiles: 288
-  totalSourceFiles: 288
+  totalTypeScriptFiles: 289
+  totalSourceFiles: 289
   totalModules: 4
-  totalLinesOfCode: 57080
+  totalLinesOfCode: 57230
   totalExports: 610
   entryRoots: 6
   reachableFiles: 49
@@ -7066,7 +7100,7 @@ statistics:
   testOnlyFiles: 45
   runtimeCircularDeps: 0
   typeOnlyCircularDeps: 1
-  totalTypeOnlyImports: 82
+  totalTypeOnlyImports: 83
   noImporterFileCount: 14
   unusedExportsCount: 117
   circularDepsTruncated: false

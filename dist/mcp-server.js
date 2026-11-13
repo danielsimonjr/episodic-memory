@@ -904,10 +904,20 @@ async function searchConversations(query, options = {}) {
   if (before) validateISODate(before, "--before");
   const { db, ownsConnection } = resolveSearchDb(options);
   let results = [];
+  let vectorRan = mode !== "text";
   try {
     const { sql: filterClause, params: filterParams } = buildSearchFilters(options);
-    if (mode === "vector" || mode === "both") {
-      await initEmbeddings();
+    if (vectorRan) {
+      try {
+        await initEmbeddings();
+      } catch (error62) {
+        if (mode !== "both" || !(error62 instanceof EmbeddingsUnavailableError)) throw error62;
+        vectorRan = false;
+        const notice = `Vector search is unavailable (${error62.message}). The results come from the text search only.`;
+        (options.onNotice ?? ((message) => console.error(`episodic-memory: ${message}`)))(notice);
+      }
+    }
+    if (vectorRan) {
       const queryEmbedding = await generateQueryEmbedding(query);
       const embedding = Buffer.from(new Float32Array(queryEmbedding).buffer);
       if (filterClause) {
@@ -994,7 +1004,7 @@ async function searchConversations(query, options = {}) {
     const snippet = snippetText + (exchange.userMessage.length > 200 ? "..." : "");
     return {
       exchange,
-      similarity: mode === "text" ? void 0 : l2DistanceToCosineSimilarity(row.distance),
+      similarity: vectorRan ? l2DistanceToCosineSimilarity(row.distance) : void 0,
       snippet,
       summary
     };
@@ -23334,7 +23344,9 @@ async function handleToolCall(name, args) {
           resultText = await formatMultiConceptResults2(results, params.query);
         }
       } else {
+        const notices = [];
         const options = {
+          onNotice: (message) => notices.push(message),
           mode: params.mode,
           limit: params.limit,
           after: params.after,
@@ -23356,13 +23368,17 @@ async function handleToolCall(name, args) {
                 ...showSummary && r.summary ? { summary: r.summary } : {}
               })),
               count: results.length,
-              mode: params.mode
+              mode: params.mode,
+              ...notices.length > 0 ? { notices } : {}
             },
             null,
             2
           );
         } else {
-          resultText = await formatResults2(results);
+          const noticeLines = notices.map((notice) => `Note: ${notice}
+
+`).join("");
+          resultText = noticeLines + await formatResults2(results);
         }
       }
       return {

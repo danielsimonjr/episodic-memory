@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3';
 import { initDatabase, getSharedReaderDatabase } from './db.js';
-import { initEmbeddings, generateQueryEmbedding } from './embeddings.js';
+import { initEmbeddings, generateQueryEmbedding, EmbeddingsUnavailableError } from './embeddings.js';
 import { SearchResult, ConversationExchange, MultiConceptResult } from './types.js';
 import { maybeRedactSecrets } from './redact.js';
 import { safeArchiveSummaryPath } from './archive-path.js';
@@ -77,6 +77,13 @@ export interface SearchOptions {
    * a one-shot connection (CLI behavior).
    */
   db?: Database.Database;
+  /**
+   * Receive a notice about a search step that did not run.
+   *
+   * A `both` search calls this function when the embedding backend cannot load. The results then come from the text step only.
+   * Without this function, the search writes the notice to stderr.
+   */
+  onNotice?: (message: string) => void;
   /** When true with no `db`, use the process-wide shared reader. */
   useSharedReader?: boolean;
 }
@@ -278,6 +285,8 @@ function resolveSearchDb(options: SearchOptions): {
  *
  * The `mode` option picks the search path. `vector` uses embeddings. `text` uses full-text search, with a `LIKE` search when full-text search fails. `both` merges the two result lists and removes duplicates.
  * Sidechain exchanges never match. The function throws when `after` or `before` is not in `YYYY-MM-DD` format.
+ * When the embedding backend cannot load, a `vector` search throws `EmbeddingsUnavailableError`.
+ * A `both` search then returns the text results. The search then sends a notice to `options.onNotice`.
  * The function closes a connection that the function opens. The function leaves a connection from `options.db` or the shared reader open.
  *
  * @param query The text to search for.
@@ -296,14 +305,27 @@ export async function searchConversations(
   const { db, ownsConnection } = resolveSearchDb(options);
 
   let results: any[] = [];
+  // The value is false when the vector step did not run. The rows then have no similarity.
+  let vectorRan = mode !== 'text';
 
   try {
     const { sql: filterClause, params: filterParams } = buildSearchFilters(options);
 
-    if (mode === 'vector' || mode === 'both') {
+    if (vectorRan) {
+      // The text step needs no embedder. A backend that cannot load therefore removes only the vector step of `both`.
+      try {
+        await initEmbeddings();
+      } catch (error) {
+        if (mode !== 'both' || !(error instanceof EmbeddingsUnavailableError)) throw error;
+        vectorRan = false;
+        const notice = `Vector search is unavailable (${error.message}). The results come from the text search only.`;
+        (options.onNotice ?? ((message: string) => console.error(`episodic-memory: ${message}`)))(notice);
+      }
+    }
+
+    if (vectorRan) {
       // Vector similarity search. vec0 takes the nearest rows before it applies WHERE.
       // A filtered search therefore uses the exact scan, which applies the filters first.
-      await initEmbeddings();
       const queryEmbedding = await generateQueryEmbedding(query);
       const embedding = Buffer.from(new Float32Array(queryEmbedding).buffer);
 
@@ -404,7 +426,7 @@ export async function searchConversations(
 
     return {
       exchange,
-      similarity: mode === 'text' ? undefined : l2DistanceToCosineSimilarity(row.distance),
+      similarity: vectorRan ? l2DistanceToCosineSimilarity(row.distance) : undefined,
       snippet,
       summary
     } as SearchResult & { summary?: string };

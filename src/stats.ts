@@ -9,7 +9,10 @@ import { getDbPath } from './paths.js';
 export interface IndexStats {
   /** Distinct archive files that hold indexed exchanges. */
   totalConversations: number;
-  /** Conversations whose `-summary.txt` file exists beside the archived `.jsonl` file. */
+  /**
+   * Conversations whose `-summary.txt` file beside the archived `.jsonl` file holds one byte or more.
+   * An empty file is the sentinel of a conversation with no exchanges, or of a summary that the sync gave up on.
+   */
   conversationsWithSummaries: number;
   conversationsWithoutSummaries: number;
   totalExchanges: number;
@@ -26,11 +29,26 @@ export interface IndexStats {
 }
 
 /**
+ * Return true when the summary file exists and holds one byte or more.
+ *
+ * @param fs the `fs` module that the caller loaded
+ * @param summaryPath the `-summary.txt` path of one conversation
+ */
+function hasSummaryText(fs: typeof import('fs'), summaryPath: string): boolean {
+  try {
+    return fs.statSync(summaryPath).size > 0;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Read the counts and sizes of the conversation index.
  *
  * The function opens the database read-only and closes it before the function returns.
  * The function returns zero counts when the file does not exist or has no exchanges table.
- * The function counts a conversation as summarized when its `-summary.txt` file exists.
+ * The function counts a conversation as summarized when its `-summary.txt` file holds one byte or more.
+ * An empty file is a sentinel of the sync. An empty file is not a summary.
  * The function throws when SQLite cannot open or query the file.
  *
  * @param dbPath the index file to read. When the caller gives no value or an empty value, the function uses getDbPath.
@@ -71,13 +89,13 @@ export async function getIndexStats(dbPath?: string): Promise<IndexStats> {
     // Total conversations
     const totalConversations = db.prepare('SELECT COUNT(DISTINCT archive_path) as count FROM exchanges').get() as { count: number };
 
-    // Check for summaries (these are files, not DB fields)
-    const fs = await import('fs');
+    // Summaries are files, not DB fields. An empty file is a sentinel of the sync: a conversation with no exchanges,
+    // or a summary that the sync gave up on. Ported from upstream de11f90.
     const conversationPaths = db.prepare('SELECT DISTINCT archive_path FROM exchanges').all() as Array<{ archive_path: string }>;
     let withSummariesCount = 0;
     for (const { archive_path } of conversationPaths) {
       const summaryPath = archive_path.replace('.jsonl', '-summary.txt');
-      if (fs.existsSync(summaryPath)) {
+      if (hasSummaryText(fs, summaryPath)) {
         withSummariesCount++;
       }
     }

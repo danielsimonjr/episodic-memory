@@ -142,7 +142,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/show-cli.ts` | episodic-memory | src | orphan | 59 |
 | `src/show.ts` | episodic-memory | src | reachable | 1027 |
 | `src/stats-cli.ts` | episodic-memory | src | orphan | 32 |
-| `src/stats.ts` | episodic-memory | src | test-only | 172 |
+| `src/stats.ts` | episodic-memory | src | test-only | 190 |
 | `src/summarizer.ts` | episodic-memory | src | reachable | 865 |
 | `src/sync-banner.ts` | episodic-memory | src | test-only | 33 |
 | `src/sync-cli.ts` | episodic-memory | src | orphan | 248 |
@@ -286,7 +286,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/setup-env.ts` | (root) | tests | test | 27 |
 | `test/show.test.ts` | (root) | tests | test | 353 |
 | `test/stats-format.test.ts` | (root) | tests | test | 29 |
-| `test/stats.test.ts` | (root) | tests | test | 135 |
+| `test/stats.test.ts` | (root) | tests | test | 169 |
 | `test/summarizer-api-env.test.ts` | (root) | tests | test | 44 |
 | `test/summarizer-claude-path.test.ts` | (root) | tests | test | 158 |
 | `test/summarizer-gpu-reservation.test.ts` | (root) | tests | test | 119 |

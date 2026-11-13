@@ -16,6 +16,7 @@ docs/roadmap/
 ├── next.md              ← 3-6 months — themes with sketched plans
 ├── later.md             ← 6-12+ months — aspirational + visionary
 ├── upstream-sync.md     ← strategy for tracking obra/episodic-memory
+├── upstream-triage.md   ← class of each obra commit after the fork point
 ├── dependency-minimization.md ← plan to shrink the install footprint
 └── focus-areas/         ← per-theme deep dives
     ├── windows-correctness.md

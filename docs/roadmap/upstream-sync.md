@@ -71,6 +71,8 @@ equivalent for our users but a switch could surprise existing installs.
 
 ## How upstream changes get classified
 
+[`upstream-triage.md`](upstream-triage.md) records the class of each upstream commit after the fork point.
+
 When `git diff main upstream/main` shows something new, classify it:
 
 - **Pure bugfix, doesn't conflict** → merge, ship.

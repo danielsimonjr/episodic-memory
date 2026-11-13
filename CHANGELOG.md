@@ -1,6 +1,7 @@
 ## [Unreleased]
 
 ### Added
+- **`docs/roadmap/upstream-triage.md` classifies the 40 obra commits after the fork point.** Each commit is in the fork, a port, a partial port, a skip or a product decision, with the fork evidence. The ledger finds 8 ports and 10 partial ports. `todo.md` has one row for each port.
 - **A host can drop the 269 MB bundled Claude Code binary (opt-in, `EPISODIC_MEMORY_CLAUDE_BIN`).** The Agent SDK starts the binary of its platform package, for example `@anthropic-ai/claude-agent-sdk-win32-x64`. A host that sets the variable to an absolute path of its own Claude Code binary uses that binary instead.
   - `src/claude-bin.ts` runs `<path> --version` once per process, with a bound of 10 seconds. A timeout is not kept, so a slow cold start retries at the next call. The version must be at or above the floor in the SDK `manifest.json`, because an older binary can delete session records.
   - When the probe passes, `ensureDeps` removes every `claude-agent-sdk-<platform>-<arch>` platform package. Another package with the same prefix stays. One call removed 269,231,840 bytes from an install at the `bun.lock` versions. With the variable unset, nothing changes.

@@ -9,7 +9,7 @@
 | Metric | Count |
 |--------|-------|
 | Total Source Files | 108 |
-| Total Test Files | 154 |
+| Total Test Files | 155 |
 | Source Files with Tests | 85 |
 | Source Files without Tests | 23 |
 | Coverage (raw, direct-import) | **78.7%** |
@@ -83,7 +83,7 @@ The following 23 source files are not directly imported by any test file:
 | `src/embeddings.ts` | `embedding-migration.test.ts`, `embeddings-format.test.ts`, `integration.test.ts`, `multi-concept.test.ts`, `query-prefix.test.ts`, `verify.test.ts` |
 | `src/fs-retry.ts` | `sync-copy-retry.test.ts` |
 | `src/gpu-reservation.ts` | `gpu-reservation.test.ts` |
-| `src/indexer.ts` | `exclude-nested.test.ts`, `incremental-indexing.test.ts`, `learn-handlers.test.ts`, `search-metadata-filters.test.ts` |
+| `src/indexer.ts` | `dangling-project-link.test.ts`, `exclude-nested.test.ts`, `incremental-indexing.test.ts`, `learn-handlers.test.ts`, `search-metadata-filters.test.ts` |
 | `learn/agent-runner.ts` | `agent-runner.test.ts` |
 | `learn/bootstrap.ts` | `bootstrap.test.ts`, `relay-task7-findings.test.ts` |
 | `learn/cited-ids.ts` | `cited-ids.test.ts`, `relay-challenger.test.ts` |
@@ -123,7 +123,7 @@ The following 23 source files are not directly imported by any test file:
 | `src/ollama-backend.ts` | `backfill-gpu-reservation.test.ts`, `claude-bin-deferral.test.ts`, `digest-gpu-reservation.test.ts`, `gpu-reservation.test.ts`, `ollama-backend.test.ts`, `ollama-plain-reply.test.ts`, `summarizer-gpu-reservation.test.ts`, `summarizer-ollama-fallback.test.ts`, `summarizer-prompt-budget.test.ts`, `sync-gpu-reservation.test.ts`, `topic-job.test.ts` |
 | `src/orphan-reaper.ts` | `orphan-reaper.test.ts` |
 | `src/parser.ts` | `codex-transcripts.test.ts`, `integration.test.ts`, `parser-tool-result.test.ts`, `parser.test.ts` |
-| `src/paths.ts` | `codex-transcripts.test.ts`, `knowledge-db.test.ts`, `knowledge-store.test.ts`, `learn-cli.test.ts`, `learn-lock.test.ts`, `learning-store.test.ts`, `skills-tool.test.ts`, `paths.test.ts` |
+| `src/paths.ts` | `codex-transcripts.test.ts`, `dangling-project-link.test.ts`, `knowledge-db.test.ts`, `knowledge-store.test.ts`, `learn-cli.test.ts`, `learn-lock.test.ts`, `learning-store.test.ts`, `skills-tool.test.ts`, `paths.test.ts` |
 | `src/priority.ts` | `priority.test.ts` |
 | `src/prune.ts` | `prune.test.ts` |
 | `src/redact.ts` | `mcp-read-redaction.test.ts`, `redact-patterns.test.ts`, `security-speed-helpers.test.ts` |
@@ -133,7 +133,7 @@ The following 23 source files are not directly imported by any test file:
 | `src/stats.ts` | `stats-format.test.ts`, `stats.test.ts` |
 | `src/summarizer.ts` | `claude-bin-deferral.test.ts`, `ollama-plain-reply.test.ts`, `real-sdk-guard.test.ts`, `summarizer-api-env.test.ts`, `summarizer-claude-path.test.ts`, `summarizer-gpu-reservation.test.ts`, `summarizer-ollama-fallback.test.ts`, `summarizer-options.test.ts`, `summarizer-prompt-budget.test.ts`, `summarizer-text.test.ts`, `topic-job.test.ts`, `verify.test.ts` |
 | `src/sync-banner.ts` | `sync-banner.test.ts` |
-| `src/sync.ts` | `claude-bin-deferral.test.ts`, `exclude-nested.test.ts`, `sync-copy-retry.test.ts`, `sync-empty-summary-audit.test.ts`, `sync-gpu-reservation.test.ts`, `sync-helpers.test.ts`, `sync-incremental-and-db.test.ts`, `sync-pending-and-legacy-retry.test.ts`, `sync-session-id.test.ts`, `sync-summary-retry.test.ts`, `sync.test.ts` |
+| `src/sync.ts` | `claude-bin-deferral.test.ts`, `dangling-project-link.test.ts`, `exclude-nested.test.ts`, `sync-copy-retry.test.ts`, `sync-empty-summary-audit.test.ts`, `sync-gpu-reservation.test.ts`, `sync-helpers.test.ts`, `sync-incremental-and-db.test.ts`, `sync-pending-and-legacy-retry.test.ts`, `sync-session-id.test.ts`, `sync-summary-retry.test.ts`, `sync.test.ts` |
 | `src/topic-db.ts` | `topic-db.test.ts`, `topic-job.test.ts`, `topic-tool.test.ts` |
 | `src/topic-format.ts` | `topic-format.test.ts`, `topic-prompts.test.ts` |
 | `src/topic-job.ts` | `topic-job.test.ts` |
@@ -141,7 +141,7 @@ The following 23 source files are not directly imported by any test file:
 | `src/topic-prompts.ts` | `topic-prompts.test.ts` |
 | `src/topic-validate.ts` | `topic-prompts.test.ts`, `topic-validate.test.ts` |
 | `src/types.ts` | `claude-bin-deferral.test.ts`, `codex-transcripts.test.ts`, `cross-harness-recall.test.ts`, `db-helpers.test.ts`, `db.test.ts`, `digest-prompt-budget.test.ts`, `digest-prompts.test.ts`, `embedding-migration-helpers.test.ts`, `oversized-message-guard.test.ts`, `prune.test.ts`, `search-with-summary.test.ts`, `summarizer-claude-path.test.ts`, `summarizer-gpu-reservation.test.ts`, `summarizer-text.test.ts`, `sync-incremental-and-db.test.ts`, `topic-prompts.test.ts`, `verify.test.ts` |
-| `src/verify.ts` | `verify.test.ts` |
+| `src/verify.ts` | `dangling-project-link.test.ts`, `verify.test.ts` |
 
 ---
 
@@ -172,6 +172,7 @@ The following 23 source files are not directly imported by any test file:
 | `test/content-text.test.ts` | 1 files |
 | `test/cosine-similarity.test.ts` | 1 files |
 | `test/cross-harness-recall.test.ts` | 3 files |
+| `test/dangling-project-link.test.ts` | 4 files |
 | `test/db-helpers.test.ts` | 2 files |
 | `test/db.test.ts` | 2 files |
 | `test/deps-health.test.ts` | 1 files |

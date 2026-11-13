@@ -4,7 +4,7 @@ import { initDatabase, insertExchange, getMaxIndexedLine } from './db.js';
 import { parseConversation } from './parser.js';
 import { initEmbeddings, generateExchangeEmbedding, generateExchangeEmbeddings } from './embeddings.js';
 import { summarizeConversation } from './summarizer.js';
-import { getArchiveDir, getExcludedProjects, getConversationSourceDirs, findJsonlFiles } from './paths.js';
+import { getArchiveDir, getExcludedProjects, getConversationSourceDirs, findJsonlFiles, statIfExists } from './paths.js';
 // Set max output tokens for Claude SDK (used by summarizer)
 process.env.CLAUDE_CODE_MAX_OUTPUT_TOKENS = '20000';
 // Increase max listeners for concurrent API calls
@@ -57,8 +57,7 @@ export async function indexConversations(limitToProject, maxConversations, concu
             if (limitToProject && project !== limitToProject)
                 continue;
             const projectPath = path.join(sourceDir, project);
-            const stat = fs.statSync(projectPath);
-            if (!stat.isDirectory())
+            if (!statIfExists(projectPath)?.isDirectory())
                 continue;
             const files = findJsonlFiles(projectPath, excludedDirSet);
             if (files.length === 0)
@@ -171,7 +170,7 @@ export async function indexSession(sessionId, concurrency = 1, noSummaries = fal
             if (excludedProjects.includes(project))
                 continue;
             const projectPath = path.join(sourceDir, project);
-            if (!fs.statSync(projectPath).isDirectory())
+            if (!statIfExists(projectPath)?.isDirectory())
                 continue;
             const files = findJsonlFiles(projectPath, excludedDirSet).filter(f => f.includes(sessionId));
             if (files.length > 0) {
@@ -245,7 +244,7 @@ export async function indexUnprocessed(concurrency = 1, noSummaries = false) {
             if (excludedProjects.includes(project))
                 continue;
             const projectPath = path.join(sourceDir, project);
-            if (!fs.statSync(projectPath).isDirectory())
+            if (!statIfExists(projectPath)?.isDirectory())
                 continue;
             const files = findJsonlFiles(projectPath, excludedDirSet);
             for (const file of files) {

@@ -8,7 +8,7 @@ This report lists each source file that the map census finds, with a disposition
 
 **Language**: typescript
 
-**Total files**: 274
+**Total files**: 275
 
 ## Disposition counts
 
@@ -18,12 +18,12 @@ This report lists each source file that the map census finds, with a disposition
 | `build-entry` | 4 | A `src`-area file that is an entry root. |
 | `test-only` | 46 | A `src`-area file that only a test reaches. |
 | `orphan` | 15 | A `src`-area file that nothing reaches. Delete it, or wire it to a root. |
-| `test` | 161 | A file in a `test/` or `tests/` folder, or a `*.test.ts` or `*.spec.ts` file. |
+| `test` | 162 | A file in a `test/` or `tests/` folder, or a `*.test.ts` or `*.spec.ts` file. |
 | `tool` | 4 | A file in a `tools/` or `scripts/` folder outside `src/`. |
 | `config` | 1 | A `*.config.*` file of TypeScript or JavaScript. |
 | `example` | 0 | A file in `examples/` or `docs/`. |
 | `bench` | 0 | A file in `bench/` or `benchmarks/`, or a `*.bench.*` file. |
-| **Total** | **274** | |
+| **Total** | **275** | |
 
 ## Per-area counts
 
@@ -31,14 +31,14 @@ This report lists each source file that the map census finds, with a disposition
 | --- | --: |
 | `config` | 1 |
 | `src` | 108 |
-| `tests` | 161 |
+| `tests` | 162 |
 | `tools` | 4 |
 
 ## Per-package counts
 
 | Package | Files |
 | --- | --: |
-| `(root)` | 175 |
+| `(root)` | 176 |
 | `episodic-memory` | 99 |
 
 ## All files
@@ -87,7 +87,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/gpu-reservation.ts` | episodic-memory | src | reachable | 98 |
 | `src/index-cli.ts` | episodic-memory | src | build-entry | 280 |
 | `src/index.ts` | episodic-memory | src | build-entry | 9 |
-| `src/indexer.ts` | episodic-memory | src | reachable | 417 |
+| `src/indexer.ts` | episodic-memory | src | reachable | 415 |
 | `src/learn-cli.ts` | episodic-memory | src | orphan | 94 |
 | `src/learn/agent-runner.ts` | episodic-memory | src | test-only | 568 |
 | `src/learn/bootstrap.ts` | episodic-memory | src | test-only | 850 |
@@ -131,7 +131,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/ollama-backend.ts` | episodic-memory | src | reachable | 145 |
 | `src/orphan-reaper.ts` | episodic-memory | src | test-only | 56 |
 | `src/parser.ts` | episodic-memory | src | reachable | 553 |
-| `src/paths.ts` | episodic-memory | src | reachable | 199 |
+| `src/paths.ts` | episodic-memory | src | reachable | 214 |
 | `src/priority.ts` | episodic-memory | src | test-only | 46 |
 | `src/prune.ts` | episodic-memory | src | reachable | 110 |
 | `src/redact.ts` | episodic-memory | src | reachable | 84 |
@@ -145,7 +145,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/summarizer.ts` | episodic-memory | src | reachable | 837 |
 | `src/sync-banner.ts` | episodic-memory | src | test-only | 33 |
 | `src/sync-cli.ts` | episodic-memory | src | orphan | 248 |
-| `src/sync.ts` | episodic-memory | src | test-only | 536 |
+| `src/sync.ts` | episodic-memory | src | test-only | 534 |
 | `src/topic-db.ts` | episodic-memory | src | reachable | 521 |
 | `src/topic-format.ts` | episodic-memory | src | reachable | 462 |
 | `src/topic-job.ts` | episodic-memory | src | test-only | 309 |
@@ -155,7 +155,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/topic-tool.ts` | episodic-memory | src | reachable | 149 |
 | `src/topic-validate.ts` | episodic-memory | src | test-only | 218 |
 | `src/types.ts` | episodic-memory | src | reachable | 82 |
-| `src/verify.ts` | episodic-memory | src | reachable | 226 |
+| `src/verify.ts` | episodic-memory | src | reachable | 224 |
 | `test/agent-sdk-floor.test.ts` | (root) | tests | test | 39 |
 | `test/allow-scripts-pin.test.ts` | (root) | tests | test | 88 |
 | `test/archive-path-edges.test.ts` | (root) | tests | test | 67 |
@@ -179,6 +179,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/content-text.test.ts` | (root) | tests | test | 47 |
 | `test/cosine-similarity.test.ts` | (root) | tests | test | 30 |
 | `test/cross-harness-recall.test.ts` | (root) | tests | test | 86 |
+| `test/dangling-project-link.test.ts` | (root) | tests | test | 145 |
 | `test/db-helpers.test.ts` | (root) | tests | test | 102 |
 | `test/db.test.ts` | (root) | tests | test | 123 |
 | `test/deps-health.test.ts` | (root) | tests | test | 207 |

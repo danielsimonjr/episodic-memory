@@ -1,7 +1,7 @@
 {
   "metadata": {
     "totalSourceFiles": 108,
-    "totalTestFiles": 154,
+    "totalTestFiles": 155,
     "testedCount": 85,
     "untestedCount": 23,
     "coveragePercent": "78.7",
@@ -284,6 +284,7 @@
     "src/index-cli.ts": [],
     "src/index.ts": [],
     "src/indexer.ts": [
+      "test/dangling-project-link.test.ts",
       "test/exclude-nested.test.ts",
       "test/incremental-indexing.test.ts",
       "test/learn/learn-handlers.test.ts",
@@ -544,6 +545,7 @@
     ],
     "src/paths.ts": [
       "test/codex-transcripts.test.ts",
+      "test/dangling-project-link.test.ts",
       "test/learn/knowledge-db.test.ts",
       "test/learn/knowledge-store.test.ts",
       "test/learn/learn-cli.test.ts",
@@ -615,6 +617,7 @@
     "src/sync-cli.ts": [],
     "src/sync.ts": [
       "test/claude-bin-deferral.test.ts",
+      "test/dangling-project-link.test.ts",
       "test/exclude-nested.test.ts",
       "test/sync-copy-retry.test.ts",
       "test/sync-empty-summary-audit.test.ts",
@@ -670,6 +673,7 @@
       "test/verify.test.ts"
     ],
     "src/verify.ts": [
+      "test/dangling-project-link.test.ts",
       "test/verify.test.ts"
     ],
     "vendor/onnxruntime-web-stub/index.js": []
@@ -741,6 +745,12 @@
       "src/db.ts",
       "src/search.ts",
       "src/types.ts"
+    ],
+    "test/dangling-project-link.test.ts": [
+      "src/sync.ts",
+      "src/indexer.ts",
+      "src/verify.ts",
+      "src/paths.ts"
     ],
     "test/db-helpers.test.ts": [
       "src/db.ts",

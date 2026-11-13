@@ -113,7 +113,7 @@ The dispatcher takes a command as its first argument.
 | `parser` | `parseConversation`, `parseConversationFile` |
 | `search` | `includeSearchSummaries`, `maxSummaryDisplayChars`, `formatSummaryForDisplay`, `SearchOptions`, `l2DistanceToCosineSimilarity`, `buildFtsMatchQuery`, `searchConversations`, `formatResults`, `searchMultipleConcepts`, `formatMultiConceptResults` |
 | `summarizer` | `CodexSummarizerCommand`, `getApiEnv`, `shouldSkipReentrantSync`, `formatConversationText`, `extractSummary`, `buildSummarizerQueryOptions`, `buildCodexSummaryPrompt`, `buildCodexSummarizerCommand`, `getCodexModel`, `CallClaudeOptions`, `callDigestModel`, `resolveLearnModels`, `callLearnModel`, `runCodexCommand`, `summarizeConversation` |
-| `paths` | `tryChmod`, `getClaudeDir`, `getCodexDir`, `getConversationSourceDirs`, `findJsonlFiles`, `getSuperpowersDir`, `getArchiveDir`, `getIndexDir`, `getDbPath`, `getLearnedDir`, `getKnowledgeDbPath`, `getLearningDbPath`, `getExcludeConfigPath`, `getExcludedProjects` |
+| `paths` | `tryChmod`, `getClaudeDir`, `getCodexDir`, `getConversationSourceDirs`, `findJsonlFiles`, `statIfExists`, `getSuperpowersDir`, `getArchiveDir`, `getIndexDir`, `getDbPath`, `getLearnedDir`, `getKnowledgeDbPath`, `getLearningDbPath`, `getExcludeConfigPath`, `getExcludedProjects` |
 
 A `src` export that the barrel does not re-export is internal to the package, even when `repo-tools map` shows no importer for it. Removing an export from the barrel is a breaking change for library callers.
 
@@ -147,7 +147,7 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalExports | 601 | repo-tools map |
-| totalSourceFiles | 274 | repo-tools map |
+| totalExports | 602 | repo-tools map |
+| totalSourceFiles | 275 | repo-tools map |
 
 `totalExports` counts every export in the repository, including test and tool files. The library barrel lists only the exports that `src/index.ts` re-exports. The tool schemas come from `src/mcp-schemas.ts`. The command names come from `cli/episodic-memory.js`. The variable names come from a search for `EPISODIC_MEMORY_` in `src/` and `cli/`. None of these facts is a `repo-tools map` metric.

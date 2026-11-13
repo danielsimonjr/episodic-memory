@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { parseConversation } from './parser.js';
 import { initDatabase, getAllExchanges, getFileLastIndexed } from './db.js';
-import { getArchiveDir, getExcludedProjects, findJsonlFiles } from './paths.js';
+import { getArchiveDir, getExcludedProjects, findJsonlFiles, statIfExists } from './paths.js';
 /**
  * Compare the conversation archive with the index and list the differences.
  *
@@ -36,8 +36,7 @@ export async function verifyIndex() {
             continue;
         }
         const projectPath = path.join(archiveDir, project);
-        const stat = fs.statSync(projectPath);
-        if (!stat.isDirectory())
+        if (!statIfExists(projectPath)?.isDirectory())
             continue;
         const files = findJsonlFiles(projectPath, excludedDirSet);
         for (const file of files) {

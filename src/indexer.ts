@@ -6,7 +6,7 @@ import { parseConversation } from './parser.js';
 import { initEmbeddings, generateExchangeEmbedding, generateExchangeEmbeddings } from './embeddings.js';
 import { summarizeConversation } from './summarizer.js';
 import { ConversationExchange } from './types.js';
-import { getArchiveDir, getExcludedProjects, getConversationSourceDirs, findJsonlFiles } from './paths.js';
+import { getArchiveDir, getExcludedProjects, getConversationSourceDirs, findJsonlFiles, statIfExists } from './paths.js';
 
 // Set max output tokens for Claude SDK (used by summarizer)
 process.env.CLAUDE_CODE_MAX_OUTPUT_TOKENS = '20000';
@@ -82,9 +82,7 @@ export async function indexConversations(
     // Skip if limiting to specific project
     if (limitToProject && project !== limitToProject) continue;
     const projectPath = path.join(sourceDir, project);
-    const stat = fs.statSync(projectPath);
-
-    if (!stat.isDirectory()) continue;
+    if (!statIfExists(projectPath)?.isDirectory()) continue;
 
     const files = findJsonlFiles(projectPath, excludedDirSet);
 
@@ -225,7 +223,7 @@ export async function indexSession(sessionId: string, concurrency: number = 1, n
     if (excludedProjects.includes(project)) continue;
 
     const projectPath = path.join(sourceDir, project);
-    if (!fs.statSync(projectPath).isDirectory()) continue;
+    if (!statIfExists(projectPath)?.isDirectory()) continue;
 
     const files = findJsonlFiles(projectPath, excludedDirSet).filter(f => f.includes(sessionId));
 
@@ -326,7 +324,7 @@ export async function indexUnprocessed(concurrency: number = 1, noSummaries: boo
     if (excludedProjects.includes(project)) continue;
 
     const projectPath = path.join(sourceDir, project);
-    if (!fs.statSync(projectPath).isDirectory()) continue;
+    if (!statIfExists(projectPath)?.isDirectory()) continue;
 
     const files = findJsonlFiles(projectPath, excludedDirSet);
 

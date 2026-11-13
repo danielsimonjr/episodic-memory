@@ -15,7 +15,7 @@ These modules import nothing from the repository, or only other leaf modules. A 
 | `src/constants.ts` | The marker text that identifies summarizer conversations, and the length cap for indexed text (`truncateForIndex`). |
 | `src/content-text.ts` | Reads the message content of a transcript line. `extractContentText` returns the text of a content. `safeParseJson` returns the input when the text is not valid JSON. `parser.ts` and `show.ts` both use the module. The module imports nothing. |
 | `src/redact.ts` | Opt-in secret redaction. `maybeRedactSecrets(text)` returns the text unchanged unless `EPISODIC_MEMORY_REDACT_SECRETS` is on. |
-| `src/paths.ts` | Resolves every directory and file the plugin uses: the config directory, the archive, the index, the database, the learned-knowledge files, and the exclusion list. It creates directories with mode `0o700`. `findJsonlFiles` walks a project folder. |
+| `src/paths.ts` | Resolves every directory and file the plugin uses: the config directory, the archive, the index, the database, the learned-knowledge files, and the exclusion list. It creates directories with mode `0o700`. `findJsonlFiles` walks a project folder. `statIfExists` returns `null` for an entry that a walk cannot read, for example a link whose target is gone. |
 | `src/api-endpoint.ts` | Validates a custom summarizer base URL so that a bad environment value cannot send transcripts to a hostile proxy. |
 | `src/gpu-reservation.ts` | Reads the fleet GPU reservation file. `gpuReservationBlock()` says whether another agent holds the GPU. |
 | `src/priority.ts` | Detects the detached background worker and lowers its process priority. |
@@ -199,10 +199,10 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 274 | repo-tools map |
+| totalSourceFiles | 275 | repo-tools map |
 | totalClasses | 8 | repo-tools map |
 | totalInterfaces | 139 | repo-tools map |
-| totalFunctions | 341 | repo-tools map |
+| totalFunctions | 342 | repo-tools map |
 | totalConstants | 70 | repo-tools map |
 
 The tool names, the table names and the model name come from a direct reading of `src/mcp-server.ts`, `src/db.ts` and `src/embeddings.ts`. They are not `repo-tools map` metrics.

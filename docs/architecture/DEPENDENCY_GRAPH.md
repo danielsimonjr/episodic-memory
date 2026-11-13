@@ -667,7 +667,7 @@ The codebase is organized into the following modules:
 | `./verify.js` | `verifyIndex, repairIndex` | Import |
 | `./indexer.js` | `indexSession, indexUnprocessed, indexConversations` | Import |
 | `./db.js` | `initDatabase, getFreelistInfo, vacuumDatabase` | Import |
-| `./paths.js` | `getDbPath, getArchiveDir, getExcludedProjects` | Import |
+| `./paths.js` | `getDbPath, getArchiveDir, getExcludedProjects, statIfExists` | Import |
 | `./prune.js` | `pruneProjects` | Import |
 
 ---
@@ -690,7 +690,7 @@ The codebase is organized into the following modules:
 | `./embeddings.js` | `initEmbeddings, generateExchangeEmbedding, generateExchangeEmbeddings` | Import |
 | `./summarizer.js` | `summarizeConversation` | Import |
 | `./types.js` | `ConversationExchange` | Import |
-| `./paths.js` | `getArchiveDir, getExcludedProjects, getConversationSourceDirs, findJsonlFiles` | Import |
+| `./paths.js` | `getArchiveDir, getExcludedProjects, getConversationSourceDirs, findJsonlFiles, statIfExists` | Import |
 
 **Exports:**
 - Functions: `indexConversations`, `indexSession`, `indexUnprocessed`
@@ -886,9 +886,9 @@ The codebase is organized into the following modules:
 - Functions:
 
   ```text
-  tryChmod, getClaudeDir, getCodexDir, getConversationSourceDirs, findJsonlFiles, getSuperpowersDir,
-  getArchiveDir, getIndexDir, getDbPath, getLearnedDir, getKnowledgeDbPath, getLearningDbPath,
-  getExcludeConfigPath, getExcludedProjects
+  tryChmod, getClaudeDir, getCodexDir, getConversationSourceDirs, findJsonlFiles, statIfExists,
+  getSuperpowersDir, getArchiveDir, getIndexDir, getDbPath, getLearnedDir, getKnowledgeDbPath,
+  getLearningDbPath, getExcludeConfigPath, getExcludedProjects
   ```
 
 
@@ -1121,7 +1121,7 @@ The codebase is organized into the following modules:
 |------|---------|------|
 | `./types.js` | `ConversationExchange` | Import (type-only) |
 | `./constants.js` | `SUMMARIZER_CONTEXT_MARKER` | Import |
-| `./paths.js` | `getExcludedProjects, findJsonlFiles` | Import |
+| `./paths.js` | `getExcludedProjects, findJsonlFiles, statIfExists` | Import |
 | `./gpu-reservation.js` | `gpuReservationBlock` | Import |
 | `./ollama-backend.js` | `summarizerBackend` | Import |
 | `./deferral.js` | `deferralDetail` | Import |
@@ -1319,7 +1319,7 @@ The codebase is organized into the following modules:
 |------|---------|------|
 | `./parser.js` | `parseConversation, *` | Import |
 | `./db.js` | `initDatabase, getAllExchanges, getFileLastIndexed, *` | Import |
-| `./paths.js` | `getArchiveDir, getExcludedProjects, findJsonlFiles` | Import |
+| `./paths.js` | `getArchiveDir, getExcludedProjects, findJsonlFiles, statIfExists` | Import |
 | `./embeddings.js` | `*` | Import |
 | `./summarizer.js` | `*` | Import |
 
@@ -2228,14 +2228,14 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 274 |
+| Total Source Files | 275 |
 | Subsystems | 5 |
-| Total Lines of Code | 54794 |
-| Total Exports | 601 |
+| Total Lines of Code | 54948 |
+| Total Exports | 602 |
 | Total Re-exports | 8 |
 | Total Classes | 8 |
 | Total Interfaces | 139 |
-| Total Functions | 341 |
+| Total Functions | 342 |
 | Total Type Guards | 10 |
 | Total Enums | 0 |
 | Type-only Imports | 79 |

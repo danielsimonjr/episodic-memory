@@ -91,6 +91,21 @@ export function findJsonlFiles(dir: string, excludedDirNames?: ReadonlySet<strin
 }
 
 /**
+ * Return the stats of a path, or `null` when the function cannot read the path.
+ *
+ * The function follows a link, as `fs.statSync` does. A link whose target is gone gives `null`, not an error.
+ * A storage migration can leave a link of this type in a projects folder. If an entry disappears after the listing, the function also gives `null`.
+ * A caller skips an entry with `null` stats. As a result, one bad entry does not stop the walk of a folder.
+ */
+export function statIfExists(target: string): fs.Stats | null {
+  try {
+    return fs.statSync(target);
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Get the personal superpowers directory.
  *
  * Precedence:

@@ -1,19 +1,19 @@
 {
   "metadata": {
-    "totalSourceFiles": 100,
-    "totalTestFiles": 142,
+    "totalSourceFiles": 101,
+    "totalTestFiles": 143,
     "testedCount": 79,
-    "untestedCount": 21,
-    "coveragePercent": "79.0",
+    "untestedCount": 22,
+    "coveragePercent": "78.2",
     "effectiveCoverage": {
       "policyLoaded": false,
-      "activeFiles": 100,
+      "activeFiles": 101,
       "testedActive": 79,
-      "activeUntested": 21,
+      "activeUntested": 22,
       "excludedTotal": 0,
-      "percent": "79.0",
+      "percent": "78.2",
       "breakdown": {
-        "active_untested": 21
+        "active_untested": 22
       }
     }
   },
@@ -38,7 +38,8 @@
     "src/stats-cli.ts",
     "src/sync-cli.ts",
     "src/topic-time.ts",
-    "src/topic-tool.ts"
+    "src/topic-tool.ts",
+    "vendor/onnxruntime-web-stub/index.js"
   ],
   "testedFiles": [
     "cli/ensure-deps.js",
@@ -629,7 +630,8 @@
     ],
     "src/verify.ts": [
       "test/verify.test.ts"
-    ]
+    ],
+    "vendor/onnxruntime-web-stub/index.js": []
   },
   "testToSourceMap": {
     "test/agent-sdk-floor.test.ts": [],
@@ -1049,6 +1051,7 @@
       "src/ollama-backend.ts",
       "src/summarizer.ts"
     ],
+    "test/onnxruntime-web-stub.test.ts": [],
     "test/orphan-reaper.test.ts": [
       "src/orphan-reaper.ts"
     ],
@@ -1312,6 +1315,10 @@
     },
     {
       "file": "src/topic-tool.ts",
+      "category": null
+    },
+    {
+      "file": "vendor/onnxruntime-web-stub/index.js",
       "category": null
     }
   ]

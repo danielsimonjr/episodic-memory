@@ -1,24 +1,24 @@
 {
-  "totalFiles": 253,
+  "totalFiles": 255,
   "byDisposition": {
     "reachable": 40,
     "build-entry": 4,
     "test-only": 43,
-    "orphan": 13,
-    "test": 148,
+    "orphan": 14,
+    "test": 149,
     "tool": 4,
     "config": 1,
     "bench": 0,
     "example": 0
   },
   "byArea": {
-    "src": 100,
+    "src": 101,
     "tools": 4,
-    "tests": 148,
+    "tests": 149,
     "config": 1
   },
   "byPackage": {
-    "(root)": 160,
+    "(root)": 162,
     "episodic-memory": 93
   },
   "files": [
@@ -762,7 +762,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 90
+      "loc": 88
     },
     {
       "file": "test/archive-path-edges.test.ts",
@@ -1395,6 +1395,13 @@
       "loc": 55
     },
     {
+      "file": "test/onnxruntime-web-stub.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 71
+    },
+    {
       "file": "test/orphan-reaper.test.ts",
       "package": "(root)",
       "area": "tests",
@@ -1785,6 +1792,13 @@
       "area": "tests",
       "disposition": "test",
       "loc": 30
+    },
+    {
+      "file": "vendor/onnxruntime-web-stub/index.js",
+      "package": "(root)",
+      "area": "src",
+      "disposition": "orphan",
+      "loc": 3
     },
     {
       "file": "vitest.config.ts",

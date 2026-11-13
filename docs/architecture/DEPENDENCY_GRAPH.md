@@ -18,10 +18,11 @@ This document provides a comprehensive dependency graph of all files, components
 4. [Root Dependencies](#root-dependencies)
 5. [Entry Dependencies](#entry-dependencies)
 6. [Learn Dependencies](#learn-dependencies)
-7. [Dependency Matrix](#dependency-matrix)
-8. [Circular Dependency Analysis](#circular-dependency-analysis)
-9. [Visual Dependency Graph](#visual-dependency-graph)
-10. [Summary Statistics](#summary-statistics)
+7. [Vendor/onnxruntime web stub Dependencies](#vendor-onnxruntime-web-stub-dependencies)
+8. [Dependency Matrix](#dependency-matrix)
+9. [Circular Dependency Analysis](#circular-dependency-analysis)
+10. [Visual Dependency Graph](#visual-dependency-graph)
+11. [Summary Statistics](#summary-statistics)
 
 ---
 
@@ -34,6 +35,7 @@ The codebase is organized into the following modules:
 - **root**: 62 files
 - **entry**: 1 file
 - **learn**: 30 files
+- **vendor/onnxruntime-web-stub**: 1 file
 
 ---
 
@@ -1953,6 +1955,14 @@ The codebase is organized into the following modules:
 
 ---
 
+<a id="vendor-onnxruntime-web-stub-dependencies"></a>
+
+## Vendor/onnxruntime web stub Dependencies
+
+### `vendor/onnxruntime-web-stub/index.js` - The node build of @huggingface/transformers does not import onnxruntime-web, so this onnxruntime-web
+
+---
+
 <a id="dependency-matrix"></a>
 ## Dependency Matrix
 
@@ -2067,6 +2077,10 @@ graph TD
         N29[...20 more]
     end
 
+    subgraph Vendor/onnxruntime-web-stub
+        N30[index.js]
+    end
+
     N4 --> N1
     N6 --> N1
     N9 --> N10
@@ -2098,9 +2112,9 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 253 |
-| Subsystems | 4 |
-| Total Lines of Code | 51484 |
+| Total Source Files | 255 |
+| Subsystems | 5 |
+| Total Lines of Code | 51556 |
 | Total Exports | 567 |
 | Total Re-exports | 8 |
 | Total Classes | 7 |

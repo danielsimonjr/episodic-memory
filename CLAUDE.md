@@ -32,7 +32,7 @@ Carry these against upstream `1.4.1`. Each is a real bug; PRs filed at
 | Patch | Commit | What it fixes |
 |---|---|---|
 | **Wrapper sentinel check** | `443db0e` | Partial `node_modules` extracts (better-sqlite3 missing native binding) slip past `existsSync(node_modules)`. Wrapper now verifies sentinel files before declaring deps healthy. |
-| **`onnxruntime-common` hoist** | `443db0e` | `@huggingface/transformers@4.2.0` directly imports `onnxruntime-common` but doesn't declare it as a direct dep. npm doesn't hoist it because conflicting versions nested under `onnxruntime-node` + `onnxruntime-web`. Adding it as a top-level dep restores ESM resolution. |
+| **`onnxruntime-common` hoist** | `443db0e` | `@huggingface/transformers@4.2.0` directly imports `onnxruntime-common` but doesn't declare it as a direct dep. npm doesn't hoist it because conflicting versions nested under `onnxruntime-node` + `onnxruntime-web`. Adding it as a top-level dep restores ESM resolution. The `onnxruntime-web` override now installs a stub with no dependencies, so at most `onnxruntime-node` nests a copy; the top-level dep stays. |
 | **Windows path-split** | `6cadc20` | `parseConversationFile` used `filePath.split('/')` — broken on Windows backslash paths. Every conversation ended up `project='unknown'`. Now uses `path.basename(path.dirname(filePath))`. |
 | **stdio log corruption** | `6cadc20` | 5 `console.log` calls in `migrateSchema`/`migrateToolCallsCascade` fire to **stdout** during MCP startup, corrupting JSON-RPC. Switched to `console.error`. |
 | **`read` tool path hardening** | `6cadc20` | The MCP `read` tool accepted arbitrary absolute paths with only `existsSync` — prompt-injection arbitrary file read. Now confined to inside `getArchiveDir()` and `.jsonl` extension. |
@@ -52,7 +52,7 @@ dependency, no `MEMORY_*` environment handling and no per-handle cache: a write 
 - **TypeScript source** in `src/`, compiled to `dist/` by `tsc && esbuild`. **Both are committed.**
 - **CLI entry points** in `cli/` (Node.js wrappers — no bash).
 - **MCP server** is `dist/mcp-server.js`, launched by `cli/mcp-server-wrapper.js` from the plugin manifest.
-- **Tests** in `test/` via vitest (142 files, 1368 tests).
+- **Tests** in `test/` via vitest (143 files, 1375 tests).
 - **Generated files** in `dist/` AND `src/version.ts`. The latter is gitignored; never edit it.
 - **`bun.lock` is committed** — CI uses `bun install --frozen-lockfile` + `bun audit --audit-level=critical`. Do not commit `package-lock.json` (gitignored).
 
@@ -101,6 +101,9 @@ cli/
   mcp-server-wrapper.js  # ensures deps are installed (sentinel check as of fork)
   *.js                   # subcommand entry points
 
+vendor/
+  onnxruntime-web-stub/  # the package that the onnxruntime-web override points at; never published, its main file throws
+
 scripts/
   bump-version.sh        # version bumper with drift audit
   generate-version.js    # writes src/version.ts from package.json
@@ -108,7 +111,7 @@ scripts/
 
 test/
   test-utils.ts          # createTestDb, safeRmSync (fork-added), suppressConsole, fixtures
-  *.test.ts              # 142 test files, 1368 tests
+  *.test.ts              # 143 test files, 1375 tests
   learn/                 # the Recursa suite; fakes for every model call
   fixtures/              # JSONL conversation fixtures
 
@@ -151,12 +154,12 @@ is not a dependency.
 
 ### Current test state
 
-- **Full suite: 1368 tests in 142 files pass** (~17s wall clock on Linux;
+- **Full suite: 1375 tests in 143 files pass** (~17s wall clock on Linux;
   Windows runs are slower). The former `integration.test.ts` / `verify.test.ts` cold-embedding
   timeout flakes were fixed: the embedder is pre-warmed once per worker in `beforeAll`,
   `vitest.config.ts` sets `hookTimeout: 30000`, and the repair re-index test gets 60s. If you see a fresh
   timeout flake, suspect a new embedding-heavy hook without warm-up rather than the old cold-start cause.
-- The learn tests are the bulk of it (`test/learn/`, 36 files; the other 106 test files sit directly in `test/`). They never reach a model: every agent and
+- The learn tests are the bulk of it (`test/learn/`, 36 files; the other 107 test files sit directly in `test/`). They never reach a model: every agent and
   text call is injectable and tests pass fakes. `test/test-env.ts` pins the Claude backend, a closed ollama URL
   and a temporary config directory. `test/setup-env.ts` deletes every other `EPISODIC_MEMORY_*` variable of
   the machine. A local run therefore uses the CI settings and cannot reach a model or the live data.

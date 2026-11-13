@@ -11,7 +11,7 @@
     "unreferencedAnywhereCount": 4,
     "referencedInModuleCount": 109,
     "unclassifiedExportCount": 0,
-    "noImporterFileCount": 13
+    "noImporterFileCount": 14
   },
   "unreferencedAnywhere": {
     "src/learn/learn-inject.ts": [
@@ -236,6 +236,7 @@
     "src/search-cli.ts",
     "src/show-cli.ts",
     "src/stats-cli.ts",
-    "src/sync-cli.ts"
+    "src/sync-cli.ts",
+    "vendor/onnxruntime-web-stub/index.js"
   ]
 }

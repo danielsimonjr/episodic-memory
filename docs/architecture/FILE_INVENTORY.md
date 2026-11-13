@@ -8,7 +8,7 @@ This report lists each source file that the map census finds, with a disposition
 
 **Language**: typescript
 
-**Total files**: 253
+**Total files**: 255
 
 ## Disposition counts
 
@@ -17,28 +17,28 @@ This report lists each source file that the map census finds, with a disposition
 | `reachable` | 40 | A `src`-area file that an entry root reaches. |
 | `build-entry` | 4 | A `src`-area file that is an entry root. |
 | `test-only` | 43 | A `src`-area file that only a test reaches. |
-| `orphan` | 13 | A `src`-area file that nothing reaches. Delete it, or wire it to a root. |
-| `test` | 148 | A file in a `test/` or `tests/` folder, or a `*.test.ts` or `*.spec.ts` file. |
+| `orphan` | 14 | A `src`-area file that nothing reaches. Delete it, or wire it to a root. |
+| `test` | 149 | A file in a `test/` or `tests/` folder, or a `*.test.ts` or `*.spec.ts` file. |
 | `tool` | 4 | A file in a `tools/` or `scripts/` folder outside `src/`. |
 | `config` | 1 | A `*.config.*` file of TypeScript or JavaScript. |
 | `example` | 0 | A file in `examples/` or `docs/`. |
 | `bench` | 0 | A file in `bench/` or `benchmarks/`, or a `*.bench.*` file. |
-| **Total** | **253** | |
+| **Total** | **255** | |
 
 ## Per-area counts
 
 | Area | Files |
 | --- | --: |
 | `config` | 1 |
-| `src` | 100 |
-| `tests` | 148 |
+| `src` | 101 |
+| `tests` | 149 |
 | `tools` | 4 |
 
 ## Per-package counts
 
 | Package | Files |
 | --- | --: |
-| `(root)` | 160 |
+| `(root)` | 162 |
 | `episodic-memory` | 93 |
 
 ## All files
@@ -150,7 +150,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/types.ts` | episodic-memory | src | reachable | 82 |
 | `src/verify.ts` | episodic-memory | src | reachable | 226 |
 | `test/agent-sdk-floor.test.ts` | (root) | tests | test | 39 |
-| `test/allow-scripts-pin.test.ts` | (root) | tests | test | 90 |
+| `test/allow-scripts-pin.test.ts` | (root) | tests | test | 88 |
 | `test/archive-path-edges.test.ts` | (root) | tests | test | 67 |
 | `test/archive-path.test.ts` | (root) | tests | test | 132 |
 | `test/backfill-cli-gpu-reservation.test.ts` | (root) | tests | test | 51 |
@@ -241,6 +241,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/node-floor.test.ts` | (root) | tests | test | 43 |
 | `test/ollama-backend.test.ts` | (root) | tests | test | 75 |
 | `test/ollama-plain-reply.test.ts` | (root) | tests | test | 55 |
+| `test/onnxruntime-web-stub.test.ts` | (root) | tests | test | 71 |
 | `test/orphan-reaper.test.ts` | (root) | tests | test | 65 |
 | `test/oversized-message-guard.test.ts` | (root) | tests | test | 136 |
 | `test/parser-tool-result.test.ts` | (root) | tests | test | 43 |
@@ -297,6 +298,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/topic-validate.test.ts` | (root) | tests | test | 371 |
 | `test/verify.test.ts` | (root) | tests | test | 320 |
 | `test/version-consistency.test.ts` | (root) | tests | test | 30 |
+| `vendor/onnxruntime-web-stub/index.js` | (root) | src | orphan | 3 |
 | `vitest.config.ts` | (root) | config | config | 26 |
 
 ## Skipped links

@@ -5479,6 +5479,16 @@
           "validateCandidate"
         ]
       }
+    },
+    "vendor/onnxruntime-web-stub": {
+      "vendor/onnxruntime-web-stub/index.js": {
+        "description": "The node build of @huggingface/transformers does not import onnxruntime-web, so this onnxruntime-web",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": []
+      }
     }
   },
   "cyclicComponents": {
@@ -5616,6 +5626,12 @@
         "src/learn/types.ts",
         "src/learn/usage.ts",
         "src/learn/validate.ts"
+      ]
+    },
+    {
+      "name": "Vendor/onnxruntime-web-stub",
+      "files": [
+        "vendor/onnxruntime-web-stub/index.js"
       ]
     }
   ]

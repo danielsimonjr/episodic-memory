@@ -3,7 +3,7 @@
     "name": "episodic-memory",
     "schemaVersion": "2.0.0",
     "language": "typescript",
-    "totalFiles": 253,
+    "totalFiles": 255,
     "totalModules": 4,
     "totalExports": 567
   },
@@ -4239,6 +4239,12 @@
           "verifyIndex",
           "repairIndex"
         ]
+      },
+      "vendor/onnxruntime-web-stub/index.js": {
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [],
+        "exports": []
       }
     },
     "tools": {
@@ -7809,6 +7815,18 @@
         ],
         "exports": []
       },
+      "test/onnxruntime-web-stub.test.ts": {
+        "externalDependencies": [
+          "vitest"
+        ],
+        "nodeDependencies": [
+          "fs",
+          "module",
+          "path"
+        ],
+        "internalDependencies": [],
+        "exports": []
+      },
       "test/orphan-reaper.test.ts": {
         "externalDependencies": [
           "vitest"
@@ -9341,20 +9359,20 @@
     }
   },
   "statistics": {
-    "totalTypeScriptFiles": 253,
-    "totalSourceFiles": 253,
+    "totalTypeScriptFiles": 255,
+    "totalSourceFiles": 255,
     "totalModules": 4,
-    "totalLinesOfCode": 51484,
+    "totalLinesOfCode": 51556,
     "totalExports": 567,
     "entryRoots": 6,
     "reachableFiles": 44,
-    "dormantFiles": 56,
-    "orphanedFiles": 13,
+    "dormantFiles": 57,
+    "orphanedFiles": 14,
     "testOnlyFiles": 43,
     "runtimeCircularDeps": 0,
     "typeOnlyCircularDeps": 1,
     "totalTypeOnlyImports": 78,
-    "noImporterFileCount": 13,
+    "noImporterFileCount": 14,
     "unusedExportsCount": 113,
     "circularDepsTruncated": false,
     "runtimeCyclicComponents": 0,
@@ -9379,7 +9397,7 @@
       "test/global-setup.ts"
     ],
     "reachableCount": 44,
-    "dormantCount": 56,
+    "dormantCount": 57,
     "orphaned": [
       "cli/digest-hook.js",
       "cli/episodic-memory.js",
@@ -9393,7 +9411,8 @@
       "src/search-cli.ts",
       "src/show-cli.ts",
       "src/stats-cli.ts",
-      "src/sync-cli.ts"
+      "src/sync-cli.ts",
+      "vendor/onnxruntime-web-stub/index.js"
     ],
     "testOnly": [
       "cli/ensure-deps.js",

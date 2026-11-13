@@ -57,10 +57,6 @@ export type Transaction<F extends (...args: never[]) => unknown> = F & {
     exclusive: F;
 };
 /**
- * A database connection with the better-sqlite3 method names.
- * Every connection turns foreign key enforcement on.
- */
-/**
  * Refuse a node:sqlite handle that has no `isTransaction` property.
  *
  * The transaction wrapper reads `isTransaction` to select a savepoint for a nested call.
@@ -73,6 +69,10 @@ export declare function requireTransactionState(handle: {
     isTransaction?: unknown;
     close(): void;
 }): void;
+/**
+ * A database connection with the better-sqlite3 method names.
+ * Every connection turns foreign key enforcement on.
+ */
 export declare class Database {
     private readonly db;
     /** The path that the constructor opened. */

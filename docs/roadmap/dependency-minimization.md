@@ -72,9 +72,9 @@ Dependency facts:
 - `package.json` has an `overrides` block (`hono`, `sharp`, `adm-zip`, `onnxruntime-web`). A new override extends that block.
 - `package.json` has no `files` field. The plugin cache holds the whole repo, so a folder inside the repo ships to every plugin host.
 - The plugin runs under Claude Code and under Codex (`README.md`, `.codex-plugin/plugin.json`, codex-cli 0.130.0 or later). A Codex host can have no `claude` executable.
-- `engines.node` is `>=22.0.0`. `src/node-floor.ts` sets `NODE_FLOOR` to `22.0.0`. CI runs Node 24 only.
+- `engines.node` is `>=22.16.0`. `src/node-floor.ts` sets `NODE_FLOOR` to `22.16.0`. CI runs Node 24 and Node 22.16.0.
 - The repo tracks `dist/`. CI fails when a build of the commit differs from `dist/`.
-- The `bundle` script marks these packages external: the Agent SDK, `@modelcontextprotocol/server`, `@modelcontextprotocol/core`, `sharp`, `onnxruntime-node`, `better-sqlite3`, `@huggingface/transformers` and `sqlite-vec`.
+- At the baseline, the `bundle` script marked these packages external: the Agent SDK, `@modelcontextprotocol/server`, `@modelcontextprotocol/core`, `sharp`, `onnxruntime-node`, `better-sqlite3`, `@huggingface/transformers` and `sqlite-vec`. Section 3.6 removed `better-sqlite3` and `sqlite-vec` from this list.
 - `main` is protected. Every change uses a branch and a pull request.
 - `.mcp.json` lists 13 names in `env_vars`, and 10 of them start with `EPISODIC_MEMORY_`. `CLAUDE.md` requires one `.mcp.json` line and one `test/codex-plugin.test.ts` row for each variable that the server reads.
 - `CLAUDE.md` requires an `EMBEDDING_VERSION` bump for any change to the model, dtype, prefix, pooling, normalization or truncation.
@@ -84,16 +84,16 @@ Install path:
 
 - `cli/ensure-deps.js` is on the start path of `cli/mcp-server-wrapper.js` and of the SessionStart hook `cli/sync-hook.js`. `src/doctor.ts` calls the same health check.
 - `ensureDeps` calls `repairPlan` from `dist/deps-health.js`. The function skips the repair when the plan is `none`. On every call, the function then prunes the idle `onnxruntime-node` binaries (section 3.3b). The function throws on any repair failure. A throw stops the MCP server start.
-- `repairPlan` checks three JS sentinels (`better-sqlite3/lib/index.js`, `@huggingface/transformers/package.json`, `onnxruntime-common/package.json`) and the `better-sqlite3` binding. The function checks no other package.
+- `repairPlan` checks three JS sentinels (`@huggingface/transformers/package.json`, `onnxruntime-common/package.json`, `onnxruntime-node/package.json`) and the `onnxruntime-node` binding. The function checks no other package.
 - The `runNpm` argument list in `cli/ensure-deps.js` is the only place for install flags.
 
 Measured facts that the workstreams use:
 
 - The node build of `@huggingface/transformers` does not import `onnxruntime-web`. The node build inlines its own copy of the web bundle. Zero files under `@huggingface/transformers/types` mention `onnxruntime-web`.
 - The node build has one static `import sharp from "sharp"`. `sharp` throws at import when its `@img/sharp-<platform>` package is absent.
-- An install with `--omit=optional` removes `@img/sharp-<platform>` and the `sqlite-vec` platform package. The transformers import and the database open then fail. **No step of this plan uses `--omit=optional`.**
+- An install with `--omit=optional` removes `@img/sharp-<platform>`. The transformers import then fails. **No step of this plan uses `--omit=optional`.**
 - The `.transaction(` call appears 12 times and the `.pragma(` call appears 12 times in non-test source.
-- 25 source files import `better-sqlite3`: 18 use `import type` and 7 use a value import.
+- At the baseline, 25 source files imported `better-sqlite3`: 18 used `import type` and 7 used a value import.
 - `tsx` has no import or command use in `cli`, `scripts`, `src`, `test`, `hooks` or `.github`. Two test fixture files hold the text as data.
 - `EMBEDDING_VERSION` is 1 (`src/embedding-migration.ts`). The model is `Xenova/bge-small-en-v1.5`, q8, mean pooling, normalized, 384 dimensions.
 
@@ -136,12 +136,12 @@ The saving applies to a fresh install. A new plugin version gets a new cache dir
 
 **Risk.**
 
-- The root `postinstall` (`scripts/rebuild-native.mjs`) runs during the install. The script imports Node built-ins only.
+- At the baseline, the root `postinstall` (`scripts/rebuild-native.mjs`) ran during the install. Section 3.6 removed it. The script imported Node built-ins only.
 - A runtime file that imports a devDependency fails on a plugin host. CI cannot show this failure, because CI installs the full tree.
 
 **Acceptance test.**
 
-1. Static check. Collect every bare import specifier in `dist/**/*.js`, `cli/*.js`, `scripts/rebuild-native.mjs` and each script that `hooks/hooks.json` names. No specifier may resolve to a package of the devDependency-only subtree. A specifier that does fails the PR.
+1. Static check. Collect every bare import specifier in `dist/**/*.js`, `cli/*.js` and each script that `hooks/hooks.json` names. No specifier may resolve to a package of the devDependency-only subtree. A specifier that does fails the PR.
 2. Make a fresh scratch install with the flag. The size-walk total falls by 78.4 MB, inside the band of section 6.
 3. In the same tree, `node cli/mcp-server-wrapper.js` receives one `initialize` request on stdin. Stdout holds the JSON-RPC response and no other bytes.
 4. In the same tree, `node cli/episodic-memory.js doctor` reports a healthy tree.
@@ -380,87 +380,27 @@ The `onnxruntime-common` pin goes away only with B.
 
 ### 3.6 better-sqlite3 to `node:sqlite`
 
-**Saving.** 27.7 MB and 2 packages. The repair machinery goes away too:
+**Status: done.** The plugin uses the `node:sqlite` built-in through the adapter in `src/sqlite.ts`. The plugin has no native SQLite package.
 
-- `scripts/rebuild-native.mjs` (the repo `postinstall`);
-- the rebuild branch of `cli/ensure-deps.js` and the binding check of `src/deps-health.ts`;
-- the structural gate on the prebuilds path in a sync task script outside this repo;
-- `@types/better-sqlite3`, `trustedDependencies` and `allowScripts` in `package.json`.
+**Removed.** The `better-sqlite3` and `sqlite-vec` packages, `@types/better-sqlite3`, the rebuild branch of `cli/ensure-deps.js`, and the better-sqlite3 binding check in `src/deps-health.ts`. `scripts/rebuild-native.mjs` is gone, and `package.json` has no `postinstall` script. The saving was 27.7 MB for better-sqlite3 and 0.3 MB for sqlite-vec, measured at the baseline (section 4). `repairPlan` returns `none`, `install` or `reinstall-onnx`. No plan rebuilds a native binding.
 
-**API gaps.**
+**Adapter.** `src/sqlite.ts` keeps the better-sqlite3 method names. Its differences from better-sqlite3 are listed in `docs/architecture/COMPONENTS.md`.
 
-| Item | better-sqlite3 | `node:sqlite` | Sites |
-|---|---|---|---|
-| Transactions | `db.transaction(fn)` returns a callable | no helper | 12 |
-| Pragmas | `db.pragma(...)`, write and read forms | no helper; use `exec` and `prepare` | 12 |
-| Constructor options | `{ readonly, fileMustExist }` | `{ readOnly, open }` | see below |
-| Types | `import type Database` | own types | 25 files |
-| `exec`, `prepare`, `close` | present | present | |
+**Transactions.** `transaction(fn)` runs the body in the begin mode of the method that the caller uses: `BEGIN`, `deferred`, `immediate` or `exclusive`. A nested call runs as a savepoint. A throw rolls back the transaction. The return value passes through. `src/learn/knowledge-store.ts` uses `immediate()`, so the write lock is taken at the start.
 
-No `function`, `aggregate`, `backup`, `serialize`, `iterate`, `pluck` or `raw` call appears in source.
+**Pragma and busy timeout.** `pragma(text, { simple })` runs `PRAGMA text`. `src/db.ts` sets `PRAGMA busy_timeout`. The timeout comes from `EPISODIC_MEMORY_DB_BUSY_TIMEOUT_MS`, with a default of 5000 ms.
 
-**Transaction wrapper.** `src/learn/knowledge-store.ts` calls `this.db.transaction(fn).immediate()`. Other sites call the returned function with arguments (`src/embedding-migration.ts`, `src/learn/learning-db.ts`). The wrapper supports these behaviours:
+**Constructor.** `new Database(path, { readonly, fileMustExist })` maps `readonly` to the native `readOnly` option and turns on foreign key enforcement. A read-only open of a missing file throws.
 
-- the default mode and `immediate` (`BEGIN IMMEDIATE`);
-- nested calls as `SAVEPOINT`;
-- rollback on a throw;
-- the return of the callback value;
-- argument passing to the callback.
+**Vectors.** The table `exchange_vectors` holds one 384-value float32 vector for each exchange. The SQL function `vec_distance_l2` computes the distance. `src/search.ts` runs an exact scan. The vectors of an earlier sqlite-vec index are copied once by `migrateVec0Vectors`. The old shadow tables stay in the file unread.
 
-`BEGIN IMMEDIATE` takes the write lock at the start. A plain `BEGIN` lets a second writer act between the read and the update.
-Test: two processes open one file. The second process blocks in `BEGIN IMMEDIATE` until the first commits. The test fails if the wrapper uses a plain `BEGIN`.
+**Integers and rows.** A safe integer binds as `INTEGER`. A value above 2^53 throws when a query reads it. better-sqlite3 rounded such a value.
 
-**Pragma wrapper.** `src/db.ts` uses the read form `pragma('busy_timeout')` once. The other 11 sites use the write form. The read form returns an array in better-sqlite3 and one row in `node:sqlite`. The wrapper returns what each call site expects.
+**Node floor.** The floor is 22.16.0, the first Node release whose `DatabaseSync` has `isTransaction`. The `Database` constructor refuses a handle without it. The fork declares this floor in `engines.node` and in `src/node-floor.ts`. Job `build` runs Node 24. Job `node-floor` runs Node 22.16.0.
 
-**Constructor sites.**
+**Warnings.** Node 22 writes an experimental warning when `node:sqlite` loads. The adapter drops that warning. Job `node-floor` checks that loading `dist/sqlite.js` leaves stderr empty.
 
-- `{ readonly: true, fileMustExist: true }`: `src/db.ts`, `src/learn/knowledge-store.ts`, `src/doctor-learn.ts` (first open).
-- `{ readonly: true }` alone: `src/learn/learning-store.ts`, `src/stats.ts`, `src/doctor-learn.ts` (second open).
-
-**Read-only open of a missing file.** On Node 26.13, `new DatabaseSync(missing, { readOnly: true })` throws "unable to open database file" and creates no file. The port keeps the throw and adds no existence pre-check, because a pre-check adds a race. A test opens a missing path read-only and expects the error.
-
-**Result shape** (measured on Node 26.13 only; the PR repeats the checks on 22.16.0 and 24.x):
-
-- Rows have a null prototype. A test that uses `toEqual` against a plain object, and code that calls `row.hasOwnProperty`, need a check.
-- An integer above 2^53 throws ("Value is too large to be represented as a JavaScript number"). better-sqlite3 returns a rounded number. The PR checks the schema with a query for columns that can hold such a value.
-
-**Node floor.** The version facts in this section come from the Node documentation. The plan does not measure these facts here. The PR checks each fact against the real binaries and corrects this document if one differs.
-
-- `node:sqlite` loads unflagged from Node 22.13.0.
-- `loadExtension` and `enableLoadExtension` exist from 22.13.0.
-- The `timeout` (busy timeout) option exists from 22.16.0 and from 24.0.0.
-- The documentation gives no version for the `allowExtension` constructor option.
-- Stability is 1.1 (active development) on the 22 line, and 1.2 (release candidate) from 24.15.0.
-- The `defensive` option exists from 24.12.0 and is on by default from 24.14.0.
-
-**Floor decision.** The floor becomes 22.16.0, the lowest 22.x release with the `timeout` option.
-
-- The PR sets `engines.node`, `NODE_FLOOR` in `src/node-floor.ts`, `CLAUDE.md` and the architecture docs to 22.16.0.
-- The change breaks hosts on Node 22.0.0 to 22.15.x. The CHANGELOG entry states the break.
-- The change is a fork-only divergence. The PR records the divergence in `docs/roadmap/upstream-sync.md`.
-- A 24.x floor drops the 22 line. The decision keeps the 22 line, because 22.16.0 raises the floor by the smallest amount.
-
-**sqlite-vec.** Open with `allowExtension: true`. Then call `loadExtension(getLoadablePath())`. The test runs with `defensive` on.
-On Node 26.13 with sqlite-vec 0.1.9, `SELECT vec_version()` returns `v0.1.9`, and a `vec0` KNN `MATCH` query returns a row with zero bytes on stderr. That measurement proves nothing for 22.x or 24.x.
-
-**WAL and busy timeout.** Use the `timeout` option with the 5000 ms default of `EPISODIC_MEMORY_DB_BUSY_TIMEOUT_MS`. Use `PRAGMA busy_timeout` for any path that the option does not cover.
-
-**stderr.** A 22.x binary can print an `ExperimentalWarning` on stderr. `test/mcp-protocol.test.ts` checks stderr with `toContain`, so a warning does not break the test. The PR records the warning text from a real 22.16.0 binary.
-
-**Risk.** The API gaps, the stability tier on the 22 line, and changes in query timing. The repair code removal also removes a recovery path. `episodic-memory doctor` must still report a broken native layer if a later dependency has one.
-
-**Acceptance test.**
-
-1. Indexing the fixture corpus gives the same row counts before and after.
-2. Measure the median search latency on the same host, before and after. The median after is at most 10% slower (chosen threshold). The PR fixes the run count and the corpus.
-3. The CI matrix runs the exact floor binary (Node 22.16.0) and the latest Node 24.x. Each job runs the full suite.
-4. On Node 22.16.0, `allowExtension`, `loadExtension`, `timeout`, `readOnly` and `open` all work.
-5. The two-process `BEGIN IMMEDIATE` test passes on each binary.
-6. `episodic-memory doctor` reports a healthy tree on each binary.
-
-**Rollback.** Section 8. The revert restores `engines` and `src/node-floor.ts`.
-
-**Verdict: DO LATER.** The main benefit is the removal of the native-build path. The PR waits for the Node 22.16.0 CI job, the stderr text check and the performance check.
+**Risk.** The exact scan reads every vector that passes the filters, so its cost grows with the number of indexed exchanges. `episodic-memory doctor` prints the `node:sqlite` line, and the line starts with `FAIL` below the floor.
 
 ### 3.7 KEEP list
 
@@ -469,10 +409,10 @@ On Node 26.13 with sqlite-vec 0.1.9, `SELECT vec_version()` returns `v0.1.9`, an
 | `@modelcontextprotocol/server` | 7.6 exclusive | The MCP server (`src/mcp-server.ts`). The closure is 3 packages. |
 | `zod` | 0.0 exclusive (6.1 own) | The MCP server and 2 source files use `zod`. The Agent SDK declares `zod` as a peer. |
 | `marked` | 0.4 | One import in `src/show.ts`. The package ships its own types. |
-| `sqlite-vec` | 0.3 exclusive | The only vector index. The `vec0` extension loads from an optional platform package, so no step uses `--omit=optional`. |
+| `sqlite-vec` | 0.3 exclusive | Removed by section 3.6. |
 | `@huggingface/transformers` (after section 3.3) | 128.8 (estimate) | The embedding pipeline that the code runs. Option B is the only step that removes `@huggingface/transformers`. |
 | `@anthropic-ai/claude-agent-sdk` | 5.2 without the platform package (measured) | Three import sites. The plan can remove only the platform package (section 3.4). |
-| `better-sqlite3` | 27.7 | The database layer until section 3.6 lands. |
+| `better-sqlite3` | 27.7 | Removed by section 3.6. |
 | `onnxruntime-common` | 0.0 | Hoist pin: transformers imports `onnxruntime-common` without a declaration. KEEP until option B removes the pin. |
 
 Remove list:
@@ -504,7 +444,7 @@ The removal of `@types/marked` in section 3.1 uses the types that `marked` 16 sh
 | 3.3b idle ORT binaries | DO | 158.1 on Windows x64 | 0 | before and after the prune at the `bun.lock` versions; 233.9 MB on an npm host |
 | 3.4 SDK platform package | DO (opt-in) | 269.2 on opt-in hosts; 0 by default | 1 | measured package size |
 | 3.5 option B | DO LATER | 65.5 | 6 | reachability; estimate |
-| 3.6 `node:sqlite` | DO LATER | 27.7 | 2 | measured closure |
+| 3.6 `node:sqlite` | DONE | 27.7 | 2 | measured closure |
 
 DO items on a default Windows x64 plugin host: 78.4 + 140.7 + 158.1 = 377.2 MB (estimate). The 12.4 MB of section 3.1 is inside the 78.4 MB.
 Resulting total: 839.2 - 377.2 = 462.0 MB (estimate). An opt-in host also saves 269.2 MB, for 192.8 MB (estimate).
@@ -535,7 +475,7 @@ Test count rule:
 Additional checks:
 
 - The preparing agent runs `vitest run` on a Windows host. The list of failing tests must equal the list of the base commit on the same host.
-- Section 3.6 adds the Node 22.16.0 CI job.
+- The CI matrix includes the Node 22.16.0 job (`node-floor`).
 - The PR body states the test counts, the output of both `repo-tools` gates, and the size before and after.
 
 ## 6. PR sequence
@@ -551,7 +491,7 @@ Each PR regenerates `bun.lock` from its own parent commit. Each PR reverts on it
 | 4 | Prune idle `onnxruntime-node` binaries | 3.3b | DO | 158.1 MB on Windows x64 |
 | 5 | SDK platform package, opt-in | 3.4 | DO | 269.2 MB on opt-in hosts; 0 by default |
 | 6 | Embedding option B, with parity gate | 3.5 | DO LATER | 65.5 MB |
-| 7 | better-sqlite3 to `node:sqlite` | 3.6 | DO LATER | 27.7 MB |
+| 7 | better-sqlite3 to `node:sqlite` | 3.6 | DONE | 27.7 MB |
 
 Order reasons:
 
@@ -571,7 +511,7 @@ Use this method for every before figure and every after figure.
 
 1. Make an empty scratch directory outside the repo.
 2. Extract the tracked files of the base commit into the directory, for example with `git archive <commit> | tar -x`.
-   The tracked files hold `scripts/`, `cli/`, `dist/` and `vendor/`. The install, the root `postinstall` and the prune need these files. The repo does not track `node_modules`.
+   The tracked files hold `scripts/`, `cli/`, `dist/` and `vendor/`. The install and the prune need these files. The repo does not track `node_modules`.
 3. Record the platform, the architecture, `node -v` and `npm -v`.
 4. Call `ensureDeps` once: `node -e "import('./cli/ensure-deps.js').then((m) => m.ensureDeps(process.cwd()))"`. Record the exit status.
    The call runs the plugin-host install with its flags, then the prune of PRs 4 and 5. Do not judge success from the output text.

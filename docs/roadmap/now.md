@@ -94,8 +94,8 @@ Options:
 ### 📋 SessionStart sync failures should not be silent (upstream issue #94)
 **Owner:** the maintainer · **ETA:** ~2 weeks · **Tracking:** [obra#94](https://github.com/obra/episodic-memory/issues/94)
 
-The hook `npm rebuild ... 2>/dev/null || true` swallows real install
-errors. Two-part fix:
+The upstream hook runs `npm rebuild ... 2>/dev/null || true`, which swallows real install
+errors. This item applies to upstream only; the fork has no `npm rebuild` step. Two-part fix:
 1. Log to a known location (`~/.config/superpowers/sync-errors.log`) so failures are diagnosable
 2. Surface in `doctor` output so users know to look
 
@@ -110,7 +110,7 @@ errors. Two-part fix:
 
 Current `doctor` covers config dir + DB path + Claude CLI version. Add:
 - Plugin install path detection (which marketplace, which version)
-- `node_modules` health check (sentinel files, native binding present)
+- `node_modules` health check (sentinel files, `onnxruntime-node` binding present)
 - DB size + row counts (sanity check)
 - Recent sync errors (from the log added in the previous task)
 - EMBEDDING_VERSION mismatch detection

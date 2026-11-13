@@ -144,23 +144,25 @@ a future maintainer.
 
 ## Engine floor divergence (fork-only)
 
-`package.json` declares `engines.node: ">=22.0.0"` and `.github/workflows/ci.yml` pins Bun
-`1.4.2`. The Node floor is the one `better-sqlite3` 13 declares (`>=22`); upstream declares `>=20`.
-(Until 2026-11-06 the floor was `22.12.0`, inherited from `@danielsimonjr/memoryjs`; that dependency
-is gone and the knowledge store is plain `better-sqlite3`.)
+`package.json` declares `engines.node: ">=22.16.0"` and `.github/workflows/ci.yml` pins Bun
+`1.4.2`. The Node floor is 22.16.0, the first Node release whose `node:sqlite` has
+`DatabaseSync.isTransaction`. Upstream declares `>=20` and uses `better-sqlite3`.
 
 This is a deliberate fork-only divergence and it will conflict on merge:
 
-- **Resolving the conflict:** keep the higher floor. Lowering `engines` back to `>=20` makes the
-  declared support a lie — `better-sqlite3` 13 fails to load on Node 20 no matter what `engines`
-  says. If upstream's `engines` ever rises above `22.0.0`, take upstream's value.
+- **Resolving the conflict:** keep the higher floor. Lowering `engines` below `22.16.0` makes the
+  declared support a lie. The `Database` adapter refuses a Node without `DatabaseSync.isTransaction`.
+  If upstream's `engines` ever rises above `22.16.0`, take upstream's value.
 - **Enforcement is in the code, not in `engines`.** `src/node-floor.ts` holds the floor constant and
   `assertNodeFloor()`; `cli/mcp-server-wrapper.js` and `cli/episodic-memory.js learn` call it and
   exit with one stderr line below the floor. `engines` alone only warns, so a Node 20 host would
   otherwise install 200 packages and then fail inside a dependency.
-- **No `overrides["better-sqlite3"]` any more.** The pin existed to collapse memoryjs's caret range
-  into one copy; nothing else pulls `better-sqlite3` in, so the exact `dependencies` entry is enough.
-- **CI's Node stays 24.** Only Bun moves, and only because Bun is what resolves and installs.
+- **No `better-sqlite3` and no `sqlite-vec`.** Upstream depends on both. The fork uses the
+  `node:sqlite` built-in through `src/sqlite.ts`. The fork has no native SQLite package and no
+  `@types/better-sqlite3`. A merge that brings either package back needs a matching change to the adapter.
+- **CI runs Node 24 and Node 22.16.0.** Job `build` runs Node 24. Job `node-floor` runs Node 22.16.0
+  and checks that the shipped `dist/sqlite.js` loads with an empty stderr. Only Bun moves, and only
+  because Bun is what resolves and installs.
 
 ## Where this gets revisited
 

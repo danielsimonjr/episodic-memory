@@ -56,10 +56,10 @@ possible only where the row says so.
 | Commit | Upstream change | Class | Fork evidence and port |
 |---|---|---|---|
 | 32c8382 (#95) | Check the manifest of each required package before the MCP server starts. | In fork | `JS_SENTINELS` and `repairPlan` in `src/deps-health.ts`, with the repair in `cli/ensure-deps.js` (fork commits 1ae7457, bdd520a). |
-| a3438a6 (#95) | A cross-platform `postinstall` script. | In fork | `postinstall` runs `node scripts/rebuild-native.mjs`, which exits 0. |
-| cbc4881 (#150) | Load the native binding to verify it, and fall back to a node-gyp build. | Partial | `scripts/rebuild-native.mjs` loads the binding and retries `npm rebuild`. The node-gyp fallback is missing. Upstream says that `npm rebuild` can exit 0 and build nothing; the fork has not reproduced that. Port only after a reproduction. |
+| a3438a6 (#95) | A cross-platform `postinstall` script. | Skip | The fork has no `postinstall` script. `node:sqlite` needs no native build. |
+| cbc4881 (#150) | Load the native binding to verify it, and fall back to a node-gyp build. | Skip | The fork builds no better-sqlite3 binding, so the fallback has no target. Port only if the fork adds a native dependency again. |
 | ea0a29e (#161) | Kill an orphaned `npm install` child and prevent a second install. | Partial | The second-install half is in the fork (`REPAIR_LOCK` in `cli/ensure-deps.js`). The orphan kill is missing: `runNpm` uses `spawnSync`, so the npm child outlives a killed wrapper. The port is large for its value. |
-| cd8dc33 (#167) | `allowScripts` for better-sqlite3 and onnxruntime-node. | Skip | The fork denies the onnxruntime-node install script on purpose (fork commit f660cec) and pins better-sqlite3. Porting would undo that decision. |
+| cd8dc33 (#167) | `allowScripts` for better-sqlite3 and onnxruntime-node. | Skip | The fork denies the onnxruntime-node install script on purpose (fork commit f660cec). The fork has no better-sqlite3 dependency. Porting would undo that decision. |
 | dd5815f (#124) | Cap the onnxruntime threads on Apple Silicon (`EPISODIC_MEMORY_EMBED_THREADS`). | Skip | The default cap applies only on darwin-arm64. The fork machines are Windows x64, and the fork embeds in batches. |
 
 ## Tests, CI and harnesses
@@ -69,7 +69,7 @@ possible only where the row says so.
 | 22a82a5 (#131) | Tests use a temporary folder for the config, Claude and Codex directories. | Partial | `test/test-env.ts` pins `EPISODIC_MEMORY_CONFIG_DIR`. Port: it does not pin `CLAUDE_CONFIG_DIR` or `CODEX_HOME`, so a test that reads the source directories without its own values reads the real `~/.claude` and `~/.codex` (`src/paths.ts`). |
 | 8b261ea (#157) | MCP integration tests through the SDK client. | Skip | `test/mcp-protocol.test.ts` already drives the wrapper over stdio, `tools/call` included. The fork has no MCP client dependency, so the upstream file does not import. |
 | 7e06519 (#169) | Pin a show test to en-US and UTC. | Skip | The fork has no test that asserts that timestamp. |
-| 06d8213 (#164) | CI on every PR, on Node 22 and 24. | In fork | The fork CI runs on `pull_request`, on Node 24 only. A Node 22 leg is optional: 22 is the floor. |
+| 06d8213 (#164) | CI on every PR, on Node 22 and 24. | In fork | The fork CI runs on `push` to `main` and on `pull_request`. Job `build` runs Node 24. Job `node-floor` runs Node 22.16.0. |
 | 30916f8 (#113, #117) | Cursor and opencode harnesses. | Decision | The fork reads Claude Code and Codex only (`src/types.ts`, `src/paths.ts`). A new harness is a product choice. |
 | 115a767 (#148) | Oh My Pi harness. | Decision | It builds on the multi-harness code of 30916f8. |
 

@@ -170,10 +170,6 @@ function isThenable(value: unknown): value is PromiseLike<unknown> {
 }
 
 /**
- * A database connection with the better-sqlite3 method names.
- * Every connection turns foreign key enforcement on.
- */
-/**
  * Refuse a node:sqlite handle that has no `isTransaction` property.
  *
  * The transaction wrapper reads `isTransaction` to select a savepoint for a nested call.
@@ -191,6 +187,10 @@ export function requireTransactionState(handle: { isTransaction?: unknown; close
   );
 }
 
+/**
+ * A database connection with the better-sqlite3 method names.
+ * Every connection turns foreign key enforcement on.
+ */
 export class Database {
   private readonly db: DatabaseSync;
 

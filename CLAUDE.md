@@ -30,7 +30,7 @@ Carry these against upstream `1.4.1`. Each is a real bug; PRs filed at
 
 | Patch | Commit | What it fixes |
 |---|---|---|
-| **Wrapper sentinel check** | `443db0e` | Partial `node_modules` extracts (better-sqlite3 missing native binding) slip past `existsSync(node_modules)`. Wrapper now verifies sentinel files before declaring deps healthy. |
+| **Wrapper sentinel check** | `443db0e` | Partial `node_modules` extracts (better-sqlite3 missing native binding) slip past `existsSync(node_modules)`. Wrapper now verifies sentinel files before declaring deps healthy. The check now covers `@huggingface/transformers`, `onnxruntime-common` and the `onnxruntime-node` binding. |
 | **`onnxruntime-common` hoist** | `443db0e` | `@huggingface/transformers@4.2.0` directly imports `onnxruntime-common` but doesn't declare it as a direct dep. npm doesn't hoist it because conflicting versions nested under `onnxruntime-node` + `onnxruntime-web`. Adding it as a top-level dep restores ESM resolution. The `onnxruntime-web` override now installs a stub with no dependencies, so at most `onnxruntime-node` nests a copy; the top-level dep stays. |
 | **Windows path-split** | `6cadc20` | `parseConversationFile` used `filePath.split('/')` — broken on Windows backslash paths. Every conversation ended up `project='unknown'`. Now uses `path.basename(path.dirname(filePath))`. |
 | **stdio log corruption** | `6cadc20` | 5 `console.log` calls in `migrateSchema`/`migrateToolCallsCascade` fire to **stdout** during MCP startup, corrupting JSON-RPC. Switched to `console.error`. |
@@ -41,7 +41,7 @@ When upstream merges these (or equivalents), rebase/merge `upstream/main` and dr
 
 ## Knowledge store (no memoryjs)
 
-The `learn` feature's `learned/knowledge.db` uses plain better-sqlite3. `src/learn/knowledge-store.ts` owns the
+The `learn` feature's `learned/knowledge.db` uses the `Database` adapter in `src/sqlite.ts` on `node:sqlite`. `src/learn/knowledge-store.ts` owns the
 `entities` / `relations` layout. This layout is the one that the former `@danielsimonjr/memoryjs` adapter created,
 so an existing file opens unchanged. Every read-modify-write runs under the write lock. The store has no memoryjs
 dependency, no `MEMORY_*` environment handling and no per-handle cache. Each open handle sees every write.
@@ -51,7 +51,7 @@ dependency, no `MEMORY_*` environment handling and no per-handle cache. Each ope
 - **TypeScript source** in `src/`, compiled to `dist/` by `tsc && esbuild`. **Both are committed.**
 - **CLI entry points** in `cli/` (Node.js wrappers — no bash).
 - **MCP server** is `dist/mcp-server.js`, launched by `cli/mcp-server-wrapper.js` from the plugin manifest.
-- **Tests** in `test/` with vitest (171 files, 1677 tests).
+- **Tests** in `test/` with vitest (173 files, 1722 tests).
 - **Generated files** in `dist/` AND `src/version.ts`. The latter is gitignored; never edit it.
 - **`bun.lock` is committed** — CI uses `bun install --frozen-lockfile` + `bun audit --audit-level=critical`. Do not commit `package-lock.json` (gitignored).
 
@@ -60,7 +60,8 @@ src/
   embeddings.ts          # encoder pipeline; query/exchange embedders
   embedding-migration.ts # version constant + lock + batch migration
   search.ts              # vector + text search; multi-concept aggregation
-  indexer.ts             # incremental index from sources to vec_exchanges
+  sqlite.ts              # node:sqlite adapter with the better-sqlite3 method names; the only importer of node:sqlite
+  indexer.ts             # incremental index from sources to exchange_vectors
   sync.ts / sync-cli.ts  # source→archive copy + index, with reentrancy guard
   derived-text.ts        # removes the digest lines that cite deleted exchanges (sync, index, repair, prune); imports only digest-db.ts
   exclusion-marker.ts    # the DO NOT INDEX marker scan of sync, index, verify and backfill (message text only); imports fs, constants.ts and content-text.ts
@@ -90,7 +91,7 @@ src/
     learn-config.ts      # flag + settings; imports nothing (hook fast path)
     learned-text-screen.ts # injection screen for learned text; imports only ../redact.js
     learn-inject.ts      # rendered block render/read/cap; never opens the knowledge store
-    knowledge-store.ts   # knowledge.db on better-sqlite3 (the only module that knows the row layout)
+    knowledge-store.ts   # knowledge.db on the sqlite.ts adapter (the only module that knows the row layout)
     pii-redactor.ts      # email/SSN/card/phone/IP redaction; imports nothing
     knowledge-db.ts      # snapshots, activation, supersede over the store
     learning-store.ts    # learned/learning.sqlite handle; hook opens it read-only
@@ -119,7 +120,7 @@ scripts/
 
 test/
   test-utils.ts          # createTestDb, safeRmSync (fork-added), suppressConsole, fixtures
-  *.test.ts              # 171 test files, 1677 tests
+  *.test.ts              # 173 test files, 1722 tests
   learn/                 # the Recursa suite; fakes for every model call
   fixtures/              # JSONL conversation fixtures
 
@@ -148,9 +149,9 @@ source changes that touch the MCP server or any imported module, run
 `bun run build` so `dist/` reflects source. **Commit `dist/` alongside `src/`** —
 CI doesn't rebuild for you.
 
-**Node floor: `>=22.0.0`** is the floor of better-sqlite3 13. The `engines` field is advisory, so the launch enforces
+**Node floor: `>=22.16.0`**, the first Node whose `node:sqlite` has `DatabaseSync.isTransaction`. The `engines` field is advisory, so the launch enforces
 the floor. `src/node-floor.ts` holds the constant. `cli/mcp-server-wrapper.js` and `cli/episodic-memory.js learn`
-exit with one stderr line below the floor. CI runs Node 24. Both of the user's machines run Node 24.
+exit with one stderr line below the floor. CI runs Node 24 (job `build`) and Node 22.16.0 (job `node-floor`).
 `docs/roadmap/upstream-sync.md` records the floor as a fork-only divergence from upstream.
 
 **Toolchain vs runtime:** Bun is the package manager and script driver (CI + local
@@ -177,12 +178,12 @@ scheduled task. To roll back, remove the variable first. Then run `npm install -
 
 ### Current test state
 
-- **Full suite: 1677 tests in 171 files pass** in about 17 s of wall clock on Linux. Windows runs are slower.
+- **Full suite: 1722 tests in 173 files pass** in about 17 s of wall clock on Linux. Windows runs are slower.
   The suite no longer has the former `integration.test.ts` / `verify.test.ts` cold-embedding timeout flakes.
   `beforeAll` pre-warms the embedder once per worker. `vitest.config.ts` sets `hookTimeout: 30000`.
   The repair re-index test gets 60s. If you see a fresh timeout flake, suspect a new embedding-heavy hook
   without warm-up, not the old cold-start cause.
-- The learn tests are the bulk of the suite (`test/learn/`, 38 files; the other 133 test files sit directly in `test/`). The learn tests never reach a model: every agent and
+- The learn tests are the bulk of the suite (`test/learn/`, 38 files; the other 135 test files sit directly in `test/`). The learn tests never reach a model: every agent and
   text call is injectable and tests pass fakes. `test/test-env.ts` pins the Claude backend, a closed ollama URL,
   a temporary config directory and temporary Claude and Codex homes. `test/setup-env.ts` deletes every other `EPISODIC_MEMORY_*` variable of
   the machine. A local run therefore uses the CI settings and cannot reach a model or the live data.
@@ -249,7 +250,7 @@ The fix:
 - `getApiEnv()` always sets `EPISODIC_MEMORY_SUMMARIZER_GUARD=1` in the env it returns to the SDK
 - `sync-cli.ts` checks `shouldSkipReentrantSync()` **before importing the heavy native stack** and exits silently when the guard is set
 
-The guard lives in its own dependency-free module, `src/reentrancy.ts` (`SUMMARIZER_GUARD_ENV` + `shouldSkipReentrantSync`). `summarizer.ts` re-exports the guard for back-compat. `sync-cli.ts` checks the guard *first*. The CLI imports the heavy modules (`db.js` → better-sqlite3, `embeddings.js`/ `embedding-migration.js` → transformers) lazily via `await import()` only when the CLI actually does work. Keep the lazy import arrangement. Moving any heavy module back to a top-level static import makes every guarded reentrant subprocess pay a multi-second load just to bail.
+The guard lives in its own dependency-free module, `src/reentrancy.ts` (`SUMMARIZER_GUARD_ENV` + `shouldSkipReentrantSync`). `summarizer.ts` re-exports the guard for back-compat. `sync-cli.ts` checks the guard *first*. The CLI imports the heavy modules (`db.js` → `sqlite.js` on `node:sqlite`, `embeddings.js`/ `embedding-migration.js` → transformers) lazily via `await import()` only when the CLI actually does work. Keep the lazy import arrangement. Moving any heavy module back to a top-level static import makes every guarded reentrant subprocess pay a multi-second load just to bail.
 
 **Anything new that spawns a Claude subprocess via the SDK must inherit this guard.** Nothing should run `sync --background` without checking the guard first. Test with `test/sync-cli-reentrancy.test.ts` / `test/reentrancy.test.ts` if you change the spawn path.
 

@@ -2,9 +2,9 @@ metadata:
   name: episodic-memory
   schemaVersion: 2.0.0
   language: typescript
-  totalFiles: 293
+  totalFiles: 295
   totalModules: 4
-  totalExports: 616
+  totalExports: 628
 modules:
   src:
     cli/digest-hook.js:
@@ -245,13 +245,15 @@ modules:
         - extractContentText
         - safeParseJson
     src/db.ts:
-      externalDependencies:
-        - better-sqlite3
-        - sqlite-vec
+      externalDependencies: []
       nodeDependencies:
         - fs
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/types.ts
           imports:
             - ConversationExchange
@@ -284,6 +286,9 @@ modules:
         - ensureFts
         - upsertExchangeFts
         - deleteExchangeFts
+        - registerVectorFunctions
+        - ensureVectorTable
+        - migrateVec0Vectors
         - openDatabase
         - openDatabaseReadonly
         - initDatabase
@@ -320,8 +325,6 @@ modules:
         - path
       internalDependencies: []
       exports:
-        - NATIVE_ADDON
-        - nativeAddonPresent
         - JS_SENTINELS
         - onnxBindingPath
         - ONNX_BINDING
@@ -330,10 +333,13 @@ modules:
         - nodeModulesIsHealthy
         - repairPlan
     src/derived-text.ts:
-      externalDependencies:
-        - better-sqlite3
+      externalDependencies: []
       nodeDependencies: []
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
         - file: src/digest-db.ts
           imports:
             - citedExchangeIds
@@ -343,10 +349,13 @@ modules:
         - dropLinesCiting
         - removeDerivedText
     src/digest-compress.ts:
-      externalDependencies:
-        - better-sqlite3
+      externalDependencies: []
       nodeDependencies: []
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
         - file: src/summarizer.ts
           imports:
             - callDigestModel
@@ -377,10 +386,13 @@ modules:
         - CompressResult
         - compressDigest
     src/digest-db.ts:
-      externalDependencies:
-        - better-sqlite3
+      externalDependencies: []
       nodeDependencies: []
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
         - file: src/fts-query.ts
           imports:
             - toFtsQuery
@@ -397,10 +409,13 @@ modules:
         - hideCitedLines
         - searchDigest
     src/digest-inject.ts:
-      externalDependencies:
-        - better-sqlite3
+      externalDependencies: []
       nodeDependencies: []
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
         - file: src/digest-db.ts
           imports:
             - hideCitedLines
@@ -413,10 +428,13 @@ modules:
         - digestMaxChars
         - buildDigestText
     src/digest-job.ts:
-      externalDependencies:
-        - better-sqlite3
+      externalDependencies: []
       nodeDependencies: []
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
         - file: src/types.ts
           imports:
             - ConversationExchange
@@ -470,10 +488,13 @@ modules:
         - isTrivial
         - runDigest
     src/digest-phase.ts:
-      externalDependencies:
-        - better-sqlite3
+      externalDependencies: []
       nodeDependencies: []
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
         - file: src/digest-job.ts
           imports:
             - digestEnabled
@@ -582,14 +603,15 @@ modules:
           typeOnly: false
       exports: []
     src/doctor-learn.ts:
-      externalDependencies:
-        - better-sqlite3
+      externalDependencies: []
       nodeDependencies:
         - fs
-        - module
         - path
-        - url
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
         - file: src/paths.ts
           imports:
             - getSuperpowersDir
@@ -604,6 +626,10 @@ modules:
             - KnowledgeKind
             - KnowledgeStatus
           typeOnly: true
+        - file: src/sqlite.ts
+          imports:
+            - '*'
+          typeOnly: false
         - file: src/learn/knowledge-store.ts
           imports:
             - '*'
@@ -655,6 +681,10 @@ modules:
           imports:
             - nodeModulesIsHealthy
           typeOnly: false
+        - file: src/node-floor.ts
+          imports:
+            - assertNodeFloor
+          typeOnly: false
         - file: src/doctor-learn.ts
           imports:
             - LearnDoctorSection
@@ -668,13 +698,17 @@ modules:
         - StructuredDoctorReport
         - readRecentLogErrors
         - collectDoctorSnapshot
+        - formatSqliteLine
         - buildDoctorReport
     src/embedding-migration.ts:
-      externalDependencies:
-        - better-sqlite3
+      externalDependencies: []
       nodeDependencies:
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/lockfile.ts
           imports:
             - acquireLock
@@ -827,6 +861,7 @@ modules:
             - deleteExchangeFts
             - deleteExchangesForArchive
             - ensureFts
+            - ensureVectorTable
             - getAllExchanges
             - getFileLastIndexed
             - getFreelistInfo
@@ -836,10 +871,25 @@ modules:
             - insertExchange
             - migrateSchema
             - migrateToolCallsCascade
+            - migrateVec0Vectors
             - openDatabase
             - openDatabaseReadonly
+            - registerVectorFunctions
             - upsertExchangeFts
             - vacuumDatabase
+          typeOnly: false
+        - file: src/sqlite.ts
+          imports:
+            - BindParams
+            - Database
+            - DatabaseOptions
+            - PragmaOptions
+            - Row
+            - RunResult
+            - SqlFunctionOptions
+            - Statement
+            - Transaction
+            - requireTransactionState
           typeOnly: false
         - file: src/embeddings.ts
           imports:
@@ -917,14 +967,17 @@ modules:
           typeOnly: false
       exports: []
     src/indexer.ts:
-      externalDependencies:
-        - better-sqlite3
+      externalDependencies: []
       nodeDependencies:
         - events
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
         - file: src/db.ts
           imports:
             - initDatabase
@@ -1014,10 +1067,13 @@ modules:
         - looksKilled
         - runAgent
     src/learn/bootstrap.ts:
-      externalDependencies:
-        - better-sqlite3
+      externalDependencies: []
       nodeDependencies: []
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
         - file: src/learn/learn-config.ts
           imports:
             - learnConfig
@@ -1129,11 +1185,14 @@ modules:
         - IdCitedLines
         - parseIdCitedLines
     src/learn/cli-main.ts:
-      externalDependencies:
-        - better-sqlite3
+      externalDependencies: []
       nodeDependencies:
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
         - file: src/paths.ts
           imports:
             - getSuperpowersDir
@@ -1331,10 +1390,13 @@ modules:
         - parseJudgeScore
         - gradeRecall
     src/learn/knowledge-db.ts:
-      externalDependencies:
-        - better-sqlite3
+      externalDependencies: []
       nodeDependencies: []
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
         - file: src/learn/knowledge-store.ts
           imports:
             - entryName
@@ -1411,13 +1473,16 @@ modules:
         - redactLearnedText
         - gateEntry
     src/learn/knowledge-store.ts:
-      externalDependencies:
-        - better-sqlite3
+      externalDependencies: []
       nodeDependencies:
         - fs
         - node:crypto
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/paths.ts
           imports:
             - getKnowledgeDbPath
@@ -1596,10 +1661,13 @@ modules:
         - learnDigest
         - learnSkills
     src/learn/learn-inject.ts:
-      externalDependencies:
-        - better-sqlite3
+      externalDependencies: []
       nodeDependencies: []
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
         - file: src/learn/types.ts
           imports:
             - KnowledgeEntry
@@ -1653,10 +1721,13 @@ modules:
         - readLearnPids
         - withLearnLock
     src/learn/learned-block.ts:
-      externalDependencies:
-        - better-sqlite3
+      externalDependencies: []
       nodeDependencies: []
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
         - file: src/redact.ts
           imports:
             - redactSecrets
@@ -1797,11 +1868,14 @@ modules:
         - splitFailures
         - runLearn
     src/learn/learning-db.ts:
-      externalDependencies:
-        - better-sqlite3
+      externalDependencies: []
       nodeDependencies:
         - crypto
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
         - file: src/redact.ts
           imports:
             - redactSecrets
@@ -1842,12 +1916,15 @@ modules:
         - attemptsExist
         - passRate
     src/learn/learning-store.ts:
-      externalDependencies:
-        - better-sqlite3
+      externalDependencies: []
       nodeDependencies:
         - fs
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/paths.ts
           imports:
             - getLearningDbPath
@@ -1917,10 +1994,13 @@ modules:
         - reflectPrompt
         - ProposedEntry
     src/learn/report.ts:
-      externalDependencies:
-        - better-sqlite3
+      externalDependencies: []
       nodeDependencies: []
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
         - file: src/learn/learning-db.ts
           imports:
             - getRun
@@ -2095,11 +2175,14 @@ modules:
         - SolveManyOptions
         - solveMany
     src/learn/tasks.ts:
-      externalDependencies:
-        - better-sqlite3
+      externalDependencies: []
       nodeDependencies:
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
         - file: src/types.ts
           imports:
             - ConversationExchange
@@ -2146,10 +2229,13 @@ modules:
         - generateTasks
         - checkTasks
     src/learn/types.ts:
-      externalDependencies:
-        - better-sqlite3
+      externalDependencies: []
       nodeDependencies: []
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
         - file: src/learn/knowledge-store.ts
           imports:
             - KnowledgeStore
@@ -2510,10 +2596,13 @@ modules:
         - isBackgroundWorker
         - lowerPriorityIfBackgroundWorker
     src/prune.ts:
-      externalDependencies:
-        - better-sqlite3
+      externalDependencies: []
       nodeDependencies: []
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/derived-text.ts
           imports:
             - removeDerivedText
@@ -2551,11 +2640,14 @@ modules:
           typeOnly: false
       exports: []
     src/search.ts:
-      externalDependencies:
-        - better-sqlite3
+      externalDependencies: []
       nodeDependencies:
         - fs
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/db.ts
           imports:
             - initDatabase
@@ -2620,6 +2712,28 @@ modules:
       exports:
         - formatConversationAsMarkdown
         - formatConversationAsHTML
+    src/sqlite.ts:
+      externalDependencies: []
+      nodeDependencies:
+        - module
+        - node:sqlite
+      internalDependencies:
+        - file: src/node-floor.ts
+          imports:
+            - NODE_FLOOR
+            - assertNodeFloor
+          typeOnly: false
+      exports:
+        - BindParams
+        - Row
+        - RunResult
+        - Statement
+        - DatabaseOptions
+        - PragmaOptions
+        - SqlFunctionOptions
+        - Transaction
+        - requireTransactionState
+        - Database
     src/stats-cli.ts:
       externalDependencies: []
       nodeDependencies: []
@@ -2631,10 +2745,13 @@ modules:
           typeOnly: false
       exports: []
     src/stats.ts:
-      externalDependencies:
-        - better-sqlite3
+      externalDependencies: []
       nodeDependencies: []
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/paths.ts
           imports:
             - getDbPath
@@ -2852,10 +2969,13 @@ modules:
         - syncConversations
         - summarizeOneFile
     src/topic-db.ts:
-      externalDependencies:
-        - better-sqlite3
+      externalDependencies: []
       nodeDependencies: []
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
         - file: src/fts-query.ts
           imports:
             - toFtsQuery
@@ -2918,10 +3038,13 @@ modules:
         - FenceState
         - fenceStep
     src/topic-job.ts:
-      externalDependencies:
-        - better-sqlite3
+      externalDependencies: []
       nodeDependencies: []
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
         - file: src/types.ts
           imports:
             - ConversationExchange
@@ -2988,10 +3111,13 @@ modules:
         - TopicResult
         - runTopics
     src/topic-phase.ts:
-      externalDependencies:
-        - better-sqlite3
+      externalDependencies: []
       nodeDependencies: []
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
         - file: src/reentrancy.ts
           imports:
             - shouldSkipReentrantSync
@@ -3207,15 +3333,6 @@ modules:
         - fs
         - path
         - url
-      internalDependencies: []
-      exports: []
-    scripts/rebuild-native.mjs:
-      externalDependencies: []
-      nodeDependencies:
-        - node:child_process
-        - node:module
-        - node:path
-        - node:url
       internalDependencies: []
       exports: []
   tests:
@@ -3531,13 +3648,16 @@ modules:
       exports: []
     test/codex-transcripts.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/paths.ts
           imports:
             - getConversationSourceDirs
@@ -3615,13 +3735,16 @@ modules:
       exports: []
     test/dangling-project-link.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/sync.ts
           imports:
             - syncConversations
@@ -3681,7 +3804,6 @@ modules:
       exports: []
     test/db.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
@@ -3703,6 +3825,10 @@ modules:
             - safeRmSync
             - suppressConsole
           typeOnly: false
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
       exports: []
     test/deps-health.test.ts:
       externalDependencies:
@@ -3716,7 +3842,6 @@ modules:
           imports:
             - DEP_SENTINELS
             - JS_SENTINELS
-            - NATIVE_ADDON
             - ONNX_BINDING
             - nodeModulesIsHealthy
             - onnxBindingPath
@@ -3730,10 +3855,13 @@ modules:
       exports: []
     test/derived-text.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies: []
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/digest-db.ts
           imports:
             - ensureDigestSchema
@@ -3750,10 +3878,13 @@ modules:
       exports: []
     test/digest-compress.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies: []
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/digest-db.ts
           imports:
             - ensureDigestSchema
@@ -3771,13 +3902,16 @@ modules:
       exports: []
     test/digest-db.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/db.ts
           imports:
             - initDatabase
@@ -3799,13 +3933,16 @@ modules:
       exports: []
     test/digest-gpu-reservation.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
         - file: src/db.ts
           imports:
             - initDatabase
@@ -3830,6 +3967,10 @@ modules:
         - file: src/claude-bin.ts
           imports:
             - ClaudeBinError
+          typeOnly: false
+        - file: src/sqlite.ts
+          imports:
+            - Database
           typeOnly: false
         - file: src/reentrancy.ts
           imports:
@@ -3882,10 +4023,13 @@ modules:
       exports: []
     test/digest-inject.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies: []
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/digest-db.ts
           imports:
             - ensureDigestSchema
@@ -3901,13 +4045,16 @@ modules:
       exports: []
     test/digest-job.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
         - file: src/db.ts
           imports:
             - initDatabase
@@ -3966,13 +4113,16 @@ modules:
       exports: []
     test/digest-prompt-budget.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
         - file: src/db.ts
           imports:
             - initDatabase
@@ -4035,18 +4185,22 @@ modules:
       exports: []
     test/doctor.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/doctor.ts
           imports:
             - buildDoctorReport
             - readRecentLogErrors
             - collectDoctorSnapshot
+            - formatSqliteLine
           typeOnly: false
         - file: src/doctor-learn.ts
           imports:
@@ -4120,14 +4274,16 @@ modules:
       exports: []
     test/embedding-migration.test.ts:
       externalDependencies:
-        - better-sqlite3
-        - sqlite-vec
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/embedding-migration.ts
           imports:
             - EMBEDDING_VERSION
@@ -4204,20 +4360,63 @@ modules:
         - file: src/deps-health.ts
           imports:
             - DEP_SENTINELS
-            - NATIVE_ADDON
             - ONNX_BINDING
             - onnxBindingPath
           typeOnly: false
       exports: []
-    test/exclude-nested.test.ts:
+    test/exchange-vectors.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
+        - file: src/db.ts
+          imports:
+            - closeSharedReaderDatabase
+            - deleteExchange
+            - ensureVectorTable
+            - initDatabase
+            - insertExchange
+            - migrateVec0Vectors
+            - registerVectorFunctions
+          typeOnly: false
+        - file: src/types.ts
+          imports:
+            - ConversationExchange
+          typeOnly: true
+        - file: test/test-utils.ts
+          imports:
+            - getFixturePath
+            - safeRmSync
+          typeOnly: false
+        - file: src/embedding-migration.ts
+          imports:
+            - countStale
+            - pickStaleBatch
+          typeOnly: false
+        - file: src/prune.ts
+          imports:
+            - pruneProjects
+          typeOnly: false
+      exports: []
+    test/exclude-nested.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - fs
+        - os
+        - path
+      internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/indexer.ts
           imports:
             - indexUnprocessed
@@ -4292,13 +4491,16 @@ modules:
       exports: []
     test/incremental-indexing.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/indexer.ts
           imports:
             - indexUnprocessed
@@ -4346,13 +4548,16 @@ modules:
       exports: []
     test/index-honours-marker.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: test/test-utils.ts
           imports:
             - safeRmSync
@@ -4386,13 +4591,16 @@ modules:
       exports: []
     test/indexer-db-close.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
         - file: test/test-utils.ts
           imports:
             - safeRmSync
@@ -4413,7 +4621,6 @@ modules:
       exports: []
     test/integration.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
@@ -4446,6 +4653,10 @@ modules:
           imports:
             - indexTestFiles
           typeOnly: false
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
       exports: []
     test/learn/agent-runner.test.ts:
       externalDependencies:
@@ -4479,7 +4690,6 @@ modules:
       exports: []
     test/learn/bootstrap.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
@@ -4487,6 +4697,10 @@ modules:
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/learn/bootstrap.ts
           imports:
             - runBootstrap
@@ -4561,13 +4775,16 @@ modules:
       exports: []
     test/learn/export.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/learn/export.ts
           imports:
             - exportSkills
@@ -4717,13 +4934,16 @@ modules:
       exports: []
     test/learn/knowledge-store.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/paths.ts
           imports:
             - getLearnedDir
@@ -4754,7 +4974,6 @@ modules:
       exports: []
     test/learn/leaf-learner.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
@@ -4762,6 +4981,10 @@ modules:
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/learn/leaf-learner.ts
           imports:
             - runLeafLearner
@@ -4807,7 +5030,6 @@ modules:
       exports: []
     test/learn/learn-cli.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - child_process
@@ -4816,6 +5038,10 @@ modules:
         - path
         - url
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/learn/cli-main.ts
           imports:
             - runLearnCli
@@ -4996,7 +5222,6 @@ modules:
       exports: []
     test/learn/learned-block.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
@@ -5023,6 +5248,10 @@ modules:
           imports:
             - writeLearnedBlocks
           typeOnly: false
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
         - file: src/learn/types.ts
           imports:
             - NewKnowledgeEntry
@@ -5049,7 +5278,6 @@ modules:
       exports: []
     test/learn/learner.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
@@ -5057,6 +5285,10 @@ modules:
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/learn/learner.ts
           imports:
             - runLearn
@@ -5103,13 +5335,16 @@ modules:
       exports: []
     test/learn/learning-db.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
         - file: src/learn/learning-db.ts
           imports:
             - ensureLearningSchema
@@ -5148,13 +5383,16 @@ modules:
       exports: []
     test/learn/learning-store.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/paths.ts
           imports:
             - getLearnedDir
@@ -5252,13 +5490,16 @@ modules:
       exports: []
     test/learn/relay-task4-findings.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/learn/tasks.ts
           imports:
             - generateTasks
@@ -5296,7 +5537,6 @@ modules:
       exports: []
     test/learn/relay-task6-findings.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - child_process
@@ -5305,6 +5545,10 @@ modules:
         - path
         - url
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/learn/cli-main.ts
           imports:
             - runLearnCli
@@ -5345,7 +5589,6 @@ modules:
       exports: []
     test/learn/relay-task8-challenger.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
@@ -5353,6 +5596,10 @@ modules:
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/learn/leaf-learner.ts
           imports:
             - runLeafLearner
@@ -5398,7 +5645,6 @@ modules:
       exports: []
     test/learn/relay-task9-findings.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
@@ -5406,6 +5652,10 @@ modules:
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/learn/learner.ts
           imports:
             - runLearn
@@ -5452,13 +5702,16 @@ modules:
       exports: []
     test/learn/report.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/learn/report.ts
           imports:
             - buildReport
@@ -5573,13 +5826,16 @@ modules:
       exports: []
     test/learn/solver.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/learn/solver.ts
           imports:
             - solveTask
@@ -5630,13 +5886,16 @@ modules:
       exports: []
     test/learn/tasks.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/learn/tasks.ts
           imports:
             - selectSourceExchanges
@@ -5661,7 +5920,6 @@ modules:
       exports: []
     test/learn/validate.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
@@ -5669,6 +5927,10 @@ modules:
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/learn/validate.ts
           imports:
             - validateCandidate
@@ -5854,10 +6116,18 @@ modules:
             - initEmbeddings
           typeOnly: false
       exports: []
+    test/no-native-sqlite.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - fs
+      internalDependencies: []
+      exports: []
     test/node-floor.test.ts:
       externalDependencies:
         - vitest
-      nodeDependencies: []
+      nodeDependencies:
+        - fs
       internalDependencies:
         - file: src/node-floor.ts
           imports:
@@ -5914,13 +6184,16 @@ modules:
       exports: []
     test/oversized-message-guard.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/db.ts
           imports:
             - initDatabase
@@ -6013,13 +6286,16 @@ modules:
       exports: []
     test/prune.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/db.ts
           imports:
             - initDatabase
@@ -6077,16 +6353,6 @@ modules:
         - REAL_SDK_MESSAGE
         - guardQuery
         - takeRealSdkCalls
-    test/rebuild-native.test.ts:
-      externalDependencies:
-        - vitest
-      nodeDependencies:
-        - node:child_process
-        - node:fs/promises
-        - node:os
-        - node:path
-      internalDependencies: []
-      exports: []
     test/redact-patterns.test.ts:
       externalDependencies:
         - vitest
@@ -6168,13 +6434,16 @@ modules:
       exports: []
     test/search-metadata-filters.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/indexer.ts
           imports:
             - indexUnprocessed
@@ -6290,6 +6559,29 @@ modules:
             - formatConversationAsHTML
           typeOnly: false
       exports: []
+    test/sqlite-adapter.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - child_process
+        - fs
+        - os
+        - path
+      internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+            - requireTransactionState
+          typeOnly: false
+        - file: src/node-floor.ts
+          imports:
+            - NODE_FLOOR
+          typeOnly: false
+        - file: test/test-utils.ts
+          imports:
+            - safeRmSync
+          typeOnly: false
+      exports: []
     test/stats-format.test.ts:
       externalDependencies:
         - vitest
@@ -6302,8 +6594,6 @@ modules:
       exports: []
     test/stats.test.ts:
       externalDependencies:
-        - better-sqlite3
-        - sqlite-vec
         - vitest
       nodeDependencies:
         - fs
@@ -6313,6 +6603,10 @@ modules:
         - file: src/stats.ts
           imports:
             - getIndexStats
+          typeOnly: false
+        - file: src/sqlite.ts
+          imports:
+            - Database
           typeOnly: false
       exports: []
     test/summarizer-api-env.test.ts:
@@ -6534,13 +6828,16 @@ modules:
       exports: []
     test/sync-embeddings-unavailable.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: test/test-utils.ts
           imports:
             - safeRmSync
@@ -6659,13 +6956,16 @@ modules:
       exports: []
     test/sync-incremental-and-db.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/sync.ts
           imports:
             - syncConversations
@@ -6690,13 +6990,16 @@ modules:
       exports: []
     test/sync-marker-scan.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: test/test-utils.ts
           imports:
             - safeRmSync
@@ -6775,8 +7078,6 @@ modules:
       exports: []
     test/sync.test.ts:
       externalDependencies:
-        - better-sqlite3
-        - sqlite-vec
         - vitest
       nodeDependencies:
         - fs
@@ -6786,6 +7087,10 @@ modules:
         - file: src/sync.ts
           imports:
             - syncConversations
+          typeOnly: false
+        - file: src/sqlite.ts
+          imports:
+            - Database
           typeOnly: false
       exports: []
     test/test-env.test.ts:
@@ -6832,13 +7137,16 @@ modules:
       exports:
         - indexTestFiles
     test/test-utils.ts:
-      externalDependencies:
-        - better-sqlite3
+      externalDependencies: []
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/digest-db.ts
           imports:
             - ensureDigestSchema
@@ -6854,13 +7162,16 @@ modules:
         - seedDigest
     test/text-search-multiword.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
         - file: src/db.ts
           imports:
             - initDatabase
@@ -6882,13 +7193,16 @@ modules:
       exports: []
     test/tool-calls-cascade.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/db.ts
           imports:
             - initDatabase
@@ -6897,13 +7211,16 @@ modules:
       exports: []
     test/topic-db.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/topic-db.ts
           imports:
             - ensureTopicSchema
@@ -6944,13 +7261,16 @@ modules:
       exports: []
     test/topic-job.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
         - file: src/db.ts
           imports:
             - initDatabase
@@ -6993,13 +7313,16 @@ modules:
       exports: []
     test/topic-phase.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/db.ts
           imports:
             - initDatabase
@@ -7058,7 +7381,6 @@ modules:
       exports: []
     test/topic-tool.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
@@ -7066,6 +7388,10 @@ modules:
         - path
         - url
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: src/mcp-tools.ts
           imports:
             - handleToolCall
@@ -7107,13 +7433,16 @@ modules:
       exports: []
     test/vanished-transcript.test.ts:
       externalDependencies:
-        - better-sqlite3
         - vitest
       nodeDependencies:
         - fs
         - os
         - path
       internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
         - file: test/test-utils.ts
           imports:
             - safeRmSync
@@ -7215,33 +7544,33 @@ modules:
           typeOnly: false
       exports: []
 statistics:
-  totalTypeScriptFiles: 293
-  totalSourceFiles: 293
+  totalTypeScriptFiles: 295
+  totalSourceFiles: 295
   totalModules: 4
-  totalLinesOfCode: 58191
-  totalExports: 616
+  totalLinesOfCode: 59093
+  totalExports: 628
   entryRoots: 6
-  reachableFiles: 50
+  reachableFiles: 51
   dormantFiles: 60
   orphanedFiles: 15
   testOnlyFiles: 45
   runtimeCircularDeps: 0
   typeOnlyCircularDeps: 1
-  totalTypeOnlyImports: 84
+  totalTypeOnlyImports: 114
   noImporterFileCount: 14
-  unusedExportsCount: 115
+  unusedExportsCount: 114
   circularDepsTruncated: false
   runtimeCyclicComponents: 0
   typeOnlyCyclicComponents: 1
   runtimeFilesInCycles: 0
   typeOnlyFilesInCycles: 2
-  totalClasses: 10
-  totalInterfaces: 140
-  totalFunctions: 351
+  totalClasses: 11
+  totalInterfaces: 145
+  totalFunctions: 355
   totalTypeGuards: 11
   totalEnums: 0
-  totalConstants: 71
-  totalReExports: 8
+  totalConstants: 70
+  totalReExports: 9
 reachability:
   roots:
     - src/index.ts
@@ -7250,7 +7579,7 @@ reachability:
     - src/mcp-server.ts
     - test/setup-env.ts
     - test/global-setup.ts
-  reachableCount: 50
+  reachableCount: 51
   dormantCount: 60
   orphaned:
     - cli/digest-hook.js

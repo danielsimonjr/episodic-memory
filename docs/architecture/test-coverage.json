@@ -1,17 +1,17 @@
 {
   "metadata": {
-    "totalSourceFiles": 110,
-    "totalTestFiles": 171,
-    "testedCount": 87,
+    "totalSourceFiles": 111,
+    "totalTestFiles": 173,
+    "testedCount": 88,
     "untestedCount": 23,
-    "coveragePercent": "79.1",
+    "coveragePercent": "79.3",
     "effectiveCoverage": {
       "policyLoaded": false,
-      "activeFiles": 110,
-      "testedActive": 87,
+      "activeFiles": 111,
+      "testedActive": 88,
       "activeUntested": 23,
       "excludedTotal": 0,
-      "percent": "79.1",
+      "percent": "79.3",
       "breakdown": {
         "active_untested": 23
       }
@@ -118,6 +118,7 @@
     "src/reentrancy.ts",
     "src/search.ts",
     "src/show.ts",
+    "src/sqlite.ts",
     "src/stats.ts",
     "src/summarizer.ts",
     "src/sync-banner.ts",
@@ -197,6 +198,7 @@
       "test/digest-prompt-budget.test.ts",
       "test/doctor.test.ts",
       "test/embedding-migration-helpers.test.ts",
+      "test/exchange-vectors.test.ts",
       "test/index-honours-marker.test.ts",
       "test/indexer-db-close.test.ts",
       "test/integration.test.ts",
@@ -280,7 +282,8 @@
     ],
     "src/embedding-migration.ts": [
       "test/embedding-migration-helpers.test.ts",
-      "test/embedding-migration.test.ts"
+      "test/embedding-migration.test.ts",
+      "test/exchange-vectors.test.ts"
     ],
     "src/embeddings.ts": [
       "test/embedding-migration.test.ts",
@@ -552,7 +555,8 @@
       "test/topic-tool.test.ts"
     ],
     "src/node-floor.ts": [
-      "test/node-floor.test.ts"
+      "test/node-floor.test.ts",
+      "test/sqlite-adapter.test.ts"
     ],
     "src/ollama-backend.ts": [
       "test/backfill-gpu-reservation.test.ts",
@@ -593,6 +597,7 @@
       "test/priority.test.ts"
     ],
     "src/prune.ts": [
+      "test/exchange-vectors.test.ts",
       "test/prune.test.ts"
     ],
     "src/redact.ts": [
@@ -630,6 +635,59 @@
     "src/show.ts": [
       "test/mcp-read-redaction.test.ts",
       "test/show.test.ts"
+    ],
+    "src/sqlite.ts": [
+      "test/codex-transcripts.test.ts",
+      "test/dangling-project-link.test.ts",
+      "test/db.test.ts",
+      "test/derived-text.test.ts",
+      "test/digest-compress.test.ts",
+      "test/digest-db.test.ts",
+      "test/digest-gpu-reservation.test.ts",
+      "test/digest-inject.test.ts",
+      "test/digest-job.test.ts",
+      "test/digest-prompt-budget.test.ts",
+      "test/doctor.test.ts",
+      "test/embedding-migration.test.ts",
+      "test/exchange-vectors.test.ts",
+      "test/exclude-nested.test.ts",
+      "test/incremental-indexing.test.ts",
+      "test/index-honours-marker.test.ts",
+      "test/indexer-db-close.test.ts",
+      "test/integration.test.ts",
+      "test/learn/bootstrap.test.ts",
+      "test/learn/export.test.ts",
+      "test/learn/knowledge-store.test.ts",
+      "test/learn/leaf-learner.test.ts",
+      "test/learn/learn-cli.test.ts",
+      "test/learn/learned-block.test.ts",
+      "test/learn/learner.test.ts",
+      "test/learn/learning-db.test.ts",
+      "test/learn/learning-store.test.ts",
+      "test/learn/relay-task4-findings.test.ts",
+      "test/learn/relay-task6-findings.test.ts",
+      "test/learn/relay-task8-challenger.test.ts",
+      "test/learn/relay-task9-findings.test.ts",
+      "test/learn/report.test.ts",
+      "test/learn/solver.test.ts",
+      "test/learn/tasks.test.ts",
+      "test/learn/validate.test.ts",
+      "test/oversized-message-guard.test.ts",
+      "test/prune.test.ts",
+      "test/search-metadata-filters.test.ts",
+      "test/sqlite-adapter.test.ts",
+      "test/stats.test.ts",
+      "test/sync-embeddings-unavailable.test.ts",
+      "test/sync-incremental-and-db.test.ts",
+      "test/sync-marker-scan.test.ts",
+      "test/sync.test.ts",
+      "test/text-search-multiword.test.ts",
+      "test/tool-calls-cascade.test.ts",
+      "test/topic-db.test.ts",
+      "test/topic-job.test.ts",
+      "test/topic-phase.test.ts",
+      "test/topic-tool.test.ts",
+      "test/vanished-transcript.test.ts"
     ],
     "src/stats-cli.ts": [],
     "src/stats.ts": [
@@ -709,6 +767,7 @@
       "test/digest-prompt-budget.test.ts",
       "test/digest-prompts.test.ts",
       "test/embedding-migration-helpers.test.ts",
+      "test/exchange-vectors.test.ts",
       "test/oversized-message-guard.test.ts",
       "test/prune.test.ts",
       "test/search-embeddings-unavailable.test.ts",
@@ -789,6 +848,7 @@
       "src/codex-support.ts"
     ],
     "test/codex-transcripts.test.ts": [
+      "src/sqlite.ts",
       "src/paths.ts",
       "src/parser.ts",
       "src/db.ts",
@@ -809,6 +869,7 @@
       "src/types.ts"
     ],
     "test/dangling-project-link.test.ts": [
+      "src/sqlite.ts",
       "src/sync.ts",
       "src/indexer.ts",
       "src/verify.ts",
@@ -820,24 +881,29 @@
     ],
     "test/db.test.ts": [
       "src/db.ts",
-      "src/types.ts"
+      "src/types.ts",
+      "src/sqlite.ts"
     ],
     "test/deps-health.test.ts": [
       "src/deps-health.ts"
     ],
     "test/derived-text.test.ts": [
+      "src/sqlite.ts",
       "src/digest-db.ts",
       "src/derived-text.ts"
     ],
     "test/digest-compress.test.ts": [
+      "src/sqlite.ts",
       "src/digest-db.ts",
       "src/digest-compress.ts"
     ],
     "test/digest-db.test.ts": [
+      "src/sqlite.ts",
       "src/db.ts",
       "src/digest-db.ts"
     ],
     "test/digest-gpu-reservation.test.ts": [
+      "src/sqlite.ts",
       "src/db.ts",
       "src/digest-job.ts",
       "src/digest-compress.ts",
@@ -854,10 +920,12 @@
       "src/learn/learn-inject.ts"
     ],
     "test/digest-inject.test.ts": [
+      "src/sqlite.ts",
       "src/digest-db.ts",
       "src/digest-inject.ts"
     ],
     "test/digest-job.test.ts": [
+      "src/sqlite.ts",
       "src/db.ts",
       "src/digest-job.ts",
       "src/digest-db.ts",
@@ -871,6 +939,7 @@
       "src/digest-tool.ts"
     ],
     "test/digest-prompt-budget.test.ts": [
+      "src/sqlite.ts",
       "src/db.ts",
       "src/digest-job.ts",
       "src/digest-prompts.ts",
@@ -887,6 +956,7 @@
       "src/digest-validate.ts"
     ],
     "test/doctor.test.ts": [
+      "src/sqlite.ts",
       "src/doctor.ts",
       "src/doctor-learn.ts",
       "src/logging.ts",
@@ -903,6 +973,7 @@
       "src/types.ts"
     ],
     "test/embedding-migration.test.ts": [
+      "src/sqlite.ts",
       "src/embedding-migration.ts",
       "src/embeddings.ts"
     ],
@@ -920,7 +991,15 @@
       "cli/ensure-deps.js",
       "src/deps-health.ts"
     ],
+    "test/exchange-vectors.test.ts": [
+      "src/sqlite.ts",
+      "src/db.ts",
+      "src/types.ts",
+      "src/embedding-migration.ts",
+      "src/prune.ts"
+    ],
     "test/exclude-nested.test.ts": [
+      "src/sqlite.ts",
       "src/indexer.ts",
       "src/sync.ts"
     ],
@@ -931,6 +1010,7 @@
     ],
     "test/hooks.test.ts": [],
     "test/incremental-indexing.test.ts": [
+      "src/sqlite.ts",
       "src/indexer.ts"
     ],
     "test/index-cli-args.test.ts": [],
@@ -938,6 +1018,7 @@
       "src/lockfile.ts"
     ],
     "test/index-honours-marker.test.ts": [
+      "src/sqlite.ts",
       "src/embeddings.ts",
       "src/summarizer.ts",
       "src/indexer.ts",
@@ -946,6 +1027,7 @@
       "src/parser.ts"
     ],
     "test/indexer-db-close.test.ts": [
+      "src/sqlite.ts",
       "src/db.ts",
       "src/embeddings.ts",
       "src/indexer.ts"
@@ -954,7 +1036,8 @@
       "src/db.ts",
       "src/embeddings.ts",
       "src/search.ts",
-      "src/parser.ts"
+      "src/parser.ts",
+      "src/sqlite.ts"
     ],
     "test/learn/agent-runner.test.ts": [
       "src/claude-bin.ts",
@@ -963,6 +1046,7 @@
       "src/reentrancy.ts"
     ],
     "test/learn/bootstrap.test.ts": [
+      "src/sqlite.ts",
       "src/learn/bootstrap.ts",
       "src/learn/solver.ts",
       "src/learn/knowledge-store.ts",
@@ -979,6 +1063,7 @@
       "src/learn/entry-order.ts"
     ],
     "test/learn/export.test.ts": [
+      "src/sqlite.ts",
       "src/learn/export.ts",
       "src/learn/knowledge-store.ts",
       "src/learn/learning-store.ts",
@@ -1006,12 +1091,14 @@
       "src/learn/knowledge-store.ts"
     ],
     "test/learn/knowledge-store.test.ts": [
+      "src/sqlite.ts",
       "src/paths.ts",
       "src/learn/types.ts",
       "src/learn/knowledge-store.ts",
       "src/learn/knowledge-db.ts"
     ],
     "test/learn/leaf-learner.test.ts": [
+      "src/sqlite.ts",
       "src/learn/leaf-learner.ts",
       "src/learn/solver.ts",
       "src/learn/knowledge-store.ts",
@@ -1021,6 +1108,7 @@
       "src/learn/types.ts"
     ],
     "test/learn/learn-cli.test.ts": [
+      "src/sqlite.ts",
       "src/learn/cli-main.ts",
       "src/learn/learning-store.ts",
       "src/learn/knowledge-store.ts",
@@ -1059,12 +1147,14 @@
       "src/learn/learning-store.ts",
       "src/learn/knowledge-db.ts",
       "src/learn/learned-block.ts",
+      "src/sqlite.ts",
       "src/learn/types.ts"
     ],
     "test/learn/learned-text-screen.test.ts": [
       "src/learn/learned-text-screen.ts"
     ],
     "test/learn/learner.test.ts": [
+      "src/sqlite.ts",
       "src/learn/learner.ts",
       "src/learn/solver.ts",
       "src/learn/knowledge-store.ts",
@@ -1074,11 +1164,13 @@
       "src/learn/types.ts"
     ],
     "test/learn/learning-db.test.ts": [
+      "src/sqlite.ts",
       "src/learn/learning-db.ts",
       "src/learn/learning-store.ts",
       "src/learn/types.ts"
     ],
     "test/learn/learning-store.test.ts": [
+      "src/sqlite.ts",
       "src/paths.ts",
       "src/learn/learning-store.ts",
       "src/learn/knowledge-store.ts"
@@ -1100,6 +1192,7 @@
       "src/learn/types.ts"
     ],
     "test/learn/relay-task4-findings.test.ts": [
+      "src/sqlite.ts",
       "src/learn/tasks.ts",
       "src/learn/learning-store.ts",
       "src/learn/learning-db.ts",
@@ -1109,6 +1202,7 @@
       "src/learn/semaphore.ts"
     ],
     "test/learn/relay-task6-findings.test.ts": [
+      "src/sqlite.ts",
       "src/learn/cli-main.ts",
       "src/learn/learning-store.ts",
       "src/learn/learning-db.ts",
@@ -1119,6 +1213,7 @@
       "src/learn/bootstrap.ts"
     ],
     "test/learn/relay-task8-challenger.test.ts": [
+      "src/sqlite.ts",
       "src/learn/leaf-learner.ts",
       "src/learn/solver.ts",
       "src/learn/knowledge-store.ts",
@@ -1128,6 +1223,7 @@
       "src/learn/types.ts"
     ],
     "test/learn/relay-task9-findings.test.ts": [
+      "src/sqlite.ts",
       "src/learn/learner.ts",
       "src/learn/solver.ts",
       "src/learn/knowledge-store.ts",
@@ -1137,6 +1233,7 @@
       "src/learn/types.ts"
     ],
     "test/learn/report.test.ts": [
+      "src/sqlite.ts",
       "src/learn/report.ts",
       "src/learn/learning-store.ts",
       "src/learn/knowledge-store.ts",
@@ -1160,6 +1257,7 @@
       "src/learn/types.ts"
     ],
     "test/learn/solver.test.ts": [
+      "src/sqlite.ts",
       "src/learn/solver.ts",
       "src/learn/knowledge-store.ts",
       "src/learn/knowledge-db.ts",
@@ -1168,11 +1266,13 @@
       "src/learn/types.ts"
     ],
     "test/learn/tasks.test.ts": [
+      "src/sqlite.ts",
       "src/learn/tasks.ts",
       "src/learn/learning-store.ts",
       "src/learn/learning-db.ts"
     ],
     "test/learn/validate.test.ts": [
+      "src/sqlite.ts",
       "src/learn/validate.ts",
       "src/learn/solver.ts",
       "src/learn/knowledge-store.ts",
@@ -1209,6 +1309,7 @@
       "src/search.ts",
       "src/embeddings.ts"
     ],
+    "test/no-native-sqlite.test.ts": [],
     "test/node-floor.test.ts": [
       "src/node-floor.ts"
     ],
@@ -1224,6 +1325,7 @@
       "src/orphan-reaper.ts"
     ],
     "test/oversized-message-guard.test.ts": [
+      "src/sqlite.ts",
       "src/db.ts",
       "src/constants.ts",
       "src/types.ts"
@@ -1241,6 +1343,7 @@
       "src/priority.ts"
     ],
     "test/prune.test.ts": [
+      "src/sqlite.ts",
       "src/db.ts",
       "src/prune.ts",
       "src/digest-db.ts",
@@ -1252,7 +1355,6 @@
     "test/real-sdk-guard.test.ts": [
       "src/summarizer.ts"
     ],
-    "test/rebuild-native.test.ts": [],
     "test/redact-patterns.test.ts": [
       "src/redact.ts"
     ],
@@ -1271,6 +1373,7 @@
       "src/mcp-tools.ts"
     ],
     "test/search-metadata-filters.test.ts": [
+      "src/sqlite.ts",
       "src/indexer.ts",
       "src/search.ts"
     ],
@@ -1292,11 +1395,16 @@
     "test/show.test.ts": [
       "src/show.ts"
     ],
+    "test/sqlite-adapter.test.ts": [
+      "src/sqlite.ts",
+      "src/node-floor.ts"
+    ],
     "test/stats-format.test.ts": [
       "src/stats.ts"
     ],
     "test/stats.test.ts": [
-      "src/stats.ts"
+      "src/stats.ts",
+      "src/sqlite.ts"
     ],
     "test/summarizer-api-env.test.ts": [
       "src/summarizer.ts",
@@ -1342,6 +1450,7 @@
       "src/fs-retry.ts"
     ],
     "test/sync-embeddings-unavailable.test.ts": [
+      "src/sqlite.ts",
       "src/embeddings.ts",
       "src/sync.ts"
     ],
@@ -1362,12 +1471,14 @@
       "src/logging.ts"
     ],
     "test/sync-incremental-and-db.test.ts": [
+      "src/sqlite.ts",
       "src/sync.ts",
       "src/db.ts",
       "src/search.ts",
       "src/types.ts"
     ],
     "test/sync-marker-scan.test.ts": [
+      "src/sqlite.ts",
       "src/embeddings.ts",
       "src/sync.ts",
       "src/exclusion-marker.ts",
@@ -1386,24 +1497,29 @@
       "src/sync.ts"
     ],
     "test/sync.test.ts": [
-      "src/sync.ts"
+      "src/sync.ts",
+      "src/sqlite.ts"
     ],
     "test/test-env.test.ts": [],
     "test/text-search-multiword.test.ts": [
+      "src/sqlite.ts",
       "src/db.ts",
       "src/search.ts",
       "src/types.ts"
     ],
     "test/tool-calls-cascade.test.ts": [
+      "src/sqlite.ts",
       "src/db.ts"
     ],
     "test/topic-db.test.ts": [
+      "src/sqlite.ts",
       "src/topic-db.ts"
     ],
     "test/topic-format.test.ts": [
       "src/topic-format.ts"
     ],
     "test/topic-job.test.ts": [
+      "src/sqlite.ts",
       "src/db.ts",
       "src/topic-job.ts",
       "src/ollama-backend.ts",
@@ -1413,6 +1529,7 @@
       "src/topic-db.ts"
     ],
     "test/topic-phase.test.ts": [
+      "src/sqlite.ts",
       "src/db.ts",
       "src/topic-phase.ts",
       "src/reentrancy.ts"
@@ -1426,6 +1543,7 @@
       "src/topic-validate.ts"
     ],
     "test/topic-tool.test.ts": [
+      "src/sqlite.ts",
       "src/mcp-tools.ts",
       "src/mcp-schemas.ts",
       "src/db.ts",
@@ -1436,6 +1554,7 @@
       "src/topic-validate.ts"
     ],
     "test/vanished-transcript.test.ts": [
+      "src/sqlite.ts",
       "src/paths.ts",
       "src/indexer.ts"
     ],

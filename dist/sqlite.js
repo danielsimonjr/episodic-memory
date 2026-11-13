@@ -96,10 +96,6 @@ function isThenable(value) {
     return typeof value.then === 'function';
 }
 /**
- * A database connection with the better-sqlite3 method names.
- * Every connection turns foreign key enforcement on.
- */
-/**
  * Refuse a node:sqlite handle that has no `isTransaction` property.
  *
  * The transaction wrapper reads `isTransaction` to select a savepoint for a nested call.
@@ -115,6 +111,10 @@ export function requireTransactionState(handle) {
     throw new Error(assertNodeFloor(process.versions.node) ??
         `node:sqlite has no DatabaseSync.isTransaction. Use Node ${NODE_FLOOR} or newer.`);
 }
+/**
+ * A database connection with the better-sqlite3 method names.
+ * Every connection turns foreign key enforcement on.
+ */
 export class Database {
     db;
     /** The path that the constructor opened. */

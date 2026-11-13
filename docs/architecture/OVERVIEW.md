@@ -30,7 +30,7 @@ Three features are off by default. They are the digest (`EPISODIC_MEMORY_DIGEST`
 | Command shims | `cli/` | Small JavaScript files. Each file imports compiled code from `dist/`. |
 | Plugin manifests | `.claude-plugin/`, `hooks/`, `agents/`, `skills/`, `prompts/` | What the host reads to load the plugin. |
 | Tests | `test/` | Vitest. The learned-knowledge tests are in `test/learn/`. |
-| Build scripts | `scripts/` | Version generation, native rebuild, fixture scrubbing. |
+| Build scripts | `scripts/` | Version generation, fixture scrubbing. |
 | Compiled output | `dist/` | Committed. Build it after each source change. |
 
 `src/version.ts` is generated from `package.json` and is not tracked by git. Never edit it.
@@ -78,9 +78,9 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 293 | repo-tools map |
-| totalLinesOfCode | 58191 | repo-tools map |
-| totalExports | 616 | repo-tools map |
+| totalSourceFiles | 295 | repo-tools map |
+| totalLinesOfCode | 59093 | repo-tools map |
+| totalExports | 628 | repo-tools map |
 | totalModules | 4 | repo-tools map |
 | entryRoots | 6 | repo-tools map |
 | orphanedFiles | 15 | repo-tools map |

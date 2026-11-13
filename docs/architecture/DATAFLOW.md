@@ -30,7 +30,9 @@ sync-cli
   │                                      skip the index step (the next sync copies and indexes the files)
   │    parser.parseConversationFile      transcript → exchanges
   │    embeddings.generateExchangeEmbeddings
-  │    db insert                         exchanges, tool_calls, vec_exchanges, FTS
+  │    db insert                         exchanges, tool_calls, exchange_vectors, FTS
+  │    (on open) migrateVec0Vectors      copy valid sqlite-vec vectors once; an exchange without one gets
+  │                                      embedding_version 0, so the next sync embeds it again
   ├─ summarize queued files (bounded)    summarizer → <name>-summary.txt
   ├─ embedding-migration                 re-embed rows with an old embedding_version
   ├─ digest-phase                        digest step; never throws, sync waits for it
@@ -54,9 +56,7 @@ input (query, mode, limit, dates, project, session, branch)
   ├─ build SQL filters
   ├─ mode vector or both:
   │    initEmbeddings → generateQueryEmbedding (adds the query prefix)
-  │    a filter is set: exact scan, apply filters and drop sidechain rows first, then sort by distance
-  │    no filter: KNN over vec_exchanges, k = limit x3 (at most 4096), drop sidechain rows
-  │      too few rows and k below the row count: exact scan
+  │    exact scan of `exchange_vectors`: drop sidechain rows, apply the filters, then sort by `vec_distance_l2`
   ├─ mode text or both:
   │    FTS5 MATCH over exchanges_fts, each word quoted (falls back to LIKE, one condition per word, on an error)
   │    newest first, limit
@@ -137,7 +137,7 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 293 | repo-tools map |
+| totalSourceFiles | 295 | repo-tools map |
 | runtimeCircularDeps | 0 | repo-tools map |
 
 The step orders above come from a direct reading of `src/sync.ts`, `src/search.ts`, `src/digest-job.ts`, `src/learn/learner.ts` and `cli/sync-hook.js`. They are not `repo-tools map` metrics.

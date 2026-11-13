@@ -43,7 +43,7 @@ _Conversation ID: 216ad284-c782-45a4-b2ce-36775cdb5a6c_
 
 ## Installation
 
-**Requirements:** Node 22 or newer, the floor `better-sqlite3` 13 declares. On an older Node, the MCP server wrapper and the `learn` command print one line and exit instead of failing inside a dependency. Bun 1.4+ is only needed for development. There is no other native or model dependency beyond the ones every install already has: the learned knowledge store is a plain SQLite file.
+**Requirements:** Node 22.16.0 or newer, the floor of the `node:sqlite` built-in. On an older Node, the MCP server wrapper and the `learn` command print one line and exit instead of failing inside a dependency. Bun 1.4+ is only needed for development. There is no other native or model dependency beyond the ones every install already has: the learned knowledge store is a plain SQLite file.
 
 This repository is the fork `danielsimonjr/episodic-memory`, which carries the self-improving memory feature. The install commands below are the upstream ones. A fork install uses the `episodic-memory@local-marketplace` plugin instead.
 
@@ -171,7 +171,7 @@ The plugin automatically syncs and indexes conversations from the harness that s
 
 - "How did we handle authentication in React Router?"
 - "The conversation about async testing patterns"
-- "Error message about sqlite-vec initialization"
+- "The conversation about the Node 22.16.0 floor"
 - "Git commit SHA for the routing refactor"
 
 When `EPISODIC_MEMORY_LEARN=1` is set and a learning run has created `learned/learning.sqlite`, a session starts with a fenced "learned hints" block. It gives instructions on where to look, plus an index of learned skills. The search agent loads a matching skill with the `skills` tool before it searches. See [Self-improving memory](#self-improving-memory-recursa).
@@ -364,7 +364,7 @@ Learned knowledge is durable state next to the index, not inside it:
 cleanup, and the `rm -rf conversation-index/` reset recipe cannot reach learned knowledge or the learning
 trace. Delete `learned/` only deliberately. Every export rewrites `learned-skills/`, which is generated output.
 
-Both files are ordinary `better-sqlite3` databases with no extra dependency. `knowledge.db` keeps one row per entry version, plus the citations and the learner's own records (heuristics, decisions, failures, reflections, project context). The `skills` tool opens the file read-only. Every `learn` write runs under the database's write lock. A `learn` run in a terminal and an open MCP server therefore never trip over each other. The layout is
+Both files are ordinary SQLite databases, opened through the `node:sqlite` built-in with no extra dependency. `knowledge.db` keeps one row per entry version, plus the citations and the learner's own records (heuristics, decisions, failures, reflections, project context). The `skills` tool opens the file read-only. Every `learn` write runs under the database's write lock. A `learn` run in a terminal and an open MCP server therefore never trip over each other. The layout is
 documented in [docs/SCHEMA.md](docs/SCHEMA.md).
 
 At session start the hook appends a fenced, size-capped block of learned hints to the digest — but only
@@ -500,7 +500,7 @@ episodic-memory doctor --json
 episodic-memory doctor codex
 ```
 
-The default report covers the config/archive/index paths, database size and row counts, embedding-version drift, recent SessionStart hook errors (`sync-errors.log`), and plugin `node_modules` sentinels. The Codex doctor additionally checks the Codex version, plugin hook feature state, MCP server registration, and hook trust. The default report also has a **Learn (Recursa)** section. The section reports the learned directory's presence and sizes, and the entries by kind and status. The section also reports the latest run, the candidates awaiting approval, the unresolved sources, and the `better-sqlite3` copy that the plugin resolves. `--json` includes this section too.
+The default report covers the config/archive/index paths, database size and row counts, embedding-version drift, recent SessionStart hook errors (`sync-errors.log`), and plugin `node_modules` sentinels. The Codex doctor additionally checks the Codex version, plugin hook feature state, MCP server registration, and hook trust. The default report also has a **Learn (Recursa)** section. The section reports the learned directory's presence and sizes, and the entries by kind and status. The section also reports the latest run, the candidates awaiting approval, the unresolved sources, and the SQLite version that `node:sqlite` reports. `--json` includes this section too.
 
 ### Codex E2E Verification
 
@@ -565,7 +565,7 @@ open output.html
 - **MCP Server** - Model Context Protocol server exposing search, read, digest, skills and topics tools
 - **Claude Code plugin** - Integration with Claude Code (auto-indexing, MCP tools, hooks)
 - **Codex plugin** - Integration with Codex (manifest, MCP config, hooks, skills)
-- **Self-improving memory** - the `learn` CLI, an in-process tool server for isolated solver and learner agents, and a `better-sqlite3` knowledge store under `learned/`
+- **Self-improving memory** - the `learn` CLI, an in-process tool server for isolated solver and learner agents, and a SQLite knowledge store under `learned/`
 
 ### Documentation
 
@@ -592,7 +592,7 @@ Regenerate the generated files with `repo-tools map . --out=docs/architecture`. 
 1. **Sync** - Copies conversation files from Claude Code and Codex transcript directories to archive
 2. **Parse** - Extracts user-agent exchanges from Claude Code JSONL or Codex rollout JSONL
 3. **Embed** - Generates vector embeddings using Transformers.js (local, offline)
-4. **Index** - Stores in SQLite with sqlite-vec for fast similarity search
+4. **Index** - Stores in SQLite, with an exact vector scan for similarity search
 5. **Search** - Semantic search using vector similarity or exact text matching
 6. **Learn** (optional) - generates practice tasks, grades its answers against archive addresses, and keeps only validated, cited hints
 
@@ -724,7 +724,7 @@ episodic-memory-mcp-server
 ## Development
 
 Bun is the package manager and script driver. Node remains the production runtime
-(CLI / MCP / hooks). Requires [Bun](https://bun.sh) 1.4+ and Node 22+ (the floor `better-sqlite3` 13 declares; both entry points check it at launch). CI pins Bun 1.4.2.
+(CLI / MCP / hooks). Requires [Bun](https://bun.sh) 1.4+ and Node 22.16.0+ (the floor of `node:sqlite`; both entry points check it at launch). CI pins Bun 1.4.2.
 
 ```bash
 # Install dependencies

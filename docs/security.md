@@ -33,9 +33,9 @@ a single stolen copy.
 
 ## Encryption at rest
 
-`better-sqlite3` does not speak SQLCipher. Bundling
-`@journeyapps/better-sqlite3-multiple-ciphers` would be a native-dep fork with
-maturity and rebuild cost on every platform this plugin supports.
+The plugin stores the index in a plain SQLite file. Adding a SQLCipher build,
+for example `@journeyapps/better-sqlite3-multiple-ciphers`, would add a native dependency with
+its own maturity and rebuild cost on every platform this plugin supports.
 
 **Recommended mitigation:** encrypt the volume that holds the config dir
 (`EPISODIC_MEMORY_CONFIG_DIR`, or `~/.config/superpowers` / the fork's

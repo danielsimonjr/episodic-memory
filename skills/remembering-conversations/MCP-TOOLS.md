@@ -292,9 +292,9 @@ All tools return errors as text content with `isError: true`:
 
 ## Performance Notes
 
-- **Search** is fast (< 100ms typically)
+- **Search** time grows with the number of indexed exchanges
 - **Read** can be slow for large conversations
   - Use `startLine`/`endLine` to paginate
   - Conversations can be 1000+ lines
-- Vector search uses sqlite-vec with cached embeddings
+- Vector search scans the stored embeddings exactly
 - Text search uses SQLite FTS5 full-text index

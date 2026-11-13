@@ -2,7 +2,7 @@ metadata:
   name: episodic-memory
   schemaVersion: 2.0.0
   language: typescript
-  totalFiles: 289
+  totalFiles: 290
   totalModules: 4
   totalExports: 611
 modules:
@@ -6112,6 +6112,35 @@ modules:
             - suppressConsole
           typeOnly: false
       exports: []
+    test/search-text-row-similarity.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - fs
+        - os
+        - path
+      internalDependencies:
+        - file: src/types.ts
+          imports:
+            - ConversationExchange
+          typeOnly: true
+        - file: test/test-utils.ts
+          imports:
+            - safeRmSync
+          typeOnly: false
+        - file: src/embeddings.ts
+          imports:
+            - '*'
+          typeOnly: false
+        - file: src/db.ts
+          imports:
+            - '*'
+          typeOnly: false
+        - file: src/search.ts
+          imports:
+            - '*'
+          typeOnly: false
+      exports: []
     test/search-with-summary.test.ts:
       externalDependencies:
         - vitest
@@ -7092,10 +7121,10 @@ modules:
           typeOnly: false
       exports: []
 statistics:
-  totalTypeScriptFiles: 289
-  totalSourceFiles: 289
+  totalTypeScriptFiles: 290
+  totalSourceFiles: 290
   totalModules: 4
-  totalLinesOfCode: 57299
+  totalLinesOfCode: 57411
   totalExports: 611
   entryRoots: 6
   reachableFiles: 49
@@ -7104,7 +7133,7 @@ statistics:
   testOnlyFiles: 45
   runtimeCircularDeps: 0
   typeOnlyCircularDeps: 1
-  totalTypeOnlyImports: 83
+  totalTypeOnlyImports: 84
   noImporterFileCount: 14
   unusedExportsCount: 116
   circularDepsTruncated: false

@@ -950,7 +950,7 @@ async function searchConversations(query, options = {}) {
         const ftsStmt = db.prepare(`
           SELECT
             ${EXCHANGE_SELECT_COLUMNS},
-            0 as distance
+            NULL as distance
           FROM exchanges_fts
           JOIN exchanges AS e ON e.id = exchanges_fts.id
           WHERE exchanges_fts MATCH ?
@@ -965,7 +965,7 @@ async function searchConversations(query, options = {}) {
         const textStmt = db.prepare(`
           SELECT
             ${EXCHANGE_SELECT_COLUMNS},
-            0 as distance
+            NULL as distance
           FROM exchanges AS e
           WHERE ${like.sql}
             AND e.is_sidechain = 0
@@ -1004,7 +1004,8 @@ async function searchConversations(query, options = {}) {
     const snippet = snippetText + (exchange.userMessage.length > 200 ? "..." : "");
     return {
       exchange,
-      similarity: vectorRan ? l2DistanceToCosineSimilarity(row.distance) : void 0,
+      // A text row has no distance, so the row has no similarity.
+      similarity: row.distance == null ? void 0 : l2DistanceToCosineSimilarity(row.distance),
       snippet,
       summary
     };

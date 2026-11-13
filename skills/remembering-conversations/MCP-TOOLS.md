@@ -27,7 +27,7 @@ Search your episodic memory of past Claude Code and Codex conversations using se
 
 - **`vector`** - Semantic similarity search using embeddings
 - **`text`** - Text matching (case-insensitive). Each word of the query must appear in the exchange, in any order
-- **`both`** - Combined semantic + text search (default, recommended). When the embedding backend cannot load, a `both` search returns the text results only. The markdown result then starts with a `Note:` line. The JSON result has a `notices` array. These text results have no similarity. A `vector` search fails in that case.
+- **`both`** - Combined semantic + text search (default, recommended). A result that only the text step finds has no similarity. When the embedding backend cannot load, a `both` search returns the text results only. The markdown result then starts with a `Note:` line. The JSON result has a `notices` array. These text results have no similarity. A `vector` search fails in that case.
 
 ### Single-Concept Search
 

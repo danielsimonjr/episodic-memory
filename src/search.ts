@@ -305,7 +305,7 @@ export async function searchConversations(
   const { db, ownsConnection } = resolveSearchDb(options);
 
   let results: any[] = [];
-  // The value is false when the vector step did not run. The rows then have no similarity.
+  // The value is false when the vector step does not run.
   let vectorRan = mode !== 'text';
 
   try {
@@ -363,7 +363,7 @@ export async function searchConversations(
         const ftsStmt = db.prepare(`
           SELECT
             ${EXCHANGE_SELECT_COLUMNS},
-            0 as distance
+            NULL as distance
           FROM exchanges_fts
           JOIN exchanges AS e ON e.id = exchanges_fts.id
           WHERE exchanges_fts MATCH ?
@@ -379,7 +379,7 @@ export async function searchConversations(
         const textStmt = db.prepare(`
           SELECT
             ${EXCHANGE_SELECT_COLUMNS},
-            0 as distance
+            NULL as distance
           FROM exchanges AS e
           WHERE ${like.sql}
             AND e.is_sidechain = 0
@@ -426,7 +426,8 @@ export async function searchConversations(
 
     return {
       exchange,
-      similarity: vectorRan ? l2DistanceToCosineSimilarity(row.distance) : undefined,
+      // A text row has no distance, so the row has no similarity.
+      similarity: row.distance == null ? undefined : l2DistanceToCosineSimilarity(row.distance),
       snippet,
       summary
     } as SearchResult & { summary?: string };

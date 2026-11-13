@@ -1,7 +1,7 @@
 {
   "metadata": {
     "totalSourceFiles": 109,
-    "totalTestFiles": 169,
+    "totalTestFiles": 170,
     "testedCount": 85,
     "untestedCount": 24,
     "coveragePercent": "78.0",
@@ -164,6 +164,7 @@
       "test/topic-job.test.ts"
     ],
     "src/codex-hook-trust.ts": [
+      "test/app-server-stdin-error.test.ts",
       "test/codex-doctor.test.ts",
       "test/codex-hook-trust.test.ts"
     ],
@@ -627,6 +628,7 @@
       "test/stats.test.ts"
     ],
     "src/summarizer.ts": [
+      "test/app-server-stdin-error.test.ts",
       "test/claude-auth-deferral.test.ts",
       "test/claude-bin-deferral.test.ts",
       "test/index-honours-marker.test.ts",
@@ -722,6 +724,10 @@
   "testToSourceMap": {
     "test/agent-sdk-floor.test.ts": [],
     "test/allow-scripts-pin.test.ts": [],
+    "test/app-server-stdin-error.test.ts": [
+      "src/summarizer.ts",
+      "src/codex-hook-trust.ts"
+    ],
     "test/archive-path-edges.test.ts": [
       "src/archive-path.ts"
     ],

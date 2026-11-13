@@ -3,7 +3,7 @@
     "name": "episodic-memory",
     "schemaVersion": "2.0.0",
     "language": "typescript",
-    "totalFiles": 290,
+    "totalFiles": 291,
     "totalModules": 4,
     "totalExports": 611
   },
@@ -4657,6 +4657,32 @@
           "path"
         ],
         "internalDependencies": [],
+        "exports": []
+      },
+      "test/app-server-stdin-error.test.ts": {
+        "externalDependencies": [
+          "vitest"
+        ],
+        "nodeDependencies": [
+          "events",
+          "stream"
+        ],
+        "internalDependencies": [
+          {
+            "file": "src/summarizer.ts",
+            "imports": [
+              "*"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/codex-hook-trust.ts",
+            "imports": [
+              "*"
+            ],
+            "typeOnly": false
+          }
+        ],
         "exports": []
       },
       "test/archive-path-edges.test.ts": {
@@ -10687,10 +10713,10 @@
     }
   },
   "statistics": {
-    "totalTypeScriptFiles": 290,
-    "totalSourceFiles": 290,
+    "totalTypeScriptFiles": 291,
+    "totalSourceFiles": 291,
     "totalModules": 4,
-    "totalLinesOfCode": 57411,
+    "totalLinesOfCode": 57529,
     "totalExports": 611,
     "entryRoots": 6,
     "reachableFiles": 49,

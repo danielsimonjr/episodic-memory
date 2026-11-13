@@ -93,12 +93,18 @@ export async function detectCodexHookTrustState(
   }>();
   let nextId = 1;
 
-  child.on('error', error => {
+  // A child that fails or exits ends every pending request at once, so the check does not wait for the timeout.
+  const stop = (error: Error): void => {
     for (const entry of pending.values()) {
       entry.reject(error);
     }
     pending.clear();
-  });
+  };
+  child.on('error', stop);
+  // A write to a child that has exited fails later, as an 'error' event on stdin (EPIPE).
+  // Without this listener, that event is an uncaught exception, and it stops `doctor`.
+  child.stdin.on('error', stop);
+  child.on('exit', () => stop(new Error('the Codex app-server exited')));
 
   rl.on('line', line => {
     if (!line.trim()) return;

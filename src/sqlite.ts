@@ -85,6 +85,21 @@ type Body = (...args: unknown[]) => unknown;
 let sqliteModule: typeof import('node:sqlite') | undefined;
 
 /**
+ * Turn a failed load of node:sqlite into an error that names the Node floor.
+ *
+ * Below Node 22.13.0 the module needs a flag, so the load fails with an unknown built-in module.
+ * At or above the floor the function returns the original error unchanged.
+ *
+ * @param err The error of the failed load.
+ * @param version The Node version, without the leading "v".
+ */
+export function sqliteLoadError(err: unknown, version: string): Error {
+  const floor = assertNodeFloor(version);
+  if (floor === null) return err instanceof Error ? err : new Error(String(err));
+  return new Error(floor, { cause: err });
+}
+
+/**
  * Load node:sqlite once. Drop the first experimental warning that the load writes.
  * Every other warning passes through unchanged.
  */
@@ -98,6 +113,8 @@ function loadSqlite(): typeof import('node:sqlite') {
   } as typeof process.emitWarning;
   try {
     sqliteModule = createRequire(import.meta.url)('node:sqlite') as typeof import('node:sqlite');
+  } catch (err) {
+    throw sqliteLoadError(err, process.versions.node);
   } finally {
     process.emitWarning = original;
   }

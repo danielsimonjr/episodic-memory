@@ -1031,7 +1031,7 @@ The codebase is organized into the following modules:
 - Classes: `Database`
 - Interfaces: `RunResult`, `Statement`, `DatabaseOptions`, `PragmaOptions`, `SqlFunctionOptions`
 - Types: `BindParams`, `Row`, `Transaction`
-- Functions: `requireTransactionState`
+- Functions: `sqliteLoadError`, `requireTransactionState`
 
 ---
 
@@ -2208,12 +2208,12 @@ graph TD
 |----------|-------|
 | Total Source Files | 295 |
 | Subsystems | 5 |
-| Total Lines of Code | 59093 |
-| Total Exports | 628 |
+| Total Lines of Code | 59124 |
+| Total Exports | 629 |
 | Total Re-exports | 9 |
 | Total Classes | 11 |
 | Total Interfaces | 145 |
-| Total Functions | 355 |
+| Total Functions | 356 |
 | Total Type Guards | 11 |
 | Total Enums | 0 |
 | Type-only Imports | 114 |

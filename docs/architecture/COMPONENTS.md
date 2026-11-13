@@ -41,7 +41,7 @@ The adapter differs from better-sqlite3 in these ways:
 - Every connection turns on foreign key enforcement.
 - The first load of `node:sqlite` writes an experimental warning. The adapter drops that one warning and passes every other warning through.
 
-The constructor calls `requireTransactionState`. A Node version below 22.16.0 has no `DatabaseSync.isTransaction`. The constructor then closes the handle and throws an error that names the floor.
+A failed load of `node:sqlite` below the floor throws the floor message (`sqliteLoadError`); below Node 22.13.0 the module needs a flag. The constructor calls `requireTransactionState`. A Node version below 22.16.0 has no `DatabaseSync.isTransaction`. The constructor then closes the handle and throws an error that names the floor.
 
 ### `src/db.ts`
 
@@ -223,7 +223,7 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 | totalSourceFiles | 295 | repo-tools map |
 | totalClasses | 11 | repo-tools map |
 | totalInterfaces | 145 | repo-tools map |
-| totalFunctions | 355 | repo-tools map |
+| totalFunctions | 356 | repo-tools map |
 | totalConstants | 70 | repo-tools map |
 
 The tool names, the table names and the model name come from a direct reading of `src/mcp-server.ts`, `src/db.ts` and `src/embeddings.ts`. They are not `repo-tools map` metrics.

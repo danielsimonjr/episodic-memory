@@ -141,7 +141,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/search.ts` | episodic-memory | src | reachable | 623 |
 | `src/show-cli.ts` | episodic-memory | src | orphan | 59 |
 | `src/show.ts` | episodic-memory | src | reachable | 1027 |
-| `src/sqlite.ts` | episodic-memory | src | reachable | 340 |
+| `src/sqlite.ts` | episodic-memory | src | reachable | 357 |
 | `src/stats-cli.ts` | episodic-memory | src | orphan | 32 |
 | `src/stats.ts` | episodic-memory | src | test-only | 190 |
 | `src/summarizer.ts` | episodic-memory | src | reachable | 870 |
@@ -291,7 +291,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/security-speed-helpers.test.ts` | (root) | tests | test | 69 |
 | `test/setup-env.ts` | (root) | tests | test | 27 |
 | `test/show.test.ts` | (root) | tests | test | 353 |
-| `test/sqlite-adapter.test.ts` | (root) | tests | test | 342 |
+| `test/sqlite-adapter.test.ts` | (root) | tests | test | 356 |
 | `test/stats-format.test.ts` | (root) | tests | test | 29 |
 | `test/stats.test.ts` | (root) | tests | test | 165 |
 | `test/summarizer-api-env.test.ts` | (root) | tests | test | 44 |

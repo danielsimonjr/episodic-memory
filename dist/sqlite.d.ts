@@ -57,6 +57,16 @@ export type Transaction<F extends (...args: never[]) => unknown> = F & {
     exclusive: F;
 };
 /**
+ * Turn a failed load of node:sqlite into an error that names the Node floor.
+ *
+ * Below Node 22.13.0 the module needs a flag, so the load fails with an unknown built-in module.
+ * At or above the floor the function returns the original error unchanged.
+ *
+ * @param err The error of the failed load.
+ * @param version The Node version, without the leading "v".
+ */
+export declare function sqliteLoadError(err: unknown, version: string): Error;
+/**
  * Refuse a node:sqlite handle that has no `isTransaction` property.
  *
  * The transaction wrapper reads `isTransaction` to select a savepoint for a nested call.

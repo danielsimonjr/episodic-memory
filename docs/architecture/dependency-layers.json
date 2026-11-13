@@ -2707,6 +2707,7 @@
         ],
         "workspaceDependencies": [],
         "exports": [
+          "sqliteLoadError",
           "requireTransactionState",
           "Database"
         ],
@@ -2721,6 +2722,7 @@
           "SqlFunctionOptions"
         ],
         "functions": [
+          "sqliteLoadError",
           "requireTransactionState"
         ]
       },

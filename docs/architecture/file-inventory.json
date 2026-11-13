@@ -699,7 +699,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 340
+      "loc": 357
     },
     {
       "file": "src/stats-cli.ts",
@@ -1749,7 +1749,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 342
+      "loc": 356
     },
     {
       "file": "test/stats-format.test.ts",

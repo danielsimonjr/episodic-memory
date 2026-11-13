@@ -39,6 +39,11 @@ var init_node_floor = __esm({
 
 // src/sqlite.ts
 import { createRequire } from "module";
+function sqliteLoadError(err, version2) {
+  const floor = assertNodeFloor(version2);
+  if (floor === null) return err instanceof Error ? err : new Error(String(err));
+  return new Error(floor, { cause: err });
+}
 function loadSqlite() {
   if (sqliteModule) return sqliteModule;
   const original = process.emitWarning;
@@ -48,6 +53,8 @@ function loadSqlite() {
   };
   try {
     sqliteModule = createRequire(import.meta.url)("node:sqlite");
+  } catch (err) {
+    throw sqliteLoadError(err, process.versions.node);
   } finally {
     process.emitWarning = original;
   }

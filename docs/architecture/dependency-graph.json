@@ -5,7 +5,7 @@
     "language": "typescript",
     "totalFiles": 295,
     "totalModules": 4,
-    "totalExports": 628
+    "totalExports": 629
   },
   "modules": {
     "src": {
@@ -1298,7 +1298,8 @@
               "SqlFunctionOptions",
               "Statement",
               "Transaction",
-              "requireTransactionState"
+              "requireTransactionState",
+              "sqliteLoadError"
             ],
             "typeOnly": false
           },
@@ -3978,6 +3979,7 @@
           "PragmaOptions",
           "SqlFunctionOptions",
           "Transaction",
+          "sqliteLoadError",
           "requireTransactionState",
           "Database"
         ]
@@ -9892,7 +9894,8 @@
             "file": "src/sqlite.ts",
             "imports": [
               "Database",
-              "requireTransactionState"
+              "requireTransactionState",
+              "sqliteLoadError"
             ],
             "typeOnly": false
           },
@@ -11425,8 +11428,8 @@
     "totalTypeScriptFiles": 295,
     "totalSourceFiles": 295,
     "totalModules": 4,
-    "totalLinesOfCode": 59093,
-    "totalExports": 628,
+    "totalLinesOfCode": 59124,
+    "totalExports": 629,
     "entryRoots": 6,
     "reachableFiles": 51,
     "dormantFiles": 60,
@@ -11444,7 +11447,7 @@
     "typeOnlyFilesInCycles": 2,
     "totalClasses": 11,
     "totalInterfaces": 145,
-    "totalFunctions": 355,
+    "totalFunctions": 356,
     "totalTypeGuards": 11,
     "totalEnums": 0,
     "totalConstants": 70,

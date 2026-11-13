@@ -74,6 +74,7 @@
       "searchConversations",
       "searchMultipleConcepts",
       "shouldSkipReentrantSync",
+      "sqliteLoadError",
       "statIfExists",
       "summarizeConversation",
       "tryChmod",

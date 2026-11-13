@@ -3,7 +3,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { spawn } from 'child_process';
-import { Database, requireTransactionState } from '../src/sqlite.js';
+import { Database, requireTransactionState, sqliteLoadError } from '../src/sqlite.js';
 import { NODE_FLOOR } from '../src/node-floor.js';
 import { safeRmSync } from './test-utils.js';
 
@@ -338,5 +338,19 @@ describe('a node:sqlite without isTransaction (Node below the floor)', () => {
     } finally {
       db.close();
     }
+  });
+});
+
+describe('a Node that has no node:sqlite module', () => {
+  it('names the floor instead of the unknown built-in module', () => {
+    const original = Object.assign(new Error('No such built-in module: node:sqlite'), { code: 'ERR_UNKNOWN_BUILTIN_MODULE' });
+    const err = sqliteLoadError(original, '22.12.0');
+    expect(err.message).toContain(NODE_FLOOR);
+    expect(err.cause).toBe(original);
+  });
+
+  it('keeps the original error on a Node at or above the floor', () => {
+    const original = new Error('other');
+    expect(sqliteLoadError(original, '24.0.0')).toBe(original);
   });
 });

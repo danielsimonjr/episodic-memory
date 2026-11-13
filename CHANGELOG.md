@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+## [1.11.0] - 2026-11-13
+
+**Breaking:** the Node floor is 22.16.0, and `openDatabase` and the other database functions return the adapter `Database` from `src/sqlite.ts`, not a better-sqlite3 `Database`.
+
 ### Removed
 - **`better-sqlite3`, `sqlite-vec` and `@types/better-sqlite3` are no longer dependencies.** The plugin has no native SQLite addon and no install script. The `postinstall` and `rebuild:native` scripts and `scripts/rebuild-native.mjs` are gone. The dependency check has no `rebuild` repair step.
 

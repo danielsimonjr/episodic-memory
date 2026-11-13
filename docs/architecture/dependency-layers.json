@@ -1588,6 +1588,12 @@
             "imports": [
               "SUMMARIZER_CONTEXT_MARKER"
             ]
+          },
+          {
+            "file": "./content-text.js",
+            "imports": [
+              "extractContentText"
+            ]
           }
         ],
         "workspaceDependencies": [],

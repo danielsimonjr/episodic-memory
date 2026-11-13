@@ -318,7 +318,7 @@ The codebase is organized into the following modules:
   migrateSchema, migrateToolCallsCascade, ensureFts, upsertExchangeFts, deleteExchangeFts,
   openDatabase, openDatabaseReadonly, initDatabase, getSharedReaderDatabase,
   closeSharedReaderDatabase, insertExchange, getAllExchanges, getFileLastIndexed, getMaxIndexedLine,
-  getFreelistInfo, vacuumDatabase, deleteExchange
+  getFreelistInfo, vacuumDatabase, deleteExchange, deleteExchangesForArchive
   ```
 
 
@@ -633,6 +633,7 @@ The codebase is organized into the following modules:
 | File | Imports | Type |
 |------|---------|------|
 | `./constants.js` | `SUMMARIZER_CONTEXT_MARKER` | Import |
+| `./content-text.js` | `extractContentText` | Import |
 
 **Exports:**
 - Functions: `shouldSkipConversation`, `scanExclusionMarkers`
@@ -695,6 +696,11 @@ The codebase is organized into the following modules:
 
 ### `src/indexer.ts` - Tell whether a listed transcript must stay out of the index and out of the summaries, and log the skip.
 
+**External Dependencies:**
+| Package | Import |
+|---------|--------|
+| `better-sqlite3` | `default` |
+
 **Node.js Built-in Dependencies:**
 | Module | Import |
 |--------|--------|
@@ -706,13 +712,13 @@ The codebase is organized into the following modules:
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
-| `./db.js` | `initDatabase, insertExchange, getMaxIndexedLine` | Import |
+| `./db.js` | `initDatabase, insertExchange, getMaxIndexedLine, deleteExchangesForArchive` | Import |
 | `./parser.js` | `parseConversation` | Import |
 | `./embeddings.js` | `initEmbeddings, generateExchangeEmbedding, generateExchangeEmbeddings` | Import |
 | `./summarizer.js` | `summarizeConversation` | Import |
 | `./types.js` | `ConversationExchange` | Import |
 | `./paths.js` | `getArchiveDir, getExcludedProjects, getConversationSourceDirs, findJsonlFiles, statIfExists` | Import |
-| `./exclusion-marker.js` | `shouldSkipConversation` | Import |
+| `./exclusion-marker.js` | `scanExclusionMarkers` | Import |
 
 **Exports:**
 - Functions: `indexConversations`, `indexSession`, `indexUnprocessed`
@@ -2256,12 +2262,12 @@ graph TD
 |----------|-------|
 | Total Source Files | 291 |
 | Subsystems | 5 |
-| Total Lines of Code | 57529 |
-| Total Exports | 611 |
+| Total Lines of Code | 57872 |
+| Total Exports | 612 |
 | Total Re-exports | 8 |
 | Total Classes | 10 |
 | Total Interfaces | 139 |
-| Total Functions | 347 |
+| Total Functions | 348 |
 | Total Type Guards | 11 |
 | Total Enums | 0 |
 | Type-only Imports | 84 |

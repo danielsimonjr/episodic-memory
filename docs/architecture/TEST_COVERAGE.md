@@ -10,14 +10,14 @@
 |--------|-------|
 | Total Source Files | 109 |
 | Total Test Files | 170 |
-| Source Files with Tests | 85 |
-| Source Files without Tests | 24 |
-| Coverage (raw, direct-import) | **78.0%** |
+| Source Files with Tests | 86 |
+| Source Files without Tests | 23 |
+| Coverage (raw, direct-import) | **78.9%** |
 ---
 
 ## Source Files Not Imported By A Test
 
-The following 24 source files are not directly imported by any test file:
+The following 23 source files are not directly imported by any test file:
 
 ### root/
 
@@ -30,7 +30,6 @@ The following 24 source files are not directly imported by any test file:
 - `cli/sync-hook.js`
 - `src/backfill-cli.ts`
 - `src/doctor-cli.ts`
-- `src/exclusion-marker.ts`
 - `src/fts-query.ts`
 - `src/index-cli.ts`
 - `src/index.ts`
@@ -82,6 +81,7 @@ The following 24 source files are not directly imported by any test file:
 | `src/doctor.ts` | `codex-doctor.test.ts`, `doctor.test.ts` |
 | `src/embedding-migration.ts` | `embedding-migration-helpers.test.ts`, `embedding-migration.test.ts` |
 | `src/embeddings.ts` | `embedding-migration.test.ts`, `embeddings-format.test.ts`, `embeddings-unavailable.test.ts`, `index-honours-marker.test.ts`, `indexer-db-close.test.ts`, `integration.test.ts`, `multi-concept.test.ts`, `query-prefix.test.ts`, `search-embeddings-unavailable.test.ts`, `search-text-row-similarity.test.ts`, `sync-embeddings-unavailable.test.ts`, `sync-marker-scan.test.ts`, `vector-search-filters.test.ts`, `verify.test.ts` |
+| `src/exclusion-marker.ts` | `sync-marker-scan.test.ts` |
 | `src/fs-retry.ts` | `sync-copy-retry.test.ts` |
 | `src/gpu-reservation.ts` | `gpu-reservation.test.ts` |
 | `src/indexer.ts` | `dangling-project-link.test.ts`, `exclude-nested.test.ts`, `incremental-indexing.test.ts`, `index-honours-marker.test.ts`, `indexer-db-close.test.ts`, `learn-handlers.test.ts`, `search-metadata-filters.test.ts`, `vanished-transcript.test.ts` |
@@ -300,7 +300,7 @@ The following 24 source files are not directly imported by any test file:
 | `test/sync-hook-learn-pids.test.ts` | 0 files |
 | `test/sync-hook-logging.test.ts` | 1 files |
 | `test/sync-incremental-and-db.test.ts` | 4 files |
-| `test/sync-marker-scan.test.ts` | 3 files |
+| `test/sync-marker-scan.test.ts` | 4 files |
 | `test/sync-pending-and-legacy-retry.test.ts` | 1 files |
 | `test/sync-session-id.test.ts` | 1 files |
 | `test/sync-skip-summaries.test.ts` | 1 files |

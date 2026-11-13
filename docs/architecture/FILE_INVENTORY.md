@@ -82,7 +82,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/doctor.ts` | episodic-memory | src | test-only | 455 |
 | `src/embedding-migration.ts` | episodic-memory | src | reachable | 197 |
 | `src/embeddings.ts` | episodic-memory | src | reachable | 205 |
-| `src/exclusion-marker.ts` | episodic-memory | src | reachable | 67 |
+| `src/exclusion-marker.ts` | episodic-memory | src | reachable | 120 |
 | `src/fs-retry.ts` | episodic-memory | src | test-only | 46 |
 | `src/fts-query.ts` | episodic-memory | src | reachable | 14 |
 | `src/gpu-reservation.ts` | episodic-memory | src | reachable | 98 |
@@ -311,7 +311,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/sync-hook-learn-pids.test.ts` | (root) | tests | test | 151 |
 | `test/sync-hook-logging.test.ts` | (root) | tests | test | 27 |
 | `test/sync-incremental-and-db.test.ts` | (root) | tests | test | 187 |
-| `test/sync-marker-scan.test.ts` | (root) | tests | test | 224 |
+| `test/sync-marker-scan.test.ts` | (root) | tests | test | 313 |
 | `test/sync-pending-and-legacy-retry.test.ts` | (root) | tests | test | 177 |
 | `test/sync-session-id.test.ts` | (root) | tests | test | 14 |
 | `test/sync-skip-summaries.test.ts` | (root) | tests | test | 91 |

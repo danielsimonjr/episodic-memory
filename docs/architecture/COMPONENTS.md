@@ -65,7 +65,7 @@ The copy writes a temporary file. The copy renames the temporary file over the a
 
 ### `src/exclusion-marker.ts`
 
-`scanExclusionMarkers(filePath)` reads the whole file, one 1 MiB chunk at a time, and compares bytes. Each chunk starts with the last bytes of the previous chunk, so a marker that crosses a chunk boundary still matches. The function returns `'marker'`, `'clean'` or `'unreadable'`, and never throws. `shouldSkipConversation(filePath)` returns true for every result except `'clean'`. The three markers are the DO NOT INDEX instruction, the NO_INSIGHTS_FOUND prompt text and `SUMMARIZER_CONTEXT_MARKER`. `src/sync.ts`, `src/indexer.ts`, `src/verify.ts` and `src/backfill.ts` use this module. `src/sync.ts` re-exports `shouldSkipConversation`.
+`scanExclusionMarkers(filePath)` reads the whole file, one 1 MiB chunk at a time, and checks one line at a time. The function joins a line that crosses a chunk boundary before the check. The function parses only a line that holds the bytes of a marker. A marker counts only in the text of a user or assistant message. For Claude Code, that text is the string content or the `text` blocks. For Codex, that text is a `message` from the user or the assistant. Tool uses, tool results, `toolUseResult` and thinking blocks do not count. A line that does not parse counts. The function returns `'marker'`, `'clean'` or `'unreadable'`, and never throws. `shouldSkipConversation(filePath)` returns true for every result except `'clean'`. The three markers are the DO NOT INDEX instruction, the NO_INSIGHTS_FOUND prompt text and `SUMMARIZER_CONTEXT_MARKER`. `src/sync.ts`, `src/indexer.ts`, `src/verify.ts` and `src/backfill.ts` use this module. `src/sync.ts` re-exports `shouldSkipConversation`.
 
 ### `src/fs-retry.ts`
 

@@ -51,7 +51,7 @@ dependency, no `MEMORY_*` environment handling and no per-handle cache. Each ope
 - **TypeScript source** in `src/`, compiled to `dist/` by `tsc && esbuild`. **Both are committed.**
 - **CLI entry points** in `cli/` (Node.js wrappers — no bash).
 - **MCP server** is `dist/mcp-server.js`, launched by `cli/mcp-server-wrapper.js` from the plugin manifest.
-- **Tests** in `test/` with vitest (170 files, 1649 tests).
+- **Tests** in `test/` with vitest (170 files, 1663 tests).
 - **Generated files** in `dist/` AND `src/version.ts`. The latter is gitignored; never edit it.
 - **`bun.lock` is committed** — CI uses `bun install --frozen-lockfile` + `bun audit --audit-level=critical`. Do not commit `package-lock.json` (gitignored).
 
@@ -62,7 +62,7 @@ src/
   search.ts              # vector + text search; multi-concept aggregation
   indexer.ts             # incremental index from sources to vec_exchanges
   sync.ts / sync-cli.ts  # source→archive copy + index, with reentrancy guard
-  exclusion-marker.ts    # the DO NOT INDEX marker scan of sync, index, verify and backfill; imports fs and constants.ts
+  exclusion-marker.ts    # the DO NOT INDEX marker scan of sync, index, verify and backfill (message text only); imports fs, constants.ts and content-text.ts
   fs-retry.ts            # rename that retries a Windows sharing violation (EPERM, EBUSY); imports only fs
   summarizer.ts          # Claude Agent SDK calls; persistSession: false guard
   claude-bin.ts          # EPISODIC_MEMORY_CLAUDE_BIN: the Claude Code executable, probed against the SDK floor; Node built-ins only
@@ -118,7 +118,7 @@ scripts/
 
 test/
   test-utils.ts          # createTestDb, safeRmSync (fork-added), suppressConsole, fixtures
-  *.test.ts              # 170 test files, 1649 tests
+  *.test.ts              # 170 test files, 1663 tests
   learn/                 # the Recursa suite; fakes for every model call
   fixtures/              # JSONL conversation fixtures
 
@@ -176,7 +176,7 @@ scheduled task. To roll back, remove the variable first. Then run `npm install -
 
 ### Current test state
 
-- **Full suite: 1649 tests in 170 files pass** in about 17 s of wall clock on Linux. Windows runs are slower.
+- **Full suite: 1663 tests in 170 files pass** in about 17 s of wall clock on Linux. Windows runs are slower.
   The suite no longer has the former `integration.test.ts` / `verify.test.ts` cold-embedding timeout flakes.
   `beforeAll` pre-warms the embedder once per worker. `vitest.config.ts` sets `hookTimeout: 30000`.
   The repair re-index test gets 60s. If you see a fresh timeout flake, suspect a new embedding-heavy hook

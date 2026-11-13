@@ -2,18 +2,18 @@
   "metadata": {
     "totalSourceFiles": 109,
     "totalTestFiles": 170,
-    "testedCount": 85,
-    "untestedCount": 24,
-    "coveragePercent": "78.0",
+    "testedCount": 86,
+    "untestedCount": 23,
+    "coveragePercent": "78.9",
     "effectiveCoverage": {
       "policyLoaded": false,
       "activeFiles": 109,
-      "testedActive": 85,
-      "activeUntested": 24,
+      "testedActive": 86,
+      "activeUntested": 23,
       "excludedTotal": 0,
-      "percent": "78.0",
+      "percent": "78.9",
       "breakdown": {
-        "active_untested": 24
+        "active_untested": 23
       }
     }
   },
@@ -27,7 +27,6 @@
     "cli/sync-hook.js",
     "src/backfill-cli.ts",
     "src/doctor-cli.ts",
-    "src/exclusion-marker.ts",
     "src/fts-query.ts",
     "src/index-cli.ts",
     "src/index.ts",
@@ -68,6 +67,7 @@
     "src/doctor.ts",
     "src/embedding-migration.ts",
     "src/embeddings.ts",
+    "src/exclusion-marker.ts",
     "src/fs-retry.ts",
     "src/gpu-reservation.ts",
     "src/indexer.ts",
@@ -292,7 +292,9 @@
       "test/vector-search-filters.test.ts",
       "test/verify.test.ts"
     ],
-    "src/exclusion-marker.ts": [],
+    "src/exclusion-marker.ts": [
+      "test/sync-marker-scan.test.ts"
+    ],
     "src/fs-retry.ts": [
       "test/sync-copy-retry.test.ts"
     ],
@@ -1357,6 +1359,7 @@
     "test/sync-marker-scan.test.ts": [
       "src/embeddings.ts",
       "src/sync.ts",
+      "src/exclusion-marker.ts",
       "src/db.ts"
     ],
     "test/sync-pending-and-legacy-retry.test.ts": [
@@ -1475,10 +1478,6 @@
     },
     {
       "file": "src/doctor-cli.ts",
-      "category": null
-    },
-    {
-      "file": "src/exclusion-marker.ts",
       "category": null
     },
     {

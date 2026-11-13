@@ -77,8 +77,8 @@ export function shouldSkipConversation(filePath) {
 /**
  * Scan the whole file for an exclusion marker in the text of a user or assistant message.
  *
- * The scan reads the file one chunk at a time and checks one line at a time. A line that crosses a chunk boundary
- * is joined before the check. The function never throws. A file that the scan cannot open or read gives
+ * The scan reads the file one chunk at a time and checks one line at a time. The scan joins a line that crosses a
+ * chunk boundary before the check. The function never throws. A file that the scan cannot open or read gives
  * `'unreadable'`.
  */
 export function scanExclusionMarkers(filePath) {

@@ -45,6 +45,13 @@ export interface SearchOptions {
      * a one-shot connection (CLI behavior).
      */
     db?: Database.Database;
+    /**
+     * Receive a notice about a search step that did not run.
+     *
+     * A `both` search calls this function when the embedding backend cannot load. The results then come from the text step only.
+     * Without this function, the search writes the notice to stderr.
+     */
+    onNotice?: (message: string) => void;
     /** When true with no `db`, use the process-wide shared reader. */
     useSharedReader?: boolean;
 }
@@ -71,6 +78,8 @@ export declare function buildFtsMatchQuery(query: string): string;
  *
  * The `mode` option picks the search path. `vector` uses embeddings. `text` uses full-text search, with a `LIKE` search when full-text search fails. `both` merges the two result lists and removes duplicates.
  * Sidechain exchanges never match. The function throws when `after` or `before` is not in `YYYY-MM-DD` format.
+ * When the embedding backend cannot load, a `vector` search throws `EmbeddingsUnavailableError`.
+ * A `both` search then returns the text results. The search then sends a notice to `options.onNotice`.
  * The function closes a connection that the function opens. The function leaves a connection from `options.db` or the shared reader open.
  *
  * @param query The text to search for.

@@ -44,7 +44,9 @@ export async function handleToolCall(name, args) {
                 }
             }
             else {
+                const notices = [];
                 const options = {
+                    onNotice: (message) => notices.push(message),
                     mode: params.mode,
                     limit: params.limit,
                     after: params.after,
@@ -66,10 +68,12 @@ export async function handleToolCall(name, args) {
                         })),
                         count: results.length,
                         mode: params.mode,
+                        ...(notices.length > 0 ? { notices } : {}),
                     }, null, 2);
                 }
                 else {
-                    resultText = await formatResults(results);
+                    const noticeLines = notices.map((notice) => `Note: ${notice}\n\n`).join('');
+                    resultText = noticeLines + (await formatResults(results));
                 }
             }
             return {

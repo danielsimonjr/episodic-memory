@@ -4,7 +4,7 @@
 
 # episodic-memory - Dependency Graph
 
-**Version**: 1.8.0
+**Version**: 1.9.0
 
 This document provides a comprehensive dependency graph of all files, components, imports, functions, and variables in the codebase.
 
@@ -982,7 +982,7 @@ The codebase is organized into the following modules:
 | File | Imports | Type |
 |------|---------|------|
 | `./db.js` | `initDatabase, getSharedReaderDatabase` | Import |
-| `./embeddings.js` | `initEmbeddings, generateQueryEmbedding` | Import |
+| `./embeddings.js` | `initEmbeddings, generateQueryEmbedding, EmbeddingsUnavailableError` | Import |
 | `./types.js` | `SearchResult, ConversationExchange, MultiConceptResult` | Import |
 | `./redact.js` | `maybeRedactSecrets` | Import |
 | `./archive-path.js` | `safeArchiveSummaryPath` | Import |
@@ -2253,9 +2253,9 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 288 |
+| Total Source Files | 289 |
 | Subsystems | 5 |
-| Total Lines of Code | 57080 |
+| Total Lines of Code | 57230 |
 | Total Exports | 610 |
 | Total Re-exports | 8 |
 | Total Classes | 10 |
@@ -2263,7 +2263,7 @@ graph TD
 | Total Functions | 347 |
 | Total Type Guards | 11 |
 | Total Enums | 0 |
-| Type-only Imports | 82 |
+| Type-only Imports | 83 |
 | Runtime Cyclic Components | 0 |
 | Type-only Cyclic Components | 1 |
 | Files in Runtime Cycles | 0 |
@@ -2271,4 +2271,4 @@ graph TD
 
 ---
 
-*Version*: 1.8.0
+*Version*: 1.9.0

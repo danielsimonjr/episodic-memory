@@ -1,11 +1,11 @@
 {
-  "totalFiles": 288,
+  "totalFiles": 289,
   "byDisposition": {
     "reachable": 45,
     "build-entry": 4,
     "test-only": 45,
     "orphan": 15,
-    "test": 174,
+    "test": 175,
     "tool": 4,
     "config": 1,
     "bench": 0,
@@ -14,11 +14,11 @@
   "byArea": {
     "src": 109,
     "tools": 4,
-    "tests": 174,
+    "tests": 175,
     "config": 1
   },
   "byPackage": {
-    "(root)": 188,
+    "(root)": 189,
     "episodic-memory": 100
   },
   "files": [
@@ -601,7 +601,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 174
+      "loc": 178
     },
     {
       "file": "src/node-floor.ts",
@@ -678,7 +678,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 614
+      "loc": 636
     },
     {
       "file": "src/show-cli.ts",
@@ -1666,6 +1666,13 @@
       "area": "tests",
       "disposition": "test",
       "loc": 162
+    },
+    {
+      "file": "test/search-embeddings-unavailable.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 124
     },
     {
       "file": "test/search-metadata-filters.test.ts",

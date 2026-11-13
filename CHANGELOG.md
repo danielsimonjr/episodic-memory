@@ -1,5 +1,8 @@
 ## [Unreleased]
 
+### Fixed
+- **A `both` search returns the text results when the embedding backend cannot load.** Before, `EmbeddingsUnavailableError` failed the default search, although the text step needs no embedder. The search now sends one notice. The notice names the missing vector step. In the markdown result, the `search` tool puts the notice in a `Note:` line. In the JSON result, the `search` tool puts the notice in the `notices` array. These text results have no similarity. A `vector` search and a multi-concept search still fail, because both searches need the embeddings. Any other embedding error still fails the search. The new `onNotice` option of `searchConversations` receives the notice.
+
 ## [1.9.0] - 2026-11-13
 
 ### Added

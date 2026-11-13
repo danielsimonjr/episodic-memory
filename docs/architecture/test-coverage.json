@@ -1,7 +1,7 @@
 {
   "metadata": {
     "totalSourceFiles": 109,
-    "totalTestFiles": 167,
+    "totalTestFiles": 168,
     "testedCount": 85,
     "untestedCount": 24,
     "coveragePercent": "78.0",
@@ -202,6 +202,7 @@
       "test/mcp-tools.test.ts",
       "test/oversized-message-guard.test.ts",
       "test/prune.test.ts",
+      "test/search-embeddings-unavailable.test.ts",
       "test/sync-incremental-and-db.test.ts",
       "test/text-search-multiword.test.ts",
       "test/tool-calls-cascade.test.ts",
@@ -281,6 +282,7 @@
       "test/integration.test.ts",
       "test/multi-concept.test.ts",
       "test/query-prefix.test.ts",
+      "test/search-embeddings-unavailable.test.ts",
       "test/sync-embeddings-unavailable.test.ts",
       "test/sync-marker-scan.test.ts",
       "test/vector-search-filters.test.ts",
@@ -534,6 +536,7 @@
       "test/digest-mcp.test.ts",
       "test/learn/learn-handlers.test.ts",
       "test/mcp-tools.test.ts",
+      "test/search-embeddings-unavailable.test.ts",
       "test/topic-tool.test.ts"
     ],
     "src/node-floor.ts": [
@@ -602,6 +605,7 @@
       "test/cross-harness-recall.test.ts",
       "test/integration.test.ts",
       "test/multi-concept.test.ts",
+      "test/search-embeddings-unavailable.test.ts",
       "test/search-metadata-filters.test.ts",
       "test/search-with-summary.test.ts",
       "test/security-speed-helpers.test.ts",
@@ -693,6 +697,7 @@
       "test/embedding-migration-helpers.test.ts",
       "test/oversized-message-guard.test.ts",
       "test/prune.test.ts",
+      "test/search-embeddings-unavailable.test.ts",
       "test/search-with-summary.test.ts",
       "test/summarizer-claude-path.test.ts",
       "test/summarizer-gpu-reservation.test.ts",
@@ -1234,6 +1239,13 @@
       "cli/ensure-deps.js"
     ],
     "test/search-agent-template.test.ts": [],
+    "test/search-embeddings-unavailable.test.ts": [
+      "src/types.ts",
+      "src/embeddings.ts",
+      "src/db.ts",
+      "src/search.ts",
+      "src/mcp-tools.ts"
+    ],
     "test/search-metadata-filters.test.ts": [
       "src/indexer.ts",
       "src/search.ts"

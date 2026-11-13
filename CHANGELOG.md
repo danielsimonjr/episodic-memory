@@ -1,5 +1,8 @@
 ## [Unreleased]
 
+### Fixed
+- **The F8 test of `runCodexCommand` no longer fails at random.** When the fake app-server exits, the exit event and the EPIPE of the next stdin write race. Either one rejects the call. The test accepted only the exit message, so a run where the EPIPE settled first failed. The test now accepts both messages.
+
 ## [1.11.0] - 2026-11-13
 
 **Breaking:** the Node floor is 22.16.0, and `openDatabase` and the other database functions return the adapter `Database` from `src/sqlite.ts`, not a better-sqlite3 `Database`.

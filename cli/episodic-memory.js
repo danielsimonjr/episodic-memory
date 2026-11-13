@@ -32,11 +32,14 @@ function runScript(scriptPath, args) {
       stdio: 'inherit'
     });
 
-    child.on('exit', (code) => {
+    // The exit code goes to the caller: 2 means a refused argument. 1 means a failed command or a stop by a signal.
+    child.on('exit', (code, signal) => {
       if (code === 0) {
         resolve();
       } else {
-        reject(new Error(`Command failed with exit code ${code}`));
+        const error = new Error(code === null ? `Command ended by signal ${signal}` : `Command failed with exit code ${code}`);
+        error.exitCode = code ?? 1;
+        reject(error);
       }
     });
 
@@ -130,7 +133,7 @@ async function main() {
     }
   } catch (error) {
     console.error(`Error: ${error.message}`);
-    process.exit(1);
+    process.exit(error.exitCode ?? 1);
   }
 }
 

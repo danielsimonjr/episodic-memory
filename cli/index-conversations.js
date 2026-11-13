@@ -14,11 +14,14 @@ function runScript(command, args) {
       stdio: 'inherit'
     });
 
-    child.on('exit', (code) => {
+    // The exit code goes to the caller: 2 means a refused argument. 1 means a failed command or a stop by a signal.
+    child.on('exit', (code, signal) => {
       if (code === 0) {
         resolve();
       } else {
-        reject(new Error(`Command failed with exit code ${code}`));
+        const error = new Error(code === null ? `Command ended by signal ${signal}` : `Command failed with exit code ${code}`);
+        error.exitCode = code ?? 1;
+        reject(error);
       }
     });
 
@@ -55,11 +58,18 @@ COMMANDS:
   --verify       Check index health
   --repair       Fix detected issues
   --rebuild      Delete DB and re-index everything (requires confirmation)
+  prune          Remove the rows of projects: --excluded, or --project NAME; add --dry-run to count only
+  vacuum         Return the free pages of the index database to disk
+
+  The index-cli names also work: index-all, index-session ID, index-cleanup, verify, repair,
+  rebuild (requires confirmation). For an unknown command or option, or an option of
+  another command, the command writes one error line, exits 2 and does no work.
 
 OPTIONS:
   --concurrency N    Parallel summarization (1-16, default: 1)
   -c N               Short form of --concurrency
   --no-summaries     Skip AI summary generation (free, but no summaries in results)
+  --yes              With --rebuild or rebuild: skip the confirmation
   --help, -h         Show this help
 
 EXAMPLES:
@@ -125,22 +135,27 @@ async function main() {
         break;
 
       case '--rebuild':
+      case 'rebuild':
         console.log('⚠️  This will DELETE the entire database and re-index everything.');
-        const confirmed = await askConfirmation('Are you sure? [yes/NO]: ');
+        // --yes skips the question for a caller with no terminal. index-cli refuses rebuild without
+        // --yes, so only the answer yes or an explicit --yes can start the delete.
+        const confirmed = args.includes('--yes') || await askConfirmation('Are you sure? [yes/NO]: ');
         if (confirmed) {
-          await runScript('rebuild', args);
+          await runScript('rebuild', args.includes('--yes') ? args : ['--yes', ...args]);
         } else {
           console.log('Cancelled');
         }
         break;
 
+      // Every other argument goes to index-cli unchanged. index-cli runs its own commands (prune, vacuum and
+      // the rest), runs index-all when there is no command, and refuses an unknown argument.
       default:
-        await runScript('index-all', [command, ...args]);
+        await runScript(command, args);
         break;
     }
   } catch (error) {
     console.error(`Error: ${error.message}`);
-    process.exit(1);
+    process.exit(error.exitCode ?? 1);
   }
 }
 

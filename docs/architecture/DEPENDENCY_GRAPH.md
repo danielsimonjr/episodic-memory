@@ -609,7 +609,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/index-cli.ts` - Parse --concurrency flag from remaining args
+### `src/index-cli.ts` - Check the arguments before any work. Without the check, an unknown command or option fell to the
 
 **Node.js Built-in Dependencies:**
 | Module | Import |
@@ -2155,9 +2155,9 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 260 |
+| Total Source Files | 261 |
 | Subsystems | 5 |
-| Total Lines of Code | 52861 |
+| Total Lines of Code | 53176 |
 | Total Exports | 578 |
 | Total Re-exports | 8 |
 | Total Classes | 8 |

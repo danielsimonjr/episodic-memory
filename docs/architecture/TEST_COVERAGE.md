@@ -9,7 +9,7 @@
 | Metric | Count |
 |--------|-------|
 | Total Source Files | 103 |
-| Total Test Files | 146 |
+| Total Test Files | 147 |
 | Source Files with Tests | 81 |
 | Source Files without Tests | 22 |
 | Coverage (raw, direct-import) | **78.6%** |
@@ -188,6 +188,7 @@ The following 22 source files are not directly imported by any test file:
 | `test/gpu-reservation.test.ts` | 2 files |
 | `test/hooks.test.ts` | 0 files |
 | `test/incremental-indexing.test.ts` | 1 files |
+| `test/index-cli-args.test.ts` | 0 files |
 | `test/integration.test.ts` | 4 files |
 | `learn/agent-runner.test.ts` | 4 files |
 | `learn/bootstrap.test.ts` | 7 files |

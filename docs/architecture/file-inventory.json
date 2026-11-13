@@ -1,11 +1,11 @@
 {
-  "totalFiles": 260,
+  "totalFiles": 261,
   "byDisposition": {
     "reachable": 42,
     "build-entry": 4,
     "test-only": 43,
     "orphan": 14,
-    "test": 152,
+    "test": 153,
     "tool": 4,
     "config": 1,
     "bench": 0,
@@ -14,11 +14,11 @@
   "byArea": {
     "src": 103,
     "tools": 4,
-    "tests": 152,
+    "tests": 153,
     "config": 1
   },
   "byPackage": {
-    "(root)": 165,
+    "(root)": 166,
     "episodic-memory": 95
   },
   "files": [
@@ -41,14 +41,14 @@
       "package": "(root)",
       "area": "src",
       "disposition": "orphan",
-      "loc": 140
+      "loc": 143
     },
     {
       "file": "cli/index-conversations.js",
       "package": "(root)",
       "area": "src",
       "disposition": "orphan",
-      "loc": 150
+      "loc": 165
     },
     {
       "file": "cli/mcp-server-wrapper.js",
@@ -286,7 +286,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "build-entry",
-      "loc": 204
+      "loc": 280
     },
     {
       "file": "src/index.ts",
@@ -1085,6 +1085,13 @@
       "area": "tests",
       "disposition": "test",
       "loc": 108
+    },
+    {
+      "file": "test/index-cli-args.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 221
     },
     {
       "file": "test/integration.test.ts",

@@ -7,7 +7,82 @@ import { pruneProjects } from './prune.js';
 import fs from 'fs';
 import path from 'path';
 
-const command = process.argv[2];
+const COMMANDS = new Set(['index-all', 'index-session', 'index-cleanup', 'verify', 'repair', 'rebuild', 'prune', 'vacuum']);
+const VALUE_OPTIONS = new Set(['--concurrency', '-c', '--project']);
+const INDEX_OPTIONS = ['--concurrency', '-c', '--no-summaries'];
+/** The options that each command accepts. A call without a command runs index-all. */
+const OPTIONS_BY_COMMAND: Record<string, string[]> = {
+  'index-all': INDEX_OPTIONS,
+  'index-session': INDEX_OPTIONS,
+  'index-cleanup': INDEX_OPTIONS,
+  rebuild: [...INDEX_OPTIONS, '--yes'],
+  prune: ['--excluded', '--project', '--dry-run'],
+  verify: [],
+  repair: [],
+  vacuum: [],
+};
+const KNOWN_OPTIONS = new Set(Object.values(OPTIONS_BY_COMMAND).flat());
+
+const USAGE = `Usage: index-cli [command] [options]
+
+Commands: index-all (the default), index-session <session-id>, index-cleanup, verify, repair, rebuild, prune, vacuum
+Options:  --concurrency N or -c N (an integer from 1 to 16), --no-summaries (index-all, index-session, index-cleanup, rebuild)
+          --yes (rebuild; the command deletes the index database and every summary file)
+          --excluded or --project <name>, --dry-run (prune)
+
+Run 'episodic-memory index --help' for the full help.`;
+
+/**
+ * Check the arguments before any work. Without the check, an unknown command or option fell to the
+ * default branch, and that branch indexes every source with summaries. A value option consumes the next
+ * argument. Only index-session takes a second positional argument, the session id. Each option must belong
+ * to the command, so `--dry-run` without `prune` cannot start a real index. `rebuild` needs `--yes`, because
+ * an option before the command hides the command from the confirmation of the wrapper.
+ */
+function parseArgs(argv: string[]): { command: string | undefined; positionals: string[] } {
+  const positionals: string[] = [];
+  const options: { name: string; value?: string }[] = [];
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+    if (arg === '--help' || arg === '-h') {
+      console.log(USAGE);
+      process.exit(0);
+    }
+    if (VALUE_OPTIONS.has(arg)) {
+      const value = argv[++i];
+      if (value === undefined) refuse(`option ${arg} needs a value`);
+      options.push({ name: arg, value });
+      continue;
+    }
+    if (KNOWN_OPTIONS.has(arg)) {
+      options.push({ name: arg });
+      continue;
+    }
+    if (arg.startsWith('-')) refuse(`unknown option ${arg}`);
+    if (positionals.length === 0 && !COMMANDS.has(arg)) refuse(`unknown command ${arg}`);
+    if (positionals.length === 1 && positionals[0] !== 'index-session') refuse(`unknown argument ${arg}`);
+    if (positionals.length === 2) refuse(`unknown argument ${arg}`);
+    positionals.push(arg);
+  }
+  const command = positionals[0] ?? 'index-all';
+  for (const option of options) {
+    if (!OPTIONS_BY_COMMAND[command].includes(option.name)) refuse(`option ${option.name} does not apply to ${command}`);
+    if ((option.name === '--concurrency' || option.name === '-c') && !/^([1-9]|1[0-6])$/.test(option.value ?? '')) {
+      refuse(`option ${option.name} needs an integer from 1 to 16`);
+    }
+  }
+  if (command === 'rebuild' && !options.some(o => o.name === '--yes')) {
+    refuse("rebuild deletes the index database and every summary file and needs --yes. 'episodic-memory index --rebuild' asks first");
+  }
+  return { command: positionals[0], positionals };
+}
+
+function refuse(reason: string): never {
+  console.error(`episodic-memory index: ${reason}. Run 'episodic-memory index --help'.`);
+  process.exit(2);
+}
+
+const { command, positionals } = parseArgs(process.argv.slice(2));
 
 // Parse --concurrency flag from remaining args
 function getConcurrency(): number {
@@ -31,7 +106,7 @@ async function main() {
   try {
     switch (command) {
       case 'index-session':
-        const sessionId = process.argv[3];
+        const sessionId = positionals[1];
         if (!sessionId) {
           console.error('Usage: index-cli index-session <session-id>');
           process.exit(1);
@@ -189,6 +264,7 @@ async function main() {
         break;
       }
 
+      // parseArgs refuses every other command, so index-cli reaches the default branch only without a command.
       case 'index-all':
       default:
         await indexConversations(undefined, undefined, concurrency, noSummaries);

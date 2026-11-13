@@ -569,6 +569,9 @@ export async function runCodexCommand(command) {
                 const fork = await send('thread/fork', {
                     threadId: command.sessionId,
                     ephemeral: true,
+                    // codex-cli 0.150 and later refuses an ephemeral fork of a paginated thread without this flag.
+                    // The flag limits the turns in the fork response. The fork still holds the full session history.
+                    excludeTurns: true,
                     sandbox: 'read-only',
                     approvalPolicy: 'never',
                     ...(command.model ? { model: command.model } : {}),

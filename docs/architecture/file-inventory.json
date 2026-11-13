@@ -706,7 +706,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 822
+      "loc": 825
     },
     {
       "file": "src/sync-banner.ts",
@@ -1700,7 +1700,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 303
+      "loc": 304
     },
     {
       "file": "test/summarizer-prompt-budget.test.ts",

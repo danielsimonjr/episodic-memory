@@ -8,7 +8,7 @@ This report lists each source file that the map census finds, with a disposition
 
 **Language**: typescript
 
-**Total files**: 280
+**Total files**: 282
 
 ## Disposition counts
 
@@ -18,12 +18,12 @@ This report lists each source file that the map census finds, with a disposition
 | `build-entry` | 4 | A `src`-area file that is an entry root. |
 | `test-only` | 46 | A `src`-area file that only a test reaches. |
 | `orphan` | 15 | A `src`-area file that nothing reaches. Delete it, or wire it to a root. |
-| `test` | 167 | A file in a `test/` or `tests/` folder, or a `*.test.ts` or `*.spec.ts` file. |
+| `test` | 169 | A file in a `test/` or `tests/` folder, or a `*.test.ts` or `*.spec.ts` file. |
 | `tool` | 4 | A file in a `tools/` or `scripts/` folder outside `src/`. |
 | `config` | 1 | A `*.config.*` file of TypeScript or JavaScript. |
 | `example` | 0 | A file in `examples/` or `docs/`. |
 | `bench` | 0 | A file in `bench/` or `benchmarks/`, or a `*.bench.*` file. |
-| **Total** | **280** | |
+| **Total** | **282** | |
 
 ## Per-area counts
 
@@ -31,14 +31,14 @@ This report lists each source file that the map census finds, with a disposition
 | --- | --: |
 | `config` | 1 |
 | `src` | 108 |
-| `tests` | 167 |
+| `tests` | 169 |
 | `tools` | 4 |
 
 ## Per-package counts
 
 | Package | Files |
 | --- | --: |
-| `(root)` | 181 |
+| `(root)` | 183 |
 | `episodic-memory` | 99 |
 
 ## All files
@@ -81,7 +81,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/doctor-learn.ts` | episodic-memory | src | test-only | 346 |
 | `src/doctor.ts` | episodic-memory | src | test-only | 455 |
 | `src/embedding-migration.ts` | episodic-memory | src | reachable | 197 |
-| `src/embeddings.ts` | episodic-memory | src | reachable | 168 |
+| `src/embeddings.ts` | episodic-memory | src | reachable | 205 |
 | `src/fs-retry.ts` | episodic-memory | src | test-only | 45 |
 | `src/fts-query.ts` | episodic-memory | src | reachable | 14 |
 | `src/gpu-reservation.ts` | episodic-memory | src | reachable | 98 |
@@ -145,7 +145,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/summarizer.ts` | episodic-memory | src | reachable | 865 |
 | `src/sync-banner.ts` | episodic-memory | src | test-only | 33 |
 | `src/sync-cli.ts` | episodic-memory | src | orphan | 248 |
-| `src/sync.ts` | episodic-memory | src | test-only | 534 |
+| `src/sync.ts` | episodic-memory | src | test-only | 570 |
 | `src/topic-db.ts` | episodic-memory | src | reachable | 521 |
 | `src/topic-format.ts` | episodic-memory | src | reachable | 462 |
 | `src/topic-job.ts` | episodic-memory | src | test-only | 309 |
@@ -198,6 +198,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/embedding-migration-helpers.test.ts` | (root) | tests | test | 57 |
 | `test/embedding-migration.test.ts` | (root) | tests | test | 221 |
 | `test/embeddings-format.test.ts` | (root) | tests | test | 35 |
+| `test/embeddings-unavailable.test.ts` | (root) | tests | test | 40 |
 | `test/ensure-deps-prune.test.ts` | (root) | tests | test | 275 |
 | `test/ensure-deps-repair.test.ts` | (root) | tests | test | 364 |
 | `test/exclude-nested.test.ts` | (root) | tests | test | 124 |
@@ -252,7 +253,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/logging-append.test.ts` | (root) | tests | test | 27 |
 | `test/logging.test.ts` | (root) | tests | test | 73 |
 | `test/mcp-auth.test.ts` | (root) | tests | test | 34 |
-| `test/mcp-protocol.test.ts` | (root) | tests | test | 282 |
+| `test/mcp-protocol.test.ts` | (root) | tests | test | 329 |
 | `test/mcp-read-redaction.test.ts` | (root) | tests | test | 48 |
 | `test/mcp-schemas.test.ts` | (root) | tests | test | 66 |
 | `test/mcp-tools.test.ts` | (root) | tests | test | 154 |
@@ -295,6 +296,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/sync-cli-lock.test.ts` | (root) | tests | test | 46 |
 | `test/sync-cli-reentrancy.test.ts` | (root) | tests | test | 35 |
 | `test/sync-copy-retry.test.ts` | (root) | tests | test | 110 |
+| `test/sync-embeddings-unavailable.test.ts` | (root) | tests | test | 124 |
 | `test/sync-empty-summary-audit.test.ts` | (root) | tests | test | 103 |
 | `test/sync-gpu-reservation.test.ts` | (root) | tests | test | 142 |
 | `test/sync-helpers.test.ts` | (root) | tests | test | 40 |

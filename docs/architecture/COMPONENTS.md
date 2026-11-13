@@ -47,7 +47,7 @@ Creates the digest tables (`digest_entry`, `digest_fts`). Entries are never dele
 
 ### `src/embeddings.ts`
 
-Loads the embedding pipeline once (`Xenova/bge-small-en-v1.5`, quantized `q8`). `generateEmbedding` and `generateEmbeddings` embed passages. `generateQueryEmbedding` adds the query prefix first. `formatExchangeEmbeddingText` builds the text of one exchange, and `generateExchangeEmbedding(s)` embeds it.
+Loads the embedding pipeline once (`Xenova/bge-small-en-v1.5`, quantized `q8`). `generateEmbedding` and `generateEmbeddings` embed passages. `generateQueryEmbedding` adds the query prefix first. `formatExchangeEmbeddingText` builds the text of one exchange, and `generateExchangeEmbedding(s)` embeds it. `initEmbeddings` imports `@huggingface/transformers` at the first load, not when the module loads. A native binding that cannot load therefore makes only `initEmbeddings` fail. `initEmbeddings` then throws `EmbeddingsUnavailableError`, and `cause` holds the load error.
 
 ### `src/embedding-migration.ts`
 
@@ -59,7 +59,7 @@ Holds `EMBEDDING_VERSION`. It finds rows with an older version and re-embeds the
 
 ### `src/sync.ts`
 
-`syncConversations(sourceDir, destDir, options)` is the core of ingest. The function walks the source folders and copies a transcript only when it is newer than the archive copy. It queues new files for indexing and queues missing summaries. It skips summarizer conversations and excluded projects. Summary work runs in this order: fresh work, then retries, then retries of legacy empty summaries. A deferral (see `src/deferral.ts`) stops the summary loop and sets `summariesDeferred`. The function returns a `SyncResult` with counts. `summarizeOneFile` summarizes a single archive file.
+`syncConversations(sourceDir, destDir, options)` is the core of ingest. The function walks the source folders and copies a transcript only when it is newer than the archive copy. It queues new files for indexing and queues missing summaries. It skips summarizer conversations and excluded projects. Summary work runs in this order: fresh work, then retries, then retries of legacy empty summaries. A deferral (see `src/deferral.ts`) stops the summary loop and sets `summariesDeferred`. When `initEmbeddings` fails, the function records one `(embeddings)` error and skips the index step. The summaries still run. The function sets the time of each copy of that run to the epoch. The next sync therefore copies the files again and indexes them. The function returns a `SyncResult` with counts. `summarizeOneFile` summarizes a single archive file.
 
 The copy writes a temporary file. The copy renames the temporary file over the archive copy with `renameWithRetry` (see `src/fs-retry.ts`). When every attempt fails, the copy removes the temporary file. The copy then records one error for the transcript.
 
@@ -199,8 +199,8 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 280 | repo-tools map |
-| totalClasses | 9 | repo-tools map |
+| totalSourceFiles | 282 | repo-tools map |
+| totalClasses | 10 | repo-tools map |
 | totalInterfaces | 139 | repo-tools map |
 | totalFunctions | 343 | repo-tools map |
 | totalConstants | 70 | repo-tools map |

@@ -3,9 +3,9 @@
     "name": "episodic-memory",
     "schemaVersion": "2.0.0",
     "language": "typescript",
-    "totalFiles": 280,
+    "totalFiles": 282,
     "totalModules": 4,
-    "totalExports": 604
+    "totalExports": 605
   },
   "modules": {
     "src": {
@@ -1025,6 +1025,7 @@
         "exports": [
           "BGE_QUERY_PREFIX",
           "initEmbeddings",
+          "EmbeddingsUnavailableError",
           "generateEmbeddings",
           "generateEmbedding",
           "withQueryPrefix",
@@ -1165,6 +1166,7 @@
             "file": "src/embeddings.ts",
             "imports": [
               "BGE_QUERY_PREFIX",
+              "EmbeddingsUnavailableError",
               "formatExchangeEmbeddingText",
               "generateEmbedding",
               "generateEmbeddings",
@@ -5978,6 +5980,23 @@
         ],
         "exports": []
       },
+      "test/embeddings-unavailable.test.ts": {
+        "externalDependencies": [
+          "vitest"
+        ],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "src/embeddings.ts",
+            "imports": [
+              "initEmbeddings",
+              "EmbeddingsUnavailableError"
+            ],
+            "typeOnly": false
+          }
+        ],
+        "exports": []
+      },
       "test/ensure-deps-prune.test.ts": {
         "externalDependencies": [
           "vitest"
@@ -9345,6 +9364,42 @@
         ],
         "exports": []
       },
+      "test/sync-embeddings-unavailable.test.ts": {
+        "externalDependencies": [
+          "better-sqlite3",
+          "vitest"
+        ],
+        "nodeDependencies": [
+          "fs",
+          "os",
+          "path"
+        ],
+        "internalDependencies": [
+          {
+            "file": "test/test-utils.ts",
+            "imports": [
+              "safeRmSync",
+              "suppressConsole"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/embeddings.ts",
+            "imports": [
+              "*"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/sync.ts",
+            "imports": [
+              "*"
+            ],
+            "typeOnly": false
+          }
+        ],
+        "exports": []
+      },
       "test/sync-empty-summary-audit.test.ts": {
         "externalDependencies": [
           "vitest"
@@ -10281,11 +10336,11 @@
     }
   },
   "statistics": {
-    "totalTypeScriptFiles": 280,
-    "totalSourceFiles": 280,
+    "totalTypeScriptFiles": 282,
+    "totalSourceFiles": 282,
     "totalModules": 4,
-    "totalLinesOfCode": 55783,
-    "totalExports": 604,
+    "totalLinesOfCode": 56067,
+    "totalExports": 605,
     "entryRoots": 6,
     "reachableFiles": 47,
     "dormantFiles": 61,
@@ -10301,7 +10356,7 @@
     "typeOnlyCyclicComponents": 1,
     "runtimeFilesInCycles": 0,
     "typeOnlyFilesInCycles": 2,
-    "totalClasses": 9,
+    "totalClasses": 10,
     "totalInterfaces": 139,
     "totalFunctions": 343,
     "totalTypeGuards": 11,

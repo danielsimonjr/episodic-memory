@@ -26,6 +26,8 @@ sync-cli
   │    ├─ copyIfNewer(src, archive)      copy a transcript only when it is newer
   │    └─ queue: files to index, files that need a summary
   ├─ index queued files
+  │    initEmbeddings                    on a failure: record one error, set the copy times to the epoch,
+  │                                      skip the index step (the next sync copies and indexes the files)
   │    parser.parseConversationFile      transcript → exchanges
   │    embeddings.generateExchangeEmbeddings
   │    db insert                         exchanges, tool_calls, vec_exchanges, FTS
@@ -135,7 +137,7 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 280 | repo-tools map |
+| totalSourceFiles | 282 | repo-tools map |
 | runtimeCircularDeps | 0 | repo-tools map |
 
 The step orders above come from a direct reading of `src/sync.ts`, `src/search.ts`, `src/digest-job.ts`, `src/learn/learner.ts` and `cli/sync-hook.js`. They are not `repo-tools map` metrics.

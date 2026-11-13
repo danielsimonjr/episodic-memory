@@ -1520,9 +1520,7 @@
           {
             "package": "@huggingface/transformers",
             "imports": [
-              "pipeline",
-              "FeatureExtractionPipeline",
-              "env"
+              "FeatureExtractionPipeline"
             ]
           }
         ],
@@ -1545,6 +1543,7 @@
         "exports": [
           "BGE_QUERY_PREFIX",
           "initEmbeddings",
+          "EmbeddingsUnavailableError",
           "generateEmbeddings",
           "generateEmbedding",
           "withQueryPrefix",
@@ -1552,6 +1551,9 @@
           "formatExchangeEmbeddingText",
           "generateExchangeEmbedding",
           "generateExchangeEmbeddings"
+        ],
+        "classes": [
+          "EmbeddingsUnavailableError"
         ],
         "functions": [
           "initEmbeddings",

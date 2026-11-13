@@ -85,6 +85,25 @@ export function isTerminalFailRecord(filePath) {
         return true;
     }
 }
+/**
+ * Set the modification time of each archive copy to the epoch, so that the next sync copies the file again.
+ *
+ * The sync indexes only the files that it copied in the same run. Without this reset, a file that a run copied but
+ * did not index stays out of the index. The file gets its index entry only when its transcript changes again.
+ * `copyIfNewer` copies a file again when the source is newer than the copy. A copy that fails to reset keeps its time.
+ * That file gets its index entry when its transcript changes again.
+ */
+function requeueForIndex(files) {
+    for (const file of files) {
+        try {
+            const stat = fs.statSync(file);
+            fs.utimesSync(file, stat.atime, new Date(0));
+        }
+        catch {
+            // The copy is gone or locked. The sync records no second error for the same cause.
+        }
+    }
+}
 function copyIfNewer(src, dest) {
     // Ensure destination directory exists
     const destDir = path.dirname(dest);
@@ -241,55 +260,71 @@ export async function syncConversations(sourceDir, destDir, options = {}) {
         const { initDatabase, insertExchange, getMaxIndexedLine } = await import('./db.js');
         const { initEmbeddings, generateExchangeEmbeddings } = await import('./embeddings.js');
         const { parseConversation } = await import('./parser.js');
-        const db = initDatabase();
-        // try/finally so a throw from initEmbeddings or anything outside the per-file
-        // catch can't leak the DB handle (and its WAL), which would surface as a
-        // "database is locked" / stale .db-wal on the next run (F6).
+        // The embedding backend can fail to load, for example when a native binding of transformers cannot load.
+        // The copies are already done and the summaries must still run, so the sync records one error and skips
+        // the index step. The load runs before initDatabase, so a failed load opens no database handle.
+        let embeddingsReady = true;
         try {
             await initEmbeddings();
-            for (const file of filesToIndex) {
-                try {
-                    // Check for DO NOT INDEX marker
-                    if (shouldSkipConversation(file)) {
-                        continue; // Skip indexing but file is already copied
-                    }
-                    const project = path.basename(path.dirname(file));
-                    const exchanges = await parseConversation(file, project, file);
-                    // High-water mark: transcript JSONLs are append-only, so only embed
-                    // exchanges past MAX(line_end). Matches indexUnprocessed (#84).
-                    const maxIndexedLine = getMaxIndexedLine(db, file);
-                    const newExchanges = maxIndexedLine > 0
-                        ? exchanges.filter((e) => e.lineStart > maxIndexedLine)
-                        : exchanges;
-                    if (newExchanges.length === 0) {
-                        result.indexed++;
-                        continue;
-                    }
-                    const embeddings = await generateExchangeEmbeddings(newExchanges.map((exchange) => ({
-                        userMessage: exchange.userMessage,
-                        assistantMessage: exchange.assistantMessage,
-                        toolNames: exchange.toolCalls?.map((tc) => tc.toolName),
-                    })));
-                    const insertTx = db.transaction(() => {
-                        for (let i = 0; i < newExchanges.length; i++) {
-                            const exchange = newExchanges[i];
-                            const toolNames = exchange.toolCalls?.map((tc) => tc.toolName);
-                            insertExchange(db, exchange, embeddings[i], toolNames);
+        }
+        catch (error) {
+            embeddingsReady = false;
+            result.errors.push({
+                file: '(embeddings)',
+                error: `Semantic indexing skipped, embedding backend unavailable: ${error instanceof Error ? error.message : String(error)}`,
+            });
+            requeueForIndex(filesToIndex);
+        }
+        if (embeddingsReady) {
+            const db = initDatabase();
+            // try/finally so a throw from anything outside the per-file
+            // catch can't leak the DB handle (and its WAL), which would surface as a
+            // "database is locked" / stale .db-wal on the next run (F6).
+            try {
+                for (const file of filesToIndex) {
+                    try {
+                        // Check for DO NOT INDEX marker
+                        if (shouldSkipConversation(file)) {
+                            continue; // Skip indexing but file is already copied
                         }
-                    });
-                    insertTx();
-                    result.indexed++;
-                }
-                catch (error) {
-                    result.errors.push({
-                        file,
-                        error: error instanceof Error ? error.message : String(error)
-                    });
+                        const project = path.basename(path.dirname(file));
+                        const exchanges = await parseConversation(file, project, file);
+                        // High-water mark: transcript JSONLs are append-only, so only embed
+                        // exchanges past MAX(line_end). Matches indexUnprocessed (#84).
+                        const maxIndexedLine = getMaxIndexedLine(db, file);
+                        const newExchanges = maxIndexedLine > 0
+                            ? exchanges.filter((e) => e.lineStart > maxIndexedLine)
+                            : exchanges;
+                        if (newExchanges.length === 0) {
+                            result.indexed++;
+                            continue;
+                        }
+                        const embeddings = await generateExchangeEmbeddings(newExchanges.map((exchange) => ({
+                            userMessage: exchange.userMessage,
+                            assistantMessage: exchange.assistantMessage,
+                            toolNames: exchange.toolCalls?.map((tc) => tc.toolName),
+                        })));
+                        const insertTx = db.transaction(() => {
+                            for (let i = 0; i < newExchanges.length; i++) {
+                                const exchange = newExchanges[i];
+                                const toolNames = exchange.toolCalls?.map((tc) => tc.toolName);
+                                insertExchange(db, exchange, embeddings[i], toolNames);
+                            }
+                        });
+                        insertTx();
+                        result.indexed++;
+                    }
+                    catch (error) {
+                        result.errors.push({
+                            file,
+                            error: error instanceof Error ? error.message : String(error)
+                        });
+                    }
                 }
             }
-        }
-        finally {
-            db.close();
+            finally {
+                db.close();
+            }
         }
     }
     // The ollama backend loads a model on the shared GPU, so it asks for no summary while another

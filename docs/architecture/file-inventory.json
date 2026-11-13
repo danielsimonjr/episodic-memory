@@ -1,11 +1,11 @@
 {
-  "totalFiles": 280,
+  "totalFiles": 282,
   "byDisposition": {
     "reachable": 43,
     "build-entry": 4,
     "test-only": 46,
     "orphan": 15,
-    "test": 167,
+    "test": 169,
     "tool": 4,
     "config": 1,
     "bench": 0,
@@ -14,11 +14,11 @@
   "byArea": {
     "src": 108,
     "tools": 4,
-    "tests": 167,
+    "tests": 169,
     "config": 1
   },
   "byPackage": {
-    "(root)": 181,
+    "(root)": 183,
     "episodic-memory": 99
   },
   "files": [
@@ -279,7 +279,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 168
+      "loc": 205
     },
     {
       "file": "src/fs-retry.ts",
@@ -727,7 +727,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 534
+      "loc": 570
     },
     {
       "file": "src/topic-db.ts",
@@ -1092,6 +1092,13 @@
       "area": "tests",
       "disposition": "test",
       "loc": 35
+    },
+    {
+      "file": "test/embeddings-unavailable.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 40
     },
     {
       "file": "test/ensure-deps-prune.test.ts",
@@ -1476,7 +1483,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 282
+      "loc": 329
     },
     {
       "file": "test/mcp-read-redaction.test.ts",
@@ -1771,6 +1778,13 @@
       "area": "tests",
       "disposition": "test",
       "loc": 110
+    },
+    {
+      "file": "test/sync-embeddings-unavailable.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 124
     },
     {
       "file": "test/sync-empty-summary-audit.test.ts",

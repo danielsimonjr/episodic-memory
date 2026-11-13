@@ -5,6 +5,7 @@
     "learn": [],
     "root": [
       "BGE_QUERY_PREFIX",
+      "EmbeddingsUnavailableError",
       "buildCodexSummarizerCommand",
       "buildCodexSummaryPrompt",
       "buildFtsMatchQuery",

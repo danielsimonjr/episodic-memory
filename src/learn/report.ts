@@ -16,7 +16,7 @@
  * fabricated "before" of zero would read as a spectacular gain.
  */
 
-import type Database from 'better-sqlite3';
+import type { Database } from '../sqlite.js';
 import {
   getRun,
   latestRun,
@@ -69,7 +69,7 @@ export interface ReportModel {
 }
 
 /** The run's snapshots, oldest first. */
-function snapshotIds(db: Database.Database, runId: string): number[] {
+function snapshotIds(db: Database, runId: string): number[] {
   const rows = db
     .prepare('SELECT id FROM knowledge_snapshot WHERE run_id = ? ORDER BY id')
     .all(runId) as Array<{ id: number }>;
@@ -81,7 +81,7 @@ function emptyRate(): PassRate {
 }
 
 function splitReport(
-  db: Database.Database,
+  db: Database,
   runId: string,
   snapshots: number[],
   split: 'train' | 'test'
@@ -108,7 +108,7 @@ function splitReport(
   return { before, after, byKindTier };
 }
 
-function usedCalls(db: Database.Database, runId: string): number {
+function usedCalls(db: Database, runId: string): number {
   const row = db.prepare('SELECT COUNT(*) AS n FROM learning_attempt WHERE run_id = ?').get(runId) as
     | { n: number }
     | undefined;
@@ -190,7 +190,7 @@ function mergesOf(run: LearningRun): ReportMerge[] {
 }
 
 /** The latest run id, for a CLI that was given no `--run`. */
-export function latestRunId(db: Database.Database): string | null {
+export function latestRunId(db: Database): string | null {
   return latestRun(db)?.id ?? null;
 }
 

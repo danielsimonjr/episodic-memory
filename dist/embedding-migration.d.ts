@@ -11,7 +11,7 @@
  *   pickStaleBatch       — find rows whose embedding_version is behind
  *   recordReembedded     — replace one vector and stamp its version
  */
-import Database from 'better-sqlite3';
+import { Database } from './sqlite.js';
 import { LockHandle } from './lockfile.js';
 /**
  * The version of the embedding pipeline. New rows carry this value. Rows with a lower value are stale.
@@ -55,26 +55,27 @@ export interface StaleRow {
 }
 /**
  * The function returns up to `limit` rows whose embedding_version is older than EMBEDDING_VERSION.
+ * The function also returns a row that has no stored vector, whatever its version.
  *
  * Each row carries its tool names, so the caller can reproduce the production exchange-text format.
  */
-export declare function pickStaleBatch(db: Database.Database, limit: number): StaleRow[];
+export declare function pickStaleBatch(db: Database, limit: number): StaleRow[];
 /**
  * Replace the vector of one exchange and stamp the current EMBEDDING_VERSION on the row.
  *
- * The function runs three statements in order. The statements delete the old vector, insert the new vector and update embedding_version.
+ * The function runs two statements in order. The statements replace the vector and update embedding_version.
  * The function does not start a transaction. The caller must wrap the call in a transaction to make the change atomic.
  *
  * @param db the open index database
  * @param id the exchange id
  * @param embedding the new vector. The function stores it as 32-bit floats.
  */
-export declare function recordReembedded(db: Database.Database, id: string, embedding: number[]): void;
+export declare function recordReembedded(db: Database, id: string, embedding: number[]): void;
 /**
- * Count rows whose embedding is older than the current version.
+ * Count rows whose embedding is older than the current version, or missing.
  * Used to decide whether migration is needed and to report progress.
  */
-export declare function countStale(db: Database.Database): number;
+export declare function countStale(db: Database): number;
 /** Path of the migration lock under the index directory. */
 export declare function getMigrationLockPath(indexDir: string): string;
 /**
@@ -94,4 +95,4 @@ export declare function getMigrationLockPath(indexDir: string): string;
  * @param batchSize the maximum number of rows to re-embed in this batch
  * @param embedFn computes one vector from the user text, the assistant text and the tool names. The function calls it only when the batched call fails.
  */
-export declare function runMigrationBatch(db: Database.Database, indexDir: string, batchSize: number, embedFn: (user: string, assistant: string, toolNames?: string[]) => Promise<number[]>): Promise<number>;
+export declare function runMigrationBatch(db: Database, indexDir: string, batchSize: number, embedFn: (user: string, assistant: string, toolNames?: string[]) => Promise<number[]>): Promise<number>;

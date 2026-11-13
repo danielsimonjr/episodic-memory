@@ -1,4 +1,4 @@
-import type Database from 'better-sqlite3';
+import type { Database } from './sqlite.js';
 /** The counts of one call of `removeDerivedText`. */
 export interface DerivedTextResult {
     /** Digest lines removed, in entries that stay and in entries that go. */
@@ -37,4 +37,4 @@ export declare function dropLinesCiting(text: string, removed: ReadonlySet<strin
  * @param db The open database connection to change.
  * @param ids The ids of the exchanges that the index deleted.
  */
-export declare function removeDerivedText(db: Database.Database, ids: readonly string[]): DerivedTextResult;
+export declare function removeDerivedText(db: Database, ids: readonly string[]): DerivedTextResult;

@@ -5,7 +5,7 @@
 `episodic-memory` is a plugin for coding agents. It turns the transcripts that agent sessions leave on disk into a searchable local store. The store has three layers that depend on each other in one direction only.
 
 1. **The archive.** A copy of each source transcript (`.jsonl`) and, optionally, a text summary next to it.
-2. **The index.** A SQLite database that holds one row per user-and-assistant exchange, a full-text index, and a vector index.
+2. **The index.** A SQLite database that holds one row per user-and-assistant exchange, a full-text index, and a vector table.
 3. **The derived layers.** A digest of recent sessions and a store of learned skills. Both read the index and the archive. Neither one writes to them.
 
 Three kinds of process use these layers.
@@ -45,9 +45,9 @@ Leaf modules import nothing from the repository, or import only each other. Seve
 
 ### Decision: Store exchanges in SQLite with a vector table and a full-text table
 
-**Rationale.** One file holds the rows, the vector index (`vec_exchanges`, 384 dimensions) and the full-text index (`exchanges_fts`). A search can run the vector query, the text query, or both, and join to the same row by `id`. A single local file needs no server.
+**Rationale.** One file holds the rows, the vectors (`exchange_vectors`, 384 float32 values for each row) and the full-text index (`exchanges_fts`). A search can run the vector query, the text query, or both, and join to the same row by `id`. A single local file needs no server.
 
-**Trade-offs.** The vector index applies its nearest-neighbour step before any `WHERE` filter. When a filter is active, search asks for three times the requested number of candidates and trims afterwards. A very selective filter can still return fewer results than the limit.
+**Trade-offs.** The vector search has no index. It computes the distance of each stored vector that passes the filters, so its cost grows with the number of indexed exchanges. The search returns the exact nearest rows, with no approximation.
 
 ### Decision: Version the embedding pipeline
 
@@ -117,7 +117,7 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 293 | repo-tools map |
+| totalSourceFiles | 295 | repo-tools map |
 | totalModules | 4 | repo-tools map |
 | runtimeCircularDeps | 0 | repo-tools map |
 

@@ -1,4 +1,4 @@
-import type Database from 'better-sqlite3';
+import type { Database } from './sqlite.js';
 import type { TopicOptions, TopicResult } from './topic-job.js';
 /**
  * The topic step of a sync run.
@@ -9,5 +9,5 @@ import type { TopicOptions, TopicResult } from './topic-job.js';
  * @param opts the job options, and an open database. Without a database, the step opens and closes its own.
  */
 export declare function runTopicPhase(opts?: TopicOptions & {
-    db?: Database.Database;
+    db?: Database;
 }): Promise<TopicResult | null>;

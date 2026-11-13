@@ -1,25 +1,25 @@
 {
-  "totalFiles": 293,
+  "totalFiles": 295,
   "byDisposition": {
-    "reachable": 46,
+    "reachable": 47,
     "build-entry": 4,
     "test-only": 45,
     "orphan": 15,
-    "test": 178,
-    "tool": 4,
+    "test": 180,
+    "tool": 3,
     "config": 1,
     "bench": 0,
     "example": 0
   },
   "byArea": {
-    "src": 110,
-    "tools": 4,
-    "tests": 178,
+    "src": 111,
+    "tools": 3,
+    "tests": 180,
     "config": 1
   },
   "byPackage": {
-    "(root)": 192,
-    "episodic-memory": 101
+    "(root)": 193,
+    "episodic-memory": 102
   },
   "files": [
     {
@@ -34,7 +34,7 @@
       "package": "(root)",
       "area": "src",
       "disposition": "test-only",
-      "loc": 389
+      "loc": 380
     },
     {
       "file": "cli/episodic-memory.js",
@@ -98,13 +98,6 @@
       "area": "tools",
       "disposition": "tool",
       "loc": 16
-    },
-    {
-      "file": "scripts/rebuild-native.mjs",
-      "package": "(root)",
-      "area": "tools",
-      "disposition": "tool",
-      "loc": 120
     },
     {
       "file": "src/api-endpoint.ts",
@@ -174,7 +167,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 565
+      "loc": 731
     },
     {
       "file": "src/deferral.ts",
@@ -188,7 +181,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 149
+      "loc": 109
     },
     {
       "file": "src/derived-text.ts",
@@ -265,21 +258,21 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 346
+      "loc": 306
     },
     {
       "file": "src/doctor.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 455
+      "loc": 470
     },
     {
       "file": "src/embedding-migration.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 197
+      "loc": 198
     },
     {
       "file": "src/embeddings.ts",
@@ -328,7 +321,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "build-entry",
-      "loc": 9
+      "loc": 10
     },
     {
       "file": "src/indexer.ts",
@@ -657,7 +650,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 112
+      "loc": 116
     },
     {
       "file": "src/redact.ts",
@@ -685,7 +678,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 637
+      "loc": 623
     },
     {
       "file": "src/show-cli.ts",
@@ -700,6 +693,13 @@
       "area": "src",
       "disposition": "reachable",
       "loc": 1027
+    },
+    {
+      "file": "src/sqlite.ts",
+      "package": "episodic-memory",
+      "area": "src",
+      "disposition": "reachable",
+      "loc": 357
     },
     {
       "file": "src/stats-cli.ts",
@@ -825,7 +825,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 88
+      "loc": 15
     },
     {
       "file": "test/app-server-stdin-error.test.ts",
@@ -1014,7 +1014,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 207
+      "loc": 191
     },
     {
       "file": "test/derived-text.test.ts",
@@ -1049,7 +1049,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 417
+      "loc": 416
     },
     {
       "file": "test/digest-inject.test.ts",
@@ -1098,7 +1098,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 360
+      "loc": 368
     },
     {
       "file": "test/embedding-migration-helpers.test.ts",
@@ -1112,7 +1112,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 221
+      "loc": 222
     },
     {
       "file": "test/embeddings-format.test.ts",
@@ -1133,14 +1133,21 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 275
+      "loc": 273
     },
     {
       "file": "test/ensure-deps-repair.test.ts",
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 364
+      "loc": 327
+    },
+    {
+      "file": "test/exchange-vectors.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 374
     },
     {
       "file": "test/exclude-nested.test.ts",
@@ -1556,11 +1563,18 @@
       "loc": 68
     },
     {
+      "file": "test/no-native-sqlite.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 33
+    },
+    {
       "file": "test/node-floor.test.ts",
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 43
+      "loc": 55
     },
     {
       "file": "test/ollama-backend.test.ts",
@@ -1630,7 +1644,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 198
+      "loc": 197
     },
     {
       "file": "test/query-prefix.test.ts",
@@ -1654,13 +1668,6 @@
       "loc": 33
     },
     {
-      "file": "test/rebuild-native.test.ts",
-      "package": "(root)",
-      "area": "tests",
-      "disposition": "test",
-      "loc": 48
-    },
-    {
       "file": "test/redact-patterns.test.ts",
       "package": "(root)",
       "area": "tests",
@@ -1679,7 +1686,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 91
+      "loc": 90
     },
     {
       "file": "test/search-agent-template.test.ts",
@@ -1738,6 +1745,13 @@
       "loc": 353
     },
     {
+      "file": "test/sqlite-adapter.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 356
+    },
+    {
       "file": "test/stats-format.test.ts",
       "package": "(root)",
       "area": "tests",
@@ -1749,7 +1763,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 169
+      "loc": 165
     },
     {
       "file": "test/summarizer-api-env.test.ts",
@@ -1938,7 +1952,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 250
+      "loc": 245
     },
     {
       "file": "test/test-env.test.ts",
@@ -2043,7 +2057,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 122
+      "loc": 138
     },
     {
       "file": "test/verify.test.ts",

@@ -3,7 +3,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, existsSync, rmSync, utimesSync }
 import { tmpdir } from 'os';
 import { join, dirname } from 'path';
 import { depsRepairLogEntry, ensureDeps, NPM_INSTALL_ARGS } from '../cli/ensure-deps.js';
-import { DEP_SENTINELS, NATIVE_ADDON, ONNX_BINDING, onnxBindingPath } from '../src/deps-health.js';
+import { DEP_SENTINELS, ONNX_BINDING, onnxBindingPath } from '../src/deps-health.js';
 
 // The repair of `ensureDeps` with npm replaced by a fake. A fake install writes only the files of a
 // package that is absent from the tree, because `npm install` does not restore one missing file
@@ -45,20 +45,15 @@ const stale = (root: string) => join(onnxDir(root), 'stale.txt');
 /**
  * A fake npm. `install` writes `onnxruntime-node` (with the running pair and one sibling pair when
  * `restoresBinding` is true) when the package directory is absent, and writes `onnxruntime-common`
- * when it is absent. `rebuild better-sqlite3` writes the compiled binding when `rebuilds` is true.
- * `fails` makes every call throw. Each call is recorded with the state of the package directory.
+ * when it is absent. `fails` makes every call throw. Each call is recorded with the state of the package directory.
  */
-function fakeNpm(options: { restoresBinding?: boolean; rebuilds?: boolean; fails?: boolean } = {}) {
-  const { restoresBinding = true, rebuilds = true, fails = false } = options;
+function fakeNpm(options: { restoresBinding?: boolean; fails?: boolean } = {}) {
+  const { restoresBinding = true, fails = false } = options;
   const calls: { cwd: string; args: string[]; onnxPresent: boolean }[] = [];
   const npm = (cwd: string, args: string[]) => {
     const nm = join(cwd, 'node_modules');
     calls.push({ cwd, args: [...args], onnxPresent: existsSync(join(nm, 'onnxruntime-node')) });
     if (fails) throw new Error('npm install --omit=dev --no-audit --no-fund failed with exit code 1');
-    if (args[0] === 'rebuild') {
-      if (rebuilds) touch(join(nm, NATIVE_ADDON));
-      return;
-    }
     if (!existsSync(join(nm, 'onnxruntime-node'))) {
       touch(join(nm, 'onnxruntime-node', 'package.json'));
       mkdirSync(join(nm, 'onnxruntime-node', 'bin', 'napi-v6'), { recursive: true });
@@ -233,38 +228,6 @@ describe('ensureDeps repair of the onnxruntime-node binding', () => {
     expect(existsSync(join(root, 'node_modules', ONNX_BINDING))).toBe(true);
   });
 
-  it('installs, then reinstalls onnxruntime-node, then rebuilds better-sqlite3 for a tree that needs all three', () => {
-    const root = pluginRoot([ONNX_BINDING, NATIVE_ADDON, 'onnxruntime-common/package.json']);
-    const { npm, calls } = fakeNpm();
-    expect(stderrOf(() => ensureDeps(root, { npm })).result).toBe('install');
-    expect(calls.map((c) => [c.args[0], c.onnxPresent])).toEqual([
-      ['install', true],
-      ['install', false],
-      ['rebuild', true],
-    ]);
-    expect(calls[2].args).toEqual(['rebuild', 'better-sqlite3']);
-  });
-
-  it('still rebuilds better-sqlite3 when the onnx reinstall fails', () => {
-    const root = pluginRoot([ONNX_BINDING, NATIVE_ADDON]);
-    const { npm, calls } = fakeNpm({ restoresBinding: false });
-    expect(stderrOf(() => ensureDeps(root, { npm })).result).toBe('onnx-missing');
-    expect(calls.map((c) => c.args[0])).toEqual(['install', 'rebuild']);
-    expect(existsSync(join(root, 'node_modules', NATIVE_ADDON))).toBe(true);
-  });
-
-  it('throws when the onnx reinstall fails and better-sqlite3 also stays unusable', () => {
-    const root = pluginRoot([ONNX_BINDING, NATIVE_ADDON]);
-    const { npm } = fakeNpm({ restoresBinding: false, rebuilds: false });
-    expect(() => stderrOf(() => ensureDeps(root, { npm }))).toThrow(/plan=reinstall-onnx/);
-  });
-
-  it('throws when better-sqlite3 stays unusable after the repair', () => {
-    const root = pluginRoot([NATIVE_ADDON]);
-    const { npm } = fakeNpm({ rebuilds: false });
-    expect(() => stderrOf(() => ensureDeps(root, { npm }))).toThrow(/plan=rebuild/);
-    expect(existsSync(join(root, LOCK))).toBe(false);
-  });
 });
 
 /**
@@ -356,7 +319,7 @@ describe('depsRepairLogEntry', () => {
       'error',
       'SessionStart deps repair left the onnxruntime-node binding missing; vector search is unavailable',
     ]);
-    for (const action of ['install', 'reinstall-onnx', 'rebuild']) {
+    for (const action of ['install', 'reinstall-onnx']) {
       expect(depsRepairLogEntry(action)).toEqual(['info', `SessionStart deps repaired: ${action}`]);
     }
     expect(depsRepairLogEntry('none')).toBeNull();

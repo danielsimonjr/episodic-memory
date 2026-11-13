@@ -9,6 +9,250 @@ var __export = (target, all) => {
     __defProp(target, name, { get: all[name], enumerable: true });
 };
 
+// src/node-floor.ts
+function parseVersion(version2) {
+  const m2 = /^v?(\d+)\.(\d+)\.(\d+)/.exec(version2.trim());
+  if (!m2) return null;
+  return [Number(m2[1]), Number(m2[2]), Number(m2[3])];
+}
+function compare(a, b2) {
+  for (let i = 0; i < 3; i++) {
+    if (a[i] !== b2[i]) return a[i] < b2[i] ? -1 : 1;
+  }
+  return 0;
+}
+function assertNodeFloor(version2 = process.versions.node) {
+  const actual = parseVersion(version2);
+  if (actual === null) {
+    return `episodic-memory: cannot read the Node version "${version2}"; ${NODE_FLOOR} or newer is required.`;
+  }
+  if (compare(actual, parseVersion(NODE_FLOOR)) >= 0) return null;
+  return `episodic-memory: Node ${NODE_FLOOR} or newer is required (this is ${version2}). Upgrade Node and retry.`;
+}
+var NODE_FLOOR;
+var init_node_floor = __esm({
+  "src/node-floor.ts"() {
+    "use strict";
+    NODE_FLOOR = "22.16.0";
+  }
+});
+
+// src/sqlite.ts
+import { createRequire } from "module";
+function sqliteLoadError(err, version2) {
+  const floor = assertNodeFloor(version2);
+  if (floor === null) return err instanceof Error ? err : new Error(String(err));
+  return new Error(floor, { cause: err });
+}
+function loadSqlite() {
+  if (sqliteModule) return sqliteModule;
+  const original = process.emitWarning;
+  process.emitWarning = function(...args) {
+    if (isSqliteWarning(args[0])) return;
+    return original.apply(this, args);
+  };
+  try {
+    sqliteModule = createRequire(import.meta.url)("node:sqlite");
+  } catch (err) {
+    throw sqliteLoadError(err, process.versions.node);
+  } finally {
+    process.emitWarning = original;
+  }
+  return sqliteModule;
+}
+function isSqliteWarning(warning) {
+  const text = typeof warning === "string" ? warning : warning?.message;
+  return typeof text === "string" && text.startsWith(SQLITE_WARNING_PREFIX);
+}
+function coerce(value) {
+  if (value === void 0) return null;
+  if (typeof value === "number" && Number.isSafeInteger(value)) return BigInt(value);
+  return value;
+}
+function isPlainObject(value) {
+  if (typeof value !== "object" || value === null || ArrayBuffer.isView(value)) return false;
+  const proto = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === null;
+}
+function bindParams(params) {
+  const [first] = params;
+  if (params.length === 1 && isPlainObject(first)) {
+    const named = {};
+    for (const [key, value] of Object.entries(first)) named[key] = coerce(value);
+    return [named];
+  }
+  return params.map(coerce);
+}
+function wrapStatement(native) {
+  return {
+    // A named object is passed as the first argument, which node:sqlite reads as named values.
+    run(...params) {
+      const info = native.run(...bindParams(params));
+      return { changes: Number(info.changes), lastInsertRowid: Number(info.lastInsertRowid) };
+    },
+    get(...params) {
+      return native.get(...bindParams(params));
+    },
+    all(...params) {
+      return native.all(...bindParams(params));
+    },
+    iterate(...params) {
+      return native.iterate(...bindParams(params));
+    }
+  };
+}
+function isThenable(value) {
+  if (value === null || typeof value !== "object" && typeof value !== "function") return false;
+  return typeof value.then === "function";
+}
+function requireTransactionState(handle2) {
+  if (typeof handle2.isTransaction === "boolean") return;
+  handle2.close();
+  throw new Error(
+    assertNodeFloor(process.versions.node) ?? `node:sqlite has no DatabaseSync.isTransaction. Use Node ${NODE_FLOOR} or newer.`
+  );
+}
+var SQLITE_WARNING_PREFIX, ASYNC_REFUSED, sqliteModule, Database;
+var init_sqlite = __esm({
+  "src/sqlite.ts"() {
+    "use strict";
+    init_node_floor();
+    SQLITE_WARNING_PREFIX = "SQLite is an experimental feature";
+    ASYNC_REFUSED = "A transaction function must not return a promise. Use a synchronous function.";
+    Database = class {
+      db;
+      /** The path that the constructor opened. */
+      name;
+      savepointCount = 0;
+      /**
+       * Open the database file at `path`. Use the readonly option to refuse writes.
+       * The first construction loads node:sqlite.
+       */
+      constructor(path4, options = {}) {
+        const { DatabaseSync: Native } = loadSqlite();
+        this.name = path4;
+        this.db = new Native(path4, {
+          readOnly: !!options.readonly,
+          enableForeignKeyConstraints: true
+        });
+        requireTransactionState(this.db);
+      }
+      /** True while the connection is open. */
+      get open() {
+        return this.db.isOpen;
+      }
+      /** True while a transaction is open on the connection. */
+      get inTransaction() {
+        return this.db.isTransaction;
+      }
+      /**
+       * Prepare one SQL statement. Bound values pass the same coercion on every call.
+       * An undefined value binds as NULL. A safe integer binds as INTEGER.
+       * A call with too few values binds the missing ones as NULL, and does not throw.
+       * The SQL text must hold one statement. Text after the first statement is ignored.
+       */
+      prepare(sql) {
+        return wrapStatement(this.db.prepare(sql));
+      }
+      /** Run one or more SQL statements. Rows that they return are discarded. */
+      exec(sql) {
+        this.db.exec(sql);
+        return this;
+      }
+      /** Close the connection. A second close does nothing. */
+      close() {
+        if (this.db.isOpen) this.db.close();
+        return this;
+      }
+      /**
+       * Register a SQL function on the connection.
+       * The function receives the SQL values as arguments and returns one SQL value.
+       */
+      function(name, options, fn) {
+        this.db.function(name, options, fn);
+        return this;
+      }
+      /**
+       * Run a PRAGMA and return the rows, like better-sqlite3. A write form often returns no row.
+       * With the simple option, return the first column value of the first row.
+       */
+      pragma(text, options = {}) {
+        const rows = this.prepare(`PRAGMA ${text}`).all();
+        if (options.simple) return rows.length > 0 ? Object.values(rows[0])[0] : void 0;
+        return rows;
+      }
+      /**
+       * Wrap a function in a transaction. The returned function passes its arguments
+       * to the function and returns its value. The immediate, deferred and exclusive
+       * methods choose the begin mode. A call inside an open transaction uses a savepoint.
+       * An async function is refused when it is wrapped. A function that returns a promise
+       * is refused when it runs. A write after an await is outside every transaction.
+       */
+      transaction(fn) {
+        if (Object.prototype.toString.call(fn) === "[object AsyncFunction]") throw new TypeError(ASYNC_REFUSED);
+        const body = fn;
+        const runner = (begin) => (...args) => this.runTransaction(body, begin, args);
+        return Object.assign(runner("BEGIN"), {
+          deferred: runner("BEGIN DEFERRED"),
+          immediate: runner("BEGIN IMMEDIATE"),
+          exclusive: runner("BEGIN EXCLUSIVE")
+        });
+      }
+      /** Run the body in a transaction, or in a savepoint when a transaction is open. */
+      runTransaction(body, begin, args) {
+        if (this.db.isTransaction) return this.runSavepoint(body, args);
+        this.db.exec(begin);
+        try {
+          const result = body(...args);
+          if (isThenable(result)) {
+            result.then(void 0, () => void 0);
+            throw new TypeError(ASYNC_REFUSED);
+          }
+          this.db.exec("COMMIT");
+          return result;
+        } catch (error62) {
+          this.rollbackQuietly();
+          throw error62;
+        }
+      }
+      /** Run the body in a savepoint with a unique name. Release it on success. */
+      runSavepoint(body, args) {
+        const name = `tx_${++this.savepointCount}`;
+        this.db.exec(`SAVEPOINT ${name}`);
+        try {
+          const result = body(...args);
+          if (isThenable(result)) {
+            result.then(void 0, () => void 0);
+            throw new TypeError(ASYNC_REFUSED);
+          }
+          this.db.exec(`RELEASE ${name}`);
+          return result;
+        } catch (error62) {
+          if (this.db.isTransaction) {
+            try {
+              this.db.exec(`ROLLBACK TO ${name}`);
+              this.db.exec(`RELEASE ${name}`);
+            } catch {
+            }
+          }
+          throw error62;
+        }
+      }
+      /**
+       * Roll back the open transaction, if one is still open.
+       * A failed rollback does not replace the original error, so it is not rethrown.
+       */
+      rollbackQuietly() {
+        if (!this.db.isTransaction) return;
+        try {
+          this.db.exec("ROLLBACK");
+        } catch {
+        }
+      }
+    };
+  }
+});
+
 // src/paths.ts
 import os from "os";
 import path from "path";
@@ -282,10 +526,8 @@ var init_digest_db = __esm({
 });
 
 // src/db.ts
-import Database from "better-sqlite3";
 import path2 from "path";
 import fs2 from "fs";
-import * as sqliteVec from "sqlite-vec";
 function migrateSchema(db) {
   const columns = db.prepare(`SELECT name FROM pragma_table_info('exchanges')`).all();
   const columnNames = new Set(columns.map((c) => c.name));
@@ -382,6 +624,106 @@ function ensureFts(db) {
     console.error("  FTS backfill complete.");
   }
 }
+function blobFloats(value, which) {
+  if (!(value instanceof Uint8Array)) {
+    throw new TypeError(`vec_distance_l2: the ${which} argument must be a BLOB`);
+  }
+  if (value.byteLength % 4 !== 0) {
+    throw new RangeError(`vec_distance_l2: the ${which} BLOB is not a whole number of 32-bit floats`);
+  }
+  const aligned = value.byteOffset % 4 === 0 ? value : new Uint8Array(value);
+  return new Float32Array(aligned.buffer, aligned.byteOffset, aligned.byteLength / 4);
+}
+function l2Distance(a, b2) {
+  const x2 = blobFloats(a, "first");
+  const y2 = blobFloats(b2, "second");
+  if (x2.length !== y2.length) {
+    throw new RangeError(`vec_distance_l2: the vectors differ in length (${x2.length} and ${y2.length})`);
+  }
+  let sum = 0;
+  for (let i = 0; i < x2.length; i++) {
+    const d2 = x2[i] - y2[i];
+    sum += d2 * d2;
+  }
+  return Math.sqrt(sum);
+}
+function registerVectorFunctions(db) {
+  db.function("vec_distance_l2", { deterministic: true }, l2Distance);
+}
+function ensureVectorTable(db) {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS exchange_vectors (
+      id TEXT PRIMARY KEY REFERENCES exchanges(id) ON DELETE CASCADE,
+      embedding BLOB NOT NULL CHECK (length(embedding) = ${VECTOR_BYTES})
+    )
+  `);
+}
+function slotIsValid(validity, offset) {
+  return ((validity[offset >> 3] ?? 0) & 1 << (offset & 7)) !== 0;
+}
+function hasUncopiedSlot(db) {
+  const rows = db.prepare(`
+    SELECT r.chunk_offset AS offset, c.validity AS validity
+    FROM vec_exchanges_rowids AS r
+    JOIN exchanges AS e ON e.id = r.id
+    JOIN vec_exchanges_chunks AS c ON c.chunk_id = r.chunk_id
+    WHERE NOT EXISTS (SELECT 1 FROM exchange_vectors AS x WHERE x.id = r.id)
+  `).iterate();
+  for (const row of rows) {
+    if (slotIsValid(row.validity, row.offset)) return true;
+  }
+  return false;
+}
+function migrateVec0Vectors(db) {
+  const placeholders = VEC0_TABLES.map(() => "?").join(",");
+  const present = db.prepare(
+    `SELECT name FROM sqlite_master WHERE type = 'table' AND name IN (${placeholders})`
+  ).all(...VEC0_TABLES).length;
+  if (present === 0) return 0;
+  if (present < VEC0_TABLES.length) {
+    console.error("episodic-memory: the vec0 vector tables are incomplete; their vectors are skipped");
+    return 0;
+  }
+  if (!hasUncopiedSlot(db)) return 0;
+  const count = db.transaction(() => {
+    if (!hasUncopiedSlot(db)) return 0;
+    const slots = db.prepare(`
+      SELECT r.id AS id, r.chunk_id AS chunk, r.chunk_offset AS offset
+      FROM vec_exchanges_rowids AS r
+      JOIN exchanges AS e ON e.id = r.id
+      WHERE r.id NOT IN (SELECT id FROM exchange_vectors)
+      ORDER BY r.chunk_id
+    `).all();
+    const chunkStmt = db.prepare(`
+      SELECT c.validity AS validity, v.vectors AS vectors
+      FROM vec_exchanges_chunks AS c
+      JOIN vec_exchanges_vector_chunks00 AS v ON v.rowid = c.chunk_id
+      WHERE c.chunk_id = ?
+    `);
+    const insert = db.prepare("INSERT INTO exchange_vectors (id, embedding) VALUES (?, ?)");
+    let copied = 0;
+    let loadedChunk = null;
+    let chunk;
+    for (const slot of slots) {
+      if (slot.chunk !== loadedChunk) {
+        chunk = chunkStmt.get(slot.chunk);
+        loadedChunk = slot.chunk;
+      }
+      if (!chunk) continue;
+      const valid = slotIsValid(chunk.validity, slot.offset);
+      const start = slot.offset * VECTOR_BYTES;
+      if (!valid || start + VECTOR_BYTES > chunk.vectors.byteLength) continue;
+      insert.run(slot.id, Buffer.from(chunk.vectors.subarray(start, start + VECTOR_BYTES)));
+      copied++;
+    }
+    db.exec("UPDATE exchanges SET embedding_version = 0 WHERE id NOT IN (SELECT id FROM exchange_vectors)");
+    return copied;
+  }).immediate();
+  if (count > 0) {
+    console.error(`episodic-memory: copied ${count} vector(s) from the vec0 tables`);
+  }
+  return count;
+}
 function applySecureDbFileMode(dbPath) {
   tryChmod(dbPath, 384);
   tryChmod(`${dbPath}-wal`, 384);
@@ -403,7 +745,7 @@ function openDatabase(options = {}) {
   } else {
     applySecureDbFileMode(dbPath);
   }
-  sqliteVec.load(db);
+  registerVectorFunctions(db);
   db.pragma("journal_mode = WAL");
   const busyTimeout = parseInt(process.env.EPISODIC_MEMORY_DB_BUSY_TIMEOUT_MS || "5000", 10);
   db.pragma(`busy_timeout = ${Number.isFinite(busyTimeout) && busyTimeout >= 0 ? busyTimeout : 5e3}`);
@@ -450,13 +792,9 @@ function openDatabase(options = {}) {
       FOREIGN KEY (exchange_id) REFERENCES exchanges(id) ON DELETE CASCADE
     )
   `);
-  db.exec(`
-    CREATE VIRTUAL TABLE IF NOT EXISTS vec_exchanges USING vec0(
-      id TEXT PRIMARY KEY,
-      embedding FLOAT[384]
-    )
-  `);
+  ensureVectorTable(db);
   migrateSchema(db);
+  migrateVec0Vectors(db);
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_timestamp ON exchanges(timestamp DESC)
   `);
@@ -513,15 +851,18 @@ function closeSharedReaderDatabase() {
     sharedReader = null;
   }
 }
-var sharedReader;
+var VECTOR_BYTES, VEC0_TABLES, sharedReader;
 var init_db = __esm({
   "src/db.ts"() {
     "use strict";
+    init_sqlite();
     init_paths();
     init_embedding_migration();
     init_constants();
     init_redact();
     init_digest_db();
+    VECTOR_BYTES = 384 * 4;
+    VEC0_TABLES = ["vec_exchanges_rowids", "vec_exchanges_chunks", "vec_exchanges_vector_chunks00"];
     sharedReader = null;
   }
 });
@@ -828,7 +1169,7 @@ function exactVectorSearch(db, embedding, filterClause, filterParams, limit) {
         ${EXCHANGE_SELECT_COLUMNS},
         vec_distance_l2(vec.embedding, ?) AS distance
       FROM exchanges AS e
-      JOIN vec_exchanges AS vec ON vec.id = e.id
+      JOIN exchange_vectors AS vec ON vec.id = e.id
       WHERE e.is_sidechain = 0
         ${filterClause}
       ORDER BY distance ASC
@@ -898,6 +1239,10 @@ function resolveSearchDb(options) {
   }
   return { db: initDatabase(), ownsConnection: true };
 }
+function sendVectorNotice(options, reason) {
+  const notice = `Vector search is unavailable (${reason}). The results come from the text search only.`;
+  (options.onNotice ?? ((message) => console.error(`episodic-memory: ${message}`)))(notice);
+}
 async function searchConversations(query, options = {}) {
   const { limit = 10, mode = "both", after, before } = options;
   if (after) validateISODate(after, "--after");
@@ -913,35 +1258,20 @@ async function searchConversations(query, options = {}) {
       } catch (error62) {
         if (mode !== "both" || !(error62 instanceof EmbeddingsUnavailableError)) throw error62;
         vectorRan = false;
-        const notice = `Vector search is unavailable (${error62.message}). The results come from the text search only.`;
-        (options.onNotice ?? ((message) => console.error(`episodic-memory: ${message}`)))(notice);
+        sendVectorNotice(options, error62.message);
       }
     }
     if (vectorRan) {
       const queryEmbedding = await generateQueryEmbedding(query);
       const embedding = Buffer.from(new Float32Array(queryEmbedding).buffer);
-      if (filterClause) {
+      try {
         results = exactVectorSearch(db, embedding, filterClause, filterParams, limit);
-      } else {
-        const k2 = Math.min(limit * 3, VEC_KNN_MAX_K);
-        const knnStmt = db.prepare(`
-          SELECT
-            ${EXCHANGE_SELECT_COLUMNS},
-            vec.distance
-          FROM vec_exchanges AS vec
-          JOIN exchanges AS e ON vec.id = e.id
-          WHERE vec.embedding MATCH ?
-            AND k = ?
-            AND e.is_sidechain = 0
-          ORDER BY vec.distance ASC
-        `);
-        results = knnStmt.all(embedding, k2).slice(0, limit);
-        if (results.length < limit) {
-          const total = db.prepare("SELECT COUNT(*) AS n FROM vec_exchanges").get().n;
-          if (k2 < total) {
-            results = exactVectorSearch(db, embedding, "", [], limit);
-          }
+      } catch (error62) {
+        if (mode !== "both" || !(error62 instanceof Error) || !error62.message.includes("no such table: exchange_vectors")) {
+          throw error62;
         }
+        vectorRan = false;
+        sendVectorNotice(options, error62.message);
       }
     }
     if (mode === "text" || mode === "both") {
@@ -1141,7 +1471,7 @@ async function formatMultiConceptResults(results, concepts) {
   }
   return output2;
 }
-var FALSY, VEC_KNN_MAX_K, EXCHANGE_SELECT_COLUMNS;
+var FALSY, EXCHANGE_SELECT_COLUMNS;
 var init_search = __esm({
   "src/search.ts"() {
     "use strict";
@@ -1151,7 +1481,6 @@ var init_search = __esm({
     init_archive_path();
     init_fts_query();
     FALSY = /* @__PURE__ */ new Set(["0", "false", "no", "off"]);
-    VEC_KNN_MAX_K = 4096;
     EXCHANGE_SELECT_COLUMNS = `
         e.id,
         e.project,
@@ -4105,7 +4434,7 @@ __export(util_exports, {
   hide: () => hide,
   installLazyProp: () => installLazyProp,
   isObject: () => isObject,
-  isPlainObject: () => isPlainObject,
+  isPlainObject: () => isPlainObject2,
   issue: () => issue,
   joinValues: () => joinValues,
   jsonStringifyReplacer: () => jsonStringifyReplacer,
@@ -4347,7 +4676,7 @@ var allowsEval = /* @__PURE__ */ cached(() => {
     return false;
   }
 });
-function isPlainObject(o) {
+function isPlainObject2(o) {
   if (isObject(o) === false)
     return false;
   const ctor = o.constructor;
@@ -4364,7 +4693,7 @@ function isPlainObject(o) {
   return true;
 }
 function shallowClone(o) {
-  if (isPlainObject(o))
+  if (isPlainObject2(o))
     return { ...o };
   if (Array.isArray(o))
     return [...o];
@@ -4553,7 +4882,7 @@ function omit(schema, mask) {
   return clone(schema, mergeDefs(currDef, { shape: newShape, checks: [] }));
 }
 function extend(schema, shape) {
-  if (!isPlainObject(shape)) {
+  if (!isPlainObject2(shape)) {
     throw new Error("Invalid input to extend: expected a plain object");
   }
   const checks = schema._zod.def.checks;
@@ -4575,7 +4904,7 @@ function extended(schema, shape) {
   return newShape;
 }
 function safeExtend(schema, shape) {
-  if (!isPlainObject(shape)) {
+  if (!isPlainObject2(shape)) {
     throw new Error("Invalid input to safeExtend: expected a plain object");
   }
   return clone(schema, mergeDefs(schema._zod.def, { shape: extended(schema, shape) }));
@@ -7455,7 +7784,7 @@ function mergeValues(a, b2) {
   if (a instanceof Date && b2 instanceof Date && +a === +b2) {
     return { valid: true, data: a };
   }
-  if (isPlainObject(a) && isPlainObject(b2)) {
+  if (isPlainObject2(a) && isPlainObject2(b2)) {
     const bKeys = Object.keys(b2);
     const sharedKeys = Object.keys(a).filter((key) => bKeys.indexOf(key) !== -1);
     const newObj = { ...a, ...b2 };
@@ -7676,7 +8005,7 @@ var $ZodRecord = /* @__PURE__ */ $constructor("$ZodRecord", (inst, def) => {
   memo2?.attach(inst);
   inst._zod.parse = (payload, ctx) => {
     const input2 = payload.value;
-    if (!isPlainObject(input2)) {
+    if (!isPlainObject2(input2)) {
       payload.issues.push({
         expected: "record",
         code: "invalid_type",
@@ -17765,7 +18094,7 @@ function generateIntersectionCheck(doc, ctx, schema, accessor) {
 }
 function generateRecordCheck(doc, ctx, schema, accessor) {
   const def = schema._zod.def;
-  const isPlainObjectConst = addConstant(ctx, isPlainObject);
+  const isPlainObjectConst = addConstant(ctx, isPlainObject2);
   doc.write(`if (!${isPlainObjectConst}(${accessor})) return INVALID;`);
   const outputVar = newVar(ctx);
   const kVar = newVar(ctx);
@@ -22771,7 +23100,7 @@ function convertBaseSchema(schema, ctx) {
           const patterns = patternKeys.map((p) => new RegExp(p));
           const basePatternSchema = zodSchema;
           zodSchema = zodSchema.check((payload) => {
-            if (!isPlainObject(payload.value))
+            if (!isPlainObject2(payload.value))
               return;
             const unrecognized = [];
             for (const key of Object.keys(payload.value)) {

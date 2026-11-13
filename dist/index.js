@@ -1,6 +1,7 @@
 // Public API for episodic-memory package
 export * from './types.js';
 export * from './db.js';
+export * from './sqlite.js';
 export * from './embeddings.js';
 export * from './indexer.js';
 export * from './parser.js';

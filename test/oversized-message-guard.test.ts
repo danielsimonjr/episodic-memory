@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import Database from 'better-sqlite3';
+import { Database } from '../src/sqlite.js';
 import { mkdtempSync, rmSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
@@ -11,7 +11,7 @@ import {
 } from '../src/constants.js';
 import type { ConversationExchange } from '../src/types.js';
 
-/** vec_exchanges is declared FLOAT[384] and vec0 rejects zero-length vectors. */
+/** exchange_vectors holds 384-wide vectors and refuses any other width. */
 const EMBEDDING = new Array(384).fill(0.1);
 
 /**
@@ -28,7 +28,7 @@ const EMBEDDING = new Array(384).fill(0.1);
  */
 describe('oversized message guard', () => {
   let testDir: string;
-  let db: Database.Database;
+  let db: Database;
 
   beforeEach(() => {
     testDir = mkdtempSync(join(tmpdir(), 'em-oversize-'));

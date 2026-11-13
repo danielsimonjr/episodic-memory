@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import type Database from 'better-sqlite3';
+import type { Database } from '../src/sqlite.js';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -38,7 +38,7 @@ function exchangesOf(n: number): ConversationExchange[] {
 
 describe('runDigest keeps the session prompt within promptBudgetChars()', () => {
   const dir = path.join(os.tmpdir(), 'digest-budget-' + Date.now());
-  let db: Database.Database;
+  let db: Database;
 
   beforeEach(() => {
     for (const k of KEYS) saved[k] = process.env[k];

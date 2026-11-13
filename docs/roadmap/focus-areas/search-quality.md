@@ -16,7 +16,7 @@ SearchOptions: { query, mode: 'both', limit: 10, project?, session_id?,
     ↓                                ↓
 embedQuery(query)              LIKE '%query%' on user_message + assistant_message
     ↓                                ↓
-sqlite-vec MATCH                 SELECT with metadata filters
+exact scan (vec_distance_l2)     SELECT with metadata filters
     ↓                                ↓
 results (with L2 distance)       results (no relevance score)
     ↓                                ↓

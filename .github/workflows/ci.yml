@@ -75,3 +75,31 @@ jobs:
               process.exit(1);
             });
           '
+
+  # The Node floor (src/node-floor.ts) is 22.16.0: the first Node whose node:sqlite has
+  # DatabaseSync.isTransaction. This job runs the suite on that exact version. It is a separate
+  # job so the required "build" check keeps its name.
+  node-floor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22.16.0
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.4.2'
+      - run: bun install --frozen-lockfile
+      - run: node -p process.version
+      - run: bun run --if-present test
+      # Node 22 prints an ExperimentalWarning when node:sqlite loads. The adapter drops that one
+      # warning, so the shipped dist must load the module with an empty stderr.
+      - name: node:sqlite loads without a warning
+        run: |
+          node --input-type=module -e '
+            const { Database } = await import("./dist/sqlite.js");
+            const db = new Database(":memory:");
+            db.close();
+          ' 2> stderr.txt
+          if [ -s stderr.txt ]; then cat stderr.txt; exit 1; fi

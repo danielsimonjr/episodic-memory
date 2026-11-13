@@ -20,7 +20,7 @@ export function isBackgroundWorker(env = process.env) {
 }
 /**
  * Drop this process to below-normal priority if it is the background sync worker.
- * Call BEFORE the heavy imports (transformers / better-sqlite3), so the expensive work
+ * Call BEFORE the heavy imports (transformers / node:sqlite), so the expensive work
  * never runs at normal priority.
  *
  * Returns whether the priority was actually lowered. Never throws: priority is

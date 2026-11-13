@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import Database from 'better-sqlite3';
+import { Database } from '../../src/sqlite.js';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -29,7 +29,7 @@ const ASSISTANT =
     3
   );
 
-function indexDbWith(rows: Row[]): Database.Database {
+function indexDbWith(rows: Row[]): Database {
   const db = new Database(':memory:');
   db.exec(`
     CREATE TABLE exchanges (
@@ -83,8 +83,8 @@ function bigProject(count: number): Row[] {
 }
 
 describe('relay challenger (Task 4): address leakage into stored prompts', () => {
-  let index: Database.Database;
-  let learning: Database.Database;
+  let index: Database;
+  let learning: Database;
   let dir: string;
   let runId: string;
 

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import type Database from 'better-sqlite3';
+import type { Database } from '../src/sqlite.js';
 import { safeRmSync, suppressConsole } from './test-utils.js';
 
 // Each index function opens the database before the function loads the embedding model.
@@ -11,7 +11,7 @@ import { safeRmSync, suppressConsole } from './test-utils.js';
 // The test also checks that the function closes the handle before the error leaves the function.
 // The check reads `db.open`, so the check works on every platform.
 // A delete of the open file cannot show the leak on Linux because Linux deletes an open file.
-const opened: Database.Database[] = [];
+const opened: Database[] = [];
 
 vi.mock('../src/db.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../src/db.js')>();

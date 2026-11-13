@@ -9,8 +9,8 @@ These modules import nothing from the repository, or only other leaf modules. A 
 | Module | Role |
 |---|---|
 | `src/reentrancy.ts` | Exports `SUMMARIZER_GUARD_ENV` and `shouldSkipReentrantSync()`. A child process that the summarizer started carries the variable, and `sync` exits when it sees it. |
-| `src/node-floor.ts` | Holds the minimum Node.js version. `assertNodeFloor()` exits with one line on standard error when the runtime is older. |
-| `src/deps-health.ts` | Checks that `node_modules` is complete. The module tests for sentinel files and for the native bindings of better-sqlite3 and `onnxruntime-node`, not only for the folder. The MCP wrapper, the sync hook and `doctor` share the module. |
+| `src/node-floor.ts` | Holds the minimum Node.js version. `assertNodeFloor()` returns one message when the runtime is older than the floor, and null otherwise. The launchers print the message and exit. |
+| `src/deps-health.ts` | Checks that `node_modules` is complete. The module tests for the JS sentinel files (`@huggingface/transformers`, `onnxruntime-common`, `onnxruntime-node`) and for the `onnxruntime-node` binding of the running platform, not only for the folder. The MCP wrapper, the sync hook and `doctor` share the module. |
 | `src/lockfile.ts` | A cross-process file lock. A lock is stale when its holder process is gone or when the lock is older than a set age. The holder writes the PID after the holder creates the file, so a file with no PID is stale only after 10 seconds. `isLockHeld` answers the same question without taking the lock. `acquireRefreshedLock` takes the lock. The function refreshes the times of the lock file four times in each stale window. A holder that runs longer than the window therefore keeps the lock. The sync worker, the `index` commands, the backfill and the learn run take their locks this way. `releaseLock` stops the refresh. |
 | `src/constants.ts` | The marker text that identifies summarizer conversations, and the length cap for indexed text (`truncateForIndex`). |
 | `src/content-text.ts` | Reads the message content of a transcript line. `extractContentText` returns the text of a content. `safeParseJson` returns the input when the text is not valid JSON. `parser.ts` and `show.ts` both use the module. The module imports nothing. |
@@ -27,9 +27,25 @@ These modules import nothing from the repository, or only other leaf modules. A 
 
 ## Data layer
 
+### `src/sqlite.ts`
+
+The adapter over the `node:sqlite` built-in. Only this module imports `node:sqlite`. The built-in loads at the first `new Database(...)`, not when the module loads. The `Database` class keeps the better-sqlite3 method names. `prepare`, `exec`, `close`, `function`, `pragma` and `transaction` have the same shapes. Other modules import `Database` and the `Statement` type from this module.
+
+The adapter differs from better-sqlite3 in these ways:
+
+- A safe integer binds as `INTEGER`. better-sqlite3 binds every number as `REAL`. An `undefined` value binds as `NULL`.
+- A single plain object binds named values. A buffer, an array or a class instance does not.
+- `transaction(fn)` runs `BEGIN`, or `BEGIN DEFERRED`, `BEGIN IMMEDIATE` or `BEGIN EXCLUSIVE` for the matching method. A call inside an open transaction runs as `SAVEPOINT tx_N`. An async function throws a `TypeError` when it is wrapped. A function that returns a promise rolls back and throws a `TypeError`.
+- `pragma(text)` runs `PRAGMA text` and returns the rows. With `{ simple: true }` it returns the first column of the first row.
+- `new Database(path, { readonly })` opens the file read-only when `readonly` is set. A read-only open of a missing file throws.
+- Every connection turns on foreign key enforcement.
+- The first load of `node:sqlite` writes an experimental warning. The adapter drops that one warning and passes every other warning through.
+
+A failed load of `node:sqlite` below the floor throws the floor message (`sqliteLoadError`); below Node 22.13.0 the module needs a flag. The constructor calls `requireTransactionState`. A Node version below 22.16.0 has no `DatabaseSync.isTransaction`. The constructor then closes the handle and throws an error that names the floor.
+
 ### `src/db.ts`
 
-Opens the database and owns the schema. `initDatabase` creates the tables `exchanges` and `tool_calls`, the virtual tables `vec_exchanges` (vector, 384 dimensions) and `exchanges_fts` (full text), and the indexes. It then runs migrations. `deleteExchangesForArchive` deletes every exchange of one archive file in one transaction. `deleteExchangesForArchive` deletes the vector rows, full-text rows and tool-call rows of each exchange. `getSharedReaderDatabase` returns a shared read connection that the MCP server uses, so each call does not re-run the schema step. A caller that knows the schema is current can pass `migrate: false`. The migrations log to standard error.
+Opens the database and owns the schema. `initDatabase` creates the tables `exchanges`, `tool_calls` and `exchange_vectors`, the virtual table `exchanges_fts` (full text), and the indexes. The module then runs the schema migrations. `exchange_vectors` holds one 384-value float32 vector for each exchange. `registerVectorFunctions` registers the SQL function `vec_distance_l2` on a connection. `migrateVec0Vectors` copies the valid vectors of an earlier sqlite-vec index into `exchange_vectors` during a migrating open. The copy runs in one `BEGIN IMMEDIATE` transaction, and only when a valid vector is not yet copied. An exchange without a vector gets `embedding_version` 0, so the embedding migration embeds it again. `deleteExchangesForArchive` deletes every exchange of one archive file in one transaction, with the vector rows, full-text rows and tool-call rows of each exchange. `getSharedReaderDatabase` returns a shared read connection that the MCP server uses, so each call does not re-run the schema step. A caller that knows the schema is current can pass `migrate: false`. The migrations log to standard error.
 
 ### `src/digest-db.ts`
 
@@ -37,7 +53,7 @@ Creates the digest tables (`digest_entry`, `digest_fts`). Entries are never dele
 
 ### `src/learn/knowledge-store.ts` and `src/learn/learning-store.ts`
 
-`knowledge-store.ts` is the only module that knows the row layout of `knowledge.db` (tables `entities` and `relations`). It uses `better-sqlite3` directly, and every read-modify-write runs under the write lock. `learning-store.ts` opens `learning.sqlite`, which holds the learning trace and the rendered learned blocks. The hook opens this file read-only.
+`knowledge-store.ts` is the only module that knows the row layout of `knowledge.db` (tables `entities` and `relations`). It opens the file through the `Database` adapter in `src/sqlite.ts`, and every read-modify-write runs under the write lock. `learning-store.ts` opens `learning.sqlite`, which holds the learning trace and the rendered learned blocks. The hook opens this file read-only.
 
 ## Ingest and index
 
@@ -51,7 +67,7 @@ Loads the embedding pipeline once (`Xenova/bge-small-en-v1.5`, quantized `q8`). 
 
 ### `src/embedding-migration.ts`
 
-Holds `EMBEDDING_VERSION`. It finds rows with an older version and re-embeds them in batches behind a lock file.
+Holds `EMBEDDING_VERSION`. It finds rows with an older version and rows with no vector in `exchange_vectors`, and re-embeds them in batches behind a lock file.
 
 ### `src/indexer.ts`
 
@@ -107,7 +123,7 @@ The module chooses the Claude Code executable that the Agent SDK starts. The mod
 
 ### `src/search.ts`
 
-`searchConversations(query, options)` runs the vector query, the full-text query, or both, and joins results by exchange id. vec0 takes the nearest rows before it applies a WHERE clause. A vector search with a date, project, session, branch or excluded-id filter therefore scans the filtered rows exactly. A vector search with no filter uses a KNN query, and uses the exact scan when sidechain rows leave too few results. `searchMultipleConcepts` takes two to five concepts and returns exchanges that match all of them. `formatResults` and `formatMultiConceptResults` render markdown. `buildFtsMatchQuery` turns free text into a safe FTS expression. Each word in the expression must match in any order. When the FTS5 query fails, the LIKE search has one condition for each word. `%`, `_` and `\` in a word match as text. `l2DistanceToCosineSimilarity` converts a distance to a similarity score. The text queries select a `NULL` distance, so a row that only the text step finds has no similarity. Search attaches the summary text of an exchange when a summary exists inside the archive. When `initEmbeddings` throws `EmbeddingsUnavailableError`, a `both` search runs only the text step. The search then sends one notice to `options.onNotice`. Without that option, the search sends one notice to stderr. A `vector` search throws the error.
+`searchConversations(query, options)` runs the vector query, the full-text query, or both, and joins results by exchange id. Every vector search runs one exact scan of `exchange_vectors`. The scan skips sidechain rows, applies the date, project, session, branch and excluded-id filters, computes `vec_distance_l2` for each remaining row, and returns the nearest rows. `searchMultipleConcepts` takes two to five concepts and returns exchanges that match all of them. `formatResults` and `formatMultiConceptResults` render markdown. `buildFtsMatchQuery` turns free text into a safe FTS expression. Each word in the expression must match in any order. When the FTS5 query fails, the LIKE search has one condition for each word. `%`, `_` and `\` in a word match as text. `l2DistanceToCosineSimilarity` converts a distance to a similarity score. The text queries select a `NULL` distance, so a row that only the text step finds has no similarity. Search attaches the summary text of an exchange when a summary exists inside the archive. When `initEmbeddings` throws `EmbeddingsUnavailableError`, a `both` search runs only the text step. The search then sends one notice to `options.onNotice`. Without that option, the search sends one notice to stderr. A `vector` search throws the error.
 
 ### `src/show.ts`
 
@@ -119,7 +135,7 @@ Renders an archived conversation as markdown or HTML, with an optional line rang
 
 ### `src/stats.ts` and `src/doctor.ts`
 
-`stats` counts rows, projects and sizes. A conversation counts as summarized only when its summary file holds one byte or more, because an empty file is a sentinel of the sync. `doctor` checks dependencies, the database, the embedding version, the Node.js version, the Codex hook trust and the learned-knowledge section (`doctor-learn.ts`). The hook trust check reports `unknown` at once when the Codex app-server fails, exits or stops reading its input.
+`stats` counts rows, projects and sizes. A conversation counts as summarized only when its summary file holds one byte or more, because an empty file is a sentinel of the sync. `doctor` checks dependencies, the database, the embedding version, the Node.js version, the Codex hook trust and the learned-knowledge section (`doctor-learn.ts`). The hook trust check reports `unknown` at once when the Codex app-server fails, exits or stops reading its input. `formatSqliteLine` writes the `node:sqlite` line: the SQLite version and the Node version, or `FAIL` below the Node floor.
 
 ## Digest
 
@@ -173,7 +189,7 @@ Each `src/*-cli.ts` file is one command. A shim in `cli/` or the umbrella dispat
 
 The shims in `cli/` are `episodic-memory.js` (dispatcher), `index-conversations.js`, `search-conversations.js`, `sync-hook.js`, `digest-hook.js`, `mcp-server-wrapper.js`, `ensure-deps.js` and `forward-child.js`. `episodic-memory.js` and `index-conversations.js` start a child process with `runChild` of `forward-child.js` and exit with the exit code of the child. A refused argument (code 2) therefore reaches the caller. `runChild` waits for the child. When a signal stops the child, the exit code is 1. `forward-child.js` runs one script as a child. `forward-child.js` then exits with the exit code of the child. When a signal stops the child, `forward-child.js` exits 1. When the child cannot start, `forward-child.js` prints one line and exits 1. `search-conversations.js` and the four files with no extension (`episodic-memory`, `index-conversations`, `mcp-server`, `search-conversations`) use `forward-child.js`.
 
-`ensure-deps.js` runs before the MCP server and the sync hook start. `ensureDeps` repairs `node_modules` when `repairPlan` reports a missing package or binding. The repair runs under a lock file in the plugin root. The MCP wrapper and the sync hook therefore do not repair one tree at the same time. A process waits up to 5 minutes while another live process holds the lock. The process stops waiting when the tree needs no repair. When the process cannot create the lock file, the process repairs without the lock. The repair has three steps, in this order. The first step is `npm install` for a missing package. The second step is a reinstall of `onnxruntime-node` for a missing binding. The third step is `npm rebuild better-sqlite3` for a missing better-sqlite3 binding. Before each step, `ensureDeps` calls `repairPlan` again. `npm install` does not restore one missing file inside an installed package. The reinstall therefore moves `node_modules/onnxruntime-node` aside and installs the package again. When the binding is still missing, the reinstall puts the old directory back and writes a failure marker in the plugin root. The next attempt waits 24 hours. A process stop during the reinstall leaves the directory in the plugin root. The next repair moves the directory back first. A failed reinstall does not stop the start: `ensureDeps` returns `onnx-missing`, and the server starts without vector search. The sync hook writes the log line that `depsRepairLogEntry` gives for the result. `onnxBindingState` returns `unshipped` when the installed version has no binding for the running pair, or uses a layout that the check does not know. A reinstall cannot help there, so `repairPlan` reports no repair. On every call, `pruneOptionalWeight` then removes the `onnxruntime-node` binding directories of the other platforms and architectures. The process loads only the `bin/napi-v6/<platform>/<arch>` directory of the running pair. When `EPISODIC_MEMORY_CLAUDE_BIN` is set and its probe passes, `pruneOptionalWeight` also removes every `@anthropic-ai/claude-agent-sdk-<platform>-<arch>` platform package. The SDK package itself stays, and so does another package with the same prefix. A failed probe removes nothing. The prune is best effort. If a removal fails, the function writes one stderr line and stops the prune. The prune never stops the start.
+`ensure-deps.js` runs before the MCP server and the sync hook start. `ensureDeps` repairs `node_modules` when `repairPlan` reports a missing package or binding. The repair runs under a lock file in the plugin root. The MCP wrapper and the sync hook therefore do not repair one tree at the same time. A process waits up to 5 minutes while another live process holds the lock. The process stops waiting when the tree needs no repair. When the process cannot create the lock file, the process repairs without the lock. The repair has two steps, in this order. The first step is `npm install` for a missing package. The second step is a reinstall of `onnxruntime-node` for a missing binding. Before each step, `ensureDeps` calls `repairPlan` again. `npm install` does not restore one missing file inside an installed package. The reinstall therefore moves `node_modules/onnxruntime-node` aside and installs the package again. When the binding is still missing, the reinstall puts the old directory back and writes a failure marker in the plugin root. The next attempt waits 24 hours. A process stop during the reinstall leaves the directory in the plugin root. The next repair moves the directory back first. A failed reinstall does not stop the start: `ensureDeps` returns `onnx-missing`, and the server starts without vector search. The sync hook writes the log line that `depsRepairLogEntry` gives for the result. `onnxBindingState` returns `unshipped` when the installed version has no binding for the running pair, or uses a layout that the check does not know. A reinstall cannot help there, so `repairPlan` reports no repair. On every call, `pruneOptionalWeight` then removes the `onnxruntime-node` binding directories of the other platforms and architectures. The process loads only the `bin/napi-v6/<platform>/<arch>` directory of the running pair. When `EPISODIC_MEMORY_CLAUDE_BIN` is set and its probe passes, `pruneOptionalWeight` also removes every `@anthropic-ai/claude-agent-sdk-<platform>-<arch>` platform package. The SDK package itself stays, and so does another package with the same prefix. A failed probe removes nothing. The prune is best effort. If a removal fails, the function writes one stderr line and stops the prune. The prune never stops the start.
 
 ## Hooks
 
@@ -204,10 +220,10 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 293 | repo-tools map |
-| totalClasses | 10 | repo-tools map |
-| totalInterfaces | 140 | repo-tools map |
-| totalFunctions | 351 | repo-tools map |
-| totalConstants | 71 | repo-tools map |
+| totalSourceFiles | 295 | repo-tools map |
+| totalClasses | 11 | repo-tools map |
+| totalInterfaces | 145 | repo-tools map |
+| totalFunctions | 356 | repo-tools map |
+| totalConstants | 70 | repo-tools map |
 
 The tool names, the table names and the model name come from a direct reading of `src/mcp-server.ts`, `src/db.ts` and `src/embeddings.ts`. They are not `repo-tools map` metrics.

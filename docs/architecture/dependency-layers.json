@@ -80,7 +80,7 @@
         ]
       },
       "cli/episodic-memory.js": {
-        "description": "`learn` opens the knowledge store on better-sqlite3 13, which requires Node >= 22; `engines` only warns.",
+        "description": "`learn` opens the knowledge store on node:sqlite, which requires Node >= 22.16.0; `engines` only warns.",
         "externalDependencies": [],
         "nodeDependencies": [
           {
@@ -633,20 +633,7 @@
       },
       "src/db.ts": {
         "description": "The options for `openDatabase`.",
-        "externalDependencies": [
-          {
-            "package": "better-sqlite3",
-            "imports": [
-              "default"
-            ]
-          },
-          {
-            "package": "sqlite-vec",
-            "imports": [
-              "*"
-            ]
-          }
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [
           {
             "module": "path",
@@ -662,6 +649,12 @@
           }
         ],
         "internalDependencies": [
+          {
+            "file": "./sqlite.js",
+            "imports": [
+              "Database"
+            ]
+          },
           {
             "file": "./types.js",
             "imports": [
@@ -707,6 +700,9 @@
           "ensureFts",
           "upsertExchangeFts",
           "deleteExchangeFts",
+          "registerVectorFunctions",
+          "ensureVectorTable",
+          "migrateVec0Vectors",
           "openDatabase",
           "openDatabaseReadonly",
           "initDatabase",
@@ -730,6 +726,9 @@
           "ensureFts",
           "upsertExchangeFts",
           "deleteExchangeFts",
+          "registerVectorFunctions",
+          "ensureVectorTable",
+          "migrateVec0Vectors",
           "openDatabase",
           "openDatabaseReadonly",
           "initDatabase",
@@ -799,8 +798,6 @@
         "internalDependencies": [],
         "workspaceDependencies": [],
         "exports": [
-          "NATIVE_ADDON",
-          "nativeAddonPresent",
           "JS_SENTINELS",
           "onnxBindingPath",
           "ONNX_BINDING",
@@ -810,14 +807,12 @@
           "repairPlan"
         ],
         "functions": [
-          "nativeAddonPresent",
           "onnxBindingPath",
           "onnxBindingState",
           "nodeModulesIsHealthy",
           "repairPlan"
         ],
         "constants": [
-          "NATIVE_ADDON",
           "JS_SENTINELS",
           "ONNX_BINDING",
           "DEP_SENTINELS"
@@ -825,16 +820,16 @@
       },
       "src/derived-text.ts": {
         "description": "Remove the stored digest lines that cite a removed exchange.",
-        "externalDependencies": [
-          {
-            "package": "better-sqlite3",
-            "imports": [
-              "default"
-            ]
-          }
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "./sqlite.js",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "./digest-db.js",
             "imports": [
@@ -857,16 +852,16 @@
       },
       "src/digest-compress.ts": {
         "description": "Options for `compressDigest`. Each field is optional and replaces its default.",
-        "externalDependencies": [
-          {
-            "package": "better-sqlite3",
-            "imports": [
-              "default"
-            ]
-          }
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "./sqlite.js",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "./summarizer.js",
             "imports": [
@@ -917,16 +912,16 @@
       },
       "src/digest-db.ts": {
         "description": "One digest entry describes one project for one period.",
-        "externalDependencies": [
-          {
-            "package": "better-sqlite3",
-            "imports": [
-              "default"
-            ]
-          }
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "./sqlite.js",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "./fts-query.js",
             "imports": [
@@ -961,16 +956,16 @@
       },
       "src/digest-inject.ts": {
         "description": "Returns the digest character limit from the `EPISODIC_MEMORY_DIGEST_MAX_CHARS` environment variable.",
-        "externalDependencies": [
-          {
-            "package": "better-sqlite3",
-            "imports": [
-              "default"
-            ]
-          }
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "./sqlite.js",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "./digest-db.js",
             "imports": [
@@ -998,16 +993,16 @@
       },
       "src/digest-job.ts": {
         "description": "Return true when the digest feature is on.",
-        "externalDependencies": [
-          {
-            "package": "better-sqlite3",
-            "imports": [
-              "default"
-            ]
-          }
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "./sqlite.js",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "./types.js",
             "imports": [
@@ -1099,16 +1094,16 @@
       },
       "src/digest-phase.ts": {
         "description": "The digest step of a sync run.",
-        "externalDependencies": [
-          {
-            "package": "better-sqlite3",
-            "imports": [
-              "default"
-            ]
-          }
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "./sqlite.js",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "./digest-job.js",
             "imports": [
@@ -1312,14 +1307,7 @@
       },
       "src/doctor-learn.ts": {
         "description": "The `learn` section of `episodic-memory doctor`.",
-        "externalDependencies": [
-          {
-            "package": "better-sqlite3",
-            "imports": [
-              "default"
-            ]
-          }
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [
           {
             "module": "fs",
@@ -1332,21 +1320,16 @@
             "imports": [
               "default"
             ]
-          },
-          {
-            "module": "module",
-            "imports": [
-              "createRequire"
-            ]
-          },
-          {
-            "module": "url",
-            "imports": [
-              "fileURLToPath"
-            ]
           }
         ],
         "internalDependencies": [
+          {
+            "file": "./sqlite.js",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "./paths.js",
             "imports": [
@@ -1368,6 +1351,12 @@
               "KnowledgeStatus"
             ],
             "typeOnly": true
+          },
+          {
+            "file": "./sqlite.js",
+            "imports": [
+              "*"
+            ]
           },
           {
             "file": "./learn/knowledge-store.js",
@@ -1460,6 +1449,12 @@
             ]
           },
           {
+            "file": "./node-floor.js",
+            "imports": [
+              "assertNodeFloor"
+            ]
+          },
+          {
             "file": "./doctor-learn.js",
             "imports": [
               "LearnDoctorSection",
@@ -1472,6 +1467,7 @@
           "buildCodexDoctorReport",
           "readRecentLogErrors",
           "collectDoctorSnapshot",
+          "formatSqliteLine",
           "buildDoctorReport"
         ],
         "interfaces": [
@@ -1484,19 +1480,13 @@
           "buildCodexDoctorReport",
           "readRecentLogErrors",
           "collectDoctorSnapshot",
+          "formatSqliteLine",
           "buildDoctorReport"
         ]
       },
       "src/embedding-migration.ts": {
         "description": "Embedding migration.",
-        "externalDependencies": [
-          {
-            "package": "better-sqlite3",
-            "imports": [
-              "default"
-            ]
-          }
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [
           {
             "module": "path",
@@ -1506,6 +1496,12 @@
           }
         ],
         "internalDependencies": [
+          {
+            "file": "./sqlite.js",
+            "imports": [
+              "Database"
+            ]
+          },
           {
             "file": "./lockfile.js",
             "imports": [
@@ -1783,14 +1779,7 @@
       },
       "src/indexer.ts": {
         "description": "Tell whether a listed transcript must stay out of the index and out of the summaries, and log the skip.",
-        "externalDependencies": [
-          {
-            "package": "better-sqlite3",
-            "imports": [
-              "default"
-            ]
-          }
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [
           {
             "module": "fs",
@@ -1818,6 +1807,13 @@
           }
         ],
         "internalDependencies": [
+          {
+            "file": "./sqlite.js",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "./db.js",
             "imports": [
@@ -2459,16 +2455,15 @@
       },
       "src/prune.ts": {
         "description": "Options for `pruneProjects`.",
-        "externalDependencies": [
-          {
-            "package": "better-sqlite3",
-            "imports": [
-              "default"
-            ]
-          }
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "./sqlite.js",
+            "imports": [
+              "Database"
+            ]
+          },
           {
             "file": "./derived-text.js",
             "imports": [
@@ -2543,14 +2538,7 @@
       },
       "src/search.ts": {
         "description": "Returns the longest summary, in characters, that the results display.",
-        "externalDependencies": [
-          {
-            "package": "better-sqlite3",
-            "imports": [
-              "default"
-            ]
-          }
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [
           {
             "module": "fs",
@@ -2560,6 +2548,12 @@
           }
         ],
         "internalDependencies": [
+          {
+            "file": "./sqlite.js",
+            "imports": [
+              "Database"
+            ]
+          },
           {
             "file": "./db.js",
             "imports": [
@@ -2682,6 +2676,56 @@
           "formatConversationAsHTML"
         ]
       },
+      "src/sqlite.ts": {
+        "description": "A better-sqlite3-compatible subset over the node:sqlite built-in module.",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "module",
+            "imports": [
+              "createRequire"
+            ]
+          },
+          {
+            "module": "sqlite",
+            "imports": [
+              "DatabaseSync",
+              "SQLInputValue",
+              "SQLOutputValue",
+              "StatementSync"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "./node-floor.js",
+            "imports": [
+              "NODE_FLOOR",
+              "assertNodeFloor"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "sqliteLoadError",
+          "requireTransactionState",
+          "Database"
+        ],
+        "classes": [
+          "Database"
+        ],
+        "interfaces": [
+          "RunResult",
+          "Statement",
+          "DatabaseOptions",
+          "PragmaOptions",
+          "SqlFunctionOptions"
+        ],
+        "functions": [
+          "sqliteLoadError",
+          "requireTransactionState"
+        ]
+      },
       "src/stats-cli.ts": {
         "description": "stats-cli module",
         "externalDependencies": [],
@@ -2700,16 +2744,15 @@
       },
       "src/stats.ts": {
         "description": "The counts and sizes that describe the conversation index.",
-        "externalDependencies": [
-          {
-            "package": "better-sqlite3",
-            "imports": [
-              "default"
-            ]
-          }
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "./sqlite.js",
+            "imports": [
+              "Database"
+            ]
+          },
           {
             "file": "./paths.js",
             "imports": [
@@ -3098,16 +3141,16 @@
       },
       "src/topic-db.ts": {
         "description": "Install one edit and rebuild the derived tables of the project, in one transaction.",
-        "externalDependencies": [
-          {
-            "package": "better-sqlite3",
-            "imports": [
-              "default"
-            ]
-          }
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "./sqlite.js",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "./fts-query.js",
             "imports": [
@@ -3218,16 +3261,16 @@
       },
       "src/topic-job.ts": {
         "description": "Return the `since` time. The first run stores it. EPISODIC_MEMORY_TOPICS_SINCE replaces `now` on that run,",
-        "externalDependencies": [
-          {
-            "package": "better-sqlite3",
-            "imports": [
-              "default"
-            ]
-          }
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "./sqlite.js",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "./types.js",
             "imports": [
@@ -3329,16 +3372,16 @@
       },
       "src/topic-phase.ts": {
         "description": "The topic step of a sync run.",
-        "externalDependencies": [
-          {
-            "package": "better-sqlite3",
-            "imports": [
-              "default"
-            ]
-          }
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "./sqlite.js",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "./reentrancy.js",
             "imports": [
@@ -3683,6 +3726,13 @@
             "reExport": true
           },
           {
+            "file": "./sqlite.js",
+            "imports": [
+              "*"
+            ],
+            "reExport": true
+          },
+          {
             "file": "./embeddings.js",
             "imports": [
               "*"
@@ -3730,6 +3780,7 @@
         "reExported": [
           "* from ./types.js",
           "* from ./db.js",
+          "* from ./sqlite.js",
           "* from ./embeddings.js",
           "* from ./indexer.js",
           "* from ./parser.js",
@@ -3832,16 +3883,16 @@
       },
       "src/learn/bootstrap.ts": {
         "description": "Bootstrapping: map the archive's projects and propose the first knowledge.",
-        "externalDependencies": [
-          {
-            "package": "better-sqlite3",
-            "imports": [
-              "default"
-            ]
-          }
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "../sqlite.js",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "./learn-config.js",
             "imports": [
@@ -4012,14 +4063,7 @@
       },
       "src/learn/cli-main.ts": {
         "description": "The `learn` subcommands. Reached only from `src/learn-cli.ts`, which owns the",
-        "externalDependencies": [
-          {
-            "package": "better-sqlite3",
-            "imports": [
-              "default"
-            ]
-          }
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [
           {
             "module": "path",
@@ -4029,6 +4073,13 @@
           }
         ],
         "internalDependencies": [
+          {
+            "file": "../sqlite.js",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "../paths.js",
             "imports": [
@@ -4354,16 +4405,16 @@
       },
       "src/learn/knowledge-db.ts": {
         "description": "The `KnowledgeEntry` API over the knowledge store and the learning trace.",
-        "externalDependencies": [
-          {
-            "package": "better-sqlite3",
-            "imports": [
-              "default"
-            ]
-          }
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "../sqlite.js",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "./knowledge-store.js",
             "imports": [
@@ -4494,14 +4545,7 @@
       },
       "src/learn/knowledge-store.ts": {
         "description": "The knowledge store: learned entries, their citations and the records the",
-        "externalDependencies": [
-          {
-            "package": "better-sqlite3",
-            "imports": [
-              "default"
-            ]
-          }
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [
           {
             "module": "fs",
@@ -4524,6 +4568,12 @@
           }
         ],
         "internalDependencies": [
+          {
+            "file": "../sqlite.js",
+            "imports": [
+              "Database"
+            ]
+          },
           {
             "file": "../paths.js",
             "imports": [
@@ -4813,16 +4863,16 @@
       },
       "src/learn/learn-inject.ts": {
         "description": "The learned block the SessionStart hook injects.",
-        "externalDependencies": [
-          {
-            "package": "better-sqlite3",
-            "imports": [
-              "default"
-            ]
-          }
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "../sqlite.js",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "./types.js",
             "imports": [
@@ -4936,16 +4986,16 @@
       },
       "src/learn/learned-block.ts": {
         "description": "Render and persist the learned block for every project that has active",
-        "externalDependencies": [
-          {
-            "package": "better-sqlite3",
-            "imports": [
-              "default"
-            ]
-          }
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "../sqlite.js",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "../redact.js",
             "imports": [
@@ -5165,14 +5215,7 @@
       },
       "src/learn/learning-db.ts": {
         "description": "The learning trace: runs, tasks and attempts, in `learning.sqlite`.",
-        "externalDependencies": [
-          {
-            "package": "better-sqlite3",
-            "imports": [
-              "default"
-            ]
-          }
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [
           {
             "module": "crypto",
@@ -5182,6 +5225,13 @@
           }
         ],
         "internalDependencies": [
+          {
+            "file": "../sqlite.js",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "../redact.js",
             "imports": [
@@ -5254,14 +5304,7 @@
       },
       "src/learn/learning-store.ts": {
         "description": "The learning trace database: `<configDir>/learned/learning.sqlite`.",
-        "externalDependencies": [
-          {
-            "package": "better-sqlite3",
-            "imports": [
-              "default"
-            ]
-          }
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [
           {
             "module": "fs",
@@ -5277,6 +5320,12 @@
           }
         ],
         "internalDependencies": [
+          {
+            "file": "../sqlite.js",
+            "imports": [
+              "Database"
+            ]
+          },
           {
             "file": "../paths.js",
             "imports": [
@@ -5411,16 +5460,16 @@
       },
       "src/learn/report.ts": {
         "description": "`learn report`: what a run changed, what it cost, and what it refused.",
-        "externalDependencies": [
-          {
-            "package": "better-sqlite3",
-            "imports": [
-              "default"
-            ]
-          }
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "../sqlite.js",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "./learning-db.js",
             "imports": [
@@ -5745,14 +5794,7 @@
       },
       "src/learn/tasks.ts": {
         "description": "Self-practice task generation and staleness checks (spec \u00a74.4).",
-        "externalDependencies": [
-          {
-            "package": "better-sqlite3",
-            "imports": [
-              "default"
-            ]
-          }
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [
           {
             "module": "path",
@@ -5762,6 +5804,13 @@
           }
         ],
         "internalDependencies": [
+          {
+            "file": "../sqlite.js",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "../types.js",
             "imports": [
@@ -5844,16 +5893,16 @@
       },
       "src/learn/types.ts": {
         "description": "Shared types for the Recursa learned-knowledge store.",
-        "externalDependencies": [
-          {
-            "package": "better-sqlite3",
-            "imports": [
-              "default"
-            ]
-          }
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "../sqlite.js",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "./knowledge-store.js",
             "imports": [
@@ -6075,6 +6124,7 @@
         "src/search.ts",
         "src/show-cli.ts",
         "src/show.ts",
+        "src/sqlite.ts",
         "src/stats-cli.ts",
         "src/stats.ts",
         "src/summarizer.ts",

@@ -33,7 +33,7 @@
  * rule keeps its row and its validation record and waits for a human.
  */
 
-import type Database from 'better-sqlite3';
+import type { Database } from '../sqlite.js';
 import { learnConfig, type LearnConfig } from './learn-config.js';
 import {
   SIGNAL_KINDS,
@@ -144,7 +144,7 @@ export interface ProjectStats {
  * conversation a user would search for.
  */
 export function eligibleProjects(
-  indexDb: Database.Database,
+  indexDb: Database,
   minPerProject: number = MIN_PER_PROJECT
 ): ProjectStats[] {
   const rows = indexDb
@@ -178,7 +178,7 @@ export function eligibleProjects(
 }
 
 /** An exchange resolver over the index database, for the citation gate. */
-export function indexExchangeResolver(indexDb: Database.Database): IdCitationResolver['exchange'] {
+export function indexExchangeResolver(indexDb: Database): IdCitationResolver['exchange'] {
   const stmt = indexDb.prepare(
     `SELECT id, archive_path, line_start, line_end, session_id, user_message, assistant_message
        FROM exchanges
@@ -345,11 +345,11 @@ function validationFor(
  * `listTasks` is the only read path. The split predicate is mandatory, so the held-out rows
  * cannot enter the returned list even by a caller's mistake.
  */
-function signalTrainTasks(db: Database.Database): LearningTask[] {
+function signalTrainTasks(db: Database): LearningTask[] {
   return listTasks(db, { split: 'train', kinds: SIGNAL_KINDS, tiers: SIGNAL_TIERS });
 }
 
-async function countTasks(db: Database.Database): Promise<number> {
+async function countTasks(db: Database): Promise<number> {
   const row = db.prepare('SELECT COUNT(*) AS n FROM learning_task').get() as { n: number } | undefined;
   return Number(row?.n ?? 0);
 }
@@ -752,7 +752,7 @@ interface ReflectionInput {
 }
 
 /** Task kinds for the attempts a reflection cites. Missing rows are omitted. */
-function taskKinds(db: Database.Database, taskIds: number[]): Map<number, LearningKind> {
+function taskKinds(db: Database, taskIds: number[]): Map<number, LearningKind> {
   const unique = [...new Set(taskIds)];
   if (unique.length === 0) return new Map();
   const rows = db

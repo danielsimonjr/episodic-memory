@@ -1,7 +1,7 @@
 /**
  * The knowledge store: learned entries, their citations and the records the
  * learner keeps beside them (heuristics, procedures, decisions, failures,
- * reflections, project context), on better-sqlite3 directly.
+ * reflections, project context), on node:sqlite directly.
  *
  * Every other module sees `KnowledgeEntry` from `./types.js`; this module is
  * the only one that knows how an entry is laid out on disk.
@@ -25,7 +25,7 @@
 import fs from 'fs';
 import path from 'path';
 import { createHash, randomUUID } from 'node:crypto';
-import Database from 'better-sqlite3';
+import { Database } from '../sqlite.js';
 import { getKnowledgeDbPath } from '../paths.js';
 import { redactPii } from './pii-redactor.js';
 /** The exact observation key prefix for each field the store parses back. */

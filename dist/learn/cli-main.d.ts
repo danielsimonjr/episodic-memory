@@ -14,7 +14,7 @@
  * Progress goes to stderr and the report to stdout: `learn report > file` must
  * produce a file a human can read, and progress lines must never land in it.
  */
-import type Database from 'better-sqlite3';
+import type { Database } from '../sqlite.js';
 import { type SolveOptions } from './solver.js';
 import { LEARN_USAGE } from './usage.js';
 import type { LearnDbs } from './types.js';
@@ -44,7 +44,7 @@ export { LEARN_USAGE };
  * Bootstrap solves the same set twice, once with an empty snapshot and once with the candidates.
  * The bootstrap multiplier is therefore 2.
  */
-export declare function baselineCallCount(db: Database.Database, times?: number): number;
+export declare function baselineCallCount(db: Database, times?: number): number;
 /** A refusal message when the baseline cannot be afforded, or null. */
 export declare function baselineRefusal(count: number, maxCalls: number): string | null;
 /**

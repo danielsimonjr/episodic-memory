@@ -2,7 +2,7 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { shouldSkipReentrantSync, SUMMARIZER_GUARD_ENV } from '../src/reentrancy.js';
 
 // The reentrancy guard lives in its own dependency-free module so sync-cli can
-// check it BEFORE importing the heavy native stack (transformers, better-sqlite3).
+// check it BEFORE importing the heavy native stack (transformers, node:sqlite).
 // Loading those just to bail out on a summarizer-spawned subprocess wasted
 // seconds per spawn and made the integration test time out on cold disks.
 
@@ -33,7 +33,7 @@ describe('reentrancy guard module', () => {
   });
 
   it('is importable without pulling the heavy native stack', async () => {
-    // Importing this module must not drag in transformers/better-sqlite3. We can't
+    // Importing this module must not drag in transformers/node:sqlite. We can't
     // easily assert the absence of a native load, but we can assert the module is
     // self-contained: re-importing returns the same function reference instantly.
     const again = await import('../src/reentrancy.js');

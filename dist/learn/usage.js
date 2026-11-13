@@ -3,7 +3,7 @@
  *
  * This module has no imports on purpose. `learn --help` prints it before any
  * heavy module loads, so it must not sit on the `cli-main` graph (tasks →
- * summarizer → Agent SDK, knowledge store → better-sqlite3).
+ * summarizer → Agent SDK, knowledge store → node:sqlite).
  */
 export const LEARN_USAGE = `Usage: episodic-memory learn <command> [options]
 

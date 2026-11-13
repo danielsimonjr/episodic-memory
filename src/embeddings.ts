@@ -5,7 +5,7 @@ import { truncateForIndex } from './constants.js';
 /**
  * The embedding model: bge-small-en-v1.5, from the Xenova ONNX export, with the `q8` data type.
  *
- * The model produces 384-dimensional vectors, which the vec_exchanges table expects.
+ * The model produces 384-dimensional vectors, which the exchange_vectors table expects.
  * The query embedder adds BGE_QUERY_PREFIX before the embedder embeds a query. The passage embedders do not.
  * See `withQueryPrefix` and `generateQueryEmbedding`.
  */

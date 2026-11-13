@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import Database from 'better-sqlite3';
+import { Database } from '../src/sqlite.js';
 import { ensureDigestSchema, insertDigestEntry, listActiveEntries } from '../src/digest-db.js';
 import { compressDigest } from '../src/digest-compress.js';
 import { suppressConsole } from './test-utils.js';
 
 suppressConsole();
 
-let db: Database.Database;
+let db: Database;
 
 function addSession(n: number, day = '2026-10-06', project = 'proj-a') {
   const hh = String(n).padStart(2, '0');

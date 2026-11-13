@@ -1,4 +1,4 @@
-import type Database from 'better-sqlite3';
+import type { Database } from './sqlite.js';
 import type { ConversationExchange } from './types.js';
 import { shouldSkipReentrantSync } from './reentrancy.js';
 import { gpuReservationBlock } from './gpu-reservation.js';
@@ -84,7 +84,7 @@ export function toExchange(r: ExchangeRow): ConversationExchange {
 }
 
 /** The exchanges of one session, oldest first. */
-export function sessionExchanges(db: Database.Database, project: string, sessionId: string): ConversationExchange[] {
+export function sessionExchanges(db: Database, project: string, sessionId: string): ConversationExchange[] {
   const rows = db
     .prepare(
       `SELECT id, project, timestamp, user_message, assistant_message, archive_path, line_start, line_end
@@ -102,7 +102,7 @@ export function isTrivial(exchanges: ConversationExchange[]): boolean {
 }
 
 async function writeSessionEntries(
-  db: Database.Database,
+  db: Database,
   model: (p: string) => Promise<string>,
   now: Date,
   result: DigestResult
@@ -185,7 +185,7 @@ async function writeSessionEntries(
  * @param db the open index database
  * @param opts replaces the model call or the clock. Without it, the job uses the default summarizer call and the current time.
  */
-export async function runDigest(db: Database.Database, opts: DigestOptions = {}): Promise<DigestResult> {
+export async function runDigest(db: Database, opts: DigestOptions = {}): Promise<DigestResult> {
   const result: DigestResult = { written: 0, skipped: 0, failed: 0 };
   if (!digestEnabled() || shouldSkipReentrantSync()) return result;
   // The default model call loads a model on the shared GPU. Wait while another agent holds it.

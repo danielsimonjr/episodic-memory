@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import Database from 'better-sqlite3';
+import { Database } from '../../src/sqlite.js';
 import { createHash } from 'node:crypto';
 import fs from 'fs';
 import os from 'os';
@@ -35,7 +35,7 @@ function hexId(label: string): string {
   return createHash('sha256').update(label).digest('hex').slice(0, 32);
 }
 
-function indexFixture(project = 'proj-a'): Database.Database {
+function indexFixture(project = 'proj-a'): Database {
   const db = new Database(':memory:');
   db.exec(`
     CREATE TABLE exchanges (
@@ -84,8 +84,8 @@ function truth(project = 'proj-a'): TaskTruth {
 }
 
 let dir: string;
-let learning: Database.Database;
-let index: Database.Database;
+let learning: Database;
+let index: Database;
 let store: KnowledgeStore;
 let dbs: LearnDbs;
 let runId: string;

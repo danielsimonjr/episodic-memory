@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import Database from 'better-sqlite3';
+import { Database } from '../../src/sqlite.js';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -23,7 +23,7 @@ function makeTempDir(prefix: string): string {
   return fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), prefix)));
 }
 
-function tables(db: Database.Database): string[] {
+function tables(db: Database): string[] {
   return (
     db.prepare("SELECT name FROM sqlite_master WHERE type IN ('table','view')").all() as Array<{
       name: string;
@@ -33,7 +33,7 @@ function tables(db: Database.Database): string[] {
 
 describe('learning store', () => {
   let configDir: string;
-  let db: Database.Database | null = null;
+  let db: Database | null = null;
   const saved = {
     config: process.env.EPISODIC_MEMORY_CONFIG_DIR,
     testDbPath: process.env.TEST_DB_PATH,

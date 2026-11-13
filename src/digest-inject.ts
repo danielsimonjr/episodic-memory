@@ -1,4 +1,4 @@
-import type Database from 'better-sqlite3';
+import type { Database } from './sqlite.js';
 import { hideCitedLines, listActiveEntries, type DigestEntry } from './digest-db.js';
 
 /** The default digest character limit. `digestMaxChars` uses the default value when the environment value is not a positive integer. */
@@ -39,7 +39,7 @@ function label(e: DigestEntry): string {
  * source exchange ids here so the digest cannot hand back its answer.
  */
 export function buildDigestText(
-  db: Database.Database,
+  db: Database,
   project: string,
   maxChars: number,
   opts: { hideExchangeIds?: string[] } = {}

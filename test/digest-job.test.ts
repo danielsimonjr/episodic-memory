@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import type Database from 'better-sqlite3';
+import type { Database } from '../src/sqlite.js';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -14,7 +14,7 @@ suppressConsole();
 const NOW = new Date('2026-10-08T18:00:00.000Z');
 
 function addExchange(
-  db: Database.Database,
+  db: Database,
   id: string,
   session: string,
   ts: string,
@@ -29,7 +29,7 @@ function addExchange(
 
 describe('runDigest', () => {
   const dir = path.join(os.tmpdir(), 'digest-job-' + Date.now());
-  let db: Database.Database;
+  let db: Database;
   const fake = async () => 'Chose sqlite as the cache store [1]';
 
   beforeEach(() => {

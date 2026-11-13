@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs, { mkdtempSync, mkdirSync, writeFileSync, statSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import Database from 'better-sqlite3';
+import { Database } from '../src/sqlite.js';
 import { safeRmSync, seedDigest, suppressConsole } from './test-utils.js';
 
 // The sync tests below index with a fixed vector, so no test loads the embedding model.
@@ -226,7 +226,7 @@ describe('sync honours the marker scan', () => {
     const db = initDatabase();
     try {
       const count = (table: string) => (db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get() as { n: number }).n;
-      return { exchanges: count('exchanges'), vectors: count('vec_exchanges'), text: count('exchanges_fts') };
+      return { exchanges: count('exchanges'), vectors: count('exchange_vectors'), text: count('exchanges_fts') };
     } finally {
       db.close();
     }

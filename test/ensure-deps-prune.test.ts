@@ -38,11 +38,9 @@ function fakePluginRoot(pairs: { platform: string; arch: string }[]): string {
 /** Add the files that `nodeModulesIsHealthy` needs, so `repairPlan` answers 'none'. */
 function makeHealthy(root: string): void {
   const nm = join(root, 'node_modules');
-  touch(join(nm, 'better-sqlite3', 'lib', 'index.js'));
   touch(join(nm, '@huggingface', 'transformers', 'package.json'));
   touch(join(nm, 'onnxruntime-common', 'package.json'));
   touch(join(nm, 'onnxruntime-node', 'package.json'));
-  touch(join(nm, 'better-sqlite3', 'prebuilds', `${process.platform}-${process.arch}.node`));
 }
 
 function napiDir(root: string): string {

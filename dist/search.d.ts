@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import { Database } from './sqlite.js';
 import { SearchResult, MultiConceptResult } from './types.js';
 /** Default on. Set EPISODIC_MEMORY_INCLUDE_SUMMARY=0 to hide summaries. */
 export declare function includeSearchSummaries(): boolean;
@@ -44,7 +44,7 @@ export interface SearchOptions {
      * Reuse an open DB handle (MCP hot path). When omitted, opens and closes
      * a one-shot connection (CLI behavior).
      */
-    db?: Database.Database;
+    db?: Database;
     /**
      * Receive a notice about a search step that did not run.
      *
@@ -62,7 +62,7 @@ export interface SearchOptions {
  * Therefore:               cos(u, v) = 1 - d^2 / 2.
  *
  * `src/embeddings.ts` passes `normalize: true` to its one pipeline call, so every vector that the module returns has unit length.
- * The `vec_exchanges` table declares no `distance_metric`, so sqlite-vec returns the L2 distance that the identity applies to.
+ * `vec_distance_l2` returns the L2 distance that the identity applies to.
  */
 export declare function l2DistanceToCosineSimilarity(distance: number): number;
 /**
@@ -80,6 +80,7 @@ export declare function buildFtsMatchQuery(query: string): string;
  * Sidechain exchanges never match. The function throws when `after` or `before` is not in `YYYY-MM-DD` format.
  * When the embedding backend cannot load, a `vector` search throws `EmbeddingsUnavailableError`.
  * A `both` search then returns the text results. The search then sends a notice to `options.onNotice`.
+ * A `both` search on a file without the `exchange_vectors` table does the same.
  * The function closes a connection that the function opens. The function leaves a connection from `options.db` or the shared reader open.
  *
  * @param query The text to search for.

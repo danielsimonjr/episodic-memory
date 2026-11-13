@@ -62,16 +62,18 @@ CREATE INDEX idx_tool_name ON tool_calls(tool_name);
 CREATE INDEX idx_exchange_id ON tool_calls(exchange_id);
 ```
 
-### `vec_exchanges`
+### `exchange_vectors`
 
-Vector embeddings for semantic search (sqlite-vec).
+Vector embeddings for semantic search. The table holds one row for each exchange. A row holds 384 float32 values, which take 1536 bytes. The database deletes a row with its exchange. The search scans this table exactly. The schema has no vector index.
 
 ```sql
-CREATE VIRTUAL TABLE vec_exchanges USING vec0(
-  id TEXT PRIMARY KEY,
-  embedding FLOAT[384]
+CREATE TABLE exchange_vectors (
+  id TEXT PRIMARY KEY REFERENCES exchanges(id) ON DELETE CASCADE,
+  embedding BLOB NOT NULL CHECK (length(embedding) = 1536)
 );
 ```
+
+A database that an earlier sqlite-vec release wrote holds the tables `vec_exchanges`, `vec_exchanges_rowids`, `vec_exchanges_chunks` and `vec_exchanges_vector_chunks00`. A migrating open copies their valid vectors into `exchange_vectors` once. The old tables stay in the file unread.
 
 ### `digest_entry`
 
@@ -210,7 +212,7 @@ Self-improving memory (the `EPISODIC_MEMORY_LEARN` feature) keeps its state in
 ```
 <configDir>/
   conversation-index/     db.sqlite          -- disposable; rebuildable from the archive
-  learned/                knowledge.db       -- learned entries (better-sqlite3), durable
+  learned/                knowledge.db       -- learned entries (SQLite), durable
                           learning.sqlite    -- the learning trace + rendered block
   learned-skills/                            -- generated SKILL.md export tree
 ```
@@ -220,7 +222,7 @@ learned knowledge or the learning trace.
 
 ### `learned/knowledge.db`
 
-`src/learn/knowledge-store.ts` owns the file. The module opens the file with `better-sqlite3`. The module creates
+`src/learn/knowledge-store.ts` owns the file. The module opens the file with the `Database` adapter in `src/sqlite.ts`. The module creates
 two tables, `entities` and `relations`, in the layout of the former memoryjs adapter. A file written by the
 former adapter opens unchanged. The module adds missing columns on open. The module drops the old `entities_fts`
 shadow table and the triggers of the old shadow table. The `skills` MCP tool opens the file read-only and runs

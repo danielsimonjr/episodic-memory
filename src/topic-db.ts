@@ -1,4 +1,4 @@
-import type Database from 'better-sqlite3';
+import type { Database } from './sqlite.js';
 import { toFtsQuery } from './fts-query.js';
 import { footnoteStatements, parseTopicDoc } from './topic-format.js';
 import { endOf, isValidTime, startOf } from './topic-time.js';
@@ -63,7 +63,7 @@ export interface TopicRange {
 }
 
 /** The schema of the topic tables. The function creates each table when it does not exist. */
-export function ensureTopicSchema(db: Database.Database): void {
+export function ensureTopicSchema(db: Database): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS topic_doc (
       project TEXT NOT NULL,
@@ -131,7 +131,7 @@ export function ensureTopicSchema(db: Database.Database): void {
  * @param expectedUpdatedAt the `updated_at` that each shown document had when the prompt was built, by slug
  */
 export function installTopicEdit(
-  db: Database.Database,
+  db: Database,
   project: string,
   edit: TopicEdit,
   expectedUpdatedAt: ReadonlyMap<string, string>
@@ -163,7 +163,7 @@ export function installTopicEdit(
  * @param db the open index database
  * @param project the project key
  */
-export function listTopicDocs(db: Database.Database, project: string): { slug: string; title: string; unitCount: number }[] {
+export function listTopicDocs(db: Database, project: string): { slug: string; title: string; unitCount: number }[] {
   const rows = db.prepare('SELECT slug, text FROM topic_doc WHERE project = ? ORDER BY slug').all(project) as {
     slug: string;
     text: string;
@@ -183,7 +183,7 @@ export function listTopicDocs(db: Database.Database, project: string): { slug: s
  * @returns the text and its `updated_at`, or null when the document does not exist
  */
 export function readTopicDoc(
-  db: Database.Database,
+  db: Database,
   project: string,
   slug: string
 ): { slug: string; text: string; updatedAt: string } | null {
@@ -206,7 +206,7 @@ export function readTopicDoc(
  * @param opts `project` limits the search to one project. `from` and `to` set the range. `limit` caps the result.
  */
 export function searchTopicUnits(
-  db: Database.Database,
+  db: Database,
   query: string,
   opts: { project?: string; from?: string; to?: string; limit?: number } = {}
 ): TopicUnitHit[] {
@@ -262,7 +262,7 @@ export function searchTopicUnits(
  * @param unitId the identifier of the unit
  */
 export function topicLinks(
-  db: Database.Database,
+  db: Database,
   project: string,
   unitId: string
 ): { outgoing: TopicLinkedUnit[]; backlinks: TopicLinkedUnit[] } | null {
@@ -299,7 +299,7 @@ export function topicLinks(
  * @param project the project key
  * @param range the optional bounds, inclusive
  */
-export function topicTimeline(db: Database.Database, project: string, range: TopicRange = {}): TopicEvent[] {
+export function topicTimeline(db: Database, project: string, range: TopicRange = {}): TopicEvent[] {
   assertRange(range);
   const rows = db
     .prepare(
@@ -339,7 +339,7 @@ export function topicTimeline(db: Database.Database, project: string, range: Top
  * @param sessionId the session id
  * @returns the row, or null when the session has no row
  */
-export function getTopicSession(db: Database.Database, project: string, sessionId: string): TopicSession | null {
+export function getTopicSession(db: Database, project: string, sessionId: string): TopicSession | null {
   const row = db
     .prepare('SELECT status, attempts, error FROM topic_session WHERE project = ? AND session_id = ?')
     .get(project, sessionId) as { status: TopicSessionStatus; attempts: number; error: string | null } | undefined;
@@ -356,7 +356,7 @@ export function getTopicSession(db: Database.Database, project: string, sessionI
  * @param error the error text, or null
  */
 export function setTopicSessionStatus(
-  db: Database.Database,
+  db: Database,
   project: string,
   sessionId: string,
   status: 'done' | 'rejected',
@@ -375,7 +375,7 @@ export function setTopicSessionStatus(
  * @param sessionId the session id
  * @param error the error text of the failed call
  */
-export function recordTopicFailedCall(db: Database.Database, project: string, sessionId: string, error: string): number {
+export function recordTopicFailedCall(db: Database, project: string, sessionId: string, error: string): number {
   const tx = db.transaction((): number => {
     db.prepare(
       `INSERT INTO topic_session (project, session_id, status, attempts, error) VALUES (?, ?, 'pending', 1, ?)
@@ -396,7 +396,7 @@ export function recordTopicFailedCall(db: Database.Database, project: string, se
  * @param key the key to read
  * @returns the value, or null when the key is not set
  */
-export function getTopicMeta(db: Database.Database, key: string): string | null {
+export function getTopicMeta(db: Database, key: string): string | null {
   const row = db.prepare('SELECT value FROM topic_meta WHERE key = ?').get(key) as { value: string } | undefined;
   return row ? row.value : null;
 }
@@ -408,7 +408,7 @@ export function getTopicMeta(db: Database.Database, key: string): string | null 
  * @param key the key to set
  * @param value the new value
  */
-export function setTopicMeta(db: Database.Database, key: string, value: string): void {
+export function setTopicMeta(db: Database, key: string, value: string): void {
   db.prepare(
     `INSERT INTO topic_meta (key, value) VALUES (?, ?)
      ON CONFLICT (key) DO UPDATE SET value = excluded.value`
@@ -424,7 +424,7 @@ function toLinked(row: LinkRow): TopicLinkedUnit {
 
 /** Write one session row, or update the status and error of an existing row. */
 function markSession(
-  db: Database.Database,
+  db: Database,
   project: string,
   sessionId: string,
   status: TopicSessionStatus,
@@ -442,7 +442,7 @@ function markSession(
  * A kept unit keeps its `seq`. A new unit takes the next number after the largest old `seq`, in slug order,
  * then in document order. The function throws when a footnote cites a ref that is not a `#<exchange id>`. The function throws when a paragraph has no identifier, or when two paragraphs share one.
  */
-function rebuildDerived(db: Database.Database, project: string): void {
+function rebuildDerived(db: Database, project: string): void {
   const docs = db.prepare('SELECT slug, text FROM topic_doc WHERE project = ? ORDER BY slug').all(project) as {
     slug: string;
     text: string;

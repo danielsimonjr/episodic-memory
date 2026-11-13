@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import type Database from 'better-sqlite3';
+import type { Database } from './sqlite.js';
 import { initDatabase, insertExchange, getMaxIndexedLine, deleteExchangesForArchive } from './db.js';
 import { removeDerivedText } from './derived-text.js';
 import { parseConversation } from './parser.js';
@@ -46,7 +46,7 @@ function sessionIdForSummary(exchanges: ConversationExchange[]): string | undefi
  * The transcript can gain the marker after an earlier run indexed part of it. The function then deletes the rows of
  * `archivePath`. The function also skips a transcript that the scan cannot read. The rows of the transcript stay.
  */
-function excludedByMarker(db: Database.Database, file: string, sourcePath: string, archivePath: string): boolean {
+function excludedByMarker(db: Database, file: string, sourcePath: string, archivePath: string): boolean {
   const scan = scanExclusionMarkers(sourcePath);
   if (scan === 'clean') return false;
   if (scan === 'marker') {

@@ -51,8 +51,8 @@ export interface LearnDoctorSection {
         files: number;
         bytes: number;
     };
-    /** The `better-sqlite3` copy the plugin loads, or null when the module does not resolve. */
-    betterSqlite3TopLevel: string | null;
+    /** The SQLite version that node:sqlite reports, or null when the probe fails. */
+    sqliteVersion: string | null;
 }
 /**
  * Returns a section that reports nothing found. The `learnedDir` field contains the given path.

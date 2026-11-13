@@ -2,8 +2,8 @@
  * Node version floor, enforced at launch — dependency-free so both entry points can import it
  * before anything heavy.
  *
- * better-sqlite3 13 (the database behind the index and the knowledge store) declares `node >= 22`.
- * `engines` is advisory: npm warns and installs anyway, so a host on Node 20 starts the wrapper,
+ * The database layer runs on node:sqlite. Its `DatabaseSync.isTransaction` first shipped in Node 22.16.0.
+ * `engines` is advisory: npm warns and installs anyway, so a host on an older Node starts the wrapper,
  * completes a 200-package install, and then fails inside a dependency with an error that names
  * neither the package nor the version. The entry points check the floor themselves and print one
  * line instead.
@@ -12,8 +12,8 @@
  * with an explicit string. Do not fake `process.versions.node` in a wrapper's process: that
  * proves nothing about the child process the wrapper will spawn.
  */
-/** The Node floor better-sqlite3 requires. Kept in sync with `engines.node` in package.json. */
-export const NODE_FLOOR = '22.0.0';
+/** The Node floor of node:sqlite (DatabaseSync.isTransaction, Node 22.16.0). Kept in sync with `engines.node` in package.json. */
+export const NODE_FLOOR = '22.16.0';
 function parseVersion(version) {
     const m = /^v?(\d+)\.(\d+)\.(\d+)/.exec(version.trim());
     if (!m)

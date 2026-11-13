@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import type Database from 'better-sqlite3';
+import type { Database } from '../../src/sqlite.js';
 import {
   ensureLearningSchema,
   createRun,
@@ -78,7 +78,7 @@ function attempt(over: Partial<Omit<AttemptRow, 'id' | 'createdAt'>> = {}) {
 }
 
 describe('learning-db', () => {
-  let db: Database.Database;
+  let db: Database;
 
   beforeEach(() => {
     db = openLearningDb({

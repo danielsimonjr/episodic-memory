@@ -3,9 +3,9 @@
     "name": "episodic-memory",
     "schemaVersion": "2.0.0",
     "language": "typescript",
-    "totalFiles": 293,
+    "totalFiles": 295,
     "totalModules": 4,
-    "totalExports": 616
+    "totalExports": 629
   },
   "modules": {
     "src": {
@@ -342,15 +342,19 @@
         ]
       },
       "src/db.ts": {
-        "externalDependencies": [
-          "better-sqlite3",
-          "sqlite-vec"
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [
           "fs",
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/types.ts",
             "imports": [
@@ -402,6 +406,9 @@
           "ensureFts",
           "upsertExchangeFts",
           "deleteExchangeFts",
+          "registerVectorFunctions",
+          "ensureVectorTable",
+          "migrateVec0Vectors",
           "openDatabase",
           "openDatabaseReadonly",
           "initDatabase",
@@ -450,8 +457,6 @@
         ],
         "internalDependencies": [],
         "exports": [
-          "NATIVE_ADDON",
-          "nativeAddonPresent",
           "JS_SENTINELS",
           "onnxBindingPath",
           "ONNX_BINDING",
@@ -462,11 +467,16 @@
         ]
       },
       "src/derived-text.ts": {
-        "externalDependencies": [
-          "better-sqlite3"
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "src/digest-db.ts",
             "imports": [
@@ -482,11 +492,16 @@
         ]
       },
       "src/digest-compress.ts": {
-        "externalDependencies": [
-          "better-sqlite3"
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "src/summarizer.ts",
             "imports": [
@@ -535,11 +550,16 @@
         ]
       },
       "src/digest-db.ts": {
-        "externalDependencies": [
-          "better-sqlite3"
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "src/fts-query.ts",
             "imports": [
@@ -562,11 +582,16 @@
         ]
       },
       "src/digest-inject.ts": {
-        "externalDependencies": [
-          "better-sqlite3"
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "src/digest-db.ts",
             "imports": [
@@ -585,11 +610,16 @@
         ]
       },
       "src/digest-job.ts": {
-        "externalDependencies": [
-          "better-sqlite3"
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "src/types.ts",
             "imports": [
@@ -676,11 +706,16 @@
         ]
       },
       "src/digest-phase.ts": {
-        "externalDependencies": [
-          "better-sqlite3"
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "src/digest-job.ts",
             "imports": [
@@ -852,16 +887,19 @@
         "exports": []
       },
       "src/doctor-learn.ts": {
-        "externalDependencies": [
-          "better-sqlite3"
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [
           "fs",
-          "module",
-          "path",
-          "url"
+          "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "src/paths.ts",
             "imports": [
@@ -884,6 +922,13 @@
               "KnowledgeStatus"
             ],
             "typeOnly": true
+          },
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "*"
+            ],
+            "typeOnly": false
           },
           {
             "file": "src/learn/knowledge-store.ts",
@@ -965,6 +1010,13 @@
             "typeOnly": false
           },
           {
+            "file": "src/node-floor.ts",
+            "imports": [
+              "assertNodeFloor"
+            ],
+            "typeOnly": false
+          },
+          {
             "file": "src/doctor-learn.ts",
             "imports": [
               "LearnDoctorSection",
@@ -981,17 +1033,23 @@
           "StructuredDoctorReport",
           "readRecentLogErrors",
           "collectDoctorSnapshot",
+          "formatSqliteLine",
           "buildDoctorReport"
         ]
       },
       "src/embedding-migration.ts": {
-        "externalDependencies": [
-          "better-sqlite3"
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/lockfile.ts",
             "imports": [
@@ -1209,6 +1267,7 @@
               "deleteExchangeFts",
               "deleteExchangesForArchive",
               "ensureFts",
+              "ensureVectorTable",
               "getAllExchanges",
               "getFileLastIndexed",
               "getFreelistInfo",
@@ -1218,10 +1277,29 @@
               "insertExchange",
               "migrateSchema",
               "migrateToolCallsCascade",
+              "migrateVec0Vectors",
               "openDatabase",
               "openDatabaseReadonly",
+              "registerVectorFunctions",
               "upsertExchangeFts",
               "vacuumDatabase"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "BindParams",
+              "Database",
+              "DatabaseOptions",
+              "PragmaOptions",
+              "Row",
+              "RunResult",
+              "SqlFunctionOptions",
+              "Statement",
+              "Transaction",
+              "requireTransactionState",
+              "sqliteLoadError"
             ],
             "typeOnly": false
           },
@@ -1321,9 +1399,7 @@
         "exports": []
       },
       "src/indexer.ts": {
-        "externalDependencies": [
-          "better-sqlite3"
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [
           "events",
           "fs",
@@ -1331,6 +1407,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "src/db.ts",
             "imports": [
@@ -1467,11 +1550,16 @@
         ]
       },
       "src/learn/bootstrap.ts": {
-        "externalDependencies": [
-          "better-sqlite3"
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "src/learn/learn-config.ts",
             "imports": [
@@ -1634,13 +1722,18 @@
         ]
       },
       "src/learn/cli-main.ts": {
-        "externalDependencies": [
-          "better-sqlite3"
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "src/paths.ts",
             "imports": [
@@ -1941,11 +2034,16 @@
         ]
       },
       "src/learn/knowledge-db.ts": {
-        "externalDependencies": [
-          "better-sqlite3"
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "src/learn/knowledge-store.ts",
             "imports": [
@@ -2055,15 +2153,20 @@
         ]
       },
       "src/learn/knowledge-store.ts": {
-        "externalDependencies": [
-          "better-sqlite3"
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [
           "fs",
           "node:crypto",
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/paths.ts",
             "imports": [
@@ -2325,11 +2428,16 @@
         ]
       },
       "src/learn/learn-inject.ts": {
-        "externalDependencies": [
-          "better-sqlite3"
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "src/learn/types.ts",
             "imports": [
@@ -2405,11 +2513,16 @@
         ]
       },
       "src/learn/learned-block.ts": {
-        "externalDependencies": [
-          "better-sqlite3"
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "src/redact.ts",
             "imports": [
@@ -2622,13 +2735,18 @@
         ]
       },
       "src/learn/learning-db.ts": {
-        "externalDependencies": [
-          "better-sqlite3"
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [
           "crypto"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "src/redact.ts",
             "imports": [
@@ -2678,14 +2796,19 @@
         ]
       },
       "src/learn/learning-store.ts": {
-        "externalDependencies": [
-          "better-sqlite3"
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [
           "fs",
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/paths.ts",
             "imports": [
@@ -2780,11 +2903,16 @@
         ]
       },
       "src/learn/report.ts": {
-        "externalDependencies": [
-          "better-sqlite3"
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "src/learn/learning-db.ts",
             "imports": [
@@ -3046,13 +3174,18 @@
         ]
       },
       "src/learn/tasks.ts": {
-        "externalDependencies": [
-          "better-sqlite3"
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "src/types.ts",
             "imports": [
@@ -3123,11 +3256,16 @@
         ]
       },
       "src/learn/types.ts": {
-        "externalDependencies": [
-          "better-sqlite3"
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "src/learn/knowledge-store.ts",
             "imports": [
@@ -3644,11 +3782,16 @@
         ]
       },
       "src/prune.ts": {
-        "externalDependencies": [
-          "better-sqlite3"
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/derived-text.ts",
             "imports": [
@@ -3701,13 +3844,18 @@
         "exports": []
       },
       "src/search.ts": {
-        "externalDependencies": [
-          "better-sqlite3"
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [
           "fs"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/db.ts",
             "imports": [
@@ -3806,6 +3954,36 @@
           "formatConversationAsHTML"
         ]
       },
+      "src/sqlite.ts": {
+        "externalDependencies": [],
+        "nodeDependencies": [
+          "module",
+          "node:sqlite"
+        ],
+        "internalDependencies": [
+          {
+            "file": "src/node-floor.ts",
+            "imports": [
+              "NODE_FLOOR",
+              "assertNodeFloor"
+            ],
+            "typeOnly": false
+          }
+        ],
+        "exports": [
+          "BindParams",
+          "Row",
+          "RunResult",
+          "Statement",
+          "DatabaseOptions",
+          "PragmaOptions",
+          "SqlFunctionOptions",
+          "Transaction",
+          "sqliteLoadError",
+          "requireTransactionState",
+          "Database"
+        ]
+      },
       "src/stats-cli.ts": {
         "externalDependencies": [],
         "nodeDependencies": [],
@@ -3822,11 +4000,16 @@
         "exports": []
       },
       "src/stats.ts": {
-        "externalDependencies": [
-          "better-sqlite3"
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/paths.ts",
             "imports": [
@@ -4163,11 +4346,16 @@
         ]
       },
       "src/topic-db.ts": {
-        "externalDependencies": [
-          "better-sqlite3"
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "src/fts-query.ts",
             "imports": [
@@ -4249,11 +4437,16 @@
         ]
       },
       "src/topic-job.ts": {
-        "externalDependencies": [
-          "better-sqlite3"
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "src/types.ts",
             "imports": [
@@ -4359,11 +4552,16 @@
         ]
       },
       "src/topic-phase.ts": {
-        "externalDependencies": [
-          "better-sqlite3"
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "src/reentrancy.ts",
             "imports": [
@@ -4681,17 +4879,6 @@
           "fs",
           "path",
           "url"
-        ],
-        "internalDependencies": [],
-        "exports": []
-      },
-      "scripts/rebuild-native.mjs": {
-        "externalDependencies": [],
-        "nodeDependencies": [
-          "node:child_process",
-          "node:module",
-          "node:path",
-          "node:url"
         ],
         "internalDependencies": [],
         "exports": []
@@ -5173,7 +5360,6 @@
       },
       "test/codex-transcripts.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -5182,6 +5368,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/paths.ts",
             "imports": [
@@ -5305,7 +5498,6 @@
       },
       "test/dangling-project-link.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -5314,6 +5506,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/sync.ts",
             "imports": [
@@ -5403,7 +5602,6 @@
       },
       "test/db.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -5435,6 +5633,13 @@
               "suppressConsole"
             ],
             "typeOnly": false
+          },
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
           }
         ],
         "exports": []
@@ -5454,7 +5659,6 @@
             "imports": [
               "DEP_SENTINELS",
               "JS_SENTINELS",
-              "NATIVE_ADDON",
               "ONNX_BINDING",
               "nodeModulesIsHealthy",
               "onnxBindingPath",
@@ -5475,11 +5679,17 @@
       },
       "test/derived-text.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/digest-db.ts",
             "imports": [
@@ -5504,11 +5714,17 @@
       },
       "test/digest-compress.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/digest-db.ts",
             "imports": [
@@ -5537,7 +5753,6 @@
       },
       "test/digest-db.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -5546,6 +5761,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/db.ts",
             "imports": [
@@ -5578,7 +5800,6 @@
       },
       "test/digest-gpu-reservation.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -5587,6 +5808,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "src/db.ts",
             "imports": [
@@ -5627,6 +5855,13 @@
             "file": "src/claude-bin.ts",
             "imports": [
               "ClaudeBinError"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
             ],
             "typeOnly": false
           },
@@ -5711,11 +5946,17 @@
       },
       "test/digest-inject.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/digest-db.ts",
             "imports": [
@@ -5739,7 +5980,6 @@
       },
       "test/digest-job.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -5748,6 +5988,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "src/db.ts",
             "imports": [
@@ -5845,7 +6092,6 @@
       },
       "test/digest-prompt-budget.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -5854,6 +6100,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "src/db.ts",
             "imports": [
@@ -5957,7 +6210,6 @@
       },
       "test/doctor.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -5967,11 +6219,19 @@
         ],
         "internalDependencies": [
           {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
+          {
             "file": "src/doctor.ts",
             "imports": [
               "buildDoctorReport",
               "readRecentLogErrors",
-              "collectDoctorSnapshot"
+              "collectDoctorSnapshot",
+              "formatSqliteLine"
             ],
             "typeOnly": false
           },
@@ -6092,8 +6352,6 @@
       },
       "test/embedding-migration.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
-          "sqlite-vec",
           "vitest"
         ],
         "nodeDependencies": [
@@ -6102,6 +6360,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/embedding-migration.ts",
             "imports": [
@@ -6214,7 +6479,6 @@
             "file": "src/deps-health.ts",
             "imports": [
               "DEP_SENTINELS",
-              "NATIVE_ADDON",
               "ONNX_BINDING",
               "onnxBindingPath"
             ],
@@ -6223,9 +6487,8 @@
         ],
         "exports": []
       },
-      "test/exclude-nested.test.ts": {
+      "test/exchange-vectors.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -6234,6 +6497,76 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/db.ts",
+            "imports": [
+              "closeSharedReaderDatabase",
+              "deleteExchange",
+              "ensureVectorTable",
+              "initDatabase",
+              "insertExchange",
+              "migrateVec0Vectors",
+              "registerVectorFunctions"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/types.ts",
+            "imports": [
+              "ConversationExchange"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "test/test-utils.ts",
+            "imports": [
+              "getFixturePath",
+              "safeRmSync"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/embedding-migration.ts",
+            "imports": [
+              "countStale",
+              "pickStaleBatch"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/prune.ts",
+            "imports": [
+              "pruneProjects"
+            ],
+            "typeOnly": false
+          }
+        ],
+        "exports": []
+      },
+      "test/exclude-nested.test.ts": {
+        "externalDependencies": [
+          "vitest"
+        ],
+        "nodeDependencies": [
+          "fs",
+          "os",
+          "path"
+        ],
+        "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/indexer.ts",
             "imports": [
@@ -6349,7 +6682,6 @@
       },
       "test/incremental-indexing.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -6358,6 +6690,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/indexer.ts",
             "imports": [
@@ -6430,7 +6769,6 @@
       },
       "test/index-honours-marker.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -6439,6 +6777,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "test/test-utils.ts",
             "imports": [
@@ -6495,7 +6840,6 @@
       },
       "test/indexer-db-close.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -6504,6 +6848,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "test/test-utils.ts",
             "imports": [
@@ -6538,7 +6889,6 @@
       },
       "test/integration.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -6590,6 +6940,13 @@
               "indexTestFiles"
             ],
             "typeOnly": false
+          },
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
           }
         ],
         "exports": []
@@ -6642,7 +6999,6 @@
       },
       "test/learn/bootstrap.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -6652,6 +7008,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/learn/bootstrap.ts",
             "imports": [
@@ -6768,7 +7131,6 @@
       },
       "test/learn/export.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -6777,6 +7139,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/learn/export.ts",
             "imports": [
@@ -7003,7 +7372,6 @@
       },
       "test/learn/knowledge-store.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -7012,6 +7380,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/paths.ts",
             "imports": [
@@ -7059,7 +7434,6 @@
       },
       "test/learn/leaf-learner.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -7069,6 +7443,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/learn/leaf-learner.ts",
             "imports": [
@@ -7140,7 +7521,6 @@
       },
       "test/learn/learn-cli.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -7151,6 +7531,13 @@
           "url"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/learn/cli-main.ts",
             "imports": [
@@ -7433,7 +7820,6 @@
       },
       "test/learn/learned-block.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -7473,6 +7859,13 @@
               "writeLearnedBlocks"
             ],
             "typeOnly": false
+          },
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
           },
           {
             "file": "src/learn/types.ts",
@@ -7515,7 +7908,6 @@
       },
       "test/learn/learner.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -7525,6 +7917,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/learn/learner.ts",
             "imports": [
@@ -7597,7 +7996,6 @@
       },
       "test/learn/learning-db.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -7606,6 +8004,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "src/learn/learning-db.ts",
             "imports": [
@@ -7661,7 +8066,6 @@
       },
       "test/learn/learning-store.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -7670,6 +8074,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/paths.ts",
             "imports": [
@@ -7817,7 +8228,6 @@
       },
       "test/learn/relay-task4-findings.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -7826,6 +8236,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/learn/tasks.ts",
             "imports": [
@@ -7886,7 +8303,6 @@
       },
       "test/learn/relay-task6-findings.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -7897,6 +8313,13 @@
           "url"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/learn/cli-main.ts",
             "imports": [
@@ -7963,7 +8386,6 @@
       },
       "test/learn/relay-task8-challenger.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -7973,6 +8395,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/learn/leaf-learner.ts",
             "imports": [
@@ -8044,7 +8473,6 @@
       },
       "test/learn/relay-task9-findings.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -8054,6 +8482,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/learn/learner.ts",
             "imports": [
@@ -8126,7 +8561,6 @@
       },
       "test/learn/report.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -8135,6 +8569,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/learn/report.ts",
             "imports": [
@@ -8312,7 +8753,6 @@
       },
       "test/learn/solver.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -8321,6 +8761,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/learn/solver.ts",
             "imports": [
@@ -8397,7 +8844,6 @@
       },
       "test/learn/tasks.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -8406,6 +8852,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/learn/tasks.ts",
             "imports": [
@@ -8444,7 +8897,6 @@
       },
       "test/learn/validate.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -8454,6 +8906,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/learn/validate.ts",
             "imports": [
@@ -8738,11 +9197,23 @@
         ],
         "exports": []
       },
+      "test/no-native-sqlite.test.ts": {
+        "externalDependencies": [
+          "vitest"
+        ],
+        "nodeDependencies": [
+          "fs"
+        ],
+        "internalDependencies": [],
+        "exports": []
+      },
       "test/node-floor.test.ts": {
         "externalDependencies": [
           "vitest"
         ],
-        "nodeDependencies": [],
+        "nodeDependencies": [
+          "fs"
+        ],
         "internalDependencies": [
           {
             "file": "src/node-floor.ts",
@@ -8828,7 +9299,6 @@
       },
       "test/oversized-message-guard.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -8837,6 +9307,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/db.ts",
             "imports": [
@@ -8976,7 +9453,6 @@
       },
       "test/prune.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -8985,6 +9461,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/db.ts",
             "imports": [
@@ -9073,19 +9556,6 @@
           "guardQuery",
           "takeRealSdkCalls"
         ]
-      },
-      "test/rebuild-native.test.ts": {
-        "externalDependencies": [
-          "vitest"
-        ],
-        "nodeDependencies": [
-          "node:child_process",
-          "node:fs/promises",
-          "node:os",
-          "node:path"
-        ],
-        "internalDependencies": [],
-        "exports": []
       },
       "test/redact-patterns.test.ts": {
         "externalDependencies": [
@@ -9212,7 +9682,6 @@
       },
       "test/search-metadata-filters.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -9221,6 +9690,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/indexer.ts",
             "imports": [
@@ -9403,6 +9879,43 @@
         ],
         "exports": []
       },
+      "test/sqlite-adapter.test.ts": {
+        "externalDependencies": [
+          "vitest"
+        ],
+        "nodeDependencies": [
+          "child_process",
+          "fs",
+          "os",
+          "path"
+        ],
+        "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database",
+              "requireTransactionState",
+              "sqliteLoadError"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/node-floor.ts",
+            "imports": [
+              "NODE_FLOOR"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "test/test-utils.ts",
+            "imports": [
+              "safeRmSync"
+            ],
+            "typeOnly": false
+          }
+        ],
+        "exports": []
+      },
       "test/stats-format.test.ts": {
         "externalDependencies": [
           "vitest"
@@ -9421,8 +9934,6 @@
       },
       "test/stats.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
-          "sqlite-vec",
           "vitest"
         ],
         "nodeDependencies": [
@@ -9435,6 +9946,13 @@
             "file": "src/stats.ts",
             "imports": [
               "getIndexStats"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
             ],
             "typeOnly": false
           }
@@ -9779,7 +10297,6 @@
       },
       "test/sync-embeddings-unavailable.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -9788,6 +10305,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "test/test-utils.ts",
             "imports": [
@@ -9974,7 +10498,6 @@
       },
       "test/sync-incremental-and-db.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -9983,6 +10506,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/sync.ts",
             "imports": [
@@ -10024,7 +10554,6 @@
       },
       "test/sync-marker-scan.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -10033,6 +10562,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "test/test-utils.ts",
             "imports": [
@@ -10158,8 +10694,6 @@
       },
       "test/sync.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
-          "sqlite-vec",
           "vitest"
         ],
         "nodeDependencies": [
@@ -10172,6 +10706,13 @@
             "file": "src/sync.ts",
             "imports": [
               "syncConversations"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
             ],
             "typeOnly": false
           }
@@ -10247,15 +10788,20 @@
         ]
       },
       "test/test-utils.ts": {
-        "externalDependencies": [
-          "better-sqlite3"
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [
           "fs",
           "os",
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/digest-db.ts",
             "imports": [
@@ -10277,7 +10823,6 @@
       },
       "test/text-search-multiword.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -10286,6 +10831,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "src/db.ts",
             "imports": [
@@ -10321,7 +10873,6 @@
       },
       "test/tool-calls-cascade.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -10330,6 +10881,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/db.ts",
             "imports": [
@@ -10343,7 +10901,6 @@
       },
       "test/topic-db.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -10352,6 +10909,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/topic-db.ts",
             "imports": [
@@ -10406,7 +10970,6 @@
       },
       "test/topic-job.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -10415,6 +10978,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          },
           {
             "file": "src/db.ts",
             "imports": [
@@ -10483,7 +11053,6 @@
       },
       "test/topic-phase.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -10492,6 +11061,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/db.ts",
             "imports": [
@@ -10586,7 +11162,6 @@
       },
       "test/topic-tool.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -10596,6 +11171,13 @@
           "url"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/mcp-tools.ts",
             "imports": [
@@ -10663,7 +11245,6 @@
       },
       "test/vanished-transcript.test.ts": {
         "externalDependencies": [
-          "better-sqlite3",
           "vitest"
         ],
         "nodeDependencies": [
@@ -10672,6 +11253,13 @@
           "path"
         ],
         "internalDependencies": [
+          {
+            "file": "src/sqlite.ts",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "test/test-utils.ts",
             "imports": [
@@ -10837,33 +11425,33 @@
     }
   },
   "statistics": {
-    "totalTypeScriptFiles": 293,
-    "totalSourceFiles": 293,
+    "totalTypeScriptFiles": 295,
+    "totalSourceFiles": 295,
     "totalModules": 4,
-    "totalLinesOfCode": 58191,
-    "totalExports": 616,
+    "totalLinesOfCode": 59124,
+    "totalExports": 629,
     "entryRoots": 6,
-    "reachableFiles": 50,
+    "reachableFiles": 51,
     "dormantFiles": 60,
     "orphanedFiles": 15,
     "testOnlyFiles": 45,
     "runtimeCircularDeps": 0,
     "typeOnlyCircularDeps": 1,
-    "totalTypeOnlyImports": 84,
+    "totalTypeOnlyImports": 114,
     "noImporterFileCount": 14,
-    "unusedExportsCount": 115,
+    "unusedExportsCount": 114,
     "circularDepsTruncated": false,
     "runtimeCyclicComponents": 0,
     "typeOnlyCyclicComponents": 1,
     "runtimeFilesInCycles": 0,
     "typeOnlyFilesInCycles": 2,
-    "totalClasses": 10,
-    "totalInterfaces": 140,
-    "totalFunctions": 351,
+    "totalClasses": 11,
+    "totalInterfaces": 145,
+    "totalFunctions": 356,
     "totalTypeGuards": 11,
     "totalEnums": 0,
-    "totalConstants": 71,
-    "totalReExports": 8
+    "totalConstants": 70,
+    "totalReExports": 9
   },
   "reachability": {
     "roots": [
@@ -10874,7 +11462,7 @@
       "test/setup-env.ts",
       "test/global-setup.ts"
     ],
-    "reachableCount": 50,
+    "reachableCount": 51,
     "dormantCount": 60,
     "orphaned": [
       "cli/digest-hook.js",

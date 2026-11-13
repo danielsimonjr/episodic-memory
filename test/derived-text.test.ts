@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import Database from 'better-sqlite3';
+import { Database } from '../src/sqlite.js';
 import { ensureDigestSchema, insertDigestEntry, supersede, searchDigest, type DigestEntry } from '../src/digest-db.js';
 import { dropLinesCiting, removeDerivedText } from '../src/derived-text.js';
 
@@ -52,7 +52,7 @@ describe('dropLinesCiting removes the digest lines that cite a removed exchange'
 });
 
 describe('removeDerivedText', () => {
-  let db: Database.Database;
+  let db: Database;
   beforeEach(() => {
     db = new Database(':memory:');
     ensureDigestSchema(db);

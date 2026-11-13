@@ -117,6 +117,26 @@ The dispatcher takes a command as its first argument.
 
 A `src` export that the barrel does not re-export is internal to the package, even when `repo-tools map` shows no importer for it. Removing an export from the barrel is a breaking change for library callers.
 
+## SQLite adapter and doctor line
+
+`src/index.ts` re-exports `src/sqlite.ts`, so a caller can name the `Database` type that `openDatabase` returns. Only `src/sqlite.ts` imports `node:sqlite`. The `Database` class keeps the better-sqlite3 method names.
+
+| Export | Signature or shape |
+|---|---|
+| `Database` (class) | `new Database(path: string, options?: DatabaseOptions)`. Properties: `name`, `open` and `inTransaction`. Methods: `prepare(sql): Statement`, `exec(sql): this`, `close(): this`, `function(name, options, fn): this`, `pragma(text, options?): unknown` and `transaction<F>(fn): Transaction<F>`. |
+| `requireTransactionState` | `(handle: { isTransaction?: unknown; close(): void }): void`. Closes the handle and throws when the handle has no boolean `isTransaction`. |
+| `sqliteLoadError` | `(err: unknown, version: string): Error`. Returns an error that names the Node floor when `version` is below it, else the original error. |
+| `BindParams` | `unknown[]`. Positional values, or one plain object of named values. |
+| `Row` | `Record<string, SQLOutputValue>`. |
+| `RunResult` | `{ changes: number; lastInsertRowid: number }`. |
+| `Statement` | Methods `run`, `get<T>`, `all<T>` and `iterate<T>`. Each takes `...params: BindParams`. |
+| `DatabaseOptions` | `{ readonly?: boolean; fileMustExist?: boolean }`. |
+| `PragmaOptions` | `{ simple?: boolean }`. |
+| `SqlFunctionOptions` | `{ deterministic?: boolean; directOnly?: boolean; varargs?: boolean; useBigIntArguments?: boolean }`. |
+| `Transaction<F>` | `F` with the properties `deferred`, `immediate` and `exclusive`. Each property has the type `F`. |
+
+`src/doctor.ts` exports `formatSqliteLine(sqliteVersion: string | null, nodeVersion: string): string`. The line starts with `FAIL` when the Node version is below the floor. Otherwise the line reports the SQLite version and the Node version.
+
 ## Environment variables
 
 | Variable | Effect |
@@ -147,7 +167,7 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalExports | 616 | repo-tools map |
-| totalSourceFiles | 293 | repo-tools map |
+| totalExports | 629 | repo-tools map |
+| totalSourceFiles | 295 | repo-tools map |
 
 `totalExports` counts every export in the repository, including test and tool files. The library barrel lists only the exports that `src/index.ts` re-exports. The tool schemas come from `src/mcp-schemas.ts`. The command names come from `cli/episodic-memory.js`. The variable names come from a search for `EPISODIC_MEMORY_` in `src/` and `cli/`. None of these facts is a `repo-tools map` metric.

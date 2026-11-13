@@ -2,7 +2,7 @@
  * A loader probe for child-process tests: make a module graph fail to load.
  *
  * The digest hook and the MCP server must not reach heavy modules on their fast
- * paths (the knowledge store, the Agent SDK, transformers, sqlite-vec). Asserting that by
+ * paths (the knowledge store, the Agent SDK, transformers). Asserting that by
  * grepping the source is not enough — a transitive import three modules away
  * would still load them. This probe is installed into the child with
  * `NODE_OPTIONS=--import=file://<this file>` and makes the named specifiers

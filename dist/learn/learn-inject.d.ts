@@ -4,7 +4,7 @@
  * This module is on the digest hook's fast path, so its import graph is kept to
  * `./types.js` (types only, erased at compile time), `./learned-text-screen.js`
  * and `../redact.js` — never `knowledge-db.js` or `knowledge-store.js`, and
- * therefore never `better-sqlite3`'s heavier callers. The hook reads the rendered text from
+ * therefore never the heavier database callers. The hook reads the rendered text from
  * `learning.sqlite` and must load in a few hundred milliseconds.
  *
  * The block is data, not instructions: it names where to look in past
@@ -12,7 +12,7 @@
  * re-redacted on the way out, because the text was written by a model reading
  * untrusted archive content.
  */
-import type Database from 'better-sqlite3';
+import type { Database } from '../sqlite.js';
 import type { KnowledgeEntry, KnowledgeKind } from './types.js';
 /** Replace email, phone, SSN, card, and IPv4 shapes with `[redacted]`. */
 export declare function redactPii(text: string): string;
@@ -78,7 +78,7 @@ export declare function capLearnedBlock(text: string, maxChars: number): string;
  * Empty when absent or
  * when every line is dropped.
  */
-export declare function readLearnedBlock(learningDb: Database.Database, project: string): string;
+export declare function readLearnedBlock(learningDb: Database, project: string): string;
 /**
  * Read the stored block for a project and cap it at `maxChars`.
  *
@@ -86,4 +86,4 @@ export declare function readLearnedBlock(learningDb: Database.Database, project:
  * The cap runs on the screened text.
  * So a drop can never leave a half-line or an unclosed fence behind.
  */
-export declare function readLearnedBlockCapped(learningDb: Database.Database, project: string, maxChars: number): string;
+export declare function readLearnedBlockCapped(learningDb: Database, project: string, maxChars: number): string;

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import Database from 'better-sqlite3';
+import { Database } from '../../src/sqlite.js';
 import { buildReport, formatReport } from '../../src/learn/report.js';
 import { openLearningDb } from '../../src/learn/learning-store.js';
 import { openKnowledgeStore, type KnowledgeStore } from '../../src/learn/knowledge-store.js';
@@ -43,8 +43,8 @@ function nk(over: Partial<NewKnowledgeEntry> = {}): NewKnowledgeEntry {
 }
 
 let dir: string;
-let learning: Database.Database;
-let index: Database.Database;
+let learning: Database;
+let index: Database;
 let store: KnowledgeStore;
 let dbs: LearnDbs;
 let runId: string;

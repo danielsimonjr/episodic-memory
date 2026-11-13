@@ -116,8 +116,8 @@ DX-wise:
 
 ### Install is slow + opaque
 
-First-run takes 3-5 minutes (npm install of 250 packages + native
-build). Two visible messages:
+First-run takes 3-5 minutes (npm install of 250 packages).
+Two visible messages:
 
 ```
 Installing episodic-memory dependencies (first run only)...
@@ -130,7 +130,7 @@ process, comes back angry.
 **Fix:** the wrapper should emit progress per-stage:
 - `[1/4] Cloning plugin repo... (10s)`
 - `[2/4] Installing 250 dependencies... (90s)`
-- `[3/4] Building native bindings (better-sqlite3, onnxruntime)... (60s)`
+- `[3/4] Verifying native bindings (onnxruntime)... (60s)`
 - `[4/4] Verifying install... (5s)`
 - `Ready!`
 

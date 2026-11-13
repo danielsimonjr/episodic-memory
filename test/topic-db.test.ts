@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import Database from 'better-sqlite3';
+import { Database } from '../src/sqlite.js';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -47,7 +47,7 @@ const DUP_A = '# A\n\n## S\n\nX.[^1]\n^4a8b10cd\n\n[^1]: Time: 2026; Sources: #e
 const DUP_B = '# B\n\n## S\n\nY.[^1]\n^4a8b10cd\n\n[^1]: Time: 2026; Sources: #ex-111\n';
 
 /** Read every topic table, in row order, as text. */
-function snapshot(db: Database.Database): Record<string, string> {
+function snapshot(db: Database): Record<string, string> {
   const out: Record<string, string> = {};
   for (const table of TABLES) {
     out[table] = JSON.stringify(db.prepare(`SELECT * FROM ${table} ORDER BY rowid`).all());
@@ -55,13 +55,13 @@ function snapshot(db: Database.Database): Record<string, string> {
   return out;
 }
 
-function count(db: Database.Database, sql: string): number {
+function count(db: Database, sql: string): number {
   return (db.prepare(sql).get() as { c: number }).c;
 }
 
 describe('topic-db', () => {
   let dir: string;
-  let db: Database.Database;
+  let db: Database;
 
   beforeEach(() => {
     dir = fs.mkdtempSync(path.join(os.tmpdir(), 'topic-db-'));

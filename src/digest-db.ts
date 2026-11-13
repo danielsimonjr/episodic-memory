@@ -1,4 +1,4 @@
-import type Database from 'better-sqlite3';
+import type { Database } from './sqlite.js';
 import { toFtsQuery } from './fts-query.js';
 
 /** The tier of a digest entry: `session`, `day` or `week`. */
@@ -63,7 +63,7 @@ function fromRow(r: Row): DigestEntry {
  * Running the function again has no effect. The module never deletes an entry.
  * The supersede function marks a replaced entry instead.
  */
-export function ensureDigestSchema(db: Database.Database): void {
+export function ensureDigestSchema(db: Database): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS digest_entry (
       id INTEGER PRIMARY KEY,
@@ -94,7 +94,7 @@ export function ensureDigestSchema(db: Database.Database): void {
  * The function sets created_at to the current time and returns the new id.
  * The function returns null, and writes nothing, when an entry with the same tier, project and periodStart already exists.
  */
-export function insertDigestEntry(db: Database.Database, e: NewDigestEntry): number | null {
+export function insertDigestEntry(db: Database, e: NewDigestEntry): number | null {
   const tx = db.transaction((): number | null => {
     const res = db
       .prepare(
@@ -126,7 +126,7 @@ export function insertDigestEntry(db: Database.Database, e: NewDigestEntry): num
  *
  * An entry is active while no other entry supersedes it. The list includes handoff notes.
  */
-export function listActiveEntries(db: Database.Database, project: string): DigestEntry[] {
+export function listActiveEntries(db: Database, project: string): DigestEntry[] {
   const rows = db
     .prepare(
       `SELECT * FROM digest_entry
@@ -142,7 +142,7 @@ export function listActiveEntries(db: Database.Database, project: string): Diges
  *
  * The list excludes handoff notes and sorts by project, then by period start, oldest first.
  */
-export function listActiveByTier(db: Database.Database, tier: DigestTier): DigestEntry[] {
+export function listActiveByTier(db: Database, tier: DigestTier): DigestEntry[] {
   const rows = db
     .prepare(
       `SELECT * FROM digest_entry
@@ -162,7 +162,7 @@ export function listActiveByTier(db: Database.Database, tier: DigestTier): Diges
  * @param ids the entries to mark
  * @param byId the id of the replacing entry
  */
-export function supersede(db: Database.Database, ids: number[], byId: number): void {
+export function supersede(db: Database, ids: number[], byId: number): void {
   const stmt = db.prepare('UPDATE digest_entry SET superseded_by = ? WHERE id = ? AND superseded_by IS NULL');
   const tx = db.transaction(() => {
     for (const id of ids) stmt.run(byId, id);
@@ -227,7 +227,7 @@ export function hideCitedLines(text: string, hideExchangeIds?: string[]): string
  * @param opts `hideExchangeIds` lists exchange ids. The function removes the lines that cite them and drops each entry with no line left.
  */
 export function searchDigest(
-  db: Database.Database,
+  db: Database,
   query: string,
   project?: string,
   limit = 10,

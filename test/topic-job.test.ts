@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import type Database from 'better-sqlite3';
+import type { Database } from '../src/sqlite.js';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -70,7 +70,7 @@ Chose B for the second task.[^1]
 === END`;
 
 function addExchange(
-  db: Database.Database,
+  db: Database,
   id: string,
   session: string,
   ts: string,
@@ -90,19 +90,19 @@ function replies(...texts: string[]) {
   return vi.fn(async (_prompt: string) => texts[Math.min(i++, texts.length - 1)]);
 }
 
-function tableNames(db: Database.Database): string[] {
+function tableNames(db: Database): string[] {
   return (db.prepare("SELECT name FROM sqlite_master WHERE name LIKE 'topic_%'").all() as { name: string }[]).map(r => r.name);
 }
 
 /** Install the cache document with the given text, as an earlier run would have. */
-function seedCache(db: Database.Database, text: string): void {
+function seedCache(db: Database, text: string): void {
   ensureTopicSchema(db);
   installTopicEdit(db, 'proj-a', { files: [{ slug: 'cache', text }], deletes: [] }, new Map());
 }
 
 describe('runTopics', () => {
   let dir: string;
-  let db: Database.Database;
+  let db: Database;
 
   beforeEach(() => {
     for (const k of KEYS) saved[k] = process.env[k];
@@ -524,7 +524,7 @@ describe('runTopics through callOllama', () => {
     'EPISODIC_MEMORY_SUMMARIZER_BACKEND', 'EPISODIC_MEMORY_OLLAMA_MODEL', 'EPISODIC_MEMORY_OLLAMA_URL'];
   const kept: Record<string, string | undefined> = {};
   let dir: string;
-  let db: Database.Database;
+  let db: Database;
 
   beforeEach(() => {
     for (const k of OKEYS) kept[k] = process.env[k];

@@ -44,6 +44,7 @@ export function releaseMigrationLock(handle) {
 }
 /**
  * The function returns up to `limit` rows whose embedding_version is older than EMBEDDING_VERSION.
+ * The function also returns a row that has no stored vector, whatever its version.
  *
  * Each row carries its tool names, so the caller can reproduce the production exchange-text format.
  */
@@ -57,6 +58,7 @@ export function pickStaleBatch(db, limit) {
     FROM exchanges e
     LEFT JOIN tool_calls tc ON tc.exchange_id = e.id
     WHERE e.embedding_version < ?
+       OR NOT EXISTS (SELECT 1 FROM exchange_vectors v WHERE v.id = e.id)
     GROUP BY e.id
     LIMIT ?
   `).all(EMBEDDING_VERSION, limit);
@@ -64,7 +66,7 @@ export function pickStaleBatch(db, limit) {
 /**
  * Replace the vector of one exchange and stamp the current EMBEDDING_VERSION on the row.
  *
- * The function runs three statements in order. The statements delete the old vector, insert the new vector and update embedding_version.
+ * The function runs two statements in order. The statements replace the vector and update embedding_version.
  * The function does not start a transaction. The caller must wrap the call in a transaction to make the change atomic.
  *
  * @param db the open index database
@@ -72,18 +74,17 @@ export function pickStaleBatch(db, limit) {
  * @param embedding the new vector. The function stores it as 32-bit floats.
  */
 export function recordReembedded(db, id, embedding) {
-    db.prepare('DELETE FROM vec_exchanges WHERE id = ?').run(id);
-    db.prepare('INSERT INTO vec_exchanges (id, embedding) VALUES (?, ?)')
+    db.prepare('INSERT OR REPLACE INTO exchange_vectors (id, embedding) VALUES (?, ?)')
         .run(id, Buffer.from(new Float32Array(embedding).buffer));
     db.prepare('UPDATE exchanges SET embedding_version = ? WHERE id = ?')
         .run(EMBEDDING_VERSION, id);
 }
 /**
- * Count rows whose embedding is older than the current version.
+ * Count rows whose embedding is older than the current version, or missing.
  * Used to decide whether migration is needed and to report progress.
  */
 export function countStale(db) {
-    const row = db.prepare('SELECT COUNT(*) AS c FROM exchanges WHERE embedding_version < ?').get(EMBEDDING_VERSION);
+    const row = db.prepare('SELECT COUNT(*) AS c FROM exchanges e WHERE e.embedding_version < ? OR NOT EXISTS (SELECT 1 FROM exchange_vectors v WHERE v.id = e.id)').get(EMBEDDING_VERSION);
     return row.c;
 }
 /** Path of the migration lock under the index directory. */

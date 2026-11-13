@@ -1,4 +1,4 @@
-import type Database from 'better-sqlite3';
+import type { Database } from './sqlite.js';
 import { type DigestOptions, type DigestResult } from './digest-job.js';
 /**
  * The digest step of a sync run.
@@ -7,5 +7,5 @@ import { type DigestOptions, type DigestResult } from './digest-job.js';
  * The digest step logs and swallows any failure, so the next run retries.
  */
 export declare function runDigestPhase(opts?: DigestOptions & {
-    db?: Database.Database;
+    db?: Database;
 }): Promise<DigestResult | null>;

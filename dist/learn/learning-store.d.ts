@@ -2,7 +2,7 @@
  * The learning trace database: `<configDir>/learned/learning.sqlite`.
  *
  * The file is the plugin's own database. The module opens the file directly with
- * `better-sqlite3`. A SessionStart hook can then read the rendered learned block
+ * the node:sqlite adapter. A SessionStart hook can then read the rendered learned block
  * without opening the
  * knowledge store (§6.3 of the Recursa spec). The file sits beside `knowledge.db` under
  * `learned/`, a sibling of `conversation-index/`, so an index reset never
@@ -12,7 +12,7 @@
  * `ensureLearningSchema` in `learning-db.ts` creates the `learning_*` tables (runs,
  * tasks and attempts).
  */
-import Database from 'better-sqlite3';
+import { Database } from '../sqlite.js';
 /** The tables of the learning trace database, in the order that migrateLearningSchema creates them. */
 export declare const LEARNING_TABLES: readonly ["knowledge_snapshot", "learned_block", "learning_run", "learning_task", "learning_attempt"];
 /** Options for openLearningDb. */
@@ -34,7 +34,7 @@ export interface OpenLearningDbOptions {
  * The function creates `knowledge_snapshot` and `learned_block`, and then the `learning_*` tables.
  * Running the function again has no effect.
  */
-export declare function migrateLearningSchema(db: Database.Database): void;
+export declare function migrateLearningSchema(db: Database): void;
 /**
  * Open the learning trace database.
  *
@@ -42,4 +42,4 @@ export declare function migrateLearningSchema(db: Database.Database): void;
  * never migrates. The hook opens the file read-only, and the file may pre-date a
  * schema change. SQLite refuses DDL on a read-only connection.
  */
-export declare function openLearningDb(options?: OpenLearningDbOptions): Database.Database;
+export declare function openLearningDb(options?: OpenLearningDbOptions): Database;

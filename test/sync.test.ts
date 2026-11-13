@@ -3,8 +3,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync, statSync, utimesSync, ex
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { syncConversations } from '../src/sync.js';
-import Database from 'better-sqlite3';
-import * as sqliteVec from 'sqlite-vec';
+import { Database } from '../src/sqlite.js';
 
 describe('sync command', () => {
   let testDir: string;
@@ -170,7 +169,6 @@ describe('sync command', () => {
 
     // Initialize test database
     const db = new Database(dbPath);
-    sqliteVec.load(db);
     db.exec(`
       CREATE TABLE exchanges (
         id TEXT PRIMARY KEY,
@@ -185,10 +183,7 @@ describe('sync command', () => {
       )
     `);
     db.exec(`
-      CREATE VIRTUAL TABLE vec_exchanges USING vec0(
-        id TEXT PRIMARY KEY,
-        embedding FLOAT[384]
-      )
+      CREATE TABLE exchange_vectors (id TEXT PRIMARY KEY, embedding BLOB NOT NULL)
     `);
     db.close();
 

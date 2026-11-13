@@ -2,8 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, rmSync, mkdirSync, existsSync, readFileSync, writeFileSync, openSync, closeSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import Database from 'better-sqlite3';
-import * as sqliteVec from 'sqlite-vec';
+import { Database } from '../src/sqlite.js';
 import {
   EMBEDDING_VERSION,
   acquireMigrationLock,
@@ -34,13 +33,12 @@ describe('embedding migration', () => {
     try { rmSync(testDir, { recursive: true, force: true }); } catch {}
   });
 
-  function openDb(): Database.Database {
+  function openDb(): Database {
     const db = new Database(dbPath);
-    sqliteVec.load(db);
     return db;
   }
 
-  function seedExchanges(db: Database.Database, n: number, version: number = 0): string[] {
+  function seedExchanges(db: Database, n: number, version: number = 0): string[] {
     db.exec(`
       CREATE TABLE IF NOT EXISTS exchanges (
         id TEXT PRIMARY KEY,
@@ -53,7 +51,7 @@ describe('embedding migration', () => {
         line_end INTEGER NOT NULL,
         embedding_version INTEGER NOT NULL DEFAULT 0
       );
-      CREATE VIRTUAL TABLE IF NOT EXISTS vec_exchanges USING vec0(id TEXT PRIMARY KEY, embedding FLOAT[384]);
+      CREATE TABLE IF NOT EXISTS exchange_vectors (id TEXT PRIMARY KEY, embedding BLOB NOT NULL);
     `);
     const ids: string[] = [];
     for (let i = 0; i < n; i++) {
@@ -65,7 +63,7 @@ describe('embedding migration', () => {
       ).run(id, `user message ${i}`, `assistant reply ${i}`, version);
       const dummy = new Float32Array(384);
       for (let k = 0; k < 384; k++) dummy[k] = Math.random();
-      db.prepare(`INSERT INTO vec_exchanges (id, embedding) VALUES (?, ?)`).run(id, Buffer.from(dummy.buffer));
+      db.prepare(`INSERT INTO exchange_vectors (id, embedding) VALUES (?, ?)`).run(id, Buffer.from(dummy.buffer));
     }
     return ids;
   }
@@ -112,12 +110,14 @@ describe('embedding migration', () => {
         embedding_version INTEGER NOT NULL DEFAULT 0
       );
       CREATE TABLE tool_calls (id TEXT PRIMARY KEY, exchange_id TEXT, tool_name TEXT);
+      CREATE TABLE exchange_vectors (id TEXT PRIMARY KEY, embedding BLOB NOT NULL);
     `);
     for (let i = 0; i < 5; i++) {
       db.prepare(`INSERT INTO exchanges (id, project, timestamp, user_message, assistant_message, archive_path, line_start, line_end, embedding_version) VALUES (?, 'p', 't', 'u', 'a', '/x', 1, 2, 0)`).run(`stale-${i}`);
     }
     for (let i = 0; i < 3; i++) {
       db.prepare(`INSERT INTO exchanges (id, project, timestamp, user_message, assistant_message, archive_path, line_start, line_end, embedding_version) VALUES (?, 'p', 't', 'u', 'a', '/x', 1, 2, ?)`).run(`fresh-${i}`, EMBEDDING_VERSION);
+      db.prepare('INSERT INTO exchange_vectors (id, embedding) VALUES (?, ?)').run(`fresh-${i}`, Buffer.alloc(384 * 4));
     }
     const batch = pickStaleBatch(db, 3);
     expect(batch.length).toBe(3);
@@ -142,14 +142,14 @@ describe('embedding migration', () => {
         embedding_version INTEGER NOT NULL DEFAULT 0
       );
       CREATE TABLE tool_calls (id TEXT PRIMARY KEY, exchange_id TEXT, tool_name TEXT);
-      CREATE VIRTUAL TABLE vec_exchanges USING vec0(id TEXT PRIMARY KEY, embedding FLOAT[384]);
+      CREATE TABLE exchange_vectors (id TEXT PRIMARY KEY, embedding BLOB NOT NULL);
     `);
     const N = 5;
     for (let i = 0; i < N; i++) {
       db.prepare(`INSERT INTO exchanges (id, project, timestamp, user_message, assistant_message, archive_path, line_start, line_end, embedding_version) VALUES (?, 'p', 't', ?, ?, '/x', 1, 2, 0)`)
         .run(`r-${i}`, `question ${i} about feature`, `answer ${i} explaining the feature`);
       const dummy = new Float32Array(384);
-      db.prepare(`INSERT INTO vec_exchanges (id, embedding) VALUES (?, ?)`).run(`r-${i}`, Buffer.from(dummy.buffer));
+      db.prepare(`INSERT INTO exchange_vectors (id, embedding) VALUES (?, ?)`).run(`r-${i}`, Buffer.from(dummy.buffer));
     }
 
     expect(countStale(db)).toBe(N);
@@ -164,7 +164,7 @@ describe('embedding migration', () => {
     expect(second).toBe(N - 3);
     expect(countStale(db)).toBe(0);
 
-    // After migration, vec_exchanges has real (non-zero) vectors and rows
+    // After migration, exchange_vectors has real (non-zero) vectors and rows
     // are stamped with the current EMBEDDING_VERSION.
     const versions = db.prepare('SELECT embedding_version FROM exchanges').all() as Array<{ embedding_version: number }>;
     expect(versions.every(v => v.embedding_version === EMBEDDING_VERSION)).toBe(true);
@@ -187,6 +187,7 @@ describe('embedding migration', () => {
         embedding_version INTEGER NOT NULL DEFAULT 0
       );
       CREATE TABLE tool_calls (id TEXT PRIMARY KEY, exchange_id TEXT, tool_name TEXT);
+      CREATE TABLE exchange_vectors (id TEXT PRIMARY KEY, embedding BLOB NOT NULL);
     `);
     db.prepare(`INSERT INTO exchanges (id, project, timestamp, user_message, assistant_message, archive_path, line_start, line_end, embedding_version) VALUES ('x', 'p', 't', 'u', 'a', '/x', 1, 2, 0)`).run();
 
@@ -206,15 +207,15 @@ describe('embedding migration', () => {
     db.close();
   });
 
-  it('recordReembedded updates vec_exchanges embedding and stamps embedding_version on the row', () => {
+  it('recordReembedded replaces the stored vector and stamps embedding_version on the row', () => {
     const db = openDb();
     seedExchanges(db, 1, 0);
     const newVec = Array.from({ length: 384 }, () => 0.5);
     recordReembedded(db, 'ex-0', newVec);
     const row = db.prepare('SELECT embedding_version FROM exchanges WHERE id = ?').get('ex-0') as { embedding_version: number };
     expect(row.embedding_version).toBe(EMBEDDING_VERSION);
-    // vec_exchanges row should have been replaced (same id, new embedding bytes).
-    const vec = db.prepare('SELECT id FROM vec_exchanges WHERE id = ?').get('ex-0');
+    // The exchange_vectors row should have been replaced (same id, new embedding bytes).
+    const vec = db.prepare('SELECT id FROM exchange_vectors WHERE id = ?').get('ex-0');
     expect(vec).toBeDefined();
     db.close();
   });

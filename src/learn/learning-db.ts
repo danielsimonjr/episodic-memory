@@ -18,7 +18,7 @@
  * Additive only: nothing here deletes a run, task or attempt.
  */
 
-import type Database from 'better-sqlite3';
+import type { Database } from '../sqlite.js';
 import { randomBytes } from 'crypto';
 import { redactSecrets } from '../redact.js';
 import type {
@@ -126,7 +126,7 @@ export const SIGNAL_KINDS: LearningKind[] = ['locate', 'when', 'multi'];
 export const SIGNAL_TIERS: LearningTier[] = [2, 3];
 
 /** Create the `learning_*` tables. Idempotent; called from `migrateLearningSchema`. */
-export function ensureLearningSchema(db: Database.Database): void {
+export function ensureLearningSchema(db: Database): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS learning_run (
       id TEXT PRIMARY KEY,
@@ -196,7 +196,7 @@ function newRunId(now: Date): string {
  *
  * The function sets the start time to the current time and stores the budget as JSON.
  */
-export function createRun(db: Database.Database, input: CreateRunInput): string {
+export function createRun(db: Database, input: CreateRunInput): string {
   const id = newRunId(new Date());
   db.prepare(
     `INSERT INTO learning_run
@@ -220,7 +220,7 @@ export function createRun(db: Database.Database, input: CreateRunInput): string 
  * The function sets the finish time to the current time and stores the metrics as JSON.
  */
 export function finishRun(
-  db: Database.Database,
+  db: Database,
   id: string,
   status: LearningRun['status'],
   metrics: Record<string, unknown> = {}
@@ -239,7 +239,7 @@ export function finishRun(
  * The function does nothing when no run has the id.
  */
 export function addRejection(
-  db: Database.Database,
+  db: Database,
   runId: string,
   rejection: RunRejection
 ): void {
@@ -278,13 +278,13 @@ function runFromRow(row: any): LearningRun {
 }
 
 /** Return the run with this id, or null when no run has the id. */
-export function getRun(db: Database.Database, id: string): LearningRun | null {
+export function getRun(db: Database, id: string): LearningRun | null {
   const row = db.prepare('SELECT * FROM learning_run WHERE id = ?').get(id);
   return row ? runFromRow(row) : null;
 }
 
 /** The newest run by start time, or null when none exists. */
-export function latestRun(db: Database.Database): LearningRun | null {
+export function latestRun(db: Database): LearningRun | null {
   const row = db
     .prepare('SELECT * FROM learning_run ORDER BY started_at DESC, rowid DESC LIMIT 1')
     .get();
@@ -293,7 +293,7 @@ export function latestRun(db: Database.Database): LearningRun | null {
 
 /** Insert one task row and return the new task id. */
 export function insertTask(
-  db: Database.Database,
+  db: Database,
   task: Omit<LearningTask, 'id'>
 ): number {
   const info = db
@@ -340,7 +340,7 @@ function taskFromRow(row: any): LearningTask {
  * held-out split. The function excludes stale rows unless the caller sets
  * `includeStale`. The `--check` command and `learn report` want to see them.
  */
-export function listTasks(db: Database.Database, options: ListTasksOptions): LearningTask[] {
+export function listTasks(db: Database, options: ListTasksOptions): LearningTask[] {
   const where = ['split = ?'];
   const params: unknown[] = [options.split];
   if (!options.includeStale) {
@@ -375,7 +375,7 @@ export function listTasks(db: Database.Database, options: ListTasksOptions): Lea
 }
 
 /** Mark tasks stale. Additive: the row stays, and `includeStale` can still read it. */
-export function markStale(db: Database.Database, ids: number[]): void {
+export function markStale(db: Database, ids: number[]): void {
   if (ids.length === 0) return;
   const stmt = db.prepare("UPDATE learning_task SET status = 'stale' WHERE id = ?");
   const run = db.transaction((list: number[]) => {
@@ -392,7 +392,7 @@ export const MAX_ANSWER_CHARS = 4000;
  *
  * The function redacts the answer, caps its length and stamps the creation time.
  */
-export function insertAttempt(db: Database.Database, attempt: Omit<AttemptRow, 'id' | 'createdAt'>): number {
+export function insertAttempt(db: Database, attempt: Omit<AttemptRow, 'id' | 'createdAt'>): number {
   const answer = redactSecrets(String(attempt.answer ?? '')).slice(0, MAX_ANSWER_CHARS);
   const info = db
     .prepare(
@@ -436,7 +436,7 @@ function attemptFromRow(row: any): AttemptRow {
 /**
  * Return the attempts of one run that match the options. An empty `taskIds` list returns no attempts.
  */
-export function listAttempts(db: Database.Database, options: ListAttemptsOptions): AttemptRow[] {
+export function listAttempts(db: Database, options: ListAttemptsOptions): AttemptRow[] {
   const where = ['run_id = ?'];
   const params: unknown[] = [options.runId];
   if (options.taskIds) {
@@ -459,7 +459,7 @@ export function listAttempts(db: Database.Database, options: ListAttemptsOptions
 }
 
 /** True only when every id names a stored attempt (and the list is non-empty). */
-export function attemptsExist(db: Database.Database, ids: number[]): boolean {
+export function attemptsExist(db: Database, ids: number[]): boolean {
   if (ids.length === 0) return false;
   const rows = db
     .prepare(
@@ -478,7 +478,7 @@ export function attemptsExist(db: Database.Database, ids: number[]): boolean {
  * tiers 2 and 3. The metric decides whether to keep an edit (spec §7 rule 5).
  */
 export function passRate(
-  db: Database.Database,
+  db: Database,
   runId: string,
   snapshotId: number,
   options: { split: 'train' | 'test'; signalOnly: boolean }

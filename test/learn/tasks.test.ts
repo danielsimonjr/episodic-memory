@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import Database from 'better-sqlite3';
+import { Database } from '../../src/sqlite.js';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -25,7 +25,7 @@ interface Row {
   sidechain?: boolean;
 }
 
-function indexDbWith(rows: Row[]): Database.Database {
+function indexDbWith(rows: Row[]): Database {
   const db = new Database(':memory:');
   db.exec(`
     CREATE TABLE exchanges (
@@ -125,7 +125,7 @@ function fakeModel(seen: string[] = []) {
 }
 
 describe('selectSourceExchanges', () => {
-  let index: Database.Database;
+  let index: Database;
 
   afterEach(() => {
     index.close();
@@ -169,8 +169,8 @@ describe('selectSourceExchanges', () => {
 });
 
 describe('generateTasks', () => {
-  let index: Database.Database;
-  let learning: Database.Database;
+  let index: Database;
+  let learning: Database;
   let dir: string;
   let runId: string;
 
@@ -258,7 +258,7 @@ describe('generateTasks', () => {
         maxTasks: 500,
         model: fakeModel(),
       });
-      const shape = (db: Database.Database) =>
+      const shape = (db: Database) =>
         db
           .prepare('SELECT kind, tier, split, prompt FROM learning_task ORDER BY prompt')
           .all() as Array<{ kind: string; tier: number; split: string; prompt: string }>;
@@ -393,8 +393,8 @@ describe('generateTasks', () => {
 });
 
 describe('checkTasks', () => {
-  let index: Database.Database;
-  let learning: Database.Database;
+  let index: Database;
+  let learning: Database;
   let dir: string;
 
   beforeEach(() => {

@@ -2,8 +2,8 @@
 /**
  * SessionStart hook: print the project digest and the learned block as additional context.
  *
- * Fast path by design. It opens each database read-only and imports only better-sqlite3 plus a few small
- * modules from dist/ (no embeddings, no sqlite-vec, no knowledge store, no SDK). The digest and the learned block
+ * Fast path by design. It opens each database read-only and imports only the node:sqlite adapter plus a few small
+ * modules from dist/ (no embeddings, no knowledge store, no SDK). The digest and the learned block
  * are gated independently: the digest on EPISODIC_MEMORY_DIGEST, the learned block on EPISODIC_MEMORY_LEARN.
  * With the learned block empty the output is byte-identical to the digest-only hook. It prints nothing and
  * exits 0 when the summarizer guard is set, when neither part has content, or when anything fails: a
@@ -27,7 +27,7 @@ async function buildDigest(cwd) {
   const dbPath = getDbPath();
   if (!fs.existsSync(dbPath)) return '';
 
-  const { default: Database } = await import('better-sqlite3');
+  const { Database } = await import('../dist/sqlite.js');
   const { buildDigestText, projectKeyFromCwd, digestMaxChars } = await import('../dist/digest-inject.js');
   const db = new Database(dbPath, { readonly: true, fileMustExist: true });
   try {

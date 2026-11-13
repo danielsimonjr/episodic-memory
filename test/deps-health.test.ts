@@ -5,7 +5,6 @@ import os from 'os';
 import {
   DEP_SENTINELS,
   JS_SENTINELS,
-  NATIVE_ADDON,
   ONNX_BINDING,
   nodeModulesIsHealthy,
   onnxBindingPath,
@@ -32,8 +31,8 @@ describe('nodeModulesIsHealthy', () => {
     fs.mkdirSync(nm, { recursive: true });
     expect(nodeModulesIsHealthy(nm)).toBe(false);
 
-    fs.mkdirSync(path.join(nm, 'better-sqlite3', 'lib'), { recursive: true });
-    fs.writeFileSync(path.join(nm, 'better-sqlite3', 'lib', 'index.js'), '', 'utf-8');
+    fs.mkdirSync(path.join(nm, 'onnxruntime-common'), { recursive: true });
+    fs.writeFileSync(path.join(nm, 'onnxruntime-common', 'package.json'), '{}', 'utf-8');
     expect(nodeModulesIsHealthy(nm)).toBe(false);
   });
 
@@ -70,10 +69,6 @@ describe('nodeModulesIsHealthy', () => {
   });
 });
 
-// 2026-09-17: 1.5.2, 1.5.3, 1.5.4 and 1.5.6 all deployed with better-sqlite3's JS present and its
-// compiled better_sqlite3.node ABSENT, because the plugin installer skips install scripts. The old
-// sentinel (lib/index.js) passed, so nothing ever built the addon. A present-JS/absent-addon tree
-// needs `npm rebuild better-sqlite3`, not `npm install` (install sees the package and does nothing).
 describe('repairPlan', () => {
   let testDir: string;
   beforeEach(() => { testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'em-plan-')); });
@@ -88,21 +83,10 @@ describe('repairPlan', () => {
     }
   };
 
-  it('treats the compiled addon as a sentinel', () => {
-    expect(DEP_SENTINELS).toContain(NATIVE_ADDON);
-  });
-
-  it('is "none" when every sentinel including the addon exists', () => {
+  it('is "none" when every sentinel exists', () => {
     const nm = path.join(testDir, 'node_modules');
     populate(nm);
     expect(repairPlan(nm)).toBe('none');
-  });
-
-  it('is "rebuild" when only the compiled addon is missing (the deployed defect)', () => {
-    const nm = path.join(testDir, 'node_modules');
-    populate(nm, [NATIVE_ADDON]);
-    expect(nodeModulesIsHealthy(nm)).toBe(false);
-    expect(repairPlan(nm)).toBe('rebuild');
   });
 
   it('is "install" when node_modules is missing or a JS sentinel is missing', () => {
@@ -195,12 +179,12 @@ describe('onnxBindingState', () => {
     expect(onnxBindingState(nm, 'darwin', 'x64')).toBe(process.platform === 'darwin' && process.arch === 'x64' ? 'present' : 'unshipped');
   });
 
-  it('installs before it reinstalls onnxruntime-node, and reinstalls before it rebuilds better-sqlite3', () => {
+  it('installs before it reinstalls onnxruntime-node', () => {
     const a = path.join(testDir, 'a');
     populate(a, [ONNX_BINDING, 'onnxruntime-common/package.json']);
     expect(repairPlan(a)).toBe('install');
     const b = path.join(testDir, 'b');
-    populate(b, [ONNX_BINDING, NATIVE_ADDON]);
+    populate(b, [ONNX_BINDING]);
     fs.mkdirSync(path.join(b, 'onnxruntime-node', 'bin', 'napi-v6'), { recursive: true });
     expect(repairPlan(b)).toBe('reinstall-onnx');
   });

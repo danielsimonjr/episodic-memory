@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, rmSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import Database from 'better-sqlite3';
+import { Database } from '../src/sqlite.js';
 import { initDatabase, deleteExchange } from '../src/db.js';
 
 describe('tool_calls FK cascade', () => {
@@ -22,21 +22,21 @@ describe('tool_calls FK cascade', () => {
     } catch {}
   });
 
-  function insertExchangeRow(db: Database.Database, id: string): void {
+  function insertExchangeRow(db: Database, id: string): void {
     db.prepare(
       `INSERT INTO exchanges (id, project, timestamp, user_message, assistant_message, archive_path, line_start, line_end)
        VALUES (?, 'p', '2026-01-01T00:00:00Z', 'u', 'a', '/x.jsonl', 1, 2)`
     ).run(id);
   }
 
-  function insertToolCall(db: Database.Database, id: string, exchangeId: string): void {
+  function insertToolCall(db: Database, id: string, exchangeId: string): void {
     db.prepare(
       `INSERT INTO tool_calls (id, exchange_id, tool_name, timestamp)
        VALUES (?, ?, 't', '2026-01-01T00:00:00Z')`
     ).run(id, exchangeId);
   }
 
-  function countToolCalls(db: Database.Database, exchangeId: string): number {
+  function countToolCalls(db: Database, exchangeId: string): number {
     return (db.prepare('SELECT COUNT(*) AS c FROM tool_calls WHERE exchange_id = ?').get(exchangeId) as { c: number }).c;
   }
 

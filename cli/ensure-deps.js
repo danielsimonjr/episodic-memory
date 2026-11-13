@@ -1,7 +1,6 @@
 /**
  * Make node_modules usable before anything opens the database. Shared by the MCP wrapper and the
- * SessionStart sync hook, because the sync hook never goes through the wrapper: a tree with
- * better-sqlite3's JS but no compiled binding made every background sync fail silently.
+ * SessionStart sync hook, because the sync hook never goes through the wrapper.
  *
  * All child output goes to stderr (fd 2). The MCP wrapper's stdout is the JSON-RPC transport.
  */
@@ -9,7 +8,7 @@
 import { spawnSync } from 'child_process';
 import { existsSync, readdirSync, rmSync, statSync, writeFileSync } from 'fs';
 import { join } from 'path';
-import { ONNX_BINDING, nativeAddonPresent, onnxBindingState, repairPlan } from '../dist/deps-health.js';
+import { ONNX_BINDING, onnxBindingState, repairPlan } from '../dist/deps-health.js';
 import { acquireLock, releaseLock } from '../dist/lockfile.js';
 import { renameWithRetry, sleepSync } from '../dist/fs-retry.js';
 import { CLAUDE_BIN_ENV, ClaudeBinError, claudeExecutableOption } from '../dist/claude-bin.js';
@@ -199,12 +198,12 @@ function pruneSdkPlatformPackages(nodeModules, options) {
  *   `npm` replaces the npm runner (called with the plugin root and the arguments), `rm` replaces
  *   `fs.rmSync`, `rename` replaces the rename, `sleep` replaces the wait between lock attempts, and
  *   `acquire` replaces `acquireLock`.
- * @returns The first repair action: 'none', 'install', 'reinstall-onnx' or 'rebuild'.
+ * @returns The first repair action: 'none', 'install' or 'reinstall-onnx'.
  *   'onnx-missing' means that the `onnxruntime-node` binding is still missing after the repair: the
  *   server starts, text search works and the first embedding fails. The prune never changes the
  *   return value.
- * @throws When npm fails for a missing package or for the better-sqlite3 binding, or when one of
- *   these is still missing after the repair. A failed `onnxruntime-node` reinstall never throws.
+ * @throws When npm fails for a missing package, or when the package is still missing after the
+ *   repair. A failed `onnxruntime-node` reinstall never throws.
  */
 export function ensureDeps(pluginRoot, options = {}) {
   const nodeModules = join(pluginRoot, 'node_modules');
@@ -284,14 +283,6 @@ function repair(pluginRoot, nodeModules, options) {
     npm(pluginRoot, [...NPM_INSTALL_ARGS]);
   }
   if (repairPlan(nodeModules) === 'reinstall-onnx') reinstallOnnx(pluginRoot, nodeModules, options);
-  // `npm install` does not rebuild a binding that its install scripts were skipped for, so check
-  // again after an install rather than trusting its exit code. A failed onnx reinstall leaves the
-  // plan at 'reinstall-onnx', and the better-sqlite3 binding still needs its own check.
-  const plan = repairPlan(nodeModules);
-  if (plan === 'rebuild' || (plan === 'reinstall-onnx' && !nativeAddonPresent(nodeModules))) {
-    console.error('Building the better-sqlite3 native binding...');
-    npm(pluginRoot, ['rebuild', 'better-sqlite3']);
-  }
 }
 
 /**
@@ -301,7 +292,7 @@ function repair(pluginRoot, nodeModules, options) {
 function checkUsable(pluginRoot, nodeModules) {
   const after = repairPlan(nodeModules);
   if (after === 'none') return undefined;
-  if (after === 'reinstall-onnx' && nativeAddonPresent(nodeModules)) return 'onnx-missing';
+  if (after === 'reinstall-onnx') return 'onnx-missing';
   throw new Error(`dependencies still unusable after repair (plan=${after}) in ${pluginRoot}`);
 }
 

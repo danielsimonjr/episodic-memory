@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import Database from 'better-sqlite3';
+import { Database } from '../src/sqlite.js';
 import { safeRmSync, suppressConsole } from './test-utils.js';
 
 // Ported from upstream 7e0a415. On some hosts the embedding backend cannot load, for example when the native

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import Database from 'better-sqlite3';
+import { Database } from '../src/sqlite.js';
 import { ensureDigestSchema, insertDigestEntry } from '../src/digest-db.js';
 
 /**
@@ -26,7 +26,7 @@ export function suppressConsole(): () => void {
 /**
  * Create a temporary test database that will be cleaned up automatically.
  */
-export function createTestDb(): { db: Database.Database; cleanup: () => void } {
+export function createTestDb(): { db: Database; cleanup: () => void } {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'episodic-memory-test-'));
   const dbPath = path.join(tmpDir, 'test.db');
 

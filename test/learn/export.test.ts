@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import Database from 'better-sqlite3';
+import { Database } from '../../src/sqlite.js';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -66,7 +66,7 @@ function capture() {
 }
 
 /** An index handle holding the one exchange the fixture entries cite. */
-function indexFixture(): Database.Database {
+function indexFixture(): Database {
   const db = new Database(':memory:');
   db.exec(`
     CREATE TABLE exchanges (

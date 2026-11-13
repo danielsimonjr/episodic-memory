@@ -10,9 +10,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { createRequire } from 'module';
-import { fileURLToPath } from 'url';
-import type Database from 'better-sqlite3';
+import type { Database } from './sqlite.js';
 import { getSuperpowersDir } from './paths.js';
 import type { KnowledgeStore } from './learn/knowledge-store.js';
 import type { KnowledgeKind, KnowledgeStatus } from './learn/types.js';
@@ -57,8 +55,8 @@ export interface LearnDoctorSection {
   unresolvedSources: Array<{ id: string; kind: KnowledgeKind; sources: number }>;
   /** `learned-skills/` presence and size of the exported tree. */
   exportTree: { present: boolean; files: number; bytes: number };
-  /** The `better-sqlite3` copy the plugin loads, or null when the module does not resolve. */
-  betterSqlite3TopLevel: string | null;
+  /** The SQLite version that node:sqlite reports, or null when the probe fails. */
+  sqliteVersion: string | null;
 }
 
 function emptyCounts(): Record<KnowledgeStatus, number> {
@@ -87,7 +85,7 @@ export function emptyLearnSection(learnedDir = ''): LearnDoctorSection {
     latestRun: null,
     unresolvedSources: [],
     exportTree: { present: false, files: 0, bytes: 0 },
-    betterSqlite3TopLevel: null,
+    sqliteVersion: null,
   };
 }
 
@@ -126,63 +124,26 @@ function treeSize(root: string): { present: boolean; files: number; bytes: numbe
 }
 
 /**
- * Return the plugin package root, or `null` when none is found.
+ * The SQLite version that node:sqlite reports, read from an in-memory database.
  *
- * The function reads `CLAUDE_PLUGIN_ROOT` and `PLUGIN_ROOT` first. Then it walks up from this file
- * to a `package.json` named `episodic-memory`.
- *
- * Deliberately not `process.cwd()`. Doctor is often started from a project directory.
- * Resolving `better-sqlite3` from there either misses the plugin copy or finds an unrelated one.
- * A null result then used to count as "shared", and the check passed without looking at the install.
+ * Returns null when the probe fails. The connection closes in every case.
  */
-function pluginPackageRoot(): string | null {
-  const fromEnv = [process.env.CLAUDE_PLUGIN_ROOT, process.env.PLUGIN_ROOT].filter(
-    (base): base is string => typeof base === 'string' && base.length > 0
-  );
-  for (const base of fromEnv) {
-    if (fs.existsSync(path.join(base, 'package.json'))) return base;
-  }
-
-  let dir = path.dirname(fileURLToPath(import.meta.url));
-  for (let i = 0; i < 8; i += 1) {
-    const manifest = path.join(dir, 'package.json');
-    if (fs.existsSync(manifest)) {
-      try {
-        const parsed = JSON.parse(fs.readFileSync(manifest, 'utf-8')) as { name?: string };
-        if (parsed.name === 'episodic-memory') return dir;
-      } catch {
-        // Keep walking; a broken manifest is not the plugin root.
-      }
-    }
-    const parent = path.dirname(dir);
-    if (parent === dir) break;
-    dir = parent;
-  }
-  return null;
-}
-
-/**
- * Where `better-sqlite3` resolves from a given base directory.
- *
- * `require.resolve`'s `paths` option is the only way to ask what a module living *here* would load.
- * A plain import from this module would always answer for the plugin root and hide a nested duplicate.
- */
-function resolveBetterSqlite3(paths: string[]): string | null {
-  if (paths.length === 0) return null;
-  const bases = [
-    pluginPackageRoot(),
-    path.dirname(fileURLToPath(import.meta.url)),
-  ].filter((base): base is string => typeof base === 'string' && base.length > 0);
-
-  for (const base of bases) {
+async function readSqliteVersion(): Promise<string | null> {
+  let db: Database | null = null;
+  try {
+    const sqlite = await import('./sqlite.js');
+    db = new sqlite.Database(':memory:');
+    const row = db.prepare('SELECT sqlite_version() AS v').get() as { v: string } | undefined;
+    return row?.v ?? null;
+  } catch {
+    return null;
+  } finally {
     try {
-      const requireFrom = createRequire(path.join(base, 'package.json'));
-      return requireFrom.resolve('better-sqlite3', { paths });
+      db?.close();
     } catch {
-      // Try the next base.
+      // best effort
     }
   }
-  return null;
 }
 
 function metricsSummary(metrics: Record<string, unknown>): string {
@@ -227,14 +188,13 @@ export async function collectLearnDoctorSection(): Promise<LearnDoctorSection> {
 
   section.exportTree = treeSize(path.join(getSuperpowersDir(), LEARNED_SKILLS_DIR));
 
-  const pluginRoot = pluginPackageRoot();
-  section.betterSqlite3TopLevel = resolveBetterSqlite3(pluginRoot ? [pluginRoot] : []);
+  section.sqliteVersion = await readSqliteVersion();
 
   if (!section.present) return section;
 
   let openedStore: KnowledgeStore | null = null;
-  let learning: Database.Database | null = null;
-  let index: Database.Database | null = null;
+  let learning: Database | null = null;
+  let index: Database | null = null;
 
   try {
     // `openKnowledgeStore` creates `learned/` and `knowledge.db`. Doctor must
@@ -268,7 +228,7 @@ export async function collectLearnDoctorSection(): Promise<LearnDoctorSection> {
         if (fs.existsSync(dbPath)) {
           // Read-only and unmigrated. `initDatabase()` would open a writer,
           // run migrations, and (via `openDatabase`) create a missing file.
-          const Database = (await import('better-sqlite3')).default;
+          const Database = (await import('./sqlite.js')).Database;
           index = new Database(dbPath, { readonly: true, fileMustExist: true });
           const statement = index.prepare('SELECT id FROM exchanges WHERE id = ?');
           for (const id of ids) {
@@ -313,7 +273,7 @@ export async function collectLearnDoctorSection(): Promise<LearnDoctorSection> {
 
   // The trace is plain sqlite, read-only and un-migrated: doctor never changes it.
   try {
-    const Database = (await import('better-sqlite3')).default;
+    const Database = (await import('./sqlite.js')).Database;
     learning = new Database(learningDb, { readonly: true });
     const row = learning
       .prepare('SELECT id, phase, status, metrics FROM learning_run ORDER BY started_at DESC, rowid DESC LIMIT 1')

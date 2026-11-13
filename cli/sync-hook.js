@@ -123,7 +123,7 @@ async function main() {
   }
 
   // Repair node_modules BEFORE syncing. This hook never passes through the MCP wrapper, so a tree
-  // missing better-sqlite3's compiled binding failed every background sync with nothing to fix it.
+  // with a damaged native binding failed every background sync with nothing to fix it.
   try {
     const entry = depsRepairLogEntry(ensureDeps(path.join(__dirname, '..')));
     if (entry) fs.appendFileSync(logPath, formatLogLine(...entry), 'utf-8');

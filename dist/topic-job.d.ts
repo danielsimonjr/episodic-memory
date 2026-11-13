@@ -1,4 +1,4 @@
-import type Database from 'better-sqlite3';
+import type { Database } from './sqlite.js';
 /** Options for runTopics. The fields let tests replace the model call and the clock. */
 export interface TopicOptions {
     /** Model call. Defaults to the digest model call of the configured backend; tests pass a fake. */
@@ -33,4 +33,4 @@ export interface TopicResult {
  * @param db the open index database
  * @param opts replaces the model call or the clock
  */
-export declare function runTopics(db: Database.Database, opts?: TopicOptions): Promise<TopicResult>;
+export declare function runTopics(db: Database, opts?: TopicOptions): Promise<TopicResult>;

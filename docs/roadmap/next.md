@@ -28,7 +28,7 @@
 **Shape:**
 - **Summary-aware ranking** (upstream #74) — when a conversation has a summary, include it in the search result body. Could also weight scores using summary-level embeddings.
 - **Multi-concept aggregation tuning** — `searchMultipleConcepts` exists but the dedup + score-merge logic is heuristic. Try BM25-style reciprocal rank fusion; A/B against current behavior on a held-out query set.
-- **LEANN experiment** (upstream #46) — alternative to sqlite-vec for the vector path. Trade-offs: better recall, lower disk footprint, but adds a non-trivial dep. Feasibility study before commitment.
+- **LEANN experiment** (upstream #46) — alternative to the exact vector scan in `src/search.ts`. Trade-offs: better recall, lower disk footprint, but adds a non-trivial dep. Feasibility study before commitment.
 - **Eval harness** — shipped 2026-11-06 with Recursa: `learn tasks` / `learn solve` / `learn report` measure pass rate per split and tier against real archive addresses, with a held-out 40% `test` split. What is still missing is user-intent labels: the generated tasks ask "which conversation holds this fact", not "find the conversation where I…". Add ≥50 real recall queries on top of the same harness.
 
 **Definition of "done":**

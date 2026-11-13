@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import Database from 'better-sqlite3';
+import { Database } from '../src/sqlite.js';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -33,7 +33,7 @@ function entry(over: Partial<NewEntry> = {}): NewEntry {
 }
 
 describe('digest-db', () => {
-  let db: Database.Database;
+  let db: Database;
   beforeEach(() => {
     db = new Database(':memory:');
     ensureDigestSchema(db);

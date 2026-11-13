@@ -2,3 +2,4 @@
 # src/ checkout puts CRs inside multi-line strings, and tsc copies them into dist/,
 # so every Windows build marked dist/ modified with no real change.
 * text=auto eol=lf
+*.sqlite binary

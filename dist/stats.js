@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import { Database } from './sqlite.js';
 import { getDbPath } from './paths.js';
 /**
  * Return true when the summary file exists and holds one byte or more.

@@ -32,7 +32,7 @@
  * Additive only: nothing here deletes an entry. A candidate that fails the gain
  * rule keeps its row and its validation record and waits for a human.
  */
-import type Database from 'better-sqlite3';
+import type { Database } from '../sqlite.js';
 import { type PassRate } from './learning-db.js';
 import type { IdCitationResolver } from './cited-ids.js';
 import { CallBudget } from './solver.js';
@@ -101,9 +101,9 @@ export interface ProjectStats {
  * exchanges makes every one of its tasks trivially findable. A sidechain is not a
  * conversation a user would search for.
  */
-export declare function eligibleProjects(indexDb: Database.Database, minPerProject?: number): ProjectStats[];
+export declare function eligibleProjects(indexDb: Database, minPerProject?: number): ProjectStats[];
 /** An exchange resolver over the index database, for the citation gate. */
-export declare function indexExchangeResolver(indexDb: Database.Database): IdCitationResolver['exchange'];
+export declare function indexExchangeResolver(indexDb: Database): IdCitationResolver['exchange'];
 /**
  * The bootstrap gain rule: keep when the signal pass rate does not fall.
  * Mean turns or USD per task must also fall by at least `minSavingPct`.

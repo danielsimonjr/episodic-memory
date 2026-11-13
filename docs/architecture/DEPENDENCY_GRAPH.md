@@ -32,7 +32,7 @@ This document provides a comprehensive dependency graph of all files, components
 The codebase is organized into the following modules:
 
 - **cli**: 8 files
-- **root**: 68 files
+- **root**: 69 files
 - **entry**: 1 file
 - **learn**: 32 files
 - **vendor/onnxruntime-web-stub**: 1 file
@@ -68,7 +68,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `cli/episodic-memory.js` - `learn` opens the knowledge store on better-sqlite3 13, which requires Node >= 22; `engines` only warns.
+### `cli/episodic-memory.js` - `learn` opens the knowledge store on node:sqlite, which requires Node >= 22.16.0; `engines` only warns.
 
 **Node.js Built-in Dependencies:**
 | Module | Import |
@@ -288,12 +288,6 @@ The codebase is organized into the following modules:
 
 ### `src/db.ts` - The options for `openDatabase`.
 
-**External Dependencies:**
-| Package | Import |
-|---------|--------|
-| `better-sqlite3` | `default` |
-| `sqlite-vec` | `*` |
-
 **Node.js Built-in Dependencies:**
 | Module | Import |
 |--------|--------|
@@ -303,6 +297,7 @@ The codebase is organized into the following modules:
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
+| `./sqlite.js` | `Database` | Import |
 | `./types.js` | `ConversationExchange` | Import |
 | `./paths.js` | `getDbPath, tryChmod` | Import |
 | `./embedding-migration.js` | `EMBEDDING_VERSION` | Import |
@@ -316,9 +311,10 @@ The codebase is organized into the following modules:
 
   ```text
   migrateSchema, migrateToolCallsCascade, ensureFts, upsertExchangeFts, deleteExchangeFts,
-  openDatabase, openDatabaseReadonly, initDatabase, getSharedReaderDatabase,
-  closeSharedReaderDatabase, insertExchange, getAllExchanges, getFileLastIndexed, getMaxIndexedLine,
-  getFreelistInfo, vacuumDatabase, deleteExchange, deleteExchangesForArchive
+  registerVectorFunctions, ensureVectorTable, migrateVec0Vectors, openDatabase, openDatabaseReadonly,
+  initDatabase, getSharedReaderDatabase, closeSharedReaderDatabase, insertExchange, getAllExchanges,
+  getFileLastIndexed, getMaxIndexedLine, getFreelistInfo, vacuumDatabase, deleteExchange,
+  deleteExchangesForArchive
   ```
 
 
@@ -347,21 +343,17 @@ The codebase is organized into the following modules:
 | `path` | `dirname, join` |
 
 **Exports:**
-- Functions: `nativeAddonPresent`, `onnxBindingPath`, `onnxBindingState`, `nodeModulesIsHealthy`, `repairPlan`
-- Constants: `NATIVE_ADDON`, `JS_SENTINELS`, `ONNX_BINDING`, `DEP_SENTINELS`
+- Functions: `onnxBindingPath`, `onnxBindingState`, `nodeModulesIsHealthy`, `repairPlan`
+- Constants: `JS_SENTINELS`, `ONNX_BINDING`, `DEP_SENTINELS`
 
 ---
 
 ### `src/derived-text.ts` - Remove the stored digest lines that cite a removed exchange.
 
-**External Dependencies:**
-| Package | Import |
-|---------|--------|
-| `better-sqlite3` | `default` |
-
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
+| `./sqlite.js` | `Database` | Import (type-only) |
 | `./digest-db.js` | `citedExchangeIds` | Import |
 
 **Exports:**
@@ -372,14 +364,10 @@ The codebase is organized into the following modules:
 
 ### `src/digest-compress.ts` - Options for `compressDigest`. Each field is optional and replaces its default.
 
-**External Dependencies:**
-| Package | Import |
-|---------|--------|
-| `better-sqlite3` | `default` |
-
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
+| `./sqlite.js` | `Database` | Import (type-only) |
 | `./summarizer.js` | `callDigestModel` | Import |
 | `./deferral.js` | `deferralDetail` | Import |
 | `./digest-prompts.js` | `buildCompressPrompt` | Import |
@@ -394,14 +382,10 @@ The codebase is organized into the following modules:
 
 ### `src/digest-db.ts` - One digest entry describes one project for one period.
 
-**External Dependencies:**
-| Package | Import |
-|---------|--------|
-| `better-sqlite3` | `default` |
-
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
+| `./sqlite.js` | `Database` | Import (type-only) |
 | `./fts-query.js` | `toFtsQuery` | Import |
 
 **Exports:**
@@ -413,14 +397,10 @@ The codebase is organized into the following modules:
 
 ### `src/digest-inject.ts` - Returns the digest character limit from the `EPISODIC_MEMORY_DIGEST_MAX_CHARS` environment variable.
 
-**External Dependencies:**
-| Package | Import |
-|---------|--------|
-| `better-sqlite3` | `default` |
-
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
+| `./sqlite.js` | `Database` | Import (type-only) |
 | `./digest-db.js` | `hideCitedLines, listActiveEntries, DigestEntry` | Import |
 
 **Exports:**
@@ -431,14 +411,10 @@ The codebase is organized into the following modules:
 
 ### `src/digest-job.ts` - Return true when the digest feature is on.
 
-**External Dependencies:**
-| Package | Import |
-|---------|--------|
-| `better-sqlite3` | `default` |
-
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
+| `./sqlite.js` | `Database` | Import (type-only) |
 | `./types.js` | `ConversationExchange` | Import (type-only) |
 | `./reentrancy.js` | `shouldSkipReentrantSync` | Import |
 | `./gpu-reservation.js` | `gpuReservationBlock` | Import |
@@ -459,14 +435,10 @@ The codebase is organized into the following modules:
 
 ### `src/digest-phase.ts` - The digest step of a sync run.
 
-**External Dependencies:**
-| Package | Import |
-|---------|--------|
-| `better-sqlite3` | `default` |
-
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
+| `./sqlite.js` | `Database` | Import (type-only) |
 | `./digest-job.js` | `digestEnabled, runDigest, DigestOptions, DigestResult` | Import |
 | `./db.js` | `initDatabase` | Import |
 
@@ -541,25 +513,20 @@ The codebase is organized into the following modules:
 
 ### `src/doctor-learn.ts` - The `learn` section of `episodic-memory doctor`.
 
-**External Dependencies:**
-| Package | Import |
-|---------|--------|
-| `better-sqlite3` | `default` |
-
 **Node.js Built-in Dependencies:**
 | Module | Import |
 |--------|--------|
 | `fs` | `default` |
 | `path` | `default` |
-| `module` | `createRequire` |
-| `url` | `fileURLToPath` |
 
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
+| `./sqlite.js` | `Database` | Import (type-only) |
 | `./paths.js` | `getSuperpowersDir, *` | Import |
 | `./learn/knowledge-store.js` | `KnowledgeStore` | Import (type-only) |
 | `./learn/types.js` | `KnowledgeKind, KnowledgeStatus` | Import (type-only) |
+| `./sqlite.js` | `*` | Import |
 | `./learn/knowledge-store.js` | `*` | Import |
 
 **Exports:**
@@ -586,20 +553,16 @@ The codebase is organized into the following modules:
 | `./paths.js` | `getArchiveDir, getDbPath, getIndexDir, getSuperpowersDir` | Import |
 | `./logging.js` | `getSyncErrorsLogPath, getSyncLogPath` | Import |
 | `./deps-health.js` | `nodeModulesIsHealthy` | Import |
+| `./node-floor.js` | `assertNodeFloor` | Import |
 | `./doctor-learn.js` | `LearnDoctorSection, collectLearnDoctorSection` | Import |
 
 **Exports:**
 - Interfaces: `CodexDoctorInputs`, `DoctorReport`, `DoctorInputs`, `StructuredDoctorReport`
-- Functions: `buildCodexDoctorReport`, `readRecentLogErrors`, `collectDoctorSnapshot`, `buildDoctorReport`
+- Functions: `buildCodexDoctorReport`, `readRecentLogErrors`, `collectDoctorSnapshot`, `formatSqliteLine`, `buildDoctorReport`
 
 ---
 
 ### `src/embedding-migration.ts` - Embedding migration.
-
-**External Dependencies:**
-| Package | Import |
-|---------|--------|
-| `better-sqlite3` | `default` |
 
 **Node.js Built-in Dependencies:**
 | Module | Import |
@@ -609,6 +572,7 @@ The codebase is organized into the following modules:
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
+| `./sqlite.js` | `Database` | Import |
 | `./lockfile.js` | `acquireLock, releaseLock, LockHandle` | Import |
 | `./embeddings.js` | `*` | Import |
 
@@ -714,11 +678,6 @@ The codebase is organized into the following modules:
 
 ### `src/indexer.ts` - Tell whether a listed transcript must stay out of the index and out of the summaries, and log the skip.
 
-**External Dependencies:**
-| Package | Import |
-|---------|--------|
-| `better-sqlite3` | `default` |
-
 **Node.js Built-in Dependencies:**
 | Module | Import |
 |--------|--------|
@@ -730,6 +689,7 @@ The codebase is organized into the following modules:
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
+| `./sqlite.js` | `Database` | Import (type-only) |
 | `./db.js` | `initDatabase, insertExchange, getMaxIndexedLine, deleteExchangesForArchive` | Import |
 | `./derived-text.js` | `removeDerivedText` | Import |
 | `./parser.js` | `parseConversation` | Import |
@@ -956,14 +916,10 @@ The codebase is organized into the following modules:
 
 ### `src/prune.ts` - Options for `pruneProjects`.
 
-**External Dependencies:**
-| Package | Import |
-|---------|--------|
-| `better-sqlite3` | `default` |
-
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
+| `./sqlite.js` | `Database` | Import |
 | `./derived-text.js` | `removeDerivedText` | Import |
 
 **Exports:**
@@ -998,11 +954,6 @@ The codebase is organized into the following modules:
 
 ### `src/search.ts` - Returns the longest summary, in characters, that the results display.
 
-**External Dependencies:**
-| Package | Import |
-|---------|--------|
-| `better-sqlite3` | `default` |
-
 **Node.js Built-in Dependencies:**
 | Module | Import |
 |--------|--------|
@@ -1011,6 +962,7 @@ The codebase is organized into the following modules:
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
+| `./sqlite.js` | `Database` | Import |
 | `./db.js` | `initDatabase, getSharedReaderDatabase` | Import |
 | `./embeddings.js` | `initEmbeddings, generateQueryEmbedding, EmbeddingsUnavailableError` | Import |
 | `./types.js` | `SearchResult, ConversationExchange, MultiConceptResult` | Import |
@@ -1062,6 +1014,27 @@ The codebase is organized into the following modules:
 
 ---
 
+### `src/sqlite.ts` - A better-sqlite3-compatible subset over the node:sqlite built-in module.
+
+**Node.js Built-in Dependencies:**
+| Module | Import |
+|--------|--------|
+| `module` | `createRequire` |
+| `sqlite` | `DatabaseSync, SQLInputValue, SQLOutputValue, StatementSync` |
+
+**Internal Dependencies:**
+| File | Imports | Type |
+|------|---------|------|
+| `./node-floor.js` | `NODE_FLOOR, assertNodeFloor` | Import |
+
+**Exports:**
+- Classes: `Database`
+- Interfaces: `RunResult`, `Statement`, `DatabaseOptions`, `PragmaOptions`, `SqlFunctionOptions`
+- Types: `BindParams`, `Row`, `Transaction`
+- Functions: `sqliteLoadError`, `requireTransactionState`
+
+---
+
 ### `src/stats-cli.ts` - stats-cli module
 
 **Internal Dependencies:**
@@ -1073,14 +1046,10 @@ The codebase is organized into the following modules:
 
 ### `src/stats.ts` - The counts and sizes that describe the conversation index.
 
-**External Dependencies:**
-| Package | Import |
-|---------|--------|
-| `better-sqlite3` | `default` |
-
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
+| `./sqlite.js` | `Database` | Import |
 | `./paths.js` | `getDbPath` | Import |
 
 **Exports:**
@@ -1195,14 +1164,10 @@ The codebase is organized into the following modules:
 
 ### `src/topic-db.ts` - Install one edit and rebuild the derived tables of the project, in one transaction.
 
-**External Dependencies:**
-| Package | Import |
-|---------|--------|
-| `better-sqlite3` | `default` |
-
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
+| `./sqlite.js` | `Database` | Import (type-only) |
 | `./fts-query.js` | `toFtsQuery` | Import |
 | `./topic-format.js` | `footnoteStatements, parseTopicDoc` | Import |
 | `./topic-time.js` | `endOf, isValidTime, startOf` | Import |
@@ -1242,14 +1207,10 @@ The codebase is organized into the following modules:
 
 ### `src/topic-job.ts` - Return the `since` time. The first run stores it. EPISODIC_MEMORY_TOPICS_SINCE replaces `now` on that run,
 
-**External Dependencies:**
-| Package | Import |
-|---------|--------|
-| `better-sqlite3` | `default` |
-
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
+| `./sqlite.js` | `Database` | Import (type-only) |
 | `./types.js` | `ConversationExchange` | Import (type-only) |
 | `./reentrancy.js` | `shouldSkipReentrantSync` | Import |
 | `./gpu-reservation.js` | `gpuReservationBlock` | Import |
@@ -1271,14 +1232,10 @@ The codebase is organized into the following modules:
 
 ### `src/topic-phase.ts` - The topic step of a sync run.
 
-**External Dependencies:**
-| Package | Import |
-|---------|--------|
-| `better-sqlite3` | `default` |
-
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
+| `./sqlite.js` | `Database` | Import (type-only) |
 | `./reentrancy.js` | `shouldSkipReentrantSync` | Import |
 | `./constants.js` | `topicsEnabled` | Import |
 | `./topic-job.js` | `TopicOptions, TopicResult` | Import (type-only) |
@@ -1398,6 +1355,7 @@ The codebase is organized into the following modules:
 |------|---------|------|
 | `./types.js` | `*` | Re-export |
 | `./db.js` | `*` | Re-export |
+| `./sqlite.js` | `*` | Re-export |
 | `./embeddings.js` | `*` | Re-export |
 | `./indexer.js` | `*` | Re-export |
 | `./parser.js` | `*` | Re-export |
@@ -1406,7 +1364,13 @@ The codebase is organized into the following modules:
 | `./paths.js` | `*` | Re-export |
 
 **Exports:**
-- Re-exports: `* from ./types.js`, `* from ./db.js`, `* from ./embeddings.js`, `* from ./indexer.js`, `* from ./parser.js`, `* from ./search.js`, `* from ./summarizer.js`, `* from ./paths.js`
+- Re-exports:
+
+  ```text
+  * from ./types.js, * from ./db.js, * from ./sqlite.js, * from ./embeddings.js, * from ./indexer.js,
+  * from ./parser.js, * from ./search.js, * from ./summarizer.js, * from ./paths.js
+  ```
+
 
 ---
 
@@ -1446,14 +1410,10 @@ The codebase is organized into the following modules:
 
 ### `src/learn/bootstrap.ts` - Bootstrapping: map the archive's projects and propose the first knowledge.
 
-**External Dependencies:**
-| Package | Import |
-|---------|--------|
-| `better-sqlite3` | `default` |
-
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
+| `../sqlite.js` | `Database` | Import (type-only) |
 | `./learn-config.js` | `learnConfig, LearnConfig` | Import |
 | `./learning-db.js` | `SIGNAL_KINDS, SIGNAL_TIERS, addRejection, attemptsExist, createRun, finishRun, listAttempts, listTasks, passRate, LearningTask, PassRate` | Import |
 | `./knowledge-db.js` | `activate, createSnapshot, insertKnowledgeEntry, DuplicateEntry` | Import |
@@ -1492,11 +1452,6 @@ The codebase is organized into the following modules:
 
 ### `src/learn/cli-main.ts` - The `learn` subcommands. Reached only from `src/learn-cli.ts`, which owns the
 
-**External Dependencies:**
-| Package | Import |
-|---------|--------|
-| `better-sqlite3` | `default` |
-
 **Node.js Built-in Dependencies:**
 | Module | Import |
 |--------|--------|
@@ -1505,6 +1460,7 @@ The codebase is organized into the following modules:
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
+| `../sqlite.js` | `Database` | Import (type-only) |
 | `../paths.js` | `getSuperpowersDir` | Import |
 | `../claude-bin.js` | `ClaudeBinError, claudeExecutableOption` | Import |
 | `../ollama-backend.js` | `summarizerBackend` | Import |
@@ -1587,14 +1543,10 @@ The codebase is organized into the following modules:
 
 ### `src/learn/knowledge-db.ts` - The `KnowledgeEntry` API over the knowledge store and the learning trace.
 
-**External Dependencies:**
-| Package | Import |
-|---------|--------|
-| `better-sqlite3` | `default` |
-
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
+| `../sqlite.js` | `Database` | Import (type-only) |
 | `./knowledge-store.js` | `entryName, procedureIdFor, rootName, KnowledgeStore` | Import |
 | `./types.js` | `isValidSlug, KnowledgeEntry, KnowledgeKind, KnowledgeStatus, NewKnowledgeEntry, ValidationRecord` | Import |
 | `./entry-order.js` | `compareByProjectAndKind` | Import |
@@ -1633,11 +1585,6 @@ The codebase is organized into the following modules:
 
 ### `src/learn/knowledge-store.ts` - The knowledge store: learned entries, their citations and the records the
 
-**External Dependencies:**
-| Package | Import |
-|---------|--------|
-| `better-sqlite3` | `default` |
-
 **Node.js Built-in Dependencies:**
 | Module | Import |
 |--------|--------|
@@ -1648,6 +1595,7 @@ The codebase is organized into the following modules:
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
+| `../sqlite.js` | `Database` | Import |
 | `../paths.js` | `getKnowledgeDbPath` | Import |
 | `./pii-redactor.js` | `redactPii` | Import |
 | `./types.js` | `Confidence, KnowledgeEntry, KnowledgeKind, KnowledgeStatus, ProcedureStepSpec, SourceRef, TrustLevel, ValidationRecord` | Import (type-only) |
@@ -1724,14 +1672,10 @@ The codebase is organized into the following modules:
 
 ### `src/learn/learn-inject.ts` - The learned block the SessionStart hook injects.
 
-**External Dependencies:**
-| Package | Import |
-|---------|--------|
-| `better-sqlite3` | `default` |
-
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
+| `../sqlite.js` | `Database` | Import (type-only) |
 | `./types.js` | `KnowledgeEntry, KnowledgeKind` | Import (type-only) |
 | `./learned-text-screen.js` | `screenLearnedText` | Import |
 | `../redact.js` | `redactSecrets` | Import |
@@ -1767,14 +1711,10 @@ The codebase is organized into the following modules:
 
 ### `src/learn/learned-block.ts` - Render and persist the learned block for every project that has active
 
-**External Dependencies:**
-| Package | Import |
-|---------|--------|
-| `better-sqlite3` | `default` |
-
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
+| `../sqlite.js` | `Database` | Import (type-only) |
 | `../redact.js` | `redactSecrets` | Import |
 | `./knowledge-store.js` | `KnowledgeStore` | Import (type-only) |
 | `./learn-inject.js` | `redactPii, renderLearnedBlock, RedactFn, ScreenFn` | Import |
@@ -1830,11 +1770,6 @@ The codebase is organized into the following modules:
 
 ### `src/learn/learning-db.ts` - The learning trace: runs, tasks and attempts, in `learning.sqlite`.
 
-**External Dependencies:**
-| Package | Import |
-|---------|--------|
-| `better-sqlite3` | `default` |
-
 **Node.js Built-in Dependencies:**
 | Module | Import |
 |--------|--------|
@@ -1843,6 +1778,7 @@ The codebase is organized into the following modules:
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
+| `../sqlite.js` | `Database` | Import (type-only) |
 | `../redact.js` | `redactSecrets` | Import |
 | `./types.js` | `AttemptOutcome, AttemptRow, Cost, LearningKind, LearningTier, TaskStatus, TaskTruth, TraceStep` | Import (type-only) |
 
@@ -1861,11 +1797,6 @@ The codebase is organized into the following modules:
 
 ### `src/learn/learning-store.ts` - The learning trace database: `<configDir>/learned/learning.sqlite`.
 
-**External Dependencies:**
-| Package | Import |
-|---------|--------|
-| `better-sqlite3` | `default` |
-
 **Node.js Built-in Dependencies:**
 | Module | Import |
 |--------|--------|
@@ -1875,6 +1806,7 @@ The codebase is organized into the following modules:
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
+| `../sqlite.js` | `Database` | Import |
 | `../paths.js` | `getLearningDbPath, tryChmod` | Import |
 | `./learning-db.js` | `ensureLearningSchema` | Import |
 
@@ -1930,14 +1862,10 @@ The codebase is organized into the following modules:
 
 ### `src/learn/report.ts` - `learn report`: what a run changed, what it cost, and what it refused.
 
-**External Dependencies:**
-| Package | Import |
-|---------|--------|
-| `better-sqlite3` | `default` |
-
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
+| `../sqlite.js` | `Database` | Import (type-only) |
 | `./learning-db.js` | `getRun, latestRun, listAttempts, passRate, LearningRun, PassRate` | Import |
 | `./knowledge-db.js` | `listActive, listCandidates` | Import |
 | `./types.js` | `KnowledgeEntry, LearnDbs` | Import (type-only) |
@@ -2038,11 +1966,6 @@ The codebase is organized into the following modules:
 
 ### `src/learn/tasks.ts` - Self-practice task generation and staleness checks (spec §4.4).
 
-**External Dependencies:**
-| Package | Import |
-|---------|--------|
-| `better-sqlite3` | `default` |
-
 **Node.js Built-in Dependencies:**
 | Module | Import |
 |--------|--------|
@@ -2051,6 +1974,7 @@ The codebase is organized into the following modules:
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
+| `../sqlite.js` | `Database` | Import (type-only) |
 | `../types.js` | `ConversationExchange` | Import (type-only) |
 | `../redact.js` | `redactSecrets` | Import |
 | `./learned-text-screen.js` | `screenLearnedText` | Import |
@@ -2068,14 +1992,10 @@ The codebase is organized into the following modules:
 
 ### `src/learn/types.ts` - Shared types for the Recursa learned-knowledge store.
 
-**External Dependencies:**
-| Package | Import |
-|---------|--------|
-| `better-sqlite3` | `default` |
-
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
+| `../sqlite.js` | `Database` | Import (type-only) |
 | `./knowledge-store.js` | `KnowledgeStore` | Import (type-only) |
 
 **Exports:**
@@ -2141,46 +2061,46 @@ The codebase is organized into the following modules:
 
 | File | Imports From | Exports To |
 |------|--------------|------------|
-| `src/learn/types` | 1 file | 22 files |
+| `src/sqlite` | 1 file | 28 files |
+| `src/learn/types` | 2 files | 22 files |
+| `src/db` | 7 files | 15 files |
+| `src/learn/cli-main` | 21 files | 1 file |
 | `src/paths` | 0 files | 22 files |
 | `src/summarizer` | 9 files | 13 files |
-| `src/db` | 6 files | 15 files |
-| `src/learn/cli-main` | 20 files | 1 file |
-| `src/learn/bootstrap` | 14 files | 3 files |
+| `src/learn/bootstrap` | 15 files | 3 files |
 | `src/learn/learner` | 15 files | 1 file |
 | `src/redact` | 0 files | 16 files |
 | `src/learn/leaf-learner` | 14 files | 1 file |
 | `src/learn/solver` | 9 files | 5 files |
 | `src/sync` | 12 files | 2 files |
-| `src/topic-job` | 12 files | 1 file |
-| `src/digest-job` | 10 files | 2 files |
+| `src/topic-job` | 13 files | 1 file |
+| `src/digest-job` | 11 files | 2 files |
+| `src/learn/learning-db` | 3 files | 9 files |
 | `src/mcp-tools` | 10 files | 2 files |
 | `src/sync-cli` | 12 files | 0 files |
 | `src/types` | 0 files | 12 files |
+| `src/indexer` | 9 files | 2 files |
+| `src/learn/knowledge-db` | 4 files | 7 files |
 | `src/learn/learn-config` | 0 files | 11 files |
-| `src/learn/learning-db` | 2 files | 9 files |
-| `src/indexer` | 8 files | 2 files |
+| `src/search` | 7 files | 4 files |
+| `src/digest-db` | 2 files | 8 files |
+| `src/doctor` | 9 files | 1 file |
 | `src/learn/agent-runner` | 5 files | 5 files |
-| `src/learn/knowledge-db` | 3 files | 7 files |
+| `src/learn/knowledge-store` | 4 files | 6 files |
+| `src/learn/learned-block` | 6 files | 4 files |
 | `src/learn/skills-tool` | 8 files | 2 files |
+| `src/learn/tasks` | 8 files | 2 files |
 | `src/learn/validate` | 8 files | 2 files |
 | `src/ollama-backend` | 3 files | 7 files |
-| `src/search` | 6 files | 4 files |
 | `src/constants` | 0 files | 9 files |
-| `src/digest-db` | 1 file | 8 files |
-| `src/doctor` | 8 files | 1 file |
 | `src/embeddings` | 2 files | 7 files |
-| `src/learn/knowledge-store` | 3 files | 6 files |
-| `src/learn/learned-block` | 5 files | 4 files |
-| `src/learn/tasks` | 7 files | 2 files |
-| `src/index` | 8 files | 0 files |
+| `src/index` | 9 files | 0 files |
 | `src/learn/export` | 7 files | 1 file |
 | `src/learn/knowledge-gate` | 5 files | 3 files |
 | `src/learn/learn-handlers` | 7 files | 1 file |
 | `src/verify` | 7 files | 1 file |
 | `src/deferral` | 2 files | 5 files |
-| `src/digest-prompts` | 4 files | 3 files |
-| `src/digest-validate` | 1 file | 6 files |
+| `src/digest-compress` | 6 files | 1 file |
 
 ---
 
@@ -2228,7 +2148,7 @@ graph TD
         N15[constants]
         N16[content-text]
         N17[db]
-        N18[...58 more]
+        N18[...59 more]
     end
 
     subgraph Entry
@@ -2286,17 +2206,17 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 293 |
+| Total Source Files | 295 |
 | Subsystems | 5 |
-| Total Lines of Code | 58191 |
-| Total Exports | 616 |
-| Total Re-exports | 8 |
-| Total Classes | 10 |
-| Total Interfaces | 140 |
-| Total Functions | 351 |
+| Total Lines of Code | 59124 |
+| Total Exports | 629 |
+| Total Re-exports | 9 |
+| Total Classes | 11 |
+| Total Interfaces | 145 |
+| Total Functions | 356 |
 | Total Type Guards | 11 |
 | Total Enums | 0 |
-| Type-only Imports | 84 |
+| Type-only Imports | 114 |
 | Runtime Cyclic Components | 0 |
 | Type-only Cyclic Components | 1 |
 | Files in Runtime Cycles | 0 |

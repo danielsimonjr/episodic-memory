@@ -81,7 +81,7 @@ $ npx episodic-memory doctor
 === Install ===
   Plugin install path:   ~/.claude/plugins/cache/local-marketplace/episodic-memory/1.4.1
   node_modules health:   ✅ all sentinel files present
-  Native bindings:       ✅ better_sqlite3.node
+  Native bindings:       ✅ onnxruntime_binding.node
   Onnx hoist:            ✅ onnxruntime-common at top level
 
 === Data ===

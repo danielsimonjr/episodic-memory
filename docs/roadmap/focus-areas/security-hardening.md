@@ -91,10 +91,9 @@ opt in via config.
 ### 2. DB encryption at rest
 **Severity: MEDIUM** · **Effort: high**
 
-`better-sqlite3` doesn't support SQLCipher natively. Options:
+The plugin opens a plain SQLite file. Options for encryption at rest:
 
-- Switch to `@journeyapps/better-sqlite3-multiple-ciphers` (drop-in with
-  encryption support). Cost: rebuild deps, dep maturity question.
+- Add a SQLCipher build, for example `@journeyapps/better-sqlite3-multiple-ciphers`. Cost: a native dependency, a rebuild on every platform, a dep maturity question, and a second database driver behind `src/sqlite.ts`.
 - Encrypt at the filesystem layer (BitLocker, FileVault, dm-crypt) and
   document instead of bundling. Cost: pushes the work to the user.
 - Per-row encryption of just the sensitive columns (user/assistant

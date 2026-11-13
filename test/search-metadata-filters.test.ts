@@ -270,4 +270,30 @@ describe('search metadata filters', () => {
     expect(explicit[0].summary).toContain('A stored summary.');
     delete process.env.EPISODIC_MEMORY_INCLUDE_SUMMARY;
   });
+
+  // Ported from upstream 489293b. The vector path ignored `after` and `before`, so a date-filtered
+  // vector search could return nothing. The test takes the boundary date from the fixture, so the
+  // test does not depend on the time zone. The fixture has fewer rows than `limit`, so this test
+  // also passes without the fix. test/vector-search-filters.test.ts holds the regression case:
+  // the rows in the range are the farthest rows.
+  it('honors after/before date filters in vector search mode', async () => {
+    const all = await searchConversations('authentication', { mode: 'vector', limit: 10 });
+    expect(all.length).toBe(3);
+    const dates = [...new Set(all.map(r => r.exchange.timestamp.slice(0, 10)))].sort();
+    expect(dates.length).toBeGreaterThanOrEqual(2);
+    const boundary = dates[1];
+
+    const after = await searchConversations('authentication', { after: boundary, mode: 'vector', limit: 10 });
+    expect(after.length).toBeGreaterThan(0);
+    expect(after.length).toBeLessThan(all.length);
+    for (const r of after) {
+      expect(r.exchange.timestamp.slice(0, 10) >= boundary).toBe(true);
+    }
+
+    const before = await searchConversations('authentication', { before: boundary, mode: 'vector', limit: 10 });
+    expect(before.length).toBeGreaterThan(0);
+    for (const r of before) {
+      expect(r.exchange.timestamp.slice(0, 10) <= boundary).toBe(true);
+    }
+  });
 });

@@ -1,7 +1,7 @@
 {
   "metadata": {
     "totalSourceFiles": 108,
-    "totalTestFiles": 159,
+    "totalTestFiles": 160,
     "testedCount": 85,
     "untestedCount": 23,
     "coveragePercent": "78.7",
@@ -206,6 +206,7 @@
       "test/topic-job.test.ts",
       "test/topic-phase.test.ts",
       "test/topic-tool.test.ts",
+      "test/vector-search-filters.test.ts",
       "test/verify.test.ts"
     ],
     "src/deferral.ts": [
@@ -276,6 +277,7 @@
       "test/integration.test.ts",
       "test/multi-concept.test.ts",
       "test/query-prefix.test.ts",
+      "test/vector-search-filters.test.ts",
       "test/verify.test.ts"
     ],
     "src/fs-retry.ts": [
@@ -593,7 +595,8 @@
       "test/search-with-summary.test.ts",
       "test/security-speed-helpers.test.ts",
       "test/sync-incremental-and-db.test.ts",
-      "test/text-search-multiword.test.ts"
+      "test/text-search-multiword.test.ts",
+      "test/vector-search-filters.test.ts"
     ],
     "src/show-cli.ts": [],
     "src/show.ts": [
@@ -682,6 +685,7 @@
       "test/sync-incremental-and-db.test.ts",
       "test/text-search-multiword.test.ts",
       "test/topic-prompts.test.ts",
+      "test/vector-search-filters.test.ts",
       "test/verify.test.ts"
     ],
     "src/verify.ts": [
@@ -1346,6 +1350,12 @@
     "test/vanished-transcript.test.ts": [
       "src/paths.ts",
       "src/indexer.ts"
+    ],
+    "test/vector-search-filters.test.ts": [
+      "src/types.ts",
+      "src/embeddings.ts",
+      "src/db.ts",
+      "src/search.ts"
     ],
     "test/verify.test.ts": [
       "src/verify.ts",

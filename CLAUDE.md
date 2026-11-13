@@ -51,7 +51,7 @@ dependency, no `MEMORY_*` environment handling and no per-handle cache. Each ope
 - **TypeScript source** in `src/`, compiled to `dist/` by `tsc && esbuild`. **Both are committed.**
 - **CLI entry points** in `cli/` (Node.js wrappers — no bash).
 - **MCP server** is `dist/mcp-server.js`, launched by `cli/mcp-server-wrapper.js` from the plugin manifest.
-- **Tests** in `test/` with vitest (159 files, 1584 tests).
+- **Tests** in `test/` with vitest (160 files, 1591 tests).
 - **Generated files** in `dist/` AND `src/version.ts`. The latter is gitignored; never edit it.
 - **`bun.lock` is committed** — CI uses `bun install --frozen-lockfile` + `bun audit --audit-level=critical`. Do not commit `package-lock.json` (gitignored).
 
@@ -117,7 +117,7 @@ scripts/
 
 test/
   test-utils.ts          # createTestDb, safeRmSync (fork-added), suppressConsole, fixtures
-  *.test.ts              # 159 test files, 1584 tests
+  *.test.ts              # 160 test files, 1591 tests
   learn/                 # the Recursa suite; fakes for every model call
   fixtures/              # JSONL conversation fixtures
 
@@ -175,12 +175,12 @@ scheduled task. To roll back, remove the variable first. Then run `npm install -
 
 ### Current test state
 
-- **Full suite: 1584 tests in 159 files pass** in about 17 s of wall clock on Linux. Windows runs are slower.
+- **Full suite: 1591 tests in 160 files pass** in about 17 s of wall clock on Linux. Windows runs are slower.
   The suite no longer has the former `integration.test.ts` / `verify.test.ts` cold-embedding timeout flakes.
   `beforeAll` pre-warms the embedder once per worker. `vitest.config.ts` sets `hookTimeout: 30000`.
   The repair re-index test gets 60s. If you see a fresh timeout flake, suspect a new embedding-heavy hook
   without warm-up, not the old cold-start cause.
-- The learn tests are the bulk of the suite (`test/learn/`, 38 files; the other 121 test files sit directly in `test/`). The learn tests never reach a model: every agent and
+- The learn tests are the bulk of the suite (`test/learn/`, 38 files; the other 122 test files sit directly in `test/`). The learn tests never reach a model: every agent and
   text call is injectable and tests pass fakes. `test/test-env.ts` pins the Claude backend, a closed ollama URL,
   a temporary config directory and temporary Claude and Codex homes. `test/setup-env.ts` deletes every other `EPISODIC_MEMORY_*` variable of
   the machine. A local run therefore uses the CI settings and cannot reach a model or the live data.

@@ -1,11 +1,11 @@
 {
-  "totalFiles": 279,
+  "totalFiles": 280,
   "byDisposition": {
     "reachable": 43,
     "build-entry": 4,
     "test-only": 46,
     "orphan": 15,
-    "test": 166,
+    "test": 167,
     "tool": 4,
     "config": 1,
     "bench": 0,
@@ -14,11 +14,11 @@
   "byArea": {
     "src": 108,
     "tools": 4,
-    "tests": 166,
+    "tests": 167,
     "config": 1
   },
   "byPackage": {
-    "(root)": 180,
+    "(root)": 181,
     "episodic-memory": 99
   },
   "files": [
@@ -671,7 +671,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 587
+      "loc": 614
     },
     {
       "file": "src/show-cli.ts",
@@ -1644,7 +1644,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 273
+      "loc": 299
     },
     {
       "file": "test/search-with-summary.test.ts",
@@ -1946,6 +1946,13 @@
       "area": "tests",
       "disposition": "test",
       "loc": 119
+    },
+    {
+      "file": "test/vector-search-filters.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 122
     },
     {
       "file": "test/verify.test.ts",

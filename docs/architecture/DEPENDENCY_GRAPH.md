@@ -2231,9 +2231,9 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 279 |
+| Total Source Files | 280 |
 | Subsystems | 5 |
-| Total Lines of Code | 55608 |
+| Total Lines of Code | 55783 |
 | Total Exports | 604 |
 | Total Re-exports | 8 |
 | Total Classes | 9 |
@@ -2241,7 +2241,7 @@ graph TD
 | Total Functions | 343 |
 | Total Type Guards | 11 |
 | Total Enums | 0 |
-| Type-only Imports | 81 |
+| Type-only Imports | 82 |
 | Runtime Cyclic Components | 0 |
 | Type-only Cyclic Components | 1 |
 | Files in Runtime Cycles | 0 |

@@ -127,7 +127,17 @@ The module chooses the Claude Code executable that the Agent SDK starts. The mod
 
 ### `src/show.ts`
 
-Renders an archived conversation as markdown or HTML, with an optional line range. This module is the largest in `src/`.
+Renders an archived conversation as markdown or HTML, with an optional line range. This module is the largest in `src/`. The HTML output sends assistant text and the Codex transcript through `markdownToHtml`.
+
+### `src/markdown-html.ts`
+
+`markdownToHtml(text: string): string` renders Markdown to HTML for `show --html`. `escapeHtml(text: string): string` escapes the five HTML-special characters, and `show.ts` uses it too. The module uses Node built-ins only and imports nothing.
+
+- Supported blocks: ATX headings, paragraphs, hard breaks, fenced code, thematic breaks, blockquotes, lists and GFM tables.
+- Supported inline rules: code spans, links, bare `http(s)` links, and `*` and `_` emphasis. Lists can nest, and a list is tight or loose.
+- Not supported: indented code, setext headings, images, angle and email autolinks, `www.` links, strikethrough, raw HTML blocks and reference links. A survey of archived assistant text found none of these constructs, except one indented code block.
+- Transcript text is untrusted. The module escapes all raw HTML. `safeUrl` is the only path to an `href`. `safeUrl` allows only `http`, `https`, `mailto` and relative destinations. Each `href` is escaped once, so an entity in a destination reaches the browser as text.
+- Every block and inline rule is a line or token scan. A backtick index and a per-block budget for link tails keep the run time linear. A cap on padding cells bounds the output of a wide table.
 
 ### `src/archive-path.ts`
 
@@ -220,10 +230,10 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 295 | repo-tools map |
+| totalSourceFiles | 297 | repo-tools map |
 | totalClasses | 11 | repo-tools map |
 | totalInterfaces | 145 | repo-tools map |
-| totalFunctions | 356 | repo-tools map |
+| totalFunctions | 358 | repo-tools map |
 | totalConstants | 70 | repo-tools map |
 
 The tool names, the table names and the model name come from a direct reading of `src/mcp-server.ts`, `src/db.ts` and `src/embeddings.ts`. They are not `repo-tools map` metrics.

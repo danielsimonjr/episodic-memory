@@ -1,17 +1,17 @@
 {
   "metadata": {
-    "totalSourceFiles": 111,
-    "totalTestFiles": 173,
-    "testedCount": 88,
+    "totalSourceFiles": 112,
+    "totalTestFiles": 174,
+    "testedCount": 89,
     "untestedCount": 23,
-    "coveragePercent": "79.3",
+    "coveragePercent": "79.5",
     "effectiveCoverage": {
       "policyLoaded": false,
-      "activeFiles": 111,
-      "testedActive": 88,
+      "activeFiles": 112,
+      "testedActive": 89,
       "activeUntested": 23,
       "excludedTotal": 0,
-      "percent": "79.3",
+      "percent": "79.5",
       "breakdown": {
         "active_untested": 23
       }
@@ -104,6 +104,7 @@
     "src/learn/validate.ts",
     "src/lockfile.ts",
     "src/logging.ts",
+    "src/markdown-html.ts",
     "src/mcp-auth.ts",
     "src/mcp-schemas.ts",
     "src/mcp-tools.ts",
@@ -539,6 +540,9 @@
       "test/sync-cli-lock.test.ts",
       "test/sync-hook-logging.test.ts"
     ],
+    "src/markdown-html.ts": [
+      "test/markdown-html.test.ts"
+    ],
     "src/mcp-auth.ts": [
       "test/mcp-auth.test.ts"
     ],
@@ -633,6 +637,7 @@
     ],
     "src/show-cli.ts": [],
     "src/show.ts": [
+      "test/markdown-html.test.ts",
       "test/mcp-read-redaction.test.ts",
       "test/show.test.ts"
     ],
@@ -1289,6 +1294,10 @@
     ],
     "test/logging.test.ts": [
       "src/logging.ts"
+    ],
+    "test/markdown-html.test.ts": [
+      "src/markdown-html.ts",
+      "src/show.ts"
     ],
     "test/mcp-auth.test.ts": [
       "src/mcp-auth.ts"

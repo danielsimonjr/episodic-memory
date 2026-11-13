@@ -1,5 +1,17 @@
 ## [Unreleased]
 
+### Security
+- **`show --html` no longer emits a link to an unsafe scheme.** `marked` 16.4.2 copied a link destination into `href` as written, so a transcript that held `[x](javascript:alert(1))`, `[x](&#106;avascript:...)` or `[x](javascript&colon;...)` rendered a live `javascript:` link, and `![a](data:...)` rendered a `data:` image. The new renderer allows only `http`, `https`, `mailto` and relative destinations, escapes each `href` once, and emits no `img`.
+
+### Removed
+- **`marked` is no longer a dependency.** `src/markdown-html.ts` renders the HTML of `show --html`. The bundle `dist/mcp-server.js` no longer embeds `marked`.
+
+### Added
+- **`src/markdown-html.ts`, a Markdown to HTML renderer with no dependency.** It renders ATX headings, paragraphs, hard breaks, fenced code, thematic breaks, blockquotes, nested tight and loose lists, GFM tables, code spans, links, bare `http(s)` links and `*`/`_` emphasis. It escapes all raw HTML, as before. Every rule is a line or token scan, and the run time is linear in the input. A test file of 74 cases covers each rule, the URL bypass forms, hostile inputs and a seeded fuzz.
+
+### Changed
+- **The `show --html` output differs from the `marked` output for some constructs.** Indented code, setext headings, images, angle and email autolinks, `www.` links, strikethrough and task-list checkboxes render as text. A survey of 1641 archived assistant text blocks found none of them, except one indented code block. Over the 104 Markdown blocks of the test fixtures, 81 render identically, 22 differ only by a space before `</p>` or `</li>`, and 1 differs by a task-list checkbox.
+
 ### Fixed
 - **The F8 test of `runCodexCommand` no longer fails at random.** When the fake app-server exits, the exit event and the EPIPE of the next stdin write race. Either one rejects the call. The test accepted only the exit message, so a run where the EPIPE settled first failed. The test now accepts both messages.
 

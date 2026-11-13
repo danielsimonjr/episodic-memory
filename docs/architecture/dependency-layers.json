@@ -1,7 +1,7 @@
 {
   "metadata": {
     "name": "episodic-memory",
-    "version": "1.10.0",
+    "version": "1.11.0",
     "schemaVersion": "2.0.0",
     "language": "typescript"
   },
@@ -2032,6 +2032,21 @@
           "appendLogLine"
         ]
       },
+      "src/markdown-html.ts": {
+        "description": "Markdown to HTML renderer for the transcript viewer. Node built-ins only.",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "escapeHtml",
+          "markdownToHtml"
+        ],
+        "functions": [
+          "escapeHtml",
+          "markdownToHtml"
+        ]
+      },
       "src/mcp-auth.ts": {
         "description": "Optional MCP tool authorization.",
         "externalDependencies": [],
@@ -2648,14 +2663,7 @@
       },
       "src/show.ts": {
         "description": "Format a conversation transcript as Markdown.",
-        "externalDependencies": [
-          {
-            "package": "marked",
-            "imports": [
-              "marked"
-            ]
-          }
-        ],
+        "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
           {
@@ -2663,6 +2671,13 @@
             "imports": [
               "extractContentText",
               "safeParseJson"
+            ]
+          },
+          {
+            "file": "./markdown-html.js",
+            "imports": [
+              "escapeHtml",
+              "markdownToHtml"
             ]
           }
         ],
@@ -6107,6 +6122,7 @@
         "src/learn-cli.ts",
         "src/lockfile.ts",
         "src/logging.ts",
+        "src/markdown-html.ts",
         "src/mcp-auth.ts",
         "src/mcp-schemas.ts",
         "src/mcp-server.ts",

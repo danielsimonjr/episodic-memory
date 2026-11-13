@@ -8,11 +8,11 @@
 
 | Metric | Count |
 |--------|-------|
-| Total Source Files | 111 |
-| Total Test Files | 173 |
-| Source Files with Tests | 88 |
+| Total Source Files | 112 |
+| Total Test Files | 174 |
+| Source Files with Tests | 89 |
 | Source Files without Tests | 23 |
-| Coverage (raw, direct-import) | **79.3%** |
+| Coverage (raw, direct-import) | **79.5%** |
 ---
 
 ## Source Files Without Test Coverage
@@ -118,6 +118,7 @@ The following 23 source files are not directly imported by any test file:
 | `learn/validate.ts` | `validate.test.ts` |
 | `src/lockfile.ts` | `index-cli-sync-lock.test.ts`, `learn-cli.test.ts`, `lockfile.test.ts` |
 | `src/logging.ts` | `doctor.test.ts`, `logging-append.test.ts`, `logging.test.ts`, `sync-cli-disable-auto-sync.test.ts`, `sync-cli-lock.test.ts`, `sync-hook-logging.test.ts` |
+| `src/markdown-html.ts` | `markdown-html.test.ts` |
 | `src/mcp-auth.ts` | `mcp-auth.test.ts` |
 | `src/mcp-schemas.ts` | `mcp-schemas.test.ts`, `topic-tool.test.ts` |
 | `src/mcp-tools.ts` | `digest-mcp.test.ts`, `learn-handlers.test.ts`, `mcp-tools.test.ts`, `search-embeddings-unavailable.test.ts`, `topic-tool.test.ts` |
@@ -131,7 +132,7 @@ The following 23 source files are not directly imported by any test file:
 | `src/redact.ts` | `mcp-read-redaction.test.ts`, `redact-patterns.test.ts`, `security-speed-helpers.test.ts` |
 | `src/reentrancy.ts` | `backfill-cli-gpu-reservation.test.ts`, `digest-gpu-reservation.test.ts`, `digest-job.test.ts`, `digest-prompt-budget.test.ts`, `agent-runner.test.ts`, `reentrancy.test.ts`, `summarizer-api-env.test.ts`, `topic-job.test.ts`, `topic-phase.test.ts` |
 | `src/search.ts` | `cosine-similarity.test.ts`, `cross-harness-recall.test.ts`, `integration.test.ts`, `multi-concept.test.ts`, `search-embeddings-unavailable.test.ts`, `search-metadata-filters.test.ts`, `search-text-row-similarity.test.ts`, `search-with-summary.test.ts`, `security-speed-helpers.test.ts`, `sync-incremental-and-db.test.ts`, `text-search-multiword.test.ts`, `vector-search-filters.test.ts` |
-| `src/show.ts` | `mcp-read-redaction.test.ts`, `show.test.ts` |
+| `src/show.ts` | `markdown-html.test.ts`, `mcp-read-redaction.test.ts`, `show.test.ts` |
 | `src/sqlite.ts` | `codex-transcripts.test.ts`, `dangling-project-link.test.ts`, `db.test.ts`, `derived-text.test.ts`, `digest-compress.test.ts`, `digest-db.test.ts`, `digest-gpu-reservation.test.ts`, `digest-inject.test.ts`, `digest-job.test.ts`, `digest-prompt-budget.test.ts`, `doctor.test.ts`, `embedding-migration.test.ts`, `exchange-vectors.test.ts`, `exclude-nested.test.ts`, `incremental-indexing.test.ts`, `index-honours-marker.test.ts`, `indexer-db-close.test.ts`, `integration.test.ts`, `bootstrap.test.ts`, `export.test.ts`, `knowledge-store.test.ts`, `leaf-learner.test.ts`, `learn-cli.test.ts`, `learned-block.test.ts`, `learner.test.ts`, `learning-db.test.ts`, `learning-store.test.ts`, `relay-task4-findings.test.ts`, `relay-task6-findings.test.ts`, `relay-task8-challenger.test.ts`, `relay-task9-findings.test.ts`, `report.test.ts`, `solver.test.ts`, `tasks.test.ts`, `validate.test.ts`, `oversized-message-guard.test.ts`, `prune.test.ts`, `search-metadata-filters.test.ts`, `sqlite-adapter.test.ts`, `stats.test.ts`, `sync-embeddings-unavailable.test.ts`, `sync-incremental-and-db.test.ts`, `sync-marker-scan.test.ts`, `sync.test.ts`, `text-search-multiword.test.ts`, `tool-calls-cascade.test.ts`, `topic-db.test.ts`, `topic-job.test.ts`, `topic-phase.test.ts`, `topic-tool.test.ts`, `vanished-transcript.test.ts` |
 | `src/stats.ts` | `stats-format.test.ts`, `stats.test.ts` |
 | `src/summarizer.ts` | `app-server-stdin-error.test.ts`, `claude-auth-deferral.test.ts`, `claude-bin-deferral.test.ts`, `index-honours-marker.test.ts`, `ollama-plain-reply.test.ts`, `real-sdk-guard.test.ts`, `summarizer-api-env.test.ts`, `summarizer-claude-path.test.ts`, `summarizer-gpu-reservation.test.ts`, `summarizer-ollama-fallback.test.ts`, `summarizer-options.test.ts`, `summarizer-prompt-budget.test.ts`, `summarizer-text.test.ts`, `topic-job.test.ts`, `verify.test.ts` |
@@ -251,6 +252,7 @@ The following 23 source files are not directly imported by any test file:
 | `test/lockfile.test.ts` | 1 files |
 | `test/logging-append.test.ts` | 1 files |
 | `test/logging.test.ts` | 1 files |
+| `test/markdown-html.test.ts` | 2 files |
 | `test/mcp-auth.test.ts` | 1 files |
 | `test/mcp-protocol.test.ts` | 0 files |
 | `test/mcp-read-redaction.test.ts` | 2 files |

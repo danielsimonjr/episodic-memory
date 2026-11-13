@@ -241,7 +241,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/node-floor.test.ts` | (root) | tests | test | 43 |
 | `test/ollama-backend.test.ts` | (root) | tests | test | 75 |
 | `test/ollama-plain-reply.test.ts` | (root) | tests | test | 55 |
-| `test/onnxruntime-web-stub.test.ts` | (root) | tests | test | 71 |
+| `test/onnxruntime-web-stub.test.ts` | (root) | tests | test | 76 |
 | `test/orphan-reaper.test.ts` | (root) | tests | test | 65 |
 | `test/oversized-message-guard.test.ts` | (root) | tests | test | 136 |
 | `test/parser-tool-result.test.ts` | (root) | tests | test | 43 |

@@ -1399,7 +1399,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 71
+      "loc": 76
     },
     {
       "file": "test/orphan-reaper.test.ts",

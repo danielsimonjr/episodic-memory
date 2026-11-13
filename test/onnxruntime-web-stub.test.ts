@@ -50,6 +50,11 @@ describe('onnxruntime-web stub override', () => {
 
   // The stub is safe only while the node build of transformers never imports onnxruntime-web. The
   // onnxruntime-node import is the control: a check that reads the wrong file finds neither import.
+  // A pattern matches any call with the package name as its first argument, and any `from` clause.
+  // transformers 4.2.0 uses `from "onnxruntime-node"`. transformers 4.3.2 uses a `createRequire`
+  // function: `requireFromHere("onnxruntime-node")`.
+  const NODE_IMPORT = /(from\s*|\(\s*)["']onnxruntime-node["']/;
+  const WEB_IMPORT = /(from\s*|\(\s*)["']onnxruntime-web["'/]/;
   it('uses a transformers node build that imports onnxruntime-node and not onnxruntime-web', () => {
     const tfDir = join(ROOT, 'node_modules', '@huggingface', 'transformers');
     // The export map holds the conditions at its top level, or under the "." key.
@@ -57,8 +62,8 @@ describe('onnxruntime-web stub override', () => {
     const nodeExport = (exportMap['.'] ?? exportMap).node;
     for (const entry of [nodeExport.import.default, nodeExport.require.default]) {
       const code = readFileSync(join(tfDir, entry), 'utf-8');
-      expect(code, `${entry} imports onnxruntime-node`).toMatch(/(from |require\()"onnxruntime-node"/);
-      expect(code, `${entry} imports onnxruntime-web`).not.toMatch(/(from |require\(|import\()"onnxruntime-web/);
+      expect(code, `${entry} imports onnxruntime-node`).toMatch(NODE_IMPORT);
+      expect(code, `${entry} imports onnxruntime-web`).not.toMatch(WEB_IMPORT);
     }
   });
 

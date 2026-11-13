@@ -1,11 +1,11 @@
 {
-  "totalFiles": 274,
+  "totalFiles": 275,
   "byDisposition": {
     "reachable": 43,
     "build-entry": 4,
     "test-only": 46,
     "orphan": 15,
-    "test": 161,
+    "test": 162,
     "tool": 4,
     "config": 1,
     "bench": 0,
@@ -14,11 +14,11 @@
   "byArea": {
     "src": 108,
     "tools": 4,
-    "tests": 161,
+    "tests": 162,
     "config": 1
   },
   "byPackage": {
-    "(root)": 175,
+    "(root)": 176,
     "episodic-memory": 99
   },
   "files": [
@@ -321,7 +321,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 417
+      "loc": 415
     },
     {
       "file": "src/learn-cli.ts",
@@ -629,7 +629,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 199
+      "loc": 214
     },
     {
       "file": "src/priority.ts",
@@ -727,7 +727,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 536
+      "loc": 534
     },
     {
       "file": "src/topic-db.ts",
@@ -797,7 +797,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 226
+      "loc": 224
     },
     {
       "file": "test/agent-sdk-floor.test.ts",
@@ -959,6 +959,13 @@
       "area": "tests",
       "disposition": "test",
       "loc": 86
+    },
+    {
+      "file": "test/dangling-project-link.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 145
     },
     {
       "file": "test/db-helpers.test.ts",

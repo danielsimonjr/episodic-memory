@@ -1677,7 +1677,8 @@
             "imports": [
               "getDbPath",
               "getArchiveDir",
-              "getExcludedProjects"
+              "getExcludedProjects",
+              "statIfExists"
             ]
           },
           {
@@ -1760,7 +1761,8 @@
               "getArchiveDir",
               "getExcludedProjects",
               "getConversationSourceDirs",
-              "findJsonlFiles"
+              "findJsonlFiles",
+              "statIfExists"
             ]
           }
         ],
@@ -2286,6 +2288,7 @@
           "getCodexDir",
           "getConversationSourceDirs",
           "findJsonlFiles",
+          "statIfExists",
           "getSuperpowersDir",
           "getArchiveDir",
           "getIndexDir",
@@ -2302,6 +2305,7 @@
           "getCodexDir",
           "getConversationSourceDirs",
           "findJsonlFiles",
+          "statIfExists",
           "getSuperpowersDir",
           "getArchiveDir",
           "getIndexDir",
@@ -2870,7 +2874,8 @@
             "file": "./paths.js",
             "imports": [
               "getExcludedProjects",
-              "findJsonlFiles"
+              "findJsonlFiles",
+              "statIfExists"
             ]
           },
           {
@@ -3464,7 +3469,8 @@
             "imports": [
               "getArchiveDir",
               "getExcludedProjects",
-              "findJsonlFiles"
+              "findJsonlFiles",
+              "statIfExists"
             ]
           },
           {

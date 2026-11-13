@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { parseConversation } from './parser.js';
 import { initDatabase, getAllExchanges, getFileLastIndexed } from './db.js';
-import { getArchiveDir, getExcludedProjects, findJsonlFiles } from './paths.js';
+import { getArchiveDir, getExcludedProjects, findJsonlFiles, statIfExists } from './paths.js';
 
 /**
  * The problems that `verifyIndex` found, grouped by kind.
@@ -61,9 +61,7 @@ export async function verifyIndex(): Promise<VerificationResult> {
     }
 
     const projectPath = path.join(archiveDir, project);
-    const stat = fs.statSync(projectPath);
-
-    if (!stat.isDirectory()) continue;
+    if (!statIfExists(projectPath)?.isDirectory()) continue;
 
     const files = findJsonlFiles(projectPath, excludedDirSet);
 

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { SUMMARIZER_CONTEXT_MARKER } from './constants.js';
-import { getExcludedProjects, findJsonlFiles } from './paths.js';
+import { getExcludedProjects, findJsonlFiles, statIfExists } from './paths.js';
 import { gpuReservationBlock } from './gpu-reservation.js';
 import { summarizerBackend } from './ollama-backend.js';
 import { deferralDetail } from './deferral.js';
@@ -167,8 +167,7 @@ export async function syncConversations(sourceDir, destDir, options = {}) {
             continue;
         }
         const projectPath = path.join(sourceDir, project);
-        const stat = fs.statSync(projectPath);
-        if (!stat.isDirectory())
+        if (!statIfExists(projectPath)?.isDirectory())
             continue;
         const files = findJsonlFiles(projectPath, excludedDirSet);
         for (const file of files) {

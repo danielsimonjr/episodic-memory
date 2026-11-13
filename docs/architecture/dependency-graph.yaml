@@ -2,9 +2,9 @@ metadata:
   name: episodic-memory
   schemaVersion: 2.0.0
   language: typescript
-  totalFiles: 274
+  totalFiles: 275
   totalModules: 4
-  totalExports: 601
+  totalExports: 602
 modules:
   src:
     cli/digest-hook.js:
@@ -758,6 +758,7 @@ modules:
             - getDbPath
             - getArchiveDir
             - getExcludedProjects
+            - statIfExists
           typeOnly: false
         - file: src/prune.ts
           imports:
@@ -867,6 +868,7 @@ modules:
             - getLearnedDir
             - getLearningDbPath
             - getSuperpowersDir
+            - statIfExists
             - tryChmod
           typeOnly: false
       exports: []
@@ -908,6 +910,7 @@ modules:
             - getExcludedProjects
             - getConversationSourceDirs
             - findJsonlFiles
+            - statIfExists
           typeOnly: false
       exports:
         - indexConversations
@@ -2431,6 +2434,7 @@ modules:
         - getCodexDir
         - getConversationSourceDirs
         - findJsonlFiles
+        - statIfExists
         - getSuperpowersDir
         - getArchiveDir
         - getIndexDir
@@ -2726,6 +2730,7 @@ modules:
           imports:
             - getExcludedProjects
             - findJsonlFiles
+            - statIfExists
           typeOnly: false
         - file: src/gpu-reservation.ts
           imports:
@@ -3067,6 +3072,7 @@ modules:
             - getArchiveDir
             - getExcludedProjects
             - findJsonlFiles
+            - statIfExists
           typeOnly: false
         - file: src/embeddings.ts
           imports:
@@ -3472,6 +3478,39 @@ modules:
         - file: src/types.ts
           imports:
             - ConversationExchange
+          typeOnly: false
+      exports: []
+    test/dangling-project-link.test.ts:
+      externalDependencies:
+        - better-sqlite3
+        - vitest
+      nodeDependencies:
+        - fs
+        - os
+        - path
+      internalDependencies:
+        - file: src/sync.ts
+          imports:
+            - syncConversations
+          typeOnly: false
+        - file: src/indexer.ts
+          imports:
+            - indexConversations
+            - indexSession
+            - indexUnprocessed
+          typeOnly: false
+        - file: src/verify.ts
+          imports:
+            - verifyIndex
+          typeOnly: false
+        - file: src/paths.ts
+          imports:
+            - statIfExists
+          typeOnly: false
+        - file: test/test-utils.ts
+          imports:
+            - safeRmSync
+            - suppressConsole
           typeOnly: false
       exports: []
     test/db-helpers.test.ts:
@@ -6675,11 +6714,11 @@ modules:
           typeOnly: false
       exports: []
 statistics:
-  totalTypeScriptFiles: 274
-  totalSourceFiles: 274
+  totalTypeScriptFiles: 275
+  totalSourceFiles: 275
   totalModules: 4
-  totalLinesOfCode: 54794
-  totalExports: 601
+  totalLinesOfCode: 54948
+  totalExports: 602
   entryRoots: 6
   reachableFiles: 47
   dormantFiles: 61
@@ -6697,7 +6736,7 @@ statistics:
   typeOnlyFilesInCycles: 2
   totalClasses: 8
   totalInterfaces: 139
-  totalFunctions: 341
+  totalFunctions: 342
   totalTypeGuards: 10
   totalEnums: 0
   totalConstants: 70

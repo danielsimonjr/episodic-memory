@@ -3,9 +3,9 @@
     "name": "episodic-memory",
     "schemaVersion": "2.0.0",
     "language": "typescript",
-    "totalFiles": 274,
+    "totalFiles": 275,
     "totalModules": 4,
-    "totalExports": 601
+    "totalExports": 602
   },
   "modules": {
     "src": {
@@ -1105,7 +1105,8 @@
             "imports": [
               "getDbPath",
               "getArchiveDir",
-              "getExcludedProjects"
+              "getExcludedProjects",
+              "statIfExists"
             ],
             "typeOnly": false
           },
@@ -1244,6 +1245,7 @@
               "getLearnedDir",
               "getLearningDbPath",
               "getSuperpowersDir",
+              "statIfExists",
               "tryChmod"
             ],
             "typeOnly": false
@@ -1305,7 +1307,8 @@
               "getArchiveDir",
               "getExcludedProjects",
               "getConversationSourceDirs",
-              "findJsonlFiles"
+              "findJsonlFiles",
+              "statIfExists"
             ],
             "typeOnly": false
           }
@@ -3530,6 +3533,7 @@
           "getCodexDir",
           "getConversationSourceDirs",
           "findJsonlFiles",
+          "statIfExists",
           "getSuperpowersDir",
           "getArchiveDir",
           "getIndexDir",
@@ -3964,7 +3968,8 @@
             "file": "src/paths.ts",
             "imports": [
               "getExcludedProjects",
-              "findJsonlFiles"
+              "findJsonlFiles",
+              "statIfExists"
             ],
             "typeOnly": false
           },
@@ -4474,7 +4479,8 @@
             "imports": [
               "getArchiveDir",
               "getExcludedProjects",
-              "findJsonlFiles"
+              "findJsonlFiles",
+              "statIfExists"
             ],
             "typeOnly": false
           },
@@ -5080,6 +5086,58 @@
             "file": "src/types.ts",
             "imports": [
               "ConversationExchange"
+            ],
+            "typeOnly": false
+          }
+        ],
+        "exports": []
+      },
+      "test/dangling-project-link.test.ts": {
+        "externalDependencies": [
+          "better-sqlite3",
+          "vitest"
+        ],
+        "nodeDependencies": [
+          "fs",
+          "os",
+          "path"
+        ],
+        "internalDependencies": [
+          {
+            "file": "src/sync.ts",
+            "imports": [
+              "syncConversations"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/indexer.ts",
+            "imports": [
+              "indexConversations",
+              "indexSession",
+              "indexUnprocessed"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/verify.ts",
+            "imports": [
+              "verifyIndex"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/paths.ts",
+            "imports": [
+              "statIfExists"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "test/test-utils.ts",
+            "imports": [
+              "safeRmSync",
+              "suppressConsole"
             ],
             "typeOnly": false
           }
@@ -9986,11 +10044,11 @@
     }
   },
   "statistics": {
-    "totalTypeScriptFiles": 274,
-    "totalSourceFiles": 274,
+    "totalTypeScriptFiles": 275,
+    "totalSourceFiles": 275,
     "totalModules": 4,
-    "totalLinesOfCode": 54794,
-    "totalExports": 601,
+    "totalLinesOfCode": 54948,
+    "totalExports": 602,
     "entryRoots": 6,
     "reachableFiles": 47,
     "dormantFiles": 61,
@@ -10008,7 +10066,7 @@
     "typeOnlyFilesInCycles": 2,
     "totalClasses": 8,
     "totalInterfaces": 139,
-    "totalFunctions": 341,
+    "totalFunctions": 342,
     "totalTypeGuards": 10,
     "totalEnums": 0,
     "totalConstants": 70,

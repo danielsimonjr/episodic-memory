@@ -1,7 +1,7 @@
 {
   "metadata": {
     "totalSourceFiles": 109,
-    "totalTestFiles": 168,
+    "totalTestFiles": 169,
     "testedCount": 85,
     "untestedCount": 24,
     "coveragePercent": "78.0",
@@ -203,6 +203,7 @@
       "test/oversized-message-guard.test.ts",
       "test/prune.test.ts",
       "test/search-embeddings-unavailable.test.ts",
+      "test/search-text-row-similarity.test.ts",
       "test/sync-incremental-and-db.test.ts",
       "test/text-search-multiword.test.ts",
       "test/tool-calls-cascade.test.ts",
@@ -283,6 +284,7 @@
       "test/multi-concept.test.ts",
       "test/query-prefix.test.ts",
       "test/search-embeddings-unavailable.test.ts",
+      "test/search-text-row-similarity.test.ts",
       "test/sync-embeddings-unavailable.test.ts",
       "test/sync-marker-scan.test.ts",
       "test/vector-search-filters.test.ts",
@@ -607,6 +609,7 @@
       "test/multi-concept.test.ts",
       "test/search-embeddings-unavailable.test.ts",
       "test/search-metadata-filters.test.ts",
+      "test/search-text-row-similarity.test.ts",
       "test/search-with-summary.test.ts",
       "test/security-speed-helpers.test.ts",
       "test/sync-incremental-and-db.test.ts",
@@ -698,6 +701,7 @@
       "test/oversized-message-guard.test.ts",
       "test/prune.test.ts",
       "test/search-embeddings-unavailable.test.ts",
+      "test/search-text-row-similarity.test.ts",
       "test/search-with-summary.test.ts",
       "test/summarizer-claude-path.test.ts",
       "test/summarizer-gpu-reservation.test.ts",
@@ -1248,6 +1252,12 @@
     ],
     "test/search-metadata-filters.test.ts": [
       "src/indexer.ts",
+      "src/search.ts"
+    ],
+    "test/search-text-row-similarity.test.ts": [
+      "src/types.ts",
+      "src/embeddings.ts",
+      "src/db.ts",
       "src/search.ts"
     ],
     "test/search-with-summary.test.ts": [

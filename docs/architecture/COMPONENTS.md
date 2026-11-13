@@ -107,7 +107,7 @@ The module chooses the Claude Code executable that the Agent SDK starts. The mod
 
 ### `src/search.ts`
 
-`searchConversations(query, options)` runs the vector query, the full-text query, or both, and joins results by exchange id. vec0 takes the nearest rows before it applies a WHERE clause. A vector search with a date, project, session, branch or excluded-id filter therefore scans the filtered rows exactly. A vector search with no filter uses a KNN query, and uses the exact scan when sidechain rows leave too few results. `searchMultipleConcepts` takes two to five concepts and returns exchanges that match all of them. `formatResults` and `formatMultiConceptResults` render markdown. `buildFtsMatchQuery` turns free text into a safe FTS expression. Each word in the expression must match in any order. When the FTS5 query fails, the LIKE search has one condition for each word. `%`, `_` and `\` in a word match as text. `l2DistanceToCosineSimilarity` converts a distance to a similarity score. Search attaches the summary text of an exchange when a summary exists inside the archive. When `initEmbeddings` throws `EmbeddingsUnavailableError`, a `both` search runs only the text step. The search then sends one notice to `options.onNotice`. Without that option, the search sends one notice to stderr. A `vector` search throws the error.
+`searchConversations(query, options)` runs the vector query, the full-text query, or both, and joins results by exchange id. vec0 takes the nearest rows before it applies a WHERE clause. A vector search with a date, project, session, branch or excluded-id filter therefore scans the filtered rows exactly. A vector search with no filter uses a KNN query, and uses the exact scan when sidechain rows leave too few results. `searchMultipleConcepts` takes two to five concepts and returns exchanges that match all of them. `formatResults` and `formatMultiConceptResults` render markdown. `buildFtsMatchQuery` turns free text into a safe FTS expression. Each word in the expression must match in any order. When the FTS5 query fails, the LIKE search has one condition for each word. `%`, `_` and `\` in a word match as text. `l2DistanceToCosineSimilarity` converts a distance to a similarity score. The text queries select a `NULL` distance, so a row that only the text step finds has no similarity. Search attaches the summary text of an exchange when a summary exists inside the archive. When `initEmbeddings` throws `EmbeddingsUnavailableError`, a `both` search runs only the text step. The search then sends one notice to `options.onNotice`. Without that option, the search sends one notice to stderr. A `vector` search throws the error.
 
 ### `src/show.ts`
 
@@ -203,7 +203,7 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 289 | repo-tools map |
+| totalSourceFiles | 290 | repo-tools map |
 | totalClasses | 10 | repo-tools map |
 | totalInterfaces | 139 | repo-tools map |
 | totalFunctions | 347 | repo-tools map |

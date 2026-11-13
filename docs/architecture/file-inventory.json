@@ -1,11 +1,11 @@
 {
-  "totalFiles": 289,
+  "totalFiles": 290,
   "byDisposition": {
     "reachable": 45,
     "build-entry": 4,
     "test-only": 45,
     "orphan": 15,
-    "test": 175,
+    "test": 176,
     "tool": 4,
     "config": 1,
     "bench": 0,
@@ -14,11 +14,11 @@
   "byArea": {
     "src": 109,
     "tools": 4,
-    "tests": 175,
+    "tests": 176,
     "config": 1
   },
   "byPackage": {
-    "(root)": 189,
+    "(root)": 190,
     "episodic-memory": 100
   },
   "files": [
@@ -678,7 +678,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 636
+      "loc": 637
     },
     {
       "file": "src/show-cli.ts",
@@ -1680,6 +1680,13 @@
       "area": "tests",
       "disposition": "test",
       "loc": 299
+    },
+    {
+      "file": "test/search-text-row-similarity.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 111
     },
     {
       "file": "test/search-with-summary.test.ts",

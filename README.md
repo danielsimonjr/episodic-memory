@@ -663,7 +663,7 @@ Search indexed conversations using semantic similarity or exact text matching.
 - `response_format` ('markdown' | 'json'): Output format (default: 'markdown')
 - `auth_token` (string): Required only when the server runs with `EPISODIC_MEMORY_MCP_TOKEN` set (see [docs/security.md](docs/security.md))
 
-Every result carries the archive path and line range that `read` takes.
+Every result carries the archive path and line range that `read` takes. A result that the vector step finds shows its similarity as a match percentage. A result that only the text step finds has no similarity.
 
 On some hosts the embedding backend cannot load. A `both` search then returns the text results only. The markdown result starts with a `Note:` line. The line names the missing vector step. The JSON result has a `notices` array. These text results have no similarity. A `vector` search and a multi-concept search fail in that case, because both searches need the embeddings.
 

@@ -1,7 +1,7 @@
 {
   "metadata": {
     "totalSourceFiles": 101,
-    "totalTestFiles": 143,
+    "totalTestFiles": 144,
     "testedCount": 79,
     "untestedCount": 22,
     "coveragePercent": "78.2",
@@ -125,6 +125,7 @@
   "coverageMap": {
     "cli/digest-hook.js": [],
     "cli/ensure-deps.js": [
+      "test/ensure-deps-prune.test.ts",
       "test/runtime-imports.test.ts"
     ],
     "cli/episodic-memory.js": [],
@@ -776,6 +777,9 @@
     "test/embeddings-format.test.ts": [
       "src/embeddings.ts",
       "src/constants.ts"
+    ],
+    "test/ensure-deps-prune.test.ts": [
+      "cli/ensure-deps.js"
     ],
     "test/exclude-nested.test.ts": [
       "src/indexer.ts",

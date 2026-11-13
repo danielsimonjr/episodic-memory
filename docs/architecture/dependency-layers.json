@@ -46,6 +46,14 @@
             ]
           },
           {
+            "module": "fs",
+            "imports": [
+              "existsSync",
+              "readdirSync",
+              "rmSync"
+            ]
+          },
+          {
             "module": "path",
             "imports": [
               "join"
@@ -56,9 +64,11 @@
         "workspaceDependencies": [],
         "exports": [
           "NPM_INSTALL_ARGS",
+          "pruneOptionalWeight",
           "ensureDeps"
         ],
         "functions": [
+          "pruneOptionalWeight",
           "ensureDeps"
         ],
         "constants": [

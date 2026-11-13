@@ -3,9 +3,9 @@
     "name": "episodic-memory",
     "schemaVersion": "2.0.0",
     "language": "typescript",
-    "totalFiles": 255,
+    "totalFiles": 256,
     "totalModules": 4,
-    "totalExports": 567
+    "totalExports": 568
   },
   "modules": {
     "src": {
@@ -22,11 +22,13 @@
         "externalDependencies": [],
         "nodeDependencies": [
           "child_process",
+          "fs",
           "path"
         ],
         "internalDependencies": [],
         "exports": [
           "NPM_INSTALL_ARGS",
+          "pruneOptionalWeight",
           "ensureDeps"
         ]
       },
@@ -5456,6 +5458,27 @@
         ],
         "exports": []
       },
+      "test/ensure-deps-prune.test.ts": {
+        "externalDependencies": [
+          "vitest"
+        ],
+        "nodeDependencies": [
+          "fs",
+          "os",
+          "path"
+        ],
+        "internalDependencies": [
+          {
+            "file": "cli/ensure-deps.js",
+            "imports": [
+              "ensureDeps",
+              "pruneOptionalWeight"
+            ],
+            "typeOnly": false
+          }
+        ],
+        "exports": []
+      },
       "test/exclude-nested.test.ts": {
         "externalDependencies": [
           "better-sqlite3",
@@ -9359,11 +9382,11 @@
     }
   },
   "statistics": {
-    "totalTypeScriptFiles": 255,
-    "totalSourceFiles": 255,
+    "totalTypeScriptFiles": 256,
+    "totalSourceFiles": 256,
     "totalModules": 4,
-    "totalLinesOfCode": 51561,
-    "totalExports": 567,
+    "totalLinesOfCode": 51825,
+    "totalExports": 568,
     "entryRoots": 6,
     "reachableFiles": 44,
     "dormantFiles": 57,
@@ -9381,7 +9404,7 @@
     "typeOnlyFilesInCycles": 2,
     "totalClasses": 7,
     "totalInterfaces": 136,
-    "totalFunctions": 316,
+    "totalFunctions": 317,
     "totalTypeGuards": 9,
     "totalEnums": 0,
     "totalConstants": 65,

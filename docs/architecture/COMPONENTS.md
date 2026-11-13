@@ -147,6 +147,8 @@ Each `src/*-cli.ts` file is one command. A shim in `cli/` or the umbrella dispat
 
 The shims in `cli/` are `episodic-memory.js` (dispatcher), `index-conversations.js`, `search-conversations.js`, `sync-hook.js`, `digest-hook.js`, `mcp-server-wrapper.js` and `ensure-deps.js`.
 
+`ensure-deps.js` runs before the MCP server and the sync hook start. `ensureDeps` repairs `node_modules` when `repairPlan` reports a missing package or binding. On every call, `pruneOptionalWeight` then removes the `onnxruntime-node` binding directories of the other platforms and architectures. The process loads only the `bin/napi-v6/<platform>/<arch>` directory of the running pair. The prune is best effort. If a removal fails, the function writes one stderr line and stops the prune. The prune never stops the start.
+
 ## Hooks
 
 `hooks/hooks.json` registers two commands for the session-start event: `cli/sync-hook.js` and `cli/digest-hook.js`. The sync hook starts a detached background sync and ends leftover summarizer processes. The digest hook prints the digest and the learned block to the session. Both import only small modules from `dist/`.
@@ -176,10 +178,10 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 255 | repo-tools map |
+| totalSourceFiles | 256 | repo-tools map |
 | totalClasses | 7 | repo-tools map |
 | totalInterfaces | 136 | repo-tools map |
-| totalFunctions | 316 | repo-tools map |
+| totalFunctions | 317 | repo-tools map |
 | totalConstants | 65 | repo-tools map |
 
 The tool names, the table names and the model name come from a direct reading of `src/mcp-server.ts`, `src/db.ts` and `src/embeddings.ts`. They are not `repo-tools map` metrics.

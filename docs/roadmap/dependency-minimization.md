@@ -83,7 +83,7 @@ Dependency facts:
 Install path:
 
 - `cli/ensure-deps.js` is on the start path of `cli/mcp-server-wrapper.js` and of the SessionStart hook `cli/sync-hook.js`. `src/doctor.ts` calls the same health check.
-- `ensureDeps` calls `repairPlan` from `dist/deps-health.js`. The function returns at once when the plan is `none`. The function throws on any repair failure. A throw stops the MCP server start.
+- `ensureDeps` calls `repairPlan` from `dist/deps-health.js`. The function skips the repair when the plan is `none`. On every call, the function then prunes the idle `onnxruntime-node` binaries (section 3.3b). The function throws on any repair failure. A throw stops the MCP server start.
 - `repairPlan` checks three JS sentinels (`better-sqlite3/lib/index.js`, `@huggingface/transformers/package.json`, `onnxruntime-common/package.json`) and the `better-sqlite3` binding. The function checks no other package.
 - The `runNpm` argument list in `cli/ensure-deps.js` is the only place for install flags.
 
@@ -199,6 +199,9 @@ A plugin host installs with npm and no lockfile. That install resolves a later `
 - Add `pruneOptionalWeight(nodeModules)` to `cli/ensure-deps.js`.
 - The function removes every directory `onnxruntime-node/bin/napi-v6/<platform>/<arch>` except the directory that equals `process.platform` and `process.arch`.
 - The function then removes each `<platform>` directory that is empty.
+- The function removes nothing when the binding file of the running pair (`onnxruntime_binding.node`) is not on disk. Without the check, a wrong key would remove the binding that the process loads. So would a prune during an install that is still writing the package.
+- The MCP wrapper and the sync hook can prune the same tree at the same time. A directory that the other call removed first gives ENOENT. The ENOENT ends the call without a stderr line.
+- The function skips a file under `napi-v6` or under a `<platform>` directory. Only a directory is a binding pair.
 - A Node x64 process on Windows ARM64 loads the x64 binding, and `process.arch` reports `x64`. The key therefore names the binding that the process loads.
 - `ensureDeps` calls the function after the repair block and before `return`, on every call. The call includes the `none` case, so the function prunes a healthy tree too. The early `return` for `none` changes for this reason.
 - When nothing remains to remove, the function does only `existsSync` checks.
@@ -213,11 +216,12 @@ A plugin host installs with npm and no lockfile. That install resolves a later `
 - A removal failure never changes the return value of `ensureDeps`, and never throws.
 - All output goes to stderr. Stdout of the wrapper belongs to JSON-RPC.
 
-**Saving.** 158.1 MB on Windows x64, 0 packages (measured directory sizes; estimate until pruned). The `win32/x64` directory (62.2 MB) stays.
+**Saving.** 158.1 MB and 0 packages on Windows x64 at the `bun.lock` versions (`onnxruntime-node` 1.24.3). The figure is the size of `node_modules` before and after one `ensureDeps` call. The `win32/x64` directory (62.2 MB) stays. A plugin host installs with npm and no lockfile, and resolves `onnxruntime-node` 1.30.0. There, the saving is 233.9 MB.
 
 **Risk.**
 
-- A later `npm install` re-extracts `onnxruntime-node` and restores the directories. The prune runs on every `ensureDeps` call, so the next call removes the directories again.
+- `npm install` and `bun install` keep the pruned tree while the installed `onnxruntime-node` version satisfies the manifest (measured with both installers). An install of a new `onnxruntime-node` version restores the directories. The prune runs on every `ensureDeps` call, so the next call removes the directories again.
+- Two operating systems can share one `node_modules`, for example in a WSL checkout or a synced folder. The first call then removes the binding of the other system. The plugin cache of a Claude Code host belongs to one host.
 - A wrong key removes the binding that the process loads. The mutation test below catches that error.
 
 **Acceptance test.**
@@ -230,7 +234,7 @@ A plugin host installs with npm and no lockfile. That install resolves a later `
 6. A fresh scratch install falls by 158.1 MB, inside the band of section 6. `doctor` reports a healthy tree.
 7. The fixture search of section 7 returns the known passage as the first hit.
 
-**Rollback.** Section 8. Then run `npm install --no-audit --no-fund` in the plugin root to restore the directories.
+**Rollback.** Section 8. Then delete `node_modules/onnxruntime-node` in the plugin root and run `npm install --no-audit --no-fund`. The install restores all five pairs (measured with npm and with bun).
 
 **Verdict: DO.** PR 4 lands before the SDK PR, because PR 4 builds the best-effort helper that PR 5 uses.
 
@@ -482,7 +486,7 @@ The removal of `@types/marked` in section 3.1 uses the types that `marked` 16 sh
 | 3.1 quick wins | DO | 12.4 on a plugin host; 0 on a repo checkout | 4 | reachability |
 | 3.2 `--omit=dev` | DO | 78.4 on a plugin host (includes 3.1) | 54 | reachability; estimate until installed |
 | 3.3a `onnxruntime-web` stub | DO | 140.7 | 18 | install cache at the `bun.lock` versions; 151.9 MB on an npm host |
-| 3.3b idle ORT binaries | DO | 158.1 on Windows x64 | 0 | measured directory sizes; estimate until pruned |
+| 3.3b idle ORT binaries | DO | 158.1 on Windows x64 | 0 | before and after the prune at the `bun.lock` versions; 233.9 MB on an npm host |
 | 3.4 SDK platform package | DO (opt-in) | 269.2 on opt-in hosts; 0 by default | 1 | measured package size |
 | 3.5 option B | DO LATER | 65.5 | 6 | reachability; estimate |
 | 3.6 `node:sqlite` | DO LATER | 27.7 | 2 | measured closure |
@@ -594,7 +598,8 @@ The preparing agent runs steps 1, 2 and 6. The release owner runs steps 3 to 5.
 Special cases:
 
 - PR 3: the revert removes the override and the stub. Run `bun install` to regenerate `bun.lock`.
-- PRs 4 and 5: `deps-health` treats the pruned tree as healthy, so no automatic reinstall happens. Run `npm install --no-audit --no-fund` in the plugin root.
+- PR 4: `deps-health` treats the pruned tree as healthy, so no automatic reinstall happens. A plain install keeps the pruned tree. Delete `node_modules/onnxruntime-node` in the plugin root, then run `npm install --no-audit --no-fund`.
+- PR 5: `deps-health` treats the tree without the platform package as healthy, so no automatic reinstall happens. Run `npm install --no-audit --no-fund` in the plugin root. The install adds the missing package directory.
 - Option B with a passed parity gate: the old vectors stay valid. No index rollback runs.
 - Option B with a bump, and option C: the old vectors stay under the old `EMBEDDING_VERSION`. A rollback restores the old version.
 

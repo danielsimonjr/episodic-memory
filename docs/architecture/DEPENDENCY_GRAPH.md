@@ -59,10 +59,11 @@ The codebase is organized into the following modules:
 | Module | Import |
 |--------|--------|
 | `child_process` | `spawnSync` |
+| `fs` | `existsSync, readdirSync, rmSync` |
 | `path` | `join` |
 
 **Exports:**
-- Functions: `ensureDeps`
+- Functions: `pruneOptionalWeight`, `ensureDeps`
 - Constants: `NPM_INSTALL_ARGS`
 
 ---
@@ -2112,14 +2113,14 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 255 |
+| Total Source Files | 256 |
 | Subsystems | 5 |
-| Total Lines of Code | 51561 |
-| Total Exports | 567 |
+| Total Lines of Code | 51825 |
+| Total Exports | 568 |
 | Total Re-exports | 8 |
 | Total Classes | 7 |
 | Total Interfaces | 136 |
-| Total Functions | 316 |
+| Total Functions | 317 |
 | Total Type Guards | 9 |
 | Total Enums | 0 |
 | Type-only Imports | 78 |

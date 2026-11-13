@@ -17,7 +17,7 @@ export interface DigestResult {
     failed: number;
     /** Day and week entries created by compression. Undefined when the job stopped before compression. */
     compressed?: number;
-    /** The reason that the job stopped, when another agent holds the shared GPU. The job counts this as a deferral, not a failure. */
+    /** The reason that the job stopped: another agent holds the shared GPU, or no usable Claude Code executable exists. The job counts this as a deferral, not a failure. */
     deferred?: string;
 }
 /** A session whose last exchange is newer than this is still running; summarize it next time. */
@@ -50,7 +50,7 @@ export declare function isTrivial(exchanges: ConversationExchange[]): boolean;
  *
  * The function returns at once, and writes nothing, when EPISODIC_MEMORY_DIGEST is not `1`.
  * The function also returns at once when EPISODIC_MEMORY_SUMMARIZER_GUARD is `1`, which marks a summarizer subprocess.
- * The job stops early when another agent holds the shared GPU and reports the reason in `deferred`.
+ * The job stops early when another agent holds the shared GPU, or when no usable Claude Code executable exists. It reports the reason in `deferred`.
  *
  * @param db the open index database
  * @param opts replaces the model call or the clock. Without it, the job uses the default summarizer call and the current time.

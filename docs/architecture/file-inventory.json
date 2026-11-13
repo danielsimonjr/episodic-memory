@@ -1,25 +1,25 @@
 {
-  "totalFiles": 256,
+  "totalFiles": 260,
   "byDisposition": {
-    "reachable": 40,
+    "reachable": 42,
     "build-entry": 4,
     "test-only": 43,
     "orphan": 14,
-    "test": 150,
+    "test": 152,
     "tool": 4,
     "config": 1,
     "bench": 0,
     "example": 0
   },
   "byArea": {
-    "src": 101,
+    "src": 103,
     "tools": 4,
-    "tests": 150,
+    "tests": 152,
     "config": 1
   },
   "byPackage": {
-    "(root)": 163,
-    "episodic-memory": 93
+    "(root)": 165,
+    "episodic-memory": 95
   },
   "files": [
     {
@@ -34,7 +34,7 @@
       "package": "(root)",
       "area": "src",
       "disposition": "test-only",
-      "loc": 138
+      "loc": 190
     },
     {
       "file": "cli/episodic-memory.js",
@@ -118,7 +118,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "orphan",
-      "loc": 106
+      "loc": 107
     },
     {
       "file": "src/backfill.ts",
@@ -126,6 +126,13 @@
       "area": "src",
       "disposition": "test-only",
       "loc": 164
+    },
+    {
+      "file": "src/claude-bin.ts",
+      "package": "episodic-memory",
+      "area": "src",
+      "disposition": "reachable",
+      "loc": 233
     },
     {
       "file": "src/codex-hook-trust.ts",
@@ -156,6 +163,13 @@
       "loc": 546
     },
     {
+      "file": "src/deferral.ts",
+      "package": "episodic-memory",
+      "area": "src",
+      "disposition": "reachable",
+      "loc": 21
+    },
+    {
       "file": "src/deps-health.ts",
       "package": "episodic-memory",
       "area": "src",
@@ -167,7 +181,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 136
+      "loc": 137
     },
     {
       "file": "src/digest-db.ts",
@@ -188,7 +202,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 206
+      "loc": 209
     },
     {
       "file": "src/digest-phase.ts",
@@ -300,7 +314,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 559
+      "loc": 568
     },
     {
       "file": "src/learn/bootstrap.ts",
@@ -321,7 +335,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 833
+      "loc": 864
     },
     {
       "file": "src/learn/export.ts",
@@ -657,7 +671,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 806
+      "loc": 822
     },
     {
       "file": "src/sync-banner.ts",
@@ -678,7 +692,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 533
+      "loc": 535
     },
     {
       "file": "src/topic-db.ts",
@@ -699,7 +713,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 307
+      "loc": 309
     },
     {
       "file": "src/topic-phase.ts",
@@ -800,6 +814,20 @@
       "loc": 122
     },
     {
+      "file": "test/claude-bin-deferral.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 180
+    },
+    {
+      "file": "test/claude-bin.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 230
+    },
+    {
       "file": "test/claude-e2e-script.test.ts",
       "package": "(root)",
       "area": "tests",
@@ -832,7 +860,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 84
+      "loc": 85
     },
     {
       "file": "test/codex-skills.test.ts",
@@ -923,7 +951,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 223
+      "loc": 247
     },
     {
       "file": "test/digest-hook.test.ts",
@@ -1007,7 +1035,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 182
+      "loc": 274
     },
     {
       "file": "test/exclude-nested.test.ts",
@@ -1070,7 +1098,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 481
+      "loc": 521
     },
     {
       "file": "test/learn/bootstrap.test.ts",
@@ -1140,7 +1168,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 587
+      "loc": 666
     },
     {
       "file": "test/learn/learn-config.test.ts",
@@ -1581,7 +1609,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 295
+      "loc": 303
     },
     {
       "file": "test/summarizer-prompt-budget.test.ts",
@@ -1756,7 +1784,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 559
+      "loc": 570
     },
     {
       "file": "test/topic-phase.test.ts",

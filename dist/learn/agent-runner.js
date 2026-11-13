@@ -17,6 +17,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { query as sdkQuery, } from '@anthropic-ai/claude-agent-sdk';
 import { getApiEnv } from '../summarizer.js';
+import { claudeExecutableOption } from '../claude-bin.js';
 import { learnConfig } from './learn-config.js';
 import { servedToolNames } from './sdk-tools.js';
 /** The tool names an isolated agent may never reach. */
@@ -43,6 +44,7 @@ export const DISALLOWED_TOOLS = [
 export function buildAgentQueryOptions(args) {
     const allowed = new Set(servedToolNames(args.allowPropose));
     return {
+        ...(args.executable ?? {}),
         model: args.model,
         maxTurns: args.maxTurns,
         maxBudgetUsd: args.maxBudgetUsd,
@@ -337,6 +339,8 @@ export function looksKilled(error) {
 export async function runAgent(options) {
     const queryFn = options.queryFn ?? sdkQuery;
     const timeoutMs = options.timeoutMs > 0 ? options.timeoutMs : DEFAULT_TIMEOUT_MS;
+    // Resolve the executable before the tracker starts, so a ClaudeBinError leaves nothing running.
+    const executable = options.executable ?? claudeExecutableOption();
     // A poll that every concurrent run shares tracks the spawn tree. The SDK exposes no PID accessor.
     // The tracker finds the direct `claude` child by its parent (the current process). The tracker
     // finds the plumbing below that child by its command line. A run with no `pids` option lists nothing.
@@ -362,6 +366,7 @@ export async function runAgent(options) {
                 model: options.model,
                 abortController: controller,
                 systemPrompt: options.systemPrompt,
+                executable,
             }),
         })) {
             // A live SDK call throws on abort; an injected stream may not, so the

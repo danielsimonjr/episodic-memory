@@ -52,7 +52,7 @@ dependency, no `MEMORY_*` environment handling and no per-handle cache: a write 
 - **TypeScript source** in `src/`, compiled to `dist/` by `tsc && esbuild`. **Both are committed.**
 - **CLI entry points** in `cli/` (Node.js wrappers — no bash).
 - **MCP server** is `dist/mcp-server.js`, launched by `cli/mcp-server-wrapper.js` from the plugin manifest.
-- **Tests** in `test/` via vitest (144 files, 1387 tests).
+- **Tests** in `test/` via vitest (146 files, 1435 tests).
 - **Generated files** in `dist/` AND `src/version.ts`. The latter is gitignored; never edit it.
 - **`bun.lock` is committed** — CI uses `bun install --frozen-lockfile` + `bun audit --audit-level=critical`. Do not commit `package-lock.json` (gitignored).
 
@@ -64,6 +64,8 @@ src/
   indexer.ts             # incremental index from sources to vec_exchanges
   sync.ts / sync-cli.ts  # source→archive copy + index, with reentrancy guard
   summarizer.ts          # Claude Agent SDK calls; persistSession: false guard
+  claude-bin.ts          # EPISODIC_MEMORY_CLAUDE_BIN: the Claude Code executable, probed against the SDK floor; Node built-ins only
+  deferral.ts            # deferralDetail: a GPU reservation or an unusable executable defers the model work
   db.ts                  # schema + migrations (cascade + embedding_version)
   paths.ts               # config/index/archive directory resolution
   parser.ts              # JSONL transcript → exchanges (cross-platform path-aware as of fork)
@@ -111,7 +113,7 @@ scripts/
 
 test/
   test-utils.ts          # createTestDb, safeRmSync (fork-added), suppressConsole, fixtures
-  *.test.ts              # 144 test files, 1387 tests
+  *.test.ts              # 146 test files, 1435 tests
   learn/                 # the Recursa suite; fakes for every model call
   fixtures/              # JSONL conversation fixtures
 
@@ -156,14 +158,25 @@ the `onnxruntime-node` binding directories of the other platforms from `node_mod
 the directories too. A plain `bun install` keeps the pruned tree. To restore the directories, delete
 `node_modules/onnxruntime-node` and run `bun install`.
 
+**Claude Code executable (`EPISODIC_MEMORY_CLAUDE_BIN`, opt-in).** When the variable is unset, the SDK runs the
+binary of its platform package `@anthropic-ai/claude-agent-sdk-<platform>-<arch>` (269 MB on Windows x64). When the
+variable is set, it names an absolute path to a Claude Code binary, or to a `.js` or `.mjs` file. `src/claude-bin.ts` probes the path once per
+process with `--version` against the floor in the SDK `manifest.json`. When the probe passes, `pruneOptionalWeight`
+removes the platform packages. When no usable executable exists, the summary loop, the digest, the topic job and
+the backfill defer (`src/deferral.ts`). These steps count no attempt and write no failure record. The learn commands that
+start Claude Code exit 1 before the lock. Set the variable in a place that every process inherits: the User
+environment variable on Windows, or the shell profile elsewhere. The Claude Code `env` setting does not reach a
+scheduled task. To roll back, remove the variable first. Then run `npm install --omit=dev --no-audit --no-fund`
+(or `bun install`) in the plugin root. A plain install restores the platform package.
+
 ### Current test state
 
-- **Full suite: 1387 tests in 144 files pass** (~17s wall clock on Linux;
+- **Full suite: 1435 tests in 146 files pass** (~17s wall clock on Linux;
   Windows runs are slower). The former `integration.test.ts` / `verify.test.ts` cold-embedding
   timeout flakes were fixed: the embedder is pre-warmed once per worker in `beforeAll`,
   `vitest.config.ts` sets `hookTimeout: 30000`, and the repair re-index test gets 60s. If you see a fresh
   timeout flake, suspect a new embedding-heavy hook without warm-up rather than the old cold-start cause.
-- The learn tests are the bulk of it (`test/learn/`, 36 files; the other 108 test files sit directly in `test/`). They never reach a model: every agent and
+- The learn tests are the bulk of it (`test/learn/`, 36 files; the other 110 test files sit directly in `test/`). They never reach a model: every agent and
   text call is injectable and tests pass fakes. `test/test-env.ts` pins the Claude backend, a closed ollama URL
   and a temporary config directory. `test/setup-env.ts` deletes every other `EPISODIC_MEMORY_*` variable of
   the machine. A local run therefore uses the CI settings and cannot reach a model or the live data.
@@ -282,6 +295,7 @@ EPISODIC_MEMORY_LEARN               EPISODIC_MEMORY_LEARN_MAX_CHARS
 EPISODIC_MEMORY_MCP_TOKEN           EPISODIC_MEMORY_REDACT_SECRETS
 EPISODIC_MEMORY_MAX_READ_BYTES      EPISODIC_MEMORY_DIGEST_MAX_CHARS
 EPISODIC_MEMORY_INCLUDE_SUMMARY     EPISODIC_MEMORY_MAX_SUMMARY_DISPLAY_CHARS
+EPISODIC_MEMORY_CLAUDE_BIN
 ```
 
 Every variable the server reads at runtime is whitelisted explicitly: without its line the plugin-launched
@@ -289,7 +303,8 @@ server never sees it (so `skills` would answer "learning is off" forever, `auth_
 required, and a read cap or redaction setting would be silently ignored). Any new setting that the MCP
 server reads at runtime needs its own line here and in `test/codex-plugin.test.ts`. `EPISODIC_MEMORY_DIGEST`
 is not listed on purpose: it gates *writing* the digest in `sync` and the hook, and the `digest` tool reads
-whatever has been written.
+whatever has been written. `EPISODIC_MEMORY_CLAUDE_BIN` is listed for `cli/mcp-server-wrapper.js`: its
+`ensureDeps` call removes the platform packages only when it sees the variable.
 
 ### `search`
 
@@ -398,7 +413,7 @@ Most common cause on a fresh install: the wrapper's `npm install` didn't fully p
 
 ```bash
 cd ~/.claude/plugins/cache/<marketplace>/episodic-memory/<version>
-npm install --no-audit --no-fund
+npm install --omit=dev --no-audit --no-fund
 # If transformers errors on onnxruntime-common:
 npm install --no-save onnxruntime-common@1.24.3
 ```

@@ -1,6 +1,14 @@
 ## [Unreleased]
 
 ### Added
+- **A host can drop the 269 MB bundled Claude Code binary (opt-in, `EPISODIC_MEMORY_CLAUDE_BIN`).** The Agent SDK starts the binary of its platform package, for example `@anthropic-ai/claude-agent-sdk-win32-x64`. A host that sets the variable to an absolute path of its own Claude Code binary uses that binary instead.
+  - `src/claude-bin.ts` runs `<path> --version` once per process, with a bound of 10 seconds. A timeout is not kept, so a slow cold start retries at the next call. The version must be at or above the floor in the SDK `manifest.json`, because an older binary can delete session records.
+  - When the probe passes, `ensureDeps` removes every `claude-agent-sdk-<platform>-<arch>` platform package. Another package with the same prefix stays. One call removed 269,231,840 bytes from an install at the `bun.lock` versions. With the variable unset, nothing changes.
+  - When no usable executable exists, the summaries, the digest, the topic step and the backfill defer (`src/deferral.ts`), as they do for a GPU reservation. They count no attempt and write no failure record. The learn commands that start Claude Code exit 1 before the lock.
+  - On the Ollama backend, an unusable Claude fallback counts as no fallback. The Ollama error stands and the attempt counts, so one transcript that Ollama cannot summarize does not hold back the queue.
+  - `.mcp.json` passes the variable to the MCP wrapper. A plain `npm install` or `bun install` restores the package, after the variable is removed.
+  - The rollback steps of the plan and the CLAUDE.md repair recipe now run `npm install --omit=dev`, as the installer does. Without the flag, a plugin host gets the devDependencies back.
+  - `backfill` no longer says "when the GPU is free" for every pause. The message now names no cause, because the deferral detail before it names the cause.
 - **Dependency-minimization plan (`docs/roadmap/dependency-minimization.md`).** The plan measures each dependency of the 839.2 MB plugin tree and gives a verdict with a saving, a risk, an acceptance test and a rollback. Five PRs are DO: quick wins, `--omit=dev` on plugin hosts, an `onnxruntime-web` stub override, a prune of the idle `onnxruntime-node` binaries, and an opt-in removal of the Agent SDK platform binary. The default-host saving is 377.2 MB (estimate); an opt-in host saves 269.2 MB more. A direct ONNX embedding path and the move to `node:sqlite` are DO LATER, each with its gate. `docs/roadmap/README.md` links the plan, and `todo.md` lists one row per PR.
 
 ### Fixed

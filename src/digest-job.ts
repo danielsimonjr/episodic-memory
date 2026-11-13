@@ -2,7 +2,8 @@ import type Database from 'better-sqlite3';
 import type { ConversationExchange } from './types.js';
 import { shouldSkipReentrantSync } from './reentrancy.js';
 import { gpuReservationBlock } from './gpu-reservation.js';
-import { GpuReservedError, summarizerBackend } from './ollama-backend.js';
+import { summarizerBackend } from './ollama-backend.js';
+import { deferralDetail } from './deferral.js';
 import { callDigestModel, promptBudgetChars } from './summarizer.js';
 import { buildSessionPrompt } from './digest-prompts.js';
 import { parseCitedLines, redactEntryText } from './digest-validate.js';
@@ -27,7 +28,7 @@ export interface DigestResult {
   failed: number;
   /** Day and week entries created by compression. Undefined when the job stopped before compression. */
   compressed?: number;
-  /** The reason that the job stopped, when another agent holds the shared GPU. The job counts this as a deferral, not a failure. */
+  /** The reason that the job stopped: another agent holds the shared GPU, or no usable Claude Code executable exists. The job counts this as a deferral, not a failure. */
   deferred?: string;
 }
 
@@ -145,9 +146,11 @@ async function writeSessionEntries(
     try {
       raw = await model(prompt);
     } catch (err) {
-      if (err instanceof GpuReservedError) {
-        // Another agent took the GPU during the run. Every further call would fail the same way.
-        result.deferred = err.detail;
+      const deferred = deferralDetail(err);
+      if (deferred !== null) {
+        // Another agent took the GPU during the run, or no usable Claude Code executable exists.
+        // Every further call would fail the same way.
+        result.deferred = deferred;
         return;
       }
       console.error(
@@ -177,7 +180,7 @@ async function writeSessionEntries(
  *
  * The function returns at once, and writes nothing, when EPISODIC_MEMORY_DIGEST is not `1`.
  * The function also returns at once when EPISODIC_MEMORY_SUMMARIZER_GUARD is `1`, which marks a summarizer subprocess.
- * The job stops early when another agent holds the shared GPU and reports the reason in `deferred`.
+ * The job stops early when another agent holds the shared GPU, or when no usable Claude Code executable exists. It reports the reason in `deferred`.
  *
  * @param db the open index database
  * @param opts replaces the model call or the clock. Without it, the job uses the default summarizer call and the current time.

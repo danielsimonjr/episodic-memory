@@ -9,7 +9,8 @@ import { runLearnCli } from '../../src/learn/cli-main.js';
 import { openLearningDb } from '../../src/learn/learning-store.js';
 import { openKnowledgeStore, type KnowledgeStore } from '../../src/learn/knowledge-store.js';
 import { insertKnowledgeEntry } from '../../src/learn/knowledge-db.js';
-import { createRun, listTasks, listAttempts, getRun } from '../../src/learn/learning-db.js';
+import { createRun, listTasks, listAttempts, getRun, latestRun } from '../../src/learn/learning-db.js';
+import { ClaudeBinError } from '../../src/claude-bin.js';
 import { acquireLock, releaseLock } from '../../src/lockfile.js';
 import { getLearnLockPath } from '../../src/learn/learn-lock.js';
 import { getIndexDir } from '../../src/paths.js';
@@ -512,6 +513,84 @@ describe('runLearnCli', () => {
     } finally {
       releaseLock(lock!);
     }
+  });
+});
+
+describe('runLearnCli without a usable Claude Code executable', () => {
+  const unusable = () => {
+    throw new ClaudeBinError('EPISODIC_MEMORY_CLAUDE_BIN=/x/claude does not exist');
+  };
+  const savedBackend = process.env.EPISODIC_MEMORY_SUMMARIZER_BACKEND;
+  afterEach(() => {
+    if (savedBackend === undefined) delete process.env.EPISODIC_MEMORY_SUMMARIZER_BACKEND;
+    else process.env.EPISODIC_MEMORY_SUMMARIZER_BACKEND = savedBackend;
+  });
+
+  for (const argv of [['solve', '--split', 'train'], ['bootstrap'], ['improve'], ['improve', '--dry-run'], ['tasks']]) {
+    it(`learn ${argv.join(' ')} exits 1 with one line, starts no agent and creates no run`, async () => {
+      const agent = fakeRunAgent();
+      let generated = 0;
+      const cap = capture();
+      const code = await runLearnCli(argv, {
+        ...cap.deps,
+        dbs,
+        runAgent: agent.fn,
+        generateModel: async () => {
+          generated += 1;
+          return '[]';
+        },
+        claudePreflight: unusable,
+      });
+      expect(code).toBe(1);
+      expect(cap.stderr()).toMatch(/needs a Claude Code executable; nothing ran/);
+      expect(agent.calls).toHaveLength(0);
+      expect(generated).toBe(0);
+      expect(latestRun(learning)).toBeNull();
+    });
+  }
+
+  it('learn tasks runs no check on the ollama backend, which makes no Claude call', async () => {
+    process.env.EPISODIC_MEMORY_SUMMARIZER_BACKEND = 'ollama';
+    let checked = 0;
+    const cap = capture();
+    const code = await runLearnCli(['tasks', '--per-project', '1'], {
+      ...cap.deps,
+      dbs,
+      generateModel: fakeGenerateModel(),
+      claudePreflight: () => {
+        checked += 1;
+      },
+    });
+    expect(code).toBe(0);
+    expect(checked).toBe(0);
+  });
+
+  it('learn tasks --check runs no check, because the check calls no model', async () => {
+    let checked = 0;
+    const cap = capture();
+    const code = await runLearnCli(['tasks', '--check'], {
+      ...cap.deps,
+      dbs,
+      claudePreflight: () => {
+        checked += 1;
+      },
+    });
+    expect(code).toBe(0);
+    expect(checked).toBe(0);
+  });
+
+  it('learn solve runs the check once when an executable is usable', async () => {
+    let checked = 0;
+    const cap = capture();
+    await runLearnCli(['solve', '--split', 'train'], {
+      ...cap.deps,
+      dbs,
+      runAgent: fakeRunAgent().fn,
+      claudePreflight: () => {
+        checked += 1;
+      },
+    });
+    expect(checked).toBe(1);
   });
 });
 

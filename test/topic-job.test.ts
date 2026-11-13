@@ -6,6 +6,7 @@ import path from 'path';
 import { initDatabase } from '../src/db.js';
 import { runTopics } from '../src/topic-job.js';
 import { GpuReservedError } from '../src/ollama-backend.js';
+import { ClaudeBinError } from '../src/claude-bin.js';
 import { promptBudgetChars } from '../src/summarizer.js';
 import { SUMMARIZER_GUARD_ENV } from '../src/reentrancy.js';
 import {
@@ -210,6 +211,16 @@ describe('runTopics', () => {
       expect(fetchSpy).not.toHaveBeenCalled();
       expect(r).toMatchObject({ installed: 0, failed: 0, deferred: 'fleet GPU reserved by Starship' });
       expect(getTopicMeta(db, 'since')).toBe(NOW.toISOString());
+      expect(getTopicSession(db, 'proj-a', 's1')).toBeNull();
+    });
+
+    it('stops at an unusable Claude Code executable, with no failure and no session row', async () => {
+      const model = vi.fn(async () => {
+        throw new ClaudeBinError('EPISODIC_MEMORY_CLAUDE_BIN=/x/claude does not exist');
+      });
+      const r = await runTopics(db, { model, now: NOW });
+      expect(model).toHaveBeenCalledTimes(1);
+      expect(r).toMatchObject({ failed: 0, rejected: 0, deferred: 'EPISODIC_MEMORY_CLAUDE_BIN=/x/claude does not exist' });
       expect(getTopicSession(db, 'proj-a', 's1')).toBeNull();
     });
 

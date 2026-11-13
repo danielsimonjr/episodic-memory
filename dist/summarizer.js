@@ -7,6 +7,8 @@ import { createInterface } from 'readline';
 import { codexVersionRequirementMessage, parseCodexCliVersion, versionMeetsMinimum, } from './codex-support.js';
 import { validateApiBaseUrl } from './api-endpoint.js';
 import { summarizerBackend, callOllama, GpuReservedError, ollamaMaxPromptChars } from './ollama-backend.js';
+import { ClaudeBinError, claudeExecutableOption } from './claude-bin.js';
+import { deferralDetail } from './deferral.js';
 /**
  * Build the environment for a summarization subprocess.
  *
@@ -123,10 +125,14 @@ ${conversationText}`;
  * No later call can resume the session. Without this option, each summary adds
  * a session to the IDE session sidebar (#83). The claude-agent-sdk type
  * declarations describe the option.
+ *
+ * `executable` is the result of `claudeExecutableOption()`: empty for the bundled binary, or
+ * `{ pathToClaudeCodeExecutable }` for the binary that EPISODIC_MEMORY_CLAUDE_BIN names.
  */
 export function buildSummarizerQueryOptions(args) {
-    const { model } = args;
+    const { model, executable = {} } = args;
     return {
+        ...executable,
         model,
         max_tokens: 4096,
         env: getApiEnv(),
@@ -203,6 +209,8 @@ async function callClaude(prompt, opts = {}) {
     const fallbackModel = opts.fallbackModel || process.env.EPISODIC_MEMORY_API_MODEL_FALLBACK || 'sonnet';
     const useFallback = opts.useFallback === true;
     const model = useFallback ? fallbackModel : primaryModel;
+    // A ClaudeBinError propagates before any process starts. The callers treat the error as a deferral.
+    const executable = claudeExecutableOption({ hint: 'or set EPISODIC_MEMORY_SUMMARIZER_BACKEND=ollama' });
     // Bound the call. A stalled SDK subprocess would otherwise block the sync. Abort
     // through an AbortController after the timeout, and throw an error the caller can record.
     const controller = new AbortController();
@@ -211,7 +219,7 @@ async function callClaude(prompt, opts = {}) {
     try {
         for await (const message of query({
             prompt,
-            options: { ...buildSummarizerQueryOptions({ model }), abortController: controller },
+            options: { ...buildSummarizerQueryOptions({ model, executable }), abortController: controller },
         })) {
             if (message && typeof message === 'object' && 'type' in message && message.type === 'result') {
                 const m = message;
@@ -253,6 +261,8 @@ async function callClaude(prompt, opts = {}) {
  *
  * EPISODIC_MEMORY_OLLAMA_FALLBACK_MODEL names the retry model (for example `haiku`). When the variable is unset or blank, the Ollama error propagates.
  * A `GpuReservedError` always propagates, because a reservation must defer the work and not move it.
+ * When no usable Claude Code executable exists, the host has no fallback, and the Ollama error propagates. A deferral
+ * there would hold back the whole queue behind one prompt that Ollama cannot answer.
  */
 async function callOllamaWithFallback(prompt, opts = {}) {
     try {
@@ -263,7 +273,14 @@ async function callOllamaWithFallback(prompt, opts = {}) {
         if (!fallback || err instanceof GpuReservedError)
             throw err;
         console.error(`    ollama call failed (${err.message}); retrying with ${fallback}`);
-        return callClaude(prompt, { model: fallback, fallbackModel: fallback });
+        try {
+            return await callClaude(prompt, { model: fallback, fallbackModel: fallback });
+        }
+        catch (fallbackError) {
+            if (fallbackError instanceof ClaudeBinError)
+                throw err;
+            throw fallbackError;
+        }
     }
 }
 /**
@@ -606,7 +623,7 @@ function getCodexModel(exchanges) {
  *
  * For more than 15 exchanges, the function summarizes each chunk of exchanges. The function then synthesizes the chunk summaries into one summary. The chunk size is 8 exchanges. A larger chunk size keeps the chunk count at 20 or less. The function logs a failed chunk and skips it. A failed synthesis returns the chunk summaries joined with a space. When no chunk succeeds, the function returns `Error: Unable to summarize conversation.` as the result.
  *
- * A GpuReservedError from a model call rejects the promise.
+ * A deferral from a model call rejects the promise: a GpuReservedError, or a ClaudeBinError when no usable Claude Code executable exists.
  *
  * The function writes its progress lines with console.log, so they go to stdout.
  *
@@ -665,8 +682,8 @@ Example: <summary>Implemented HID keyboard functionality for ESP32. Hit Bluetoot
             console.log(`  Chunk ${i + 1}/${chunks.length}: ${extracted.split(/\s+/).length} words`);
         }
         catch (error) {
-            // A reserved GPU stops the whole summary: skipping the chunk would store a partial summary.
-            if (error instanceof GpuReservedError)
+            // A deferral stops the whole summary: skipping the chunk would store a partial summary.
+            if (deferralDetail(error) !== null)
                 throw error;
             console.log(`  Chunk ${i + 1} failed, skipping`);
         }
@@ -695,7 +712,7 @@ Your summary (max 200 words):`;
         return extractSummary(result);
     }
     catch (error) {
-        if (error instanceof GpuReservedError)
+        if (deferralDetail(error) !== null)
             throw error;
         console.log(`  Synthesis failed, using chunk summaries`);
         return chunkSummaries.join(' ');

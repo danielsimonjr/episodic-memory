@@ -32,7 +32,7 @@ This document provides a comprehensive dependency graph of all files, components
 The codebase is organized into the following modules:
 
 - **cli**: 7 files
-- **root**: 62 files
+- **root**: 64 files
 - **entry**: 1 file
 - **learn**: 30 files
 - **vendor/onnxruntime-web-stub**: 1 file
@@ -207,6 +207,24 @@ The codebase is organized into the following modules:
 
 ---
 
+### `src/claude-bin.ts` - Choose the Claude Code executable that the Agent SDK starts.
+
+**Node.js Built-in Dependencies:**
+| Module | Import |
+|--------|--------|
+| `child_process` | `spawnSync` |
+| `fs` | `existsSync, readFileSync` |
+| `module` | `createRequire` |
+| `path` | `dirname, extname, isAbsolute, join` |
+
+**Exports:**
+- Classes: `ClaudeBinError`
+- Interfaces: `ClaudeBinOptions`
+- Functions: `resolveSdkDir`, `sdkFloor`, `bundledBinaryPresent`, `probeClaudeBin`, `claudeExecutableOption`
+- Constants: `CLAUDE_BIN_ENV`, `PROBE_TIMEOUT_MS`
+
+---
+
 ### `src/codex-hook-trust.ts` - The trust state that Codex reports for the episodic-memory hooks.
 
 **Node.js Built-in Dependencies:**
@@ -275,6 +293,19 @@ The codebase is organized into the following modules:
 
 ---
 
+### `src/deferral.ts` - The errors that defer model work instead of failing it.
+
+**Internal Dependencies:**
+| File | Imports | Type |
+|------|---------|------|
+| `./claude-bin.js` | `ClaudeBinError` | Import |
+| `./ollama-backend.js` | `GpuReservedError` | Import |
+
+**Exports:**
+- Functions: `deferralDetail`
+
+---
+
 ### `src/deps-health.ts` - node_modules health check shared by the MCP wrapper, the SessionStart sync hook and `doctor`.
 
 **Node.js Built-in Dependencies:**
@@ -300,7 +331,7 @@ The codebase is organized into the following modules:
 | File | Imports | Type |
 |------|---------|------|
 | `./summarizer.js` | `callDigestModel` | Import |
-| `./ollama-backend.js` | `GpuReservedError` | Import |
+| `./deferral.js` | `deferralDetail` | Import |
 | `./digest-prompts.js` | `buildCompressPrompt` | Import |
 | `./digest-validate.js` | `parseCitedLines, redactEntryText` | Import |
 | `./digest-db.js` | `insertDigestEntry, listActiveByTier, supersede, DigestEntry, DigestTier` | Import |
@@ -361,7 +392,8 @@ The codebase is organized into the following modules:
 | `./types.js` | `ConversationExchange` | Import (type-only) |
 | `./reentrancy.js` | `shouldSkipReentrantSync` | Import |
 | `./gpu-reservation.js` | `gpuReservationBlock` | Import |
-| `./ollama-backend.js` | `GpuReservedError, summarizerBackend` | Import |
+| `./ollama-backend.js` | `summarizerBackend` | Import |
+| `./deferral.js` | `deferralDetail` | Import |
 | `./summarizer.js` | `callDigestModel, promptBudgetChars` | Import |
 | `./digest-prompts.js` | `buildSessionPrompt` | Import |
 | `./digest-validate.js` | `parseCitedLines, redactEntryText` | Import |
@@ -976,6 +1008,8 @@ The codebase is organized into the following modules:
 | `./codex-support.js` | `codexVersionRequirementMessage, parseCodexCliVersion, versionMeetsMinimum` | Import |
 | `./api-endpoint.js` | `validateApiBaseUrl` | Import |
 | `./ollama-backend.js` | `summarizerBackend, callOllama, GpuReservedError, ollamaMaxPromptChars, OllamaCallOptions` | Import |
+| `./claude-bin.js` | `ClaudeBinError, claudeExecutableOption` | Import |
+| `./deferral.js` | `deferralDetail` | Import |
 
 **Exports:**
 - Interfaces: `CodexSummarizerCommand`, `CallClaudeOptions`
@@ -1039,7 +1073,8 @@ The codebase is organized into the following modules:
 | `./constants.js` | `SUMMARIZER_CONTEXT_MARKER` | Import |
 | `./paths.js` | `getExcludedProjects, findJsonlFiles` | Import |
 | `./gpu-reservation.js` | `gpuReservationBlock` | Import |
-| `./ollama-backend.js` | `GpuReservedError, summarizerBackend` | Import |
+| `./ollama-backend.js` | `summarizerBackend` | Import |
+| `./deferral.js` | `deferralDetail` | Import |
 | `./db.js` | `*` | Import |
 | `./embeddings.js` | `*` | Import |
 | `./parser.js` | `*` | Import |
@@ -1111,7 +1146,8 @@ The codebase is organized into the following modules:
 | `./types.js` | `ConversationExchange` | Import (type-only) |
 | `./reentrancy.js` | `shouldSkipReentrantSync` | Import |
 | `./gpu-reservation.js` | `gpuReservationBlock` | Import |
-| `./ollama-backend.js` | `GpuReservedError, summarizerBackend` | Import |
+| `./ollama-backend.js` | `summarizerBackend` | Import |
+| `./deferral.js` | `deferralDetail` | Import |
 | `./summarizer.js` | `callDigestModel, promptBudgetChars` | Import |
 | `./digest-job.js` | `QUIET_MS, isTrivial, sessionExchanges` | Import |
 | `./constants.js` | `TOPIC_DEFAULTS, envPositiveInt, topicsEnabled` | Import |
@@ -1286,6 +1322,7 @@ The codebase is organized into the following modules:
 | File | Imports | Type |
 |------|---------|------|
 | `../summarizer.js` | `getApiEnv` | Import |
+| `../claude-bin.js` | `claudeExecutableOption` | Import |
 | `./learn-config.js` | `learnConfig` | Import |
 | `./types.js` | `AttemptOutcome, Cost, TraceStep` | Import (type-only) |
 | `./sdk-tools.js` | `servedToolNames` | Import |
@@ -1360,6 +1397,8 @@ The codebase is organized into the following modules:
 | File | Imports | Type |
 |------|---------|------|
 | `../paths.js` | `getSuperpowersDir` | Import |
+| `../claude-bin.js` | `ClaudeBinError, claudeExecutableOption` | Import |
+| `../ollama-backend.js` | `summarizerBackend` | Import |
 | `./learn-lock.js` | `LearnLockHeld, withLearnLock, PidRegistry` | Import |
 | `./learn-config.js` | `learnConfig, learnEnabled, LEARN_OFF_MESSAGE` | Import |
 | `./tasks.js` | `generateTasks, checkTasks` | Import |
@@ -1974,30 +2013,30 @@ The codebase is organized into the following modules:
 | `src/learn/types` | 1 file | 22 files |
 | `src/paths` | 0 files | 22 files |
 | `src/db` | 6 files | 15 files |
-| `src/summarizer` | 6 files | 13 files |
-| `src/learn/cli-main` | 17 files | 1 file |
+| `src/summarizer` | 8 files | 13 files |
+| `src/learn/cli-main` | 19 files | 1 file |
 | `src/learn/bootstrap` | 14 files | 3 files |
 | `src/learn/learner` | 15 files | 1 file |
 | `src/learn/leaf-learner` | 14 files | 1 file |
 | `src/redact` | 0 files | 15 files |
 | `src/learn/solver` | 9 files | 5 files |
+| `src/topic-job` | 12 files | 1 file |
+| `src/digest-job` | 10 files | 2 files |
 | `src/mcp-tools` | 10 files | 2 files |
 | `src/sync-cli` | 12 files | 0 files |
-| `src/topic-job` | 11 files | 1 file |
+| `src/sync` | 10 files | 2 files |
 | `src/types` | 0 files | 12 files |
-| `src/digest-job` | 9 files | 2 files |
 | `src/learn/learn-config` | 0 files | 11 files |
 | `src/learn/learning-db` | 2 files | 9 files |
-| `src/sync` | 9 files | 2 files |
+| `src/learn/agent-runner` | 5 files | 5 files |
 | `src/learn/skills-tool` | 8 files | 2 files |
+| `src/ollama-backend` | 3 files | 7 files |
 | `src/constants` | 0 files | 9 files |
 | `src/doctor` | 8 files | 1 file |
 | `src/embeddings` | 2 files | 7 files |
-| `src/learn/agent-runner` | 4 files | 5 files |
 | `src/learn/knowledge-db` | 2 files | 7 files |
 | `src/learn/knowledge-store` | 3 files | 6 files |
 | `src/learn/validate` | 7 files | 2 files |
-| `src/ollama-backend` | 3 files | 6 files |
 | `src/search` | 5 files | 4 files |
 | `src/digest-db` | 1 file | 7 files |
 | `src/index` | 8 files | 0 files |
@@ -2006,11 +2045,11 @@ The codebase is organized into the following modules:
 | `src/learn/learn-handlers` | 7 files | 1 file |
 | `src/learn/learned-block` | 4 files | 4 files |
 | `src/learn/tasks` | 6 files | 2 files |
+| `src/deferral` | 2 files | 5 files |
 | `src/digest-prompts` | 4 files | 3 files |
 | `src/digest-validate` | 1 file | 6 files |
 | `src/learn-cli` | 7 files | 0 files |
 | `src/reentrancy` | 0 files | 7 files |
-| `src/topic-prompts` | 6 files | 1 file |
 
 ---
 
@@ -2051,13 +2090,13 @@ graph TD
         N8[archive-path]
         N9[backfill-cli]
         N10[backfill]
-        N11[codex-hook-trust]
-        N12[codex-support]
-        N13[constants]
-        N14[db]
-        N15[deps-health]
-        N16[digest-compress]
-        N17[...52 more]
+        N11[claude-bin]
+        N12[codex-hook-trust]
+        N13[codex-support]
+        N14[constants]
+        N15[db]
+        N16[deferral]
+        N17[...54 more]
     end
 
     subgraph Entry
@@ -2085,16 +2124,19 @@ graph TD
     N4 --> N1
     N6 --> N1
     N9 --> N10
-    N14 --> N13
-    N18 --> N14
+    N15 --> N14
+    N16 --> N11
+    N18 --> N15
+    N19 --> N11
     N20 --> N25
     N20 --> N26
     N20 --> N21
     N20 --> N19
+    N22 --> N11
     N22 --> N25
     N22 --> N23
     N22 --> N27
-    N22 --> N14
+    N22 --> N15
     N22 --> N20
     N25 --> N27
     N26 --> N21
@@ -2113,17 +2155,17 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 256 |
+| Total Source Files | 260 |
 | Subsystems | 5 |
-| Total Lines of Code | 51825 |
-| Total Exports | 568 |
+| Total Lines of Code | 52861 |
+| Total Exports | 578 |
 | Total Re-exports | 8 |
-| Total Classes | 7 |
-| Total Interfaces | 136 |
-| Total Functions | 317 |
+| Total Classes | 8 |
+| Total Interfaces | 137 |
+| Total Functions | 323 |
 | Total Type Guards | 9 |
 | Total Enums | 0 |
-| Type-only Imports | 78 |
+| Type-only Imports | 79 |
 | Runtime Cyclic Components | 0 |
 | Type-only Cyclic Components | 1 |
 | Files in Runtime Cycles | 0 |

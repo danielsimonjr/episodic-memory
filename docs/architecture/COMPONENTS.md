@@ -58,7 +58,7 @@ Holds `EMBEDDING_VERSION`. It finds rows with an older version and re-embeds the
 
 ### `src/sync.ts`
 
-`syncConversations(sourceDir, destDir, options)` is the core of ingest. The function walks the source folders and copies a transcript only when it is newer than the archive copy. It queues new files for indexing and queues missing summaries. It skips summarizer conversations and excluded projects. Summary work runs in this order: fresh work, then retries, then retries of legacy empty summaries. The function returns a `SyncResult` with counts. `summarizeOneFile` summarizes a single archive file.
+`syncConversations(sourceDir, destDir, options)` is the core of ingest. The function walks the source folders and copies a transcript only when it is newer than the archive copy. It queues new files for indexing and queues missing summaries. It skips summarizer conversations and excluded projects. Summary work runs in this order: fresh work, then retries, then retries of legacy empty summaries. A deferral (see `src/deferral.ts`) stops the summary loop and sets `summariesDeferred`. The function returns a `SyncResult` with counts. `summarizeOneFile` summarizes a single archive file.
 
 ### `src/backfill.ts`
 
@@ -77,6 +77,20 @@ Produces conversation summaries. The default backend is the Claude Agent SDK, ca
 ### `src/ollama-backend.ts`
 
 An opt-in local backend. `EPISODIC_MEMORY_SUMMARIZER_BACKEND=ollama` selects it. It checks the GPU reservation and raises `GpuReservedError` when another agent holds the GPU.
+
+### `src/claude-bin.ts`
+
+The module chooses the Claude Code executable that the Agent SDK starts. The module imports only Node built-ins, because `cli/ensure-deps.js` imports the module before an install. `claudeExecutableOption()` returns the executable option of one SDK call:
+
+- When `EPISODIC_MEMORY_CLAUDE_BIN` is unset or blank and the platform package `@anthropic-ai/claude-agent-sdk-<platform>-<arch>` is installed, the function returns an empty object. The SDK runs its bundled binary, and no probe runs.
+- When the variable is unset and the platform package is absent, the function throws a `ClaudeBinError`. The error line names the variable. The run never falls back to a path that is not on disk.
+- When the variable is set, the function returns `{ pathToClaudeCodeExecutable }` after one probe per process.
+
+`probeClaudeBin` refuses a relative path, a `.cmd`, `.bat` or `.ps1` shim, and a script that needs a loader. `probeClaudeBin` runs `<path> --version` with piped output and a bound of `PROBE_TIMEOUT_MS` (10 seconds). A `.js` or `.mjs` path runs under the running node. The version must be at or above the floor. `sdkFloor` reads the floor from the `version` field of the SDK `manifest.json`, which names the bundled release. The floor is mandatory: an older binary can delete session records (`test/agent-sdk-floor.test.ts`). Each failure line goes to stderr once per process. A failure is kept for the process, except a timeout: the next call probes again.
+
+### `src/deferral.ts`
+
+`deferralDetail(error)` returns the one-line reason of a deferral, or null for an ordinary failure. Two errors defer: `GpuReservedError` and `ClaudeBinError`. The summary loop of `sync`, the backfill, the digest job, the digest compression and the topic job stop at the first deferral. These steps count no attempt and write no failure record, so the queue is the same at the next run. `summarizeConversation` re-throws a deferral from a chunk or from the synthesis, so the function never stores a partial summary. On the Ollama backend, an unusable Claude fallback counts as no fallback: the Ollama error stands, and the attempt counts.
 
 ## Search and read
 
@@ -147,7 +161,7 @@ Each `src/*-cli.ts` file is one command. A shim in `cli/` or the umbrella dispat
 
 The shims in `cli/` are `episodic-memory.js` (dispatcher), `index-conversations.js`, `search-conversations.js`, `sync-hook.js`, `digest-hook.js`, `mcp-server-wrapper.js` and `ensure-deps.js`.
 
-`ensure-deps.js` runs before the MCP server and the sync hook start. `ensureDeps` repairs `node_modules` when `repairPlan` reports a missing package or binding. On every call, `pruneOptionalWeight` then removes the `onnxruntime-node` binding directories of the other platforms and architectures. The process loads only the `bin/napi-v6/<platform>/<arch>` directory of the running pair. The prune is best effort. If a removal fails, the function writes one stderr line and stops the prune. The prune never stops the start.
+`ensure-deps.js` runs before the MCP server and the sync hook start. `ensureDeps` repairs `node_modules` when `repairPlan` reports a missing package or binding. On every call, `pruneOptionalWeight` then removes the `onnxruntime-node` binding directories of the other platforms and architectures. The process loads only the `bin/napi-v6/<platform>/<arch>` directory of the running pair. When `EPISODIC_MEMORY_CLAUDE_BIN` is set and its probe passes, `pruneOptionalWeight` also removes every `@anthropic-ai/claude-agent-sdk-<platform>-<arch>` platform package. The SDK package itself stays, and so does another package with the same prefix. A failed probe removes nothing. The prune is best effort. If a removal fails, the function writes one stderr line and stops the prune. The prune never stops the start.
 
 ## Hooks
 
@@ -165,7 +179,7 @@ The feature is off unless `EPISODIC_MEMORY_LEARN` is on. `LEARN.md` gives the fu
 | Injection | `learn-inject.ts`, `learned-block.ts`, `skills-tool.ts` | Render the learned block, persist it per project, and serve the `skills` tool. |
 | Practice | `tasks.ts`, `solver.ts`, `grade.ts`, `agent-runner.ts`, `sdk-tools.ts`, `learn-handlers.ts`, `semaphore.ts`, `prompts.ts` | Generate tasks, solve them in isolated agent subprocesses, and grade the answers by rule. |
 | Learning loop | `bootstrap.ts`, `learner.ts`, `leaf-learner.ts`, `validate.ts` | Bootstrap first knowledge, then run rounds that split failures, learn per subset, merge and reflect. |
-| Operation | `cli-main.ts`, `learn-lock.ts`, `report.ts`, `export.ts`, `usage.ts` | Subcommands, the one-run lock, reports, and export to a `SKILL.md` tree. |
+| Operation | `cli-main.ts`, `learn-lock.ts`, `report.ts`, `export.ts`, `usage.ts` | Subcommands, the one-run lock, reports, and export to a `SKILL.md` tree. A subcommand that starts Claude Code checks the executable before it takes the lock, and exits 1 with no run when none is usable. |
 
 ## Plugin content
 
@@ -178,10 +192,10 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 256 | repo-tools map |
-| totalClasses | 7 | repo-tools map |
-| totalInterfaces | 136 | repo-tools map |
-| totalFunctions | 317 | repo-tools map |
-| totalConstants | 65 | repo-tools map |
+| totalSourceFiles | 260 | repo-tools map |
+| totalClasses | 8 | repo-tools map |
+| totalInterfaces | 137 | repo-tools map |
+| totalFunctions | 323 | repo-tools map |
+| totalConstants | 67 | repo-tools map |
 
 The tool names, the table names and the model name come from a direct reading of `src/mcp-server.ts`, `src/db.ts` and `src/embeddings.ts`. They are not `repo-tools map` metrics.

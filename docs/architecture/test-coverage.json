@@ -1,17 +1,17 @@
 {
   "metadata": {
-    "totalSourceFiles": 101,
-    "totalTestFiles": 144,
-    "testedCount": 79,
+    "totalSourceFiles": 103,
+    "totalTestFiles": 146,
+    "testedCount": 81,
     "untestedCount": 22,
-    "coveragePercent": "78.2",
+    "coveragePercent": "78.6",
     "effectiveCoverage": {
       "policyLoaded": false,
-      "activeFiles": 101,
-      "testedActive": 79,
+      "activeFiles": 103,
+      "testedActive": 81,
       "activeUntested": 22,
       "excludedTotal": 0,
-      "percent": "78.2",
+      "percent": "78.6",
       "breakdown": {
         "active_untested": 22
       }
@@ -46,10 +46,12 @@
     "src/api-endpoint.ts",
     "src/archive-path.ts",
     "src/backfill.ts",
+    "src/claude-bin.ts",
     "src/codex-hook-trust.ts",
     "src/codex-support.ts",
     "src/constants.ts",
     "src/db.ts",
+    "src/deferral.ts",
     "src/deps-health.ts",
     "src/digest-compress.ts",
     "src/digest-db.ts",
@@ -145,6 +147,14 @@
       "test/backfill-gpu-reservation.test.ts",
       "test/backfill.test.ts"
     ],
+    "src/claude-bin.ts": [
+      "test/claude-bin-deferral.test.ts",
+      "test/claude-bin.test.ts",
+      "test/digest-gpu-reservation.test.ts",
+      "test/learn/agent-runner.test.ts",
+      "test/learn/learn-cli.test.ts",
+      "test/topic-job.test.ts"
+    ],
     "src/codex-hook-trust.ts": [
       "test/codex-doctor.test.ts",
       "test/codex-hook-trust.test.ts"
@@ -185,6 +195,9 @@
       "test/topic-phase.test.ts",
       "test/topic-tool.test.ts",
       "test/verify.test.ts"
+    ],
+    "src/deferral.ts": [
+      "test/claude-bin-deferral.test.ts"
     ],
     "src/deps-health.ts": [
       "test/deps-health.test.ts"
@@ -489,6 +502,7 @@
     ],
     "src/ollama-backend.ts": [
       "test/backfill-gpu-reservation.test.ts",
+      "test/claude-bin-deferral.test.ts",
       "test/digest-gpu-reservation.test.ts",
       "test/gpu-reservation.test.ts",
       "test/ollama-backend.test.ts",
@@ -562,6 +576,7 @@
       "test/stats.test.ts"
     ],
     "src/summarizer.ts": [
+      "test/claude-bin-deferral.test.ts",
       "test/ollama-plain-reply.test.ts",
       "test/summarizer-api-env.test.ts",
       "test/summarizer-claude-path.test.ts",
@@ -577,6 +592,7 @@
     ],
     "src/sync-cli.ts": [],
     "src/sync.ts": [
+      "test/claude-bin-deferral.test.ts",
       "test/exclude-nested.test.ts",
       "test/sync-empty-summary-audit.test.ts",
       "test/sync-gpu-reservation.test.ts",
@@ -612,6 +628,7 @@
       "test/topic-validate.test.ts"
     ],
     "src/types.ts": [
+      "test/claude-bin-deferral.test.ts",
       "test/codex-transcripts.test.ts",
       "test/cross-harness-recall.test.ts",
       "test/db-helpers.test.ts",
@@ -652,6 +669,17 @@
     ],
     "test/backfill.test.ts": [
       "src/backfill.ts"
+    ],
+    "test/claude-bin-deferral.test.ts": [
+      "src/types.ts",
+      "src/summarizer.ts",
+      "src/claude-bin.ts",
+      "src/deferral.ts",
+      "src/ollama-backend.ts",
+      "src/sync.ts"
+    ],
+    "test/claude-bin.test.ts": [
+      "src/claude-bin.ts"
     ],
     "test/claude-e2e-script.test.ts": [],
     "test/codex-doctor.test.ts": [
@@ -712,6 +740,7 @@
       "src/digest-compress.ts",
       "src/digest-db.ts",
       "src/ollama-backend.ts",
+      "src/claude-bin.ts",
       "src/reentrancy.ts"
     ],
     "test/digest-hook.test.ts": [
@@ -801,6 +830,7 @@
       "src/parser.ts"
     ],
     "test/learn/agent-runner.test.ts": [
+      "src/claude-bin.ts",
       "src/learn/agent-runner.ts",
       "src/learn/sdk-tools.ts",
       "src/reentrancy.ts"
@@ -866,6 +896,7 @@
       "src/learn/knowledge-store.ts",
       "src/learn/knowledge-db.ts",
       "src/learn/learning-db.ts",
+      "src/claude-bin.ts",
       "src/lockfile.ts",
       "src/learn/learn-lock.ts",
       "src/paths.ts",
@@ -1201,6 +1232,7 @@
       "src/db.ts",
       "src/topic-job.ts",
       "src/ollama-backend.ts",
+      "src/claude-bin.ts",
       "src/summarizer.ts",
       "src/reentrancy.ts",
       "src/topic-db.ts"

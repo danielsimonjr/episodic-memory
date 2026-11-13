@@ -18,6 +18,8 @@
 import type Database from 'better-sqlite3';
 import path from 'path';
 import { getSuperpowersDir } from '../paths.js';
+import { ClaudeBinError, claudeExecutableOption } from '../claude-bin.js';
+import { summarizerBackend } from '../ollama-backend.js';
 import { LearnLockHeld, withLearnLock, type PidRegistry } from './learn-lock.js';
 import { learnConfig, learnEnabled, LEARN_OFF_MESSAGE } from './learn-config.js';
 import { generateTasks, checkTasks } from './tasks.js';
@@ -59,6 +61,11 @@ export interface LearnCliDeps {
   judge?: (prompt: string) => Promise<string>;
   /** Text model for task generation. Defaults to `callLearnModel`. */
   generateModel?: (prompt: string) => Promise<string>;
+  /**
+   * Checks that a Claude Code executable is usable. Throws `ClaudeBinError` when none is.
+   * Defaults to `claudeExecutableOption()`.
+   */
+  claudePreflight?: () => void;
   now?: () => Date;
   stdout: (text: string) => void;
   stderr: (text: string) => void;
@@ -169,6 +176,24 @@ export function baselineRefusal(count: number, maxCalls: number): string | null 
   );
 }
 
+/**
+ * Return true when a Claude Code executable is usable.
+ *
+ * A command that starts a Claude Code process calls this check before it takes the lock.
+ * When no executable is usable, the check writes one line and the command exits 1, with no run row.
+ * `claudeExecutableOption` already wrote the reason to stderr.
+ */
+function claudeReady(deps: LearnCliDeps): boolean {
+  try {
+    (deps.claudePreflight ?? (() => void claudeExecutableOption()))();
+    return true;
+  } catch (error) {
+    if (!(error instanceof ClaudeBinError)) throw error;
+    deps.stderr('episodic-memory learn: the command needs a Claude Code executable; nothing ran\n');
+    return false;
+  }
+}
+
 /** Run `fn` under the learn lock, turning a held lock into exit code 1. */
 async function underLock(
   deps: LearnCliDeps,
@@ -188,6 +213,8 @@ async function underLock(
 async function commandTasks(dbs: LearnDbs, argv: string[], deps: LearnCliDeps): Promise<number> {
   const config = learnConfig();
   const seed = optionNumber(argv, 'seed') ?? 1;
+  // Task generation calls Claude Code unless the backend is ollama. `--check` calls no model.
+  if (!hasFlag(argv, 'check') && summarizerBackend() !== 'ollama' && !claudeReady(deps)) return 1;
 
   return underLock(deps, async () => {
     if (hasFlag(argv, 'check')) {
@@ -223,6 +250,7 @@ async function commandSolve(dbs: LearnDbs, argv: string[], deps: LearnCliDeps): 
   const config = learnConfig();
   const split = optionValue(argv, 'split') === 'test' ? 'test' : 'train';
   const explicitSnapshot = optionNumber(argv, 'snapshot');
+  if (!claudeReady(deps)) return 1;
 
   return underLock(deps, async pids => {
     const refusal = baselineRefusal(baselineCallCount(dbs.learning), config.maxCalls);
@@ -334,6 +362,7 @@ async function exportAfterRun(dbs: LearnDbs, deps: LearnCliDeps): Promise<void> 
 async function commandBootstrap(dbs: LearnDbs, argv: string[], deps: LearnCliDeps): Promise<number> {
   const config = learnConfig();
   const seed = optionNumber(argv, 'seed') ?? 1;
+  if (!claudeReady(deps)) return 1;
 
   return underLock(deps, async pids => {
     const refusal = baselineRefusal(baselineCallCount(dbs.learning, 2), config.maxCalls);
@@ -398,6 +427,8 @@ async function commandImprove(dbs: LearnDbs, argv: string[], deps: LearnCliDeps)
   const project = optionValue(argv, 'project') || undefined;
   const dryRun = hasFlag(argv, 'dry-run');
   const rounds = optionNumber(argv, 'rounds') ?? config.rounds;
+  // A dry run still solves the baseline, so the run starts Claude Code processes.
+  if (!claudeReady(deps)) return 1;
 
   return underLock(deps, async pids => {
     const baseline = listTasks(dbs.learning, {

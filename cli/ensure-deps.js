@@ -10,6 +10,7 @@ import { spawnSync } from 'child_process';
 import { existsSync, readdirSync, rmSync } from 'fs';
 import { join } from 'path';
 import { repairPlan } from '../dist/deps-health.js';
+import { CLAUDE_BIN_ENV, ClaudeBinError, claudeExecutableOption } from '../dist/claude-bin.js';
 
 /**
  * A first-run install on a plugin host uses these npm arguments. `--omit=dev` keeps the build and
@@ -43,6 +44,13 @@ const RM_OPTIONS = Object.freeze({ recursive: true, force: true, maxRetries: 5, 
 const BINDING_FILE = 'onnxruntime_binding.node';
 
 /**
+ * The name of an Agent SDK platform package: `claude-agent-sdk-<platform>-<arch>`, with an optional `-musl` or
+ * `-android` suffix. The platform and arch values are those of Node. Another package with the same prefix stays.
+ */
+const SDK_PLATFORM_PACKAGE =
+  /^claude-agent-sdk-(aix|android|darwin|freebsd|linux|netbsd|openbsd|sunos|win32)-(arm|arm64|ia32|loong64|mips|mipsel|ppc|ppc64|riscv64|s390|s390x|x64)(-musl|-android)?$/;
+
+/**
  * Remove one path, best effort. On a failure, the function writes one stderr line and returns false.
  * The function never throws, because an optional cleanup must not stop the plugin from starting.
  */
@@ -62,6 +70,21 @@ function subdirs(dir) {
 }
 
 /**
+ * Remove the weight that this host never loads: the idle `onnxruntime-node` bindings, and the Agent
+ * SDK platform packages on a host that names its own Claude Code binary.
+ *
+ * Each part is best effort and never throws. A failure in one part does not stop the other part.
+ *
+ * @param nodeModules - The `node_modules` directory of the plugin root.
+ * @param options - Test seams: `platform` and `arch` replace the process values, `rm` replaces
+ *   `fs.rmSync`, `env` replaces `process.env`, and `spawn` replaces the `spawnSync` of the probe.
+ */
+export function pruneOptionalWeight(nodeModules, options = {}) {
+  pruneOnnxBindings(nodeModules, options);
+  pruneSdkPlatformPackages(nodeModules, options);
+}
+
+/**
  * Remove the `onnxruntime-node` binding directories that this process never loads.
  *
  * `onnxruntime-node` ships `bin/napi-v6/<platform>/<arch>` for each supported pair. The process loads
@@ -77,11 +100,8 @@ function subdirs(dir) {
  * `npm install` and `bun install` do not restore the pruned directories while the installed
  * version satisfies the manifest. To restore the directories, delete `node_modules/onnxruntime-node`
  * and install again. The next call then prunes the directories again.
- *
- * @param nodeModules - The `node_modules` directory of the plugin root.
- * @param options - Test seams: `platform` and `arch` replace the process values, `rm` replaces `fs.rmSync`.
  */
-export function pruneOptionalWeight(nodeModules, options = {}) {
+function pruneOnnxBindings(nodeModules, options) {
   const { platform = process.platform, arch = process.arch, rm = rmSync } = options;
   const napiDir = join(nodeModules, 'onnxruntime-node', 'bin', 'napi-v6');
   try {
@@ -100,6 +120,38 @@ export function pruneOptionalWeight(nodeModules, options = {}) {
     // A concurrent call (the MCP wrapper and the sync hook start together) removed a directory first.
     if (e?.code === 'ENOENT') return;
     console.error(`episodic-memory: could not prune ${napiDir} (${e?.message ?? e}); continuing`);
+  }
+}
+
+/**
+ * Remove every `@anthropic-ai/claude-agent-sdk-<platform>-<arch>` platform package when `EPISODIC_MEMORY_CLAUDE_BIN`
+ * names a Claude Code binary that passes the probe of `dist/claude-bin.js`.
+ *
+ * The SDK package itself stays: it holds the code and the `manifest.json` with the version floor.
+ * The function removes every platform package, because npm can install more than one candidate on
+ * linux (`-linux-x64` and `-linux-x64-musl`). The function removes nothing when the variable is
+ * unset, or when the probe fails: a failed probe leaves the bundled binary as the working path. The
+ * probe writes its own stderr line. A removal failure writes one stderr line and stops the part.
+ */
+function pruneSdkPlatformPackages(nodeModules, options) {
+  const { env = process.env, rm = rmSync, spawn } = options;
+  if (!(env[CLAUDE_BIN_ENV] ?? '').trim()) return;
+  const scopeDir = join(nodeModules, '@anthropic-ai');
+  try {
+    claudeExecutableOption({ env, sdkDir: join(scopeDir, 'claude-agent-sdk'), ...(spawn ? { spawn } : {}) });
+  } catch (e) {
+    if (e instanceof ClaudeBinError) return;
+    console.error(`episodic-memory: could not check ${CLAUDE_BIN_ENV} (${e?.message ?? e}); continuing`);
+    return;
+  }
+  try {
+    for (const name of subdirs(scopeDir)) {
+      if (!SDK_PLATFORM_PACKAGE.test(name)) continue;
+      if (!removeBestEffort(join(scopeDir, name), rm)) return;
+    }
+  } catch (e) {
+    if (e?.code === 'ENOENT') return;
+    console.error(`episodic-memory: could not prune ${scopeDir} (${e?.message ?? e}); continuing`);
   }
 }
 

@@ -43,7 +43,7 @@ describe('backfill CLI under a GPU reservation', () => {
     const run = spawnSync(process.execPath, [BACKFILL_CLI], { env, encoding: 'utf-8', timeout: 30000 });
 
     expect(run.status).toBe(0);
-    expect(run.stdout).toContain('Backfill paused: fleet GPU reserved by Starship. Run it again when the GPU is free.');
+    expect(run.stdout).toContain('Backfill paused: fleet GPU reserved by Starship. No attempt was counted. Run it again when the cause ends.');
     expect(run.stdout).toContain('Backfill finished: 0 processed, 0 summarized, 0 errors');
     expect(existsSync(transcript.replace('.jsonl', '-summary.txt'))).toBe(false);
     expect(existsSync(transcript.replace('.jsonl', '-summary.failed'))).toBe(false);

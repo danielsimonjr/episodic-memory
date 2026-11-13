@@ -8,6 +8,7 @@ import { runDigest } from '../src/digest-job.js';
 import { compressDigest } from '../src/digest-compress.js';
 import { ensureDigestSchema, insertDigestEntry } from '../src/digest-db.js';
 import { GpuReservedError } from '../src/ollama-backend.js';
+import { ClaudeBinError } from '../src/claude-bin.js';
 import BetterSqlite3 from 'better-sqlite3';
 import { SUMMARIZER_GUARD_ENV } from '../src/reentrancy.js';
 import { safeRmSync, suppressConsole } from './test-utils.js';
@@ -94,6 +95,18 @@ describe('runDigest under a GPU reservation', () => {
     expect(model).toHaveBeenCalledTimes(1);
     expect(result).toMatchObject({ written: 0, failed: 0, deferred: 'fleet GPU reserved by Starship' });
     expect(result.compressed).toBeUndefined();
+  });
+
+  // An unusable Claude Code executable defers the run the same way: every further call would fail the same way.
+  it('stops at an unusable Claude Code executable, with no failure counted', async () => {
+    const model = vi.fn(async () => {
+      throw new ClaudeBinError('EPISODIC_MEMORY_CLAUDE_BIN=/x/claude does not exist');
+    });
+
+    const result = await runDigest(db, { now: NOW, model });
+
+    expect(model).toHaveBeenCalledTimes(1);
+    expect(result).toMatchObject({ written: 0, failed: 0, deferred: 'EPISODIC_MEMORY_CLAUDE_BIN=/x/claude does not exist' });
   });
 
   it('still counts a real model failure', async () => {
@@ -183,6 +196,17 @@ describe('compressDigest under a GPU reservation', () => {
 
     expect(model).toHaveBeenCalledTimes(1);
     expect(result).toMatchObject({ created: 0, failed: 0, deferred: 'fleet GPU reserved by Starship' });
+  });
+
+  it('stops at an unusable Claude Code executable and counts no failure', async () => {
+    const model = vi.fn(async () => {
+      throw new ClaudeBinError('EPISODIC_MEMORY_CLAUDE_BIN=/x/claude does not exist');
+    });
+
+    const result = await compressDigest(cdb, { model, now: NOW_C, dayCap: 2 });
+
+    expect(model).toHaveBeenCalledTimes(1);
+    expect(result).toMatchObject({ created: 0, failed: 0, deferred: 'EPISODIC_MEMORY_CLAUDE_BIN=/x/claude does not exist' });
   });
 
   it('stops at the first deferral in the week step too', async () => {

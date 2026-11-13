@@ -3,9 +3,9 @@
     "name": "episodic-memory",
     "schemaVersion": "2.0.0",
     "language": "typescript",
-    "totalFiles": 283,
+    "totalFiles": 285,
     "totalModules": 4,
-    "totalExports": 605
+    "totalExports": 607
   },
   "modules": {
     "src": {
@@ -1035,6 +1035,25 @@
           "generateExchangeEmbeddings"
         ]
       },
+      "src/exclusion-marker.ts": {
+        "externalDependencies": [],
+        "nodeDependencies": [
+          "fs"
+        ],
+        "internalDependencies": [
+          {
+            "file": "src/constants.ts",
+            "imports": [
+              "SUMMARIZER_CONTEXT_MARKER"
+            ],
+            "typeOnly": false
+          }
+        ],
+        "exports": [
+          "shouldSkipConversation",
+          "scanExclusionMarkers"
+        ]
+      },
       "src/fs-retry.ts": {
         "externalDependencies": [],
         "nodeDependencies": [
@@ -1313,6 +1332,13 @@
               "getConversationSourceDirs",
               "findJsonlFiles",
               "statIfExists"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/exclusion-marker.ts",
+            "imports": [
+              "shouldSkipConversation"
             ],
             "typeOnly": false
           }
@@ -3978,9 +4004,10 @@
             "typeOnly": true
           },
           {
-            "file": "src/constants.ts",
+            "file": "src/exclusion-marker.ts",
             "imports": [
-              "SUMMARIZER_CONTEXT_MARKER"
+              "scanExclusionMarkers",
+              "shouldSkipConversation"
             ],
             "typeOnly": false
           },
@@ -4501,6 +4528,14 @@
               "getExcludedProjects",
               "findJsonlFiles",
               "statIfExists"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/exclusion-marker.ts",
+            "imports": [
+              "scanExclusionMarkers",
+              "shouldSkipConversation"
             ],
             "typeOnly": false
           },
@@ -6219,6 +6254,70 @@
             "file": "test/test-utils.ts",
             "imports": [
               "safeRmSync"
+            ],
+            "typeOnly": false
+          }
+        ],
+        "exports": []
+      },
+      "test/index-honours-marker.test.ts": {
+        "externalDependencies": [
+          "better-sqlite3",
+          "vitest"
+        ],
+        "nodeDependencies": [
+          "fs",
+          "os",
+          "path"
+        ],
+        "internalDependencies": [
+          {
+            "file": "test/test-utils.ts",
+            "imports": [
+              "safeRmSync",
+              "suppressConsole"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/embeddings.ts",
+            "imports": [
+              "*"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/summarizer.ts",
+            "imports": [
+              "*"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/indexer.ts",
+            "imports": [
+              "*"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/verify.ts",
+            "imports": [
+              "*"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/db.ts",
+            "imports": [
+              "*"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/parser.ts",
+            "imports": [
+              "*"
             ],
             "typeOnly": false
           }
@@ -10372,13 +10471,13 @@
     }
   },
   "statistics": {
-    "totalTypeScriptFiles": 283,
-    "totalSourceFiles": 283,
+    "totalTypeScriptFiles": 285,
+    "totalSourceFiles": 285,
     "totalModules": 4,
-    "totalLinesOfCode": 56262,
-    "totalExports": 605,
+    "totalLinesOfCode": 56524,
+    "totalExports": 607,
     "entryRoots": 6,
-    "reachableFiles": 47,
+    "reachableFiles": 48,
     "dormantFiles": 61,
     "orphanedFiles": 15,
     "testOnlyFiles": 46,
@@ -10394,7 +10493,7 @@
     "typeOnlyFilesInCycles": 2,
     "totalClasses": 10,
     "totalInterfaces": 139,
-    "totalFunctions": 343,
+    "totalFunctions": 344,
     "totalTypeGuards": 11,
     "totalEnums": 0,
     "totalConstants": 70,
@@ -10409,7 +10508,7 @@
       "test/setup-env.ts",
       "test/global-setup.ts"
     ],
-    "reachableCount": 47,
+    "reachableCount": 48,
     "dormantCount": 61,
     "orphaned": [
       "cli/digest-hook.js",

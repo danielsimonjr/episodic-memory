@@ -32,7 +32,7 @@ This document provides a comprehensive dependency graph of all files, components
 The codebase is organized into the following modules:
 
 - **cli**: 8 files
-- **root**: 66 files
+- **root**: 67 files
 - **entry**: 1 file
 - **learn**: 32 files
 - **vendor/onnxruntime-web-stub**: 1 file
@@ -622,6 +622,23 @@ The codebase is organized into the following modules:
 
 ---
 
+### `src/exclusion-marker.ts` - The exclusion-marker scan of a transcript.
+
+**Node.js Built-in Dependencies:**
+| Module | Import |
+|--------|--------|
+| `fs` | `default` |
+
+**Internal Dependencies:**
+| File | Imports | Type |
+|------|---------|------|
+| `./constants.js` | `SUMMARIZER_CONTEXT_MARKER` | Import |
+
+**Exports:**
+- Functions: `shouldSkipConversation`, `scanExclusionMarkers`
+
+---
+
 ### `src/fs-retry.ts` - Retry of the file operations that a Windows sharing violation stops for a moment.
 
 **Node.js Built-in Dependencies:**
@@ -674,7 +691,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/indexer.ts` - Run the copy and the parse of one listed transcript. Return `null` when the transcript is gone.
+### `src/indexer.ts` - Tell whether a listed transcript must stay out of the index and out of the summaries, and log the skip.
 
 **Node.js Built-in Dependencies:**
 | Module | Import |
@@ -693,6 +710,7 @@ The codebase is organized into the following modules:
 | `./summarizer.js` | `summarizeConversation` | Import |
 | `./types.js` | `ConversationExchange` | Import |
 | `./paths.js` | `getArchiveDir, getExcludedProjects, getConversationSourceDirs, findJsonlFiles, statIfExists` | Import |
+| `./exclusion-marker.js` | `shouldSkipConversation` | Import |
 
 **Exports:**
 - Functions: `indexConversations`, `indexSession`, `indexUnprocessed`
@@ -1112,7 +1130,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/sync.ts` - Tell whether the conversation must stay out of the index and out of the summaries.
+### `src/sync.ts` - The counts and errors of one `syncConversations` run.
 
 **Node.js Built-in Dependencies:**
 | Module | Import |
@@ -1124,7 +1142,7 @@ The codebase is organized into the following modules:
 | File | Imports | Type |
 |------|---------|------|
 | `./types.js` | `ConversationExchange` | Import (type-only) |
-| `./constants.js` | `SUMMARIZER_CONTEXT_MARKER` | Import |
+| `./exclusion-marker.js` | `scanExclusionMarkers, shouldSkipConversation` | Import |
 | `./paths.js` | `getExcludedProjects, findJsonlFiles, statIfExists` | Import |
 | `./gpu-reservation.js` | `gpuReservationBlock` | Import |
 | `./ollama-backend.js` | `summarizerBackend` | Import |
@@ -1137,7 +1155,7 @@ The codebase is organized into the following modules:
 
 **Exports:**
 - Interfaces: `SyncResult`, `SyncOptions`
-- Functions: `shouldSkipConversation`, `isTerminalFailRecord`, `extractSessionIdFromPath`, `syncConversations`, `summarizeOneFile`
+- Functions: `isTerminalFailRecord`, `extractSessionIdFromPath`, `syncConversations`, `summarizeOneFile`
 
 ---
 
@@ -1324,6 +1342,7 @@ The codebase is organized into the following modules:
 | `./parser.js` | `parseConversation, *` | Import |
 | `./db.js` | `initDatabase, getAllExchanges, getFileLastIndexed, *` | Import |
 | `./paths.js` | `getArchiveDir, getExcludedProjects, findJsonlFiles, statIfExists` | Import |
+| `./exclusion-marker.js` | `scanExclusionMarkers, shouldSkipConversation` | Import |
 | `./embeddings.js` | `*` | Import |
 | `./summarizer.js` | `*` | Import |
 
@@ -2114,12 +2133,12 @@ The codebase is organized into the following modules:
 | `src/constants` | 0 files | 9 files |
 | `src/doctor` | 8 files | 1 file |
 | `src/embeddings` | 2 files | 7 files |
+| `src/indexer` | 7 files | 2 files |
 | `src/learn/knowledge-store` | 3 files | 6 files |
 | `src/learn/learned-block` | 5 files | 4 files |
 | `src/learn/tasks` | 7 files | 2 files |
 | `src/digest-db` | 1 file | 7 files |
 | `src/index` | 8 files | 0 files |
-| `src/indexer` | 6 files | 2 files |
 | `src/learn/export` | 7 files | 1 file |
 | `src/learn/knowledge-gate` | 5 files | 3 files |
 | `src/learn/learn-handlers` | 7 files | 1 file |
@@ -2174,7 +2193,7 @@ graph TD
         N15[constants]
         N16[content-text]
         N17[db]
-        N18[...56 more]
+        N18[...57 more]
     end
 
     subgraph Entry
@@ -2232,14 +2251,14 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 283 |
+| Total Source Files | 285 |
 | Subsystems | 5 |
-| Total Lines of Code | 56262 |
-| Total Exports | 605 |
+| Total Lines of Code | 56524 |
+| Total Exports | 607 |
 | Total Re-exports | 8 |
 | Total Classes | 10 |
 | Total Interfaces | 139 |
-| Total Functions | 343 |
+| Total Functions | 344 |
 | Total Type Guards | 11 |
 | Total Enums | 0 |
 | Type-only Imports | 82 |

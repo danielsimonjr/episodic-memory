@@ -1847,14 +1847,14 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 23
+      "loc": 30
     },
     {
       "file": "test/test-env.ts",
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 23
+      "loc": 27
     },
     {
       "file": "test/test-indexer.ts",

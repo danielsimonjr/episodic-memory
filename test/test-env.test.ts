@@ -20,4 +20,11 @@ describe('test environment', () => {
   it('points the config directory away from the live data', () => {
     expect(process.env.EPISODIC_MEMORY_CONFIG_DIR?.startsWith(tmpdir())).toBe(true);
   });
+
+  it('points the Claude and Codex homes away from the live transcripts', () => {
+    // Without these two values, getClaudeDir() and getCodexDir() return ~/.claude and ~/.codex.
+    // A test that walks the projects then reads the real transcripts of the machine.
+    expect(process.env.CLAUDE_CONFIG_DIR?.startsWith(tmpdir()), 'CLAUDE_CONFIG_DIR').toBe(true);
+    expect(process.env.CODEX_HOME?.startsWith(tmpdir()), 'CODEX_HOME').toBe(true);
+  });
 });

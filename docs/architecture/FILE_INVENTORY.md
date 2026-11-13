@@ -305,8 +305,8 @@ This report lists each source file that the map census finds, with a disposition
 | `test/sync-session-id.test.ts` | (root) | tests | test | 14 |
 | `test/sync-summary-retry.test.ts` | (root) | tests | test | 110 |
 | `test/sync.test.ts` | (root) | tests | test | 250 |
-| `test/test-env.test.ts` | (root) | tests | test | 23 |
-| `test/test-env.ts` | (root) | tests | test | 23 |
+| `test/test-env.test.ts` | (root) | tests | test | 30 |
+| `test/test-env.ts` | (root) | tests | test | 27 |
 | `test/test-indexer.ts` | (root) | tests | test | 45 |
 | `test/test-utils.ts` | (root) | tests | test | 100 |
 | `test/tool-calls-cascade.test.ts` | (root) | tests | test | 125 |

@@ -240,7 +240,7 @@ describe('markdownToHtml - hostile input', () => {
   // Each adversary doubles in size; a quadratic scan takes about 4x longer, a linear one about 2x.
   const adversaries: Array<[string, (n: number) => string]> = [
     ['brackets', n => '['.repeat(n)],
-    ['empty link tails', n => '[](('.repeat(Math.floor(n / 4))],
+    ['empty link tails', n => '[]('.repeat(Math.ceil(n / 3))],
     [
       'backtick runs of growing width',
       n => {
@@ -265,7 +265,11 @@ describe('markdownToHtml - hostile input', () => {
       };
       time(10_000);
       const small = Math.max(time(100_000), 1);
-      expect(time(200_000)).toBeLessThan(small * 4 + 50);
+      const large = time(200_000);
+      expect(large).toBeLessThan(small * 4 + 50);
+      // A ratio bound lets a scan that is quadratic from the start pass. The ceiling catches it:
+      // a linear render of 200k characters takes under 50 ms, a quadratic one about a second.
+      expect(large).toBeLessThan(500);
     });
   }
 

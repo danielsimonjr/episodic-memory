@@ -13,6 +13,7 @@
 - **The `show --html` output differs from the `marked` output for some constructs.** Indented code, setext headings, images, angle and email autolinks, `www.` links, strikethrough and task-list checkboxes render as text. A survey of 1641 archived assistant text blocks found none of them, except one indented code block. Over the 104 Markdown blocks of the test fixtures, 81 render identically, 22 differ only by a space before `</p>` or `</li>`, and 1 differs by a task-list checkbox.
 
 ### Fixed
+- **The renderer linearity tests also set a ceiling of 500 ms at 200k characters.** A ratio bound alone passed an input that is slow from the start: the first-pass renderer took about 1.3 s on 200k characters of `[](`, and the test passed. The link-tail case now uses that input.
 - **The F8 test of `runCodexCommand` no longer fails at random.** When the fake app-server exits, the exit event and the EPIPE of the next stdin write race. Either one rejects the call. The test accepted only the exit message, so a run where the EPIPE settled first failed. The test now accepts both messages.
 
 ## [1.11.0] - 2026-11-13

@@ -672,7 +672,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/indexer.ts` - Index the conversations in every source folder.
+### `src/indexer.ts` - Run the copy and the parse of one listed transcript. Return `null` when the transcript is gone.
 
 **Node.js Built-in Dependencies:**
 | Module | Import |
@@ -2228,9 +2228,9 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 276 |
+| Total Source Files | 277 |
 | Subsystems | 5 |
-| Total Lines of Code | 55037 |
+| Total Lines of Code | 55177 |
 | Total Exports | 602 |
 | Total Re-exports | 8 |
 | Total Classes | 8 |

@@ -1692,7 +1692,7 @@
         "exports": []
       },
       "src/indexer.ts": {
-        "description": "Index the conversations in every source folder.",
+        "description": "Run the copy and the parse of one listed transcript. Return `null` when the transcript is gone.",
         "externalDependencies": [],
         "nodeDependencies": [
           {

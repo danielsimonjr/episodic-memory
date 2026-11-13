@@ -8,7 +8,7 @@ This report lists each source file that the map census finds, with a disposition
 
 **Language**: typescript
 
-**Total files**: 276
+**Total files**: 277
 
 ## Disposition counts
 
@@ -18,12 +18,12 @@ This report lists each source file that the map census finds, with a disposition
 | `build-entry` | 4 | A `src`-area file that is an entry root. |
 | `test-only` | 46 | A `src`-area file that only a test reaches. |
 | `orphan` | 15 | A `src`-area file that nothing reaches. Delete it, or wire it to a root. |
-| `test` | 163 | A file in a `test/` or `tests/` folder, or a `*.test.ts` or `*.spec.ts` file. |
+| `test` | 164 | A file in a `test/` or `tests/` folder, or a `*.test.ts` or `*.spec.ts` file. |
 | `tool` | 4 | A file in a `tools/` or `scripts/` folder outside `src/`. |
 | `config` | 1 | A `*.config.*` file of TypeScript or JavaScript. |
 | `example` | 0 | A file in `examples/` or `docs/`. |
 | `bench` | 0 | A file in `bench/` or `benchmarks/`, or a `*.bench.*` file. |
-| **Total** | **276** | |
+| **Total** | **277** | |
 
 ## Per-area counts
 
@@ -31,14 +31,14 @@ This report lists each source file that the map census finds, with a disposition
 | --- | --: |
 | `config` | 1 |
 | `src` | 108 |
-| `tests` | 163 |
+| `tests` | 164 |
 | `tools` | 4 |
 
 ## Per-package counts
 
 | Package | Files |
 | --- | --: |
-| `(root)` | 177 |
+| `(root)` | 178 |
 | `episodic-memory` | 99 |
 
 ## All files
@@ -87,7 +87,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/gpu-reservation.ts` | episodic-memory | src | reachable | 98 |
 | `src/index-cli.ts` | episodic-memory | src | build-entry | 280 |
 | `src/index.ts` | episodic-memory | src | build-entry | 9 |
-| `src/indexer.ts` | episodic-memory | src | reachable | 420 |
+| `src/indexer.ts` | episodic-memory | src | reachable | 441 |
 | `src/learn-cli.ts` | episodic-memory | src | orphan | 94 |
 | `src/learn/agent-runner.ts` | episodic-memory | src | test-only | 568 |
 | `src/learn/bootstrap.ts` | episodic-memory | src | test-only | 850 |
@@ -317,6 +317,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/topic-prompts.test.ts` | (root) | tests | test | 663 |
 | `test/topic-tool.test.ts` | (root) | tests | test | 492 |
 | `test/topic-validate.test.ts` | (root) | tests | test | 371 |
+| `test/vanished-transcript.test.ts` | (root) | tests | test | 119 |
 | `test/verify.test.ts` | (root) | tests | test | 328 |
 | `test/version-consistency.test.ts` | (root) | tests | test | 30 |
 | `vendor/onnxruntime-web-stub/index.js` | (root) | src | orphan | 3 |

@@ -1,11 +1,11 @@
 {
-  "totalFiles": 276,
+  "totalFiles": 277,
   "byDisposition": {
     "reachable": 43,
     "build-entry": 4,
     "test-only": 46,
     "orphan": 15,
-    "test": 163,
+    "test": 164,
     "tool": 4,
     "config": 1,
     "bench": 0,
@@ -14,11 +14,11 @@
   "byArea": {
     "src": 108,
     "tools": 4,
-    "tests": 163,
+    "tests": 164,
     "config": 1
   },
   "byPackage": {
-    "(root)": 177,
+    "(root)": 178,
     "episodic-memory": 99
   },
   "files": [
@@ -321,7 +321,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 420
+      "loc": 441
     },
     {
       "file": "src/learn-cli.ts",
@@ -1925,6 +1925,13 @@
       "area": "tests",
       "disposition": "test",
       "loc": 371
+    },
+    {
+      "file": "test/vanished-transcript.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 119
     },
     {
       "file": "test/verify.test.ts",

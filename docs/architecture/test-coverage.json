@@ -1,7 +1,7 @@
 {
   "metadata": {
     "totalSourceFiles": 103,
-    "totalTestFiles": 146,
+    "totalTestFiles": 147,
     "testedCount": 81,
     "untestedCount": 22,
     "coveragePercent": "78.6",
@@ -823,6 +823,7 @@
     "test/incremental-indexing.test.ts": [
       "src/indexer.ts"
     ],
+    "test/index-cli-args.test.ts": [],
     "test/integration.test.ts": [
       "src/db.ts",
       "src/embeddings.ts",

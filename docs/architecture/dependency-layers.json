@@ -1547,7 +1547,7 @@
         ]
       },
       "src/index-cli.ts": {
-        "description": "Parse --concurrency flag from remaining args",
+        "description": "Check the arguments before any work. Without the check, an unknown command or option fell to the",
         "externalDependencies": [],
         "nodeDependencies": [
           {

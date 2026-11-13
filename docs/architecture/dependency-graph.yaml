@@ -2,7 +2,7 @@ metadata:
   name: episodic-memory
   schemaVersion: 2.0.0
   language: typescript
-  totalFiles: 260
+  totalFiles: 261
   totalModules: 4
   totalExports: 578
 modules:
@@ -3950,6 +3950,21 @@ modules:
             - suppressConsole
           typeOnly: false
       exports: []
+    test/index-cli-args.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - child_process
+        - fs
+        - os
+        - path
+        - url
+      internalDependencies:
+        - file: test/test-utils.ts
+          imports:
+            - safeRmSync
+          typeOnly: false
+      exports: []
     test/integration.test.ts:
       externalDependencies:
         - better-sqlite3
@@ -6422,10 +6437,10 @@ modules:
           typeOnly: false
       exports: []
 statistics:
-  totalTypeScriptFiles: 260
-  totalSourceFiles: 260
+  totalTypeScriptFiles: 261
+  totalSourceFiles: 261
   totalModules: 4
-  totalLinesOfCode: 52861
+  totalLinesOfCode: 53176
   totalExports: 578
   entryRoots: 6
   reachableFiles: 46

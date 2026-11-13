@@ -520,6 +520,11 @@ Common operations:
 - `--cleanup` - Index all unprocessed conversations
 - `--verify` - Check index health
 - `--repair` - Fix detected issues
+- `prune --excluded` or `prune --project NAME` - Remove the rows of projects; add `--dry-run` to count only
+- `vacuum` - Return the free pages of the index database to disk
+- `--rebuild --yes` - Rebuild with no confirmation question, for a script
+
+For an unknown command or option, or an option of another command, `index` writes one error line, exits with code 2 and does no work. The exit code of the command reaches the caller.
 
 ### `episodic-memory search`
 

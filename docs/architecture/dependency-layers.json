@@ -1529,6 +1529,36 @@
           "BGE_QUERY_PREFIX"
         ]
       },
+      "src/fs-retry.ts": {
+        "description": "Retry of the file operations that a Windows sharing violation stops for a moment.",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "RETRY_ATTEMPTS",
+          "retryDelayMs",
+          "sleepSync",
+          "isSharingViolation",
+          "renameWithRetry"
+        ],
+        "functions": [
+          "retryDelayMs",
+          "sleepSync",
+          "isSharingViolation",
+          "renameWithRetry"
+        ],
+        "constants": [
+          "RETRY_ATTEMPTS"
+        ]
+      },
       "src/fts-query.ts": {
         "description": "Turn free text into an FTS5 query in which each word must match.",
         "externalDependencies": [],
@@ -2813,6 +2843,12 @@
             ]
           },
           {
+            "file": "./fs-retry.js",
+            "imports": [
+              "renameWithRetry"
+            ]
+          },
+          {
             "file": "./db.js",
             "imports": [
               "*"
@@ -3964,6 +4000,15 @@
             "file": "../paths.js",
             "imports": [
               "getSuperpowersDir"
+            ]
+          },
+          {
+            "file": "../fs-retry.js",
+            "imports": [
+              "renameWithRetry",
+              "retryDelayMs",
+              "sleepSync",
+              "RETRY_ATTEMPTS"
             ]
           },
           {
@@ -5717,6 +5762,7 @@
         "src/doctor.ts",
         "src/embedding-migration.ts",
         "src/embeddings.ts",
+        "src/fs-retry.ts",
         "src/fts-query.ts",
         "src/gpu-reservation.ts",
         "src/index-cli.ts",

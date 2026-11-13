@@ -7,12 +7,12 @@
 ## Summary
 
 - **Files with no in-repo importer**: 14
-- **Dormant files**: 58
+- **Dormant files**: 59
   - **Orphaned (reachable from nothing)**: 15
-  - **Test-only (only a test reaches them)**: 43
-- **Potentially unused exports**: 114
+  - **Test-only (only a test reaches them)**: 44
+- **Potentially unused exports**: 115
   - **Unreferenced anywhere**: 4
-  - **Referenced in their own module**: 110
+  - **Referenced in their own module**: 111
   - **Not classified**: 0
 
 ## Caveats
@@ -57,6 +57,7 @@ Source files that only a test reaches. They ship nothing, but a test uses them.
 - `src/digest-prompts.ts`
 - `src/doctor-learn.ts`
 - `src/doctor.ts`
+- `src/fs-retry.ts`
 - `src/learn/agent-runner.ts`
 - `src/learn/bootstrap.ts`
 - `src/learn/cited-ids.ts`
@@ -139,6 +140,7 @@ No other file imports these names, but their own module uses them.
 - `src/digest-validate.ts`: `CitedLines`
 - `src/doctor-learn.ts`: `LearnEntryCounts`, `LearnLatestRunSummary`
 - `src/doctor.ts`: `CodexDoctorInputs`, `DoctorInputs`, `DoctorReport`, `StructuredDoctorReport`
+- `src/fs-retry.ts`: `isSharingViolation`
 - `src/gpu-reservation.ts`: `GpuReservation`
 - `src/learn/agent-runner.ts`: `AgentRunOptions`, `AgentRunResult`, `BuildAgentQueryOptionsArgs`, `DISALLOWED_TOOLS`, `ProcessLister`, `addressFromResultText`, `isAgentSpawnTree`, `looksKilled`
 - `src/learn/cited-ids.ts`: `DropReason`, `IdCitedLines`

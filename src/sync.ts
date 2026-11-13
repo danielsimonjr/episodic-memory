@@ -6,6 +6,7 @@ import { getExcludedProjects, findJsonlFiles } from './paths.js';
 import { gpuReservationBlock } from './gpu-reservation.js';
 import { summarizerBackend } from './ollama-backend.js';
 import { deferralDetail } from './deferral.js';
+import { renameWithRetry } from './fs-retry.js';
 
 const EXCLUSION_MARKERS = [
   '<INSTRUCTIONS-TO-EPISODIC-MEMORY>DO NOT INDEX THIS CHAT</INSTRUCTIONS-TO-EPISODIC-MEMORY>',
@@ -150,13 +151,13 @@ function copyIfNewer(src: string, dest: string): boolean {
     }
   }
 
-  // Atomic copy: temp file + rename. Use a unique suffix and clean the temp up if
-  // the rename fails (e.g. Windows EPERM when an AV scanner briefly locks dest),
-  // so the archive doesn't accumulate orphaned *.tmp.* files (F10).
+  // Atomic copy: temp file + rename. On Windows another process can hold dest open for a moment
+  // (a reader, the search indexer, a virus scanner). The rename then retries EPERM and EBUSY.
+  // When every attempt fails, the copy removes the temp file. The archive then keeps no *.tmp.* file (F10).
   const tempDest = `${dest}.tmp.${process.pid}.${Math.random().toString(36).slice(2)}`;
   try {
     fs.copyFileSync(src, tempDest);
-    fs.renameSync(tempDest, dest); // Atomic on same filesystem
+    renameWithRetry(tempDest, dest); // Atomic on same filesystem
   } catch (err) {
     try { fs.unlinkSync(tempDest); } catch {}
     throw err;

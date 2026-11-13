@@ -4,7 +4,7 @@ metadata:
   language: typescript
   totalFiles: 274
   totalModules: 4
-  totalExports: 600
+  totalExports: 601
 modules:
   src:
     cli/digest-hook.js:
@@ -845,6 +845,7 @@ modules:
             - extractSummary
             - formatConversationText
             - getApiEnv
+            - getCodexModel
             - promptBudgetChars
             - resolveLearnModels
             - runCodexCommand
@@ -2636,6 +2637,7 @@ modules:
         - resolveLearnModels
         - callLearnModel
         - runCodexCommand
+        - getCodexModel
         - summarizeConversation
     src/sync-banner.ts:
       externalDependencies: []
@@ -6031,6 +6033,7 @@ modules:
             - buildCodexSummarizerCommand
             - buildSummarizerQueryOptions
             - getApiEnv
+            - getCodexModel
             - resolveLearnModels
             - runCodexCommand
             - shouldSkipReentrantSync
@@ -6675,8 +6678,8 @@ statistics:
   totalTypeScriptFiles: 274
   totalSourceFiles: 274
   totalModules: 4
-  totalLinesOfCode: 54737
-  totalExports: 600
+  totalLinesOfCode: 54771
+  totalExports: 601
   entryRoots: 6
   reachableFiles: 47
   dormantFiles: 61
@@ -6694,7 +6697,7 @@ statistics:
   typeOnlyFilesInCycles: 2
   totalClasses: 8
   totalInterfaces: 139
-  totalFunctions: 340
+  totalFunctions: 341
   totalTypeGuards: 10
   totalEnums: 0
   totalConstants: 70

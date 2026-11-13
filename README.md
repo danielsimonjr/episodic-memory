@@ -200,6 +200,9 @@ export EPISODIC_MEMORY_API_TIMEOUT_MS=3000000
 
 # Override Codex binary path if needed (default: codex)
 export EPISODIC_MEMORY_CODEX_BIN=/path/to/codex
+
+# Codex summary model (default: the model of the Codex configuration)
+export EPISODIC_MEMORY_CODEX_MODEL=gpt-5.5
 ```
 
 These settings only affect episodic-memory's summarization calls, not your interactive Claude Code or Codex sessions.

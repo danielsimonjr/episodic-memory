@@ -610,8 +610,15 @@ function getCodexSessionId(exchanges, sessionId) {
     }
     return sessionId || exchanges.find(exchange => exchange.sessionId)?.sessionId;
 }
-function getCodexModel(exchanges) {
-    return exchanges.find(exchange => exchange.harness === 'codex' && exchange.model)?.model;
+/**
+ * Return the model for the Codex `thread/fork` request. The value comes from `EPISODIC_MEMORY_CODEX_MODEL`.
+ *
+ * The function does not read the model of the conversation history. The Codex app server refuses some history models, for example `gpt-5.2-codex`.
+ * A `-codex` model also needs an API key. As a result, a ChatGPT login gets a 400 error for the model.
+ * When the variable is unset or empty, the function returns `undefined`. The fork then sends no model. Codex uses the model of its configuration.
+ */
+export function getCodexModel() {
+    return process.env.EPISODIC_MEMORY_CODEX_MODEL || undefined;
 }
 /**
  * Summarize one conversation and return the summary text.
@@ -646,7 +653,7 @@ export async function summarizeConversation(exchanges, sessionId) {
     const codexSessionId = getCodexSessionId(exchanges, sessionId);
     if (codexSessionId) {
         try {
-            const result = await callCodex(buildCodexSummaryPrompt(), codexSessionId, getCodexModel(exchanges));
+            const result = await callCodex(buildCodexSummaryPrompt(), codexSessionId, getCodexModel());
             return extractSummary(result);
         }
         catch (error) {

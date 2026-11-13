@@ -112,7 +112,7 @@ The dispatcher takes a command as its first argument.
 | `indexer` | `indexConversations`, `indexSession`, `indexUnprocessed` |
 | `parser` | `parseConversation`, `parseConversationFile` |
 | `search` | `includeSearchSummaries`, `maxSummaryDisplayChars`, `formatSummaryForDisplay`, `SearchOptions`, `l2DistanceToCosineSimilarity`, `buildFtsMatchQuery`, `searchConversations`, `formatResults`, `searchMultipleConcepts`, `formatMultiConceptResults` |
-| `summarizer` | `CodexSummarizerCommand`, `getApiEnv`, `shouldSkipReentrantSync`, `formatConversationText`, `extractSummary`, `buildSummarizerQueryOptions`, `buildCodexSummaryPrompt`, `buildCodexSummarizerCommand`, `CallClaudeOptions`, `callDigestModel`, `resolveLearnModels`, `callLearnModel`, `runCodexCommand`, `summarizeConversation` |
+| `summarizer` | `CodexSummarizerCommand`, `getApiEnv`, `shouldSkipReentrantSync`, `formatConversationText`, `extractSummary`, `buildSummarizerQueryOptions`, `buildCodexSummaryPrompt`, `buildCodexSummarizerCommand`, `getCodexModel`, `CallClaudeOptions`, `callDigestModel`, `resolveLearnModels`, `callLearnModel`, `runCodexCommand`, `summarizeConversation` |
 | `paths` | `tryChmod`, `getClaudeDir`, `getCodexDir`, `getConversationSourceDirs`, `findJsonlFiles`, `getSuperpowersDir`, `getArchiveDir`, `getIndexDir`, `getDbPath`, `getLearnedDir`, `getKnowledgeDbPath`, `getLearningDbPath`, `getExcludeConfigPath`, `getExcludedProjects` |
 
 A `src` export that the barrel does not re-export is internal to the package, even when `repo-tools map` shows no importer for it. Removing an export from the barrel is a breaking change for library callers.
@@ -131,7 +131,7 @@ A `src` export that the barrel does not re-export is internal to the package, ev
 | `EPISODIC_MEMORY_SUMMARIZER_BACKEND` | Selects the summary backend. `ollama` selects the local backend. |
 | `EPISODIC_MEMORY_API_MODEL`, `_API_MODEL_FALLBACK`, `_API_BASE_URL`, `_API_TOKEN`, `_API_TIMEOUT_MS` | Summarizer API settings. |
 | `EPISODIC_MEMORY_OLLAMA_URL`, `_OLLAMA_MODEL`, `_OLLAMA_MAX_PROMPT_CHARS` | Local backend settings. |
-| `EPISODIC_MEMORY_CODEX_BIN`, `_CODEX_SUMMARY_TIMEOUT_MS` | Codex summarizer settings. |
+| `EPISODIC_MEMORY_CODEX_BIN`, `_CODEX_MODEL`, `_CODEX_SUMMARY_TIMEOUT_MS` | Codex summarizer settings. `_CODEX_MODEL` selects the model of the Codex fork. Without `_CODEX_MODEL`, the fork sends no model. |
 | `EPISODIC_MEMORY_MAX_SUMMARY_ATTEMPTS` | Retry cap for failed summaries. |
 | `EPISODIC_MEMORY_MIGRATION_BATCH` | Batch size of the embedding migration. |
 | `EPISODIC_MEMORY_SUMMARIZER_GUARD` | Set by the plugin on child agent processes. Do not set it by hand. |
@@ -147,7 +147,7 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalExports | 600 | repo-tools map |
+| totalExports | 601 | repo-tools map |
 | totalSourceFiles | 274 | repo-tools map |
 
 `totalExports` counts every export in the repository, including test and tool files. The library barrel lists only the exports that `src/index.ts` re-exports. The tool schemas come from `src/mcp-schemas.ts`. The command names come from `cli/episodic-memory.js`. The variable names come from a search for `EPISODIC_MEMORY_` in `src/` and `cli/`. None of these facts is a `repo-tools map` metric.

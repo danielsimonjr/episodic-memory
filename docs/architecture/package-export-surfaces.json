@@ -32,6 +32,7 @@
       "getArchiveDir",
       "getClaudeDir",
       "getCodexDir",
+      "getCodexModel",
       "getConversationSourceDirs",
       "getDbPath",
       "getExcludeConfigPath",

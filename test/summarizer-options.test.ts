@@ -4,6 +4,7 @@ import {
   buildCodexSummarizerCommand,
   buildSummarizerQueryOptions,
   getApiEnv,
+  getCodexModel,
   resolveLearnModels,
   runCodexCommand,
   shouldSkipReentrantSync
@@ -121,6 +122,32 @@ describe('buildCodexSummarizerCommand', () => {
       sessionId: '019e4c75-d5bf-7c71-9df7-77f5fb86b711',
       model: 'gpt-5.2'
     });
+  });
+});
+
+describe('getCodexModel', () => {
+  afterEach(() => {
+    delete process.env.EPISODIC_MEMORY_CODEX_MODEL;
+  });
+
+  it('returns undefined when EPISODIC_MEMORY_CODEX_MODEL is unset, so the fork uses the Codex configuration model', () => {
+    // setup-env deletes the machine value of the variable before each test file.
+    expect(process.env.EPISODIC_MEMORY_CODEX_MODEL).toBeUndefined();
+    expect(getCodexModel()).toBeUndefined();
+  });
+
+  it('returns the value of EPISODIC_MEMORY_CODEX_MODEL', () => {
+    process.env.EPISODIC_MEMORY_CODEX_MODEL = 'gpt-5.5';
+    expect(getCodexModel()).toBe('gpt-5.5');
+  });
+
+  it('treats an empty EPISODIC_MEMORY_CODEX_MODEL as unset', () => {
+    process.env.EPISODIC_MEMORY_CODEX_MODEL = '';
+    expect(getCodexModel()).toBeUndefined();
+  });
+
+  it('takes no conversation argument, so a history model such as gpt-5.2-codex cannot reach the fork', () => {
+    expect(getCodexModel.length).toBe(0);
   });
 });
 

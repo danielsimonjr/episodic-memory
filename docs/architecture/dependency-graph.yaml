@@ -2,9 +2,9 @@ metadata:
   name: episodic-memory
   schemaVersion: 2.0.0
   language: typescript
-  totalFiles: 265
+  totalFiles: 266
   totalModules: 4
-  totalExports: 585
+  totalExports: 589
 modules:
   src:
     cli/digest-hook.js:
@@ -25,6 +25,7 @@ modules:
         - NPM_INSTALL_ARGS
         - pruneOptionalWeight
         - ensureDeps
+        - depsRepairLogEntry
     cli/episodic-memory.js:
       externalDependencies: []
       nodeDependencies:
@@ -87,6 +88,7 @@ modules:
       internalDependencies:
         - file: cli/ensure-deps.js
           imports:
+            - depsRepairLogEntry
             - ensureDeps
           typeOnly: false
       exports: []
@@ -304,7 +306,10 @@ modules:
         - NATIVE_ADDON
         - nativeAddonPresent
         - JS_SENTINELS
+        - onnxBindingPath
+        - ONNX_BINDING
         - DEP_SENTINELS
+        - onnxBindingState
         - nodeModulesIsHealthy
         - repairPlan
     src/digest-compress.ts:
@@ -3463,7 +3468,10 @@ modules:
             - DEP_SENTINELS
             - JS_SENTINELS
             - NATIVE_ADDON
+            - ONNX_BINDING
             - nodeModulesIsHealthy
+            - onnxBindingPath
+            - onnxBindingState
             - repairPlan
           typeOnly: false
         - file: test/test-utils.ts
@@ -3897,6 +3905,28 @@ modules:
           imports:
             - ensureDeps
             - pruneOptionalWeight
+          typeOnly: false
+      exports: []
+    test/ensure-deps-repair.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - fs
+        - os
+        - path
+      internalDependencies:
+        - file: cli/ensure-deps.js
+          imports:
+            - depsRepairLogEntry
+            - ensureDeps
+            - NPM_INSTALL_ARGS
+          typeOnly: false
+        - file: src/deps-health.ts
+          imports:
+            - DEP_SENTINELS
+            - NATIVE_ADDON
+            - ONNX_BINDING
+            - onnxBindingPath
           typeOnly: false
       exports: []
     test/exclude-nested.test.ts:
@@ -6508,11 +6538,11 @@ modules:
           typeOnly: false
       exports: []
 statistics:
-  totalTypeScriptFiles: 265
-  totalSourceFiles: 265
+  totalTypeScriptFiles: 266
+  totalSourceFiles: 266
   totalModules: 4
-  totalLinesOfCode: 53674
-  totalExports: 585
+  totalLinesOfCode: 54430
+  totalExports: 589
   entryRoots: 6
   reachableFiles: 46
   dormantFiles: 59
@@ -6530,10 +6560,10 @@ statistics:
   typeOnlyFilesInCycles: 2
   totalClasses: 8
   totalInterfaces: 137
-  totalFunctions: 329
+  totalFunctions: 332
   totalTypeGuards: 10
   totalEnums: 0
-  totalConstants: 68
+  totalConstants: 69
   totalReExports: 8
 reachability:
   roots:

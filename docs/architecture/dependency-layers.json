@@ -50,7 +50,9 @@
             "imports": [
               "existsSync",
               "readdirSync",
-              "rmSync"
+              "rmSync",
+              "statSync",
+              "writeFileSync"
             ]
           },
           {
@@ -65,11 +67,13 @@
         "exports": [
           "NPM_INSTALL_ARGS",
           "pruneOptionalWeight",
-          "ensureDeps"
+          "ensureDeps",
+          "depsRepairLogEntry"
         ],
         "functions": [
           "pruneOptionalWeight",
-          "ensureDeps"
+          "ensureDeps",
+          "depsRepairLogEntry"
         ],
         "constants": [
           "NPM_INSTALL_ARGS"
@@ -282,6 +286,7 @@
           {
             "file": "./ensure-deps.js",
             "imports": [
+              "depsRepairLogEntry",
               "ensureDeps"
             ]
           }
@@ -752,12 +757,14 @@
           {
             "module": "fs",
             "imports": [
-              "existsSync"
+              "existsSync",
+              "readdirSync"
             ]
           },
           {
             "module": "path",
             "imports": [
+              "dirname",
               "join"
             ]
           }
@@ -768,18 +775,24 @@
           "NATIVE_ADDON",
           "nativeAddonPresent",
           "JS_SENTINELS",
+          "onnxBindingPath",
+          "ONNX_BINDING",
           "DEP_SENTINELS",
+          "onnxBindingState",
           "nodeModulesIsHealthy",
           "repairPlan"
         ],
         "functions": [
           "nativeAddonPresent",
+          "onnxBindingPath",
+          "onnxBindingState",
           "nodeModulesIsHealthy",
           "repairPlan"
         ],
         "constants": [
           "NATIVE_ADDON",
           "JS_SENTINELS",
+          "ONNX_BINDING",
           "DEP_SENTINELS"
         ]
       },

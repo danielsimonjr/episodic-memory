@@ -134,7 +134,7 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 265 | repo-tools map |
+| totalSourceFiles | 266 | repo-tools map |
 | runtimeCircularDeps | 0 | repo-tools map |
 
 The step orders above come from a direct reading of `src/sync.ts`, `src/search.ts`, `src/digest-job.ts`, `src/learn/learner.ts` and `cli/sync-hook.js`. They are not `repo-tools map` metrics.

@@ -353,7 +353,7 @@ export function buildDoctorReport(inputs: DoctorInputs): StructuredDoctorReport 
   }
   if (inputs.nodeModulesHealthy === false) {
     issues.push(
-      `Plugin node_modules is incomplete at ${inputs.pluginRoot}; run npm install in the plugin root.`
+      `Plugin node_modules is incomplete at ${inputs.pluginRoot}. Run npm install --omit=dev --no-audit --no-fund in the plugin root. When the onnxruntime-node binding is missing, delete node_modules/onnxruntime-node first.`
     );
   }
 

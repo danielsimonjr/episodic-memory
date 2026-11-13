@@ -63,11 +63,12 @@ var init_paths = __esm({
 });
 
 // src/lockfile.ts
-var DEFAULT_STALE_MS;
+var DEFAULT_STALE_MS, EMPTY_LOCK_GRACE_MS;
 var init_lockfile = __esm({
   "src/lockfile.ts"() {
     "use strict";
     DEFAULT_STALE_MS = 60 * 60 * 1e3;
+    EMPTY_LOCK_GRACE_MS = 10 * 1e3;
   }
 });
 

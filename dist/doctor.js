@@ -252,7 +252,7 @@ export function buildDoctorReport(inputs) {
         issues.push(`${inputs.recentSyncErrors.length} recent SessionStart hook error(s) in ${inputs.syncErrorsLogPath}.`);
     }
     if (inputs.nodeModulesHealthy === false) {
-        issues.push(`Plugin node_modules is incomplete at ${inputs.pluginRoot}; run npm install in the plugin root.`);
+        issues.push(`Plugin node_modules is incomplete at ${inputs.pluginRoot}. Run npm install --omit=dev --no-audit --no-fund in the plugin root. When the onnxruntime-node binding is missing, delete node_modules/onnxruntime-node first.`);
     }
     const learn = inputs.learn;
     if (learn !== undefined && learn.present) {

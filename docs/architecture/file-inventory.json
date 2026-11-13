@@ -1,11 +1,11 @@
 {
-  "totalFiles": 265,
+  "totalFiles": 266,
   "byDisposition": {
     "reachable": 42,
     "build-entry": 4,
     "test-only": 44,
     "orphan": 15,
-    "test": 155,
+    "test": 156,
     "tool": 4,
     "config": 1,
     "bench": 0,
@@ -14,11 +14,11 @@
   "byArea": {
     "src": 105,
     "tools": 4,
-    "tests": 155,
+    "tests": 156,
     "config": 1
   },
   "byPackage": {
-    "(root)": 169,
+    "(root)": 170,
     "episodic-memory": 96
   },
   "files": [
@@ -34,7 +34,7 @@
       "package": "(root)",
       "area": "src",
       "disposition": "test-only",
-      "loc": 190
+      "loc": 389
     },
     {
       "file": "cli/episodic-memory.js",
@@ -76,7 +76,7 @@
       "package": "(root)",
       "area": "src",
       "disposition": "orphan",
-      "loc": 198
+      "loc": 196
     },
     {
       "file": "scripts/claude-e2e.js",
@@ -181,7 +181,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 77
+      "loc": 149
     },
     {
       "file": "src/digest-compress.ts",
@@ -538,7 +538,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 139
+      "loc": 147
     },
     {
       "file": "src/logging.ts",
@@ -951,7 +951,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 112
+      "loc": 207
     },
     {
       "file": "test/digest-compress.test.ts",
@@ -1028,7 +1028,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 358
+      "loc": 360
     },
     {
       "file": "test/embedding-migration-helpers.test.ts",
@@ -1056,7 +1056,14 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 274
+      "loc": 275
+    },
+    {
+      "file": "test/ensure-deps-repair.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 364
     },
     {
       "file": "test/exclude-nested.test.ts",
@@ -1378,7 +1385,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 68
+      "loc": 85
     },
     {
       "file": "test/logging-append.test.ts",

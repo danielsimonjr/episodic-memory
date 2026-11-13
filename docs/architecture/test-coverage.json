@@ -1,7 +1,7 @@
 {
   "metadata": {
     "totalSourceFiles": 105,
-    "totalTestFiles": 149,
+    "totalTestFiles": 150,
     "testedCount": 82,
     "untestedCount": 23,
     "coveragePercent": "78.1",
@@ -130,6 +130,7 @@
     "cli/digest-hook.js": [],
     "cli/ensure-deps.js": [
       "test/ensure-deps-prune.test.ts",
+      "test/ensure-deps-repair.test.ts",
       "test/runtime-imports.test.ts"
     ],
     "cli/episodic-memory.js": [],
@@ -203,7 +204,8 @@
       "test/claude-bin-deferral.test.ts"
     ],
     "src/deps-health.ts": [
-      "test/deps-health.test.ts"
+      "test/deps-health.test.ts",
+      "test/ensure-deps-repair.test.ts"
     ],
     "src/digest-compress.ts": [
       "test/digest-compress.test.ts",
@@ -817,6 +819,10 @@
     ],
     "test/ensure-deps-prune.test.ts": [
       "cli/ensure-deps.js"
+    ],
+    "test/ensure-deps-repair.test.ts": [
+      "cli/ensure-deps.js",
+      "src/deps-health.ts"
     ],
     "test/exclude-nested.test.ts": [
       "src/indexer.ts",

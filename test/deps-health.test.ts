@@ -6,7 +6,10 @@ import {
   DEP_SENTINELS,
   JS_SENTINELS,
   NATIVE_ADDON,
+  ONNX_BINDING,
   nodeModulesIsHealthy,
+  onnxBindingPath,
+  onnxBindingState,
   repairPlan,
 } from '../src/deps-health.js';
 import { safeRmSync } from './test-utils.js';
@@ -109,4 +112,96 @@ describe('repairPlan', () => {
     expect(repairPlan(nm)).toBe('install');
   });
 
+});
+
+// onnxruntime-node loads `bin/napi-v6/<platform>/<arch>/onnxruntime_binding.node` and nothing else.
+// `npm install` does not restore one missing file inside an installed package, so a lost binding
+// needs the package directory deleted first. A pair the package never shipped (darwin/x64 in 1.24.3)
+// cannot be repaired, and a repair there would reinstall on every start and then stop the server.
+describe('onnxBindingState', () => {
+  let testDir: string;
+  beforeEach(() => { testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'em-onnx-')); });
+  afterEach(() => { safeRmSync(testDir); });
+
+  const write = (nm: string, rel: string) => {
+    const full = path.join(nm, rel);
+    fs.mkdirSync(path.dirname(full), { recursive: true });
+    fs.writeFileSync(full, '{}', 'utf-8');
+  };
+  const populate = (nm: string, skip: string[] = []) => {
+    for (const rel of DEP_SENTINELS) if (!skip.includes(rel)) write(nm, rel);
+  };
+  /** A pair that is not the running pair. */
+  const SIBLING = process.platform === 'linux' ? { platform: 'win32', arch: 'x64' } : { platform: 'linux', arch: 'x64' };
+
+  it('names the binding file of the running pair as a sentinel', () => {
+    expect(ONNX_BINDING).toBe(`onnxruntime-node/bin/napi-v6/${process.platform}/${process.arch}/onnxruntime_binding.node`);
+    expect(onnxBindingPath('darwin', 'x64')).toBe('onnxruntime-node/bin/napi-v6/darwin/x64/onnxruntime_binding.node');
+    expect(DEP_SENTINELS).toContain(ONNX_BINDING);
+    expect(JS_SENTINELS).toContain('onnxruntime-node/package.json');
+  });
+
+  it('is "present" and the plan is "none" when the binding of the running pair exists', () => {
+    const nm = path.join(testDir, 'node_modules');
+    populate(nm);
+    expect(onnxBindingState(nm)).toBe('present');
+    expect(repairPlan(nm)).toBe('none');
+  });
+
+  it('is "unshipped" when the package has no bin/napi-v6 directory (a layout that the check does not know)', () => {
+    const nm = path.join(testDir, 'node_modules');
+    populate(nm, [ONNX_BINDING]);
+    expect(onnxBindingState(nm)).toBe('unshipped');
+    expect(repairPlan(nm)).toBe('none');
+  });
+
+  it('is "missing" and the plan is "reinstall-onnx" when no binding pair is on disk', () => {
+    const nm = path.join(testDir, 'node_modules');
+    populate(nm, [ONNX_BINDING]);
+    fs.mkdirSync(path.join(nm, 'onnxruntime-node', 'bin', 'napi-v6'), { recursive: true });
+    expect(onnxBindingState(nm)).toBe('missing');
+    expect(nodeModulesIsHealthy(nm)).toBe(false);
+    expect(repairPlan(nm)).toBe('reinstall-onnx');
+  });
+
+  it('is "missing" when the directory of the running pair exists without its binding file', () => {
+    const nm = path.join(testDir, 'node_modules');
+    populate(nm, [ONNX_BINDING]);
+    fs.mkdirSync(path.dirname(path.join(nm, ONNX_BINDING)), { recursive: true });
+    write(nm, onnxBindingPath(SIBLING.platform, SIBLING.arch));
+    expect(onnxBindingState(nm)).toBe('missing');
+    expect(repairPlan(nm)).toBe('reinstall-onnx');
+  });
+
+  it('is "unshipped" and the plan is "none" when only the pairs of other hosts are on disk', () => {
+    const nm = path.join(testDir, 'node_modules');
+    populate(nm, [ONNX_BINDING]);
+    write(nm, onnxBindingPath(SIBLING.platform, SIBLING.arch));
+    expect(onnxBindingState(nm)).toBe('unshipped');
+    expect(nodeModulesIsHealthy(nm)).toBe(true);
+    expect(repairPlan(nm)).toBe('none');
+  });
+
+  it('is "missing" when the directories of other pairs hold no binding file', () => {
+    const nm = path.join(testDir, 'node_modules');
+    populate(nm, [ONNX_BINDING]);
+    fs.mkdirSync(path.dirname(path.join(nm, onnxBindingPath(SIBLING.platform, SIBLING.arch))), { recursive: true });
+    expect(onnxBindingState(nm)).toBe('missing');
+  });
+
+  it('reads the pair from its arguments', () => {
+    const nm = path.join(testDir, 'node_modules');
+    populate(nm);
+    expect(onnxBindingState(nm, 'darwin', 'x64')).toBe(process.platform === 'darwin' && process.arch === 'x64' ? 'present' : 'unshipped');
+  });
+
+  it('installs before it reinstalls onnxruntime-node, and reinstalls before it rebuilds better-sqlite3', () => {
+    const a = path.join(testDir, 'a');
+    populate(a, [ONNX_BINDING, 'onnxruntime-common/package.json']);
+    expect(repairPlan(a)).toBe('install');
+    const b = path.join(testDir, 'b');
+    populate(b, [ONNX_BINDING, NATIVE_ADDON]);
+    fs.mkdirSync(path.join(b, 'onnxruntime-node', 'bin', 'napi-v6'), { recursive: true });
+    expect(repairPlan(b)).toBe('reinstall-onnx');
+  });
 });

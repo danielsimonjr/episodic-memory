@@ -8,7 +8,7 @@ import { spawn, execFileSync } from 'child_process';
 import { selectOrphans } from '../dist/orphan-reaper.js';
 import { readLearnPids } from '../dist/learn/learn-lock.js';
 import { getIndexDir } from '../dist/paths.js';
-import { ensureDeps } from './ensure-deps.js';
+import { depsRepairLogEntry, ensureDeps } from './ensure-deps.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
@@ -125,10 +125,8 @@ async function main() {
   // Repair node_modules BEFORE syncing. This hook never passes through the MCP wrapper, so a tree
   // missing better-sqlite3's compiled binding failed every background sync with nothing to fix it.
   try {
-    const action = ensureDeps(path.join(__dirname, '..'));
-    if (action !== 'none') {
-      fs.appendFileSync(logPath, formatLogLine('info', `SessionStart deps repaired: ${action}`), 'utf-8');
-    }
+    const entry = depsRepairLogEntry(ensureDeps(path.join(__dirname, '..')));
+    if (entry) fs.appendFileSync(logPath, formatLogLine(...entry), 'utf-8');
   } catch (err) {
     fs.appendFileSync(logPath, formatLogLine('error', `SessionStart deps repair failed: ${err.message}`), 'utf-8');
   }

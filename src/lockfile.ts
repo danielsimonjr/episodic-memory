@@ -26,6 +26,12 @@ export interface LockHandle {
 const DEFAULT_STALE_MS = 60 * 60 * 1000; // 1 hour
 
 /**
+ * The age after which a lock file with no valid PID is stealable. The holder creates the file and
+ * then writes the PID of the process, so a file with no PID can belong to a holder that is still writing.
+ */
+const EMPTY_LOCK_GRACE_MS = 10 * 1000;
+
+/**
  * Return true when a process with the given PID exists.
  *
  * The check sends signal 0. Signal 0 tests whether the process exists and delivers nothing. A process that exists but cannot be signaled counts as alive. The PID must be greater than zero.
@@ -58,8 +64,9 @@ function tryCreate(lockPath: string): LockHandle | null {
  */
 function isLockStealable(lockPath: string, staleMs: number): boolean {
   // Age-based staleness first — covers PID reuse.
+  let ageMs: number;
   try {
-    const ageMs = Date.now() - fs.statSync(lockPath).mtimeMs;
+    ageMs = Date.now() - fs.statSync(lockPath).mtimeMs;
     if (ageMs > staleMs) return true;
   } catch {
     return true; // can't stat → treat as stealable
@@ -72,7 +79,8 @@ function isLockStealable(lockPath: string, staleMs: number): boolean {
   } catch {
     return true;
   }
-  if (!Number.isFinite(holderPid) || holderPid <= 0) return true;
+  // A file with no PID yet can belong to a holder after the holder creates the file and before the holder writes the PID.
+  if (!Number.isFinite(holderPid) || holderPid <= 0) return ageMs > EMPTY_LOCK_GRACE_MS;
   return !isProcessAlive(holderPid);
 }
 

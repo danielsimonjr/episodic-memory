@@ -22,6 +22,7 @@ import {
   type SDKMessage,
 } from '@anthropic-ai/claude-agent-sdk';
 import { getApiEnv } from '../summarizer.js';
+import { claudeExecutableOption } from '../claude-bin.js';
 import { learnConfig } from './learn-config.js';
 import type { AttemptOutcome, Cost, TraceStep } from './types.js';
 import { servedToolNames } from './sdk-tools.js';
@@ -61,6 +62,8 @@ export interface BuildAgentQueryOptionsArgs {
   model: string;
   abortController: AbortController;
   systemPrompt: string;
+  /** The result of `claudeExecutableOption()`. Empty selects the bundled binary. */
+  executable?: { pathToClaudeCodeExecutable?: string };
 }
 
 /**
@@ -77,6 +80,7 @@ export function buildAgentQueryOptions(
   const allowed = new Set(servedToolNames(args.allowPropose));
 
   return {
+    ...(args.executable ?? {}),
     model: args.model,
     maxTurns: args.maxTurns,
     maxBudgetUsd: args.maxBudgetUsd,
@@ -348,6 +352,8 @@ export interface AgentRunOptions {
   timeoutMs: number;
   model: string;
   pids?: PidRegistry;
+  /** The executable option. The default is `claudeExecutableOption()`, which can throw `ClaudeBinError`. */
+  executable?: { pathToClaudeCodeExecutable?: string };
   /** Test seam: the SDK's `query` by default. */
   queryFn?: (params: { prompt: string; options: Record<string, unknown> }) => AsyncIterable<SDKMessage>;
   /** Test seam: defaults to `listAgentProcesses`. */
@@ -451,6 +457,8 @@ export function looksKilled(error: unknown): boolean {
 export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult> {
   const queryFn = options.queryFn ?? (sdkQuery as AgentRunOptions['queryFn'] as any);
   const timeoutMs = options.timeoutMs > 0 ? options.timeoutMs : DEFAULT_TIMEOUT_MS;
+  // Resolve the executable before the tracker starts, so a ClaudeBinError leaves nothing running.
+  const executable = options.executable ?? claudeExecutableOption();
 
   // A poll that every concurrent run shares tracks the spawn tree. The SDK exposes no PID accessor.
   // The tracker finds the direct `claude` child by its parent (the current process). The tracker
@@ -484,6 +492,7 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
         model: options.model,
         abortController: controller,
         systemPrompt: options.systemPrompt,
+        executable,
       }),
     })) {
       // A live SDK call throws on abort; an injected stream may not, so the

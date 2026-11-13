@@ -59,9 +59,15 @@ export declare function extractSummary(text: string): string;
  * No later call can resume the session. Without this option, each summary adds
  * a session to the IDE session sidebar (#83). The claude-agent-sdk type
  * declarations describe the option.
+ *
+ * `executable` is the result of `claudeExecutableOption()`: empty for the bundled binary, or
+ * `{ pathToClaudeCodeExecutable }` for the binary that EPISODIC_MEMORY_CLAUDE_BIN names.
  */
 export declare function buildSummarizerQueryOptions(args: {
     model: string;
+    executable?: {
+        pathToClaudeCodeExecutable?: string;
+    };
 }): Record<string, unknown>;
 /**
  * Return the prompt for one summary turn in a forked Codex session.
@@ -156,7 +162,7 @@ export declare function runCodexCommand(command: CodexSummarizerCommand): Promis
  *
  * For more than 15 exchanges, the function summarizes each chunk of exchanges. The function then synthesizes the chunk summaries into one summary. The chunk size is 8 exchanges. A larger chunk size keeps the chunk count at 20 or less. The function logs a failed chunk and skips it. A failed synthesis returns the chunk summaries joined with a space. When no chunk succeeds, the function returns `Error: Unable to summarize conversation.` as the result.
  *
- * A GpuReservedError from a model call rejects the promise.
+ * A deferral from a model call rejects the promise: a GpuReservedError, or a ClaudeBinError when no usable Claude Code executable exists.
  *
  * The function writes its progress lines with console.log, so they go to stdout.
  *

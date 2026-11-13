@@ -37,6 +37,10 @@ export interface BuildAgentQueryOptionsArgs {
     model: string;
     abortController: AbortController;
     systemPrompt: string;
+    /** The result of `claudeExecutableOption()`. Empty selects the bundled binary. */
+    executable?: {
+        pathToClaudeCodeExecutable?: string;
+    };
 }
 /**
  * The options object handed to the SDK's `query()`.
@@ -81,6 +85,10 @@ export interface AgentRunOptions {
     timeoutMs: number;
     model: string;
     pids?: PidRegistry;
+    /** The executable option. The default is `claudeExecutableOption()`, which can throw `ClaudeBinError`. */
+    executable?: {
+        pathToClaudeCodeExecutable?: string;
+    };
     /** Test seam: the SDK's `query` by default. */
     queryFn?: (params: {
         prompt: string;

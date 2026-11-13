@@ -206,6 +206,21 @@ These settings only affect episodic-memory's summarization calls, not your inter
 
 Codex summarization requires `codex-cli 0.130.0` or newer. If Codex app-server summarization is unavailable, sync logs the reason and falls back to transcript-text summarization.
 
+### Claude Code executable (opt-in)
+
+The Claude Agent SDK starts a Claude Code binary for summaries and for the learn agent. By default, the binary comes from the SDK platform package, for example `@anthropic-ai/claude-agent-sdk-win32-x64` (269 MB on Windows x64). A host that already has Claude Code can name its binary instead and drop that package:
+
+```bash
+export EPISODIC_MEMORY_CLAUDE_BIN=/absolute/path/to/claude   # claude.exe on Windows
+```
+
+- The path must be absolute. The variable has no PATH lookup. The plugin refuses a `.cmd`, `.bat` or `.ps1` shim. A `.js` or `.mjs` file runs under node.
+- The plugin runs `<path> --version` once per process. The version must be at or above the version of the bundled binary, which the SDK `manifest.json` records. An older Claude Code binary can delete session records, so the floor is mandatory.
+- When the check passes, the plugin removes the platform packages from its `node_modules` at its next start. The SDK package itself stays.
+- When no usable binary exists, the summaries, the digest, the topic job and the backfill defer. These steps count no attempt and write no failure record, so the plugin loses no data. Each reason goes to stderr once. The learn commands that start Claude Code exit 1 before they start a run.
+- Set the variable in a place that every process inherits: the User environment variable on Windows, or the shell profile elsewhere. The Claude Code `env` setting reaches the MCP server and the hooks, but not a scheduled sync task.
+- To roll back, remove the variable first. Then run `npm install --omit=dev --no-audit --no-fund` in the plugin root. The install restores the platform package.
+
 ### Local-model summarization (Ollama)
 
 Set the backend to `ollama` to summarize with a local model instead of billed API calls:

@@ -27,6 +27,11 @@ export interface LearnCliDeps {
     judge?: (prompt: string) => Promise<string>;
     /** Text model for task generation. Defaults to `callLearnModel`. */
     generateModel?: (prompt: string) => Promise<string>;
+    /**
+     * Checks that a Claude Code executable is usable. Throws `ClaudeBinError` when none is.
+     * Defaults to `claudeExecutableOption()`.
+     */
+    claudePreflight?: () => void;
     now?: () => Date;
     stdout: (text: string) => void;
     stderr: (text: string) => void;

@@ -1,5 +1,5 @@
 import { callDigestModel } from './summarizer.js';
-import { GpuReservedError } from './ollama-backend.js';
+import { deferralDetail } from './deferral.js';
 import { buildCompressPrompt } from './digest-prompts.js';
 import { parseCitedLines, redactEntryText } from './digest-validate.js';
 import { insertDigestEntry, listActiveByTier, supersede } from './digest-db.js';
@@ -39,8 +39,9 @@ async function mergeGroup(db, model, group, tier, periodStart, result) {
         raw = await model(prompt);
     }
     catch (err) {
-        if (err instanceof GpuReservedError) {
-            result.deferred = err.detail;
+        const deferred = deferralDetail(err);
+        if (deferred !== null) {
+            result.deferred = deferred;
             return;
         }
         console.error(`digest: ${tier} compression failed: ${err instanceof Error ? err.message : String(err)}`);

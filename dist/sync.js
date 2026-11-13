@@ -3,7 +3,8 @@ import path from 'path';
 import { SUMMARIZER_CONTEXT_MARKER } from './constants.js';
 import { getExcludedProjects, findJsonlFiles } from './paths.js';
 import { gpuReservationBlock } from './gpu-reservation.js';
-import { GpuReservedError, summarizerBackend } from './ollama-backend.js';
+import { summarizerBackend } from './ollama-backend.js';
+import { deferralDetail } from './deferral.js';
 const EXCLUSION_MARKERS = [
     '<INSTRUCTIONS-TO-EPISODIC-MEMORY>DO NOT INDEX THIS CHAT</INSTRUCTIONS-TO-EPISODIC-MEMORY>',
     'Only use NO_INSIGHTS_FOUND',
@@ -134,7 +135,7 @@ export function extractSessionIdFromPath(filePath) {
  *
  * Use `skipIndex` and `skipSummaries` to turn off the two later steps. The function skips the excluded projects. The function records an error for each file that fails and continues with the next file.
  *
- * When the Ollama summarizer is in use and another agent holds the shared GPU, the function writes no summary. The reason is reported in `summariesDeferred`. The function returns an empty result when `sourceDir` does not exist.
+ * When the Ollama summarizer is in use and another agent holds the shared GPU, the function writes no summary. When no usable Claude Code executable exists, the summaries stop at the first call. In both cases the reason is reported in `summariesDeferred`, and no attempt is counted. The function returns an empty result when `sourceDir` does not exist.
  */
 export async function syncConversations(sourceDir, destDir, options = {}) {
     const result = {
@@ -326,7 +327,7 @@ export async function syncConversations(sourceDir, destDir, options = {}) {
         for (const { path: filePath, sessionId } of toSummarize) {
             const deferred = await summarizeOneFile(filePath, sessionId, result, summarizeConversation);
             if (deferred) {
-                // Another agent took the GPU during the run. Every further call would fail the same way.
+                // A deferral: the GPU is reserved, or no usable Claude Code executable exists. Every further call would fail the same way.
                 result.summariesDeferred = deferred;
                 break;
             }
@@ -417,11 +418,12 @@ export async function summarizeOneFile(filePath, sessionId, result, summarize) {
         result.summarized++;
     }
     catch (error) {
-        // A reservation that appeared during the run is not a failed summary. Leave the queue as it is
-        // and take back the attempt that was counted before the call.
-        if (error instanceof GpuReservedError) {
+        // A deferral is not a failed summary: a GPU reservation that appeared during the run, or no usable
+        // Claude Code executable. Leave the queue as it is and take back the attempt counted before the call.
+        const deferred = deferralDetail(error);
+        if (deferred !== null) {
             result.summaryAttempts--;
-            return error.detail;
+            return deferred;
         }
         const errMsg = error instanceof Error ? error.message : String(error);
         const attempts = readSummaryAttempts(filePath) + 1;

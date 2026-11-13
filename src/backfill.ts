@@ -50,7 +50,7 @@ export interface BackfillResult {
   summarized: number;
   summaryAttempts: number;
   errors: Array<{ file: string; error: string }>;
-  /** Set when the run stopped because another agent holds the shared GPU. Not a failure. */
+  /** Set when the run stopped for a deferral: another agent holds the shared GPU, or no usable Claude Code executable exists. Not a failure. */
   deferred?: string;
 }
 
@@ -110,7 +110,7 @@ export function selectBackfillCandidates(
  * Each candidate goes through `summarizeOneFile`. The evidence matches the evidence from a sync.
  * With `dryRun`, the function counts the candidates and summarizes nothing.
  * With the Ollama backend, the function stops at once when another agent holds the shared GPU. The result then sets `deferred`.
- * A reservation that appears during the run also stops the loop and sets `deferred`.
+ * A deferral during the run also stops the loop and sets `deferred`: a reservation that appears, or no usable Claude Code executable.
  *
  * @param archiveDir The archive directory, with one subdirectory per project.
  * @param opts The limit and dry-run settings. See `BackfillOptions`.
@@ -134,7 +134,7 @@ export async function backfillArchive(archiveDir: string, opts: BackfillOptions)
   for (const c of candidates.slice(0, limit)) {
     const deferred = await summarizeOneFile(c.path, c.sessionId, result, summarizeConversation);
     if (deferred) {
-      // The reservation appeared during the run. This conversation stays a candidate.
+      // A deferral during the run. This conversation stays a candidate.
       result.deferred = deferred;
       break;
     }

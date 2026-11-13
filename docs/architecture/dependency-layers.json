@@ -439,6 +439,69 @@
           "batchVerdict"
         ]
       },
+      "src/claude-bin.ts": {
+        "description": "Choose the Claude Code executable that the Agent SDK starts.",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "child_process",
+            "imports": [
+              "spawnSync"
+            ]
+          },
+          {
+            "module": "fs",
+            "imports": [
+              "existsSync",
+              "readFileSync"
+            ]
+          },
+          {
+            "module": "module",
+            "imports": [
+              "createRequire"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "dirname",
+              "extname",
+              "isAbsolute",
+              "join"
+            ]
+          }
+        ],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "CLAUDE_BIN_ENV",
+          "PROBE_TIMEOUT_MS",
+          "ClaudeBinError",
+          "resolveSdkDir",
+          "sdkFloor",
+          "bundledBinaryPresent",
+          "probeClaudeBin",
+          "claudeExecutableOption"
+        ],
+        "classes": [
+          "ClaudeBinError"
+        ],
+        "interfaces": [
+          "ClaudeBinOptions"
+        ],
+        "functions": [
+          "resolveSdkDir",
+          "sdkFloor",
+          "bundledBinaryPresent",
+          "probeClaudeBin",
+          "claudeExecutableOption"
+        ],
+        "constants": [
+          "CLAUDE_BIN_ENV",
+          "PROBE_TIMEOUT_MS"
+        ]
+      },
       "src/codex-hook-trust.ts": {
         "description": "The trust state that Codex reports for the episodic-memory hooks.",
         "externalDependencies": [],
@@ -633,6 +696,32 @@
           "deleteExchange"
         ]
       },
+      "src/deferral.ts": {
+        "description": "The errors that defer model work instead of failing it.",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./claude-bin.js",
+            "imports": [
+              "ClaudeBinError"
+            ]
+          },
+          {
+            "file": "./ollama-backend.js",
+            "imports": [
+              "GpuReservedError"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "deferralDetail"
+        ],
+        "functions": [
+          "deferralDetail"
+        ]
+      },
       "src/deps-health.ts": {
         "description": "node_modules health check shared by the MCP wrapper, the SessionStart sync hook and `doctor`.",
         "externalDependencies": [],
@@ -690,9 +779,9 @@
             ]
           },
           {
-            "file": "./ollama-backend.js",
+            "file": "./deferral.js",
             "imports": [
-              "GpuReservedError"
+              "deferralDetail"
             ]
           },
           {
@@ -846,8 +935,13 @@
           {
             "file": "./ollama-backend.js",
             "imports": [
-              "GpuReservedError",
               "summarizerBackend"
+            ]
+          },
+          {
+            "file": "./deferral.js",
+            "imports": [
+              "deferralDetail"
             ]
           },
           {
@@ -2472,6 +2566,19 @@
               "ollamaMaxPromptChars",
               "OllamaCallOptions"
             ]
+          },
+          {
+            "file": "./claude-bin.js",
+            "imports": [
+              "ClaudeBinError",
+              "claudeExecutableOption"
+            ]
+          },
+          {
+            "file": "./deferral.js",
+            "imports": [
+              "deferralDetail"
+            ]
           }
         ],
         "workspaceDependencies": [],
@@ -2673,8 +2780,13 @@
           {
             "file": "./ollama-backend.js",
             "imports": [
-              "GpuReservedError",
               "summarizerBackend"
+            ]
+          },
+          {
+            "file": "./deferral.js",
+            "imports": [
+              "deferralDetail"
             ]
           },
           {
@@ -2876,8 +2988,13 @@
           {
             "file": "./ollama-backend.js",
             "imports": [
-              "GpuReservedError",
               "summarizerBackend"
+            ]
+          },
+          {
+            "file": "./deferral.js",
+            "imports": [
+              "deferralDetail"
             ]
           },
           {
@@ -3381,6 +3498,12 @@
             ]
           },
           {
+            "file": "../claude-bin.js",
+            "imports": [
+              "claudeExecutableOption"
+            ]
+          },
+          {
             "file": "./learn-config.js",
             "imports": [
               "learnConfig"
@@ -3634,6 +3757,19 @@
             "file": "../paths.js",
             "imports": [
               "getSuperpowersDir"
+            ]
+          },
+          {
+            "file": "../claude-bin.js",
+            "imports": [
+              "ClaudeBinError",
+              "claudeExecutableOption"
+            ]
+          },
+          {
+            "file": "../ollama-backend.js",
+            "imports": [
+              "summarizerBackend"
             ]
           },
           {
@@ -5537,10 +5673,12 @@
         "src/archive-path.ts",
         "src/backfill-cli.ts",
         "src/backfill.ts",
+        "src/claude-bin.ts",
         "src/codex-hook-trust.ts",
         "src/codex-support.ts",
         "src/constants.ts",
         "src/db.ts",
+        "src/deferral.ts",
         "src/deps-health.ts",
         "src/digest-compress.ts",
         "src/digest-db.ts",

@@ -1,6 +1,7 @@
 import { shouldSkipReentrantSync } from './reentrancy.js';
 import { gpuReservationBlock } from './gpu-reservation.js';
-import { GpuReservedError, summarizerBackend } from './ollama-backend.js';
+import { summarizerBackend } from './ollama-backend.js';
+import { deferralDetail } from './deferral.js';
 import { callDigestModel, promptBudgetChars } from './summarizer.js';
 import { QUIET_MS, isTrivial, sessionExchanges } from './digest-job.js';
 import { TOPIC_DEFAULTS, envPositiveInt, topicsEnabled } from './constants.js';
@@ -128,8 +129,9 @@ async function organizeSession(run, limits, s, exchanges) {
             answer = String((await model(prompt)) ?? '');
         }
         catch (err) {
-            if (err instanceof GpuReservedError) {
-                result.deferred = err.detail;
+            const deferred = deferralDetail(err);
+            if (deferred !== null) {
+                result.deferred = deferred;
                 return 'stop';
             }
             recordFailedCall(run, s.project, s.session_id, errorText(err));
@@ -181,7 +183,7 @@ async function organizeSession(run, limits, s, exchanges) {
  *
  * The function returns at once, and writes nothing, when EPISODIC_MEMORY_TOPICS is not `1`, or when the summarizer
  * guard is set. It stores `since` on the first run, before the GPU check. It stops early when another agent holds
- * the shared GPU, and reports the reason in `deferred`.
+ * the shared GPU, or when no usable Claude Code executable exists. It reports the reason in `deferred`.
  *
  * @param db the open index database
  * @param opts replaces the model call or the clock

@@ -234,7 +234,7 @@ A plugin host installs with npm and no lockfile. That install resolves a later `
 6. A fresh scratch install falls by 158.1 MB, inside the band of section 6. `doctor` reports a healthy tree.
 7. The fixture search of section 7 returns the known passage as the first hit.
 
-**Rollback.** Section 8. Then delete `node_modules/onnxruntime-node` in the plugin root and run `npm install --no-audit --no-fund`. The install restores all five pairs (measured with npm and with bun).
+**Rollback.** Section 8. Then delete `node_modules/onnxruntime-node` in the plugin root and run `npm install --omit=dev --no-audit --no-fund`. The install restores all five pairs (measured with npm and with bun).
 
 **Verdict: DO.** PR 4 lands before the SDK PR, because PR 4 builds the best-effort helper that PR 5 uses.
 
@@ -263,19 +263,20 @@ Discriminators:
 
 **What changes.**
 
-1. **One resolution module.** A new module (name set in the PR) reads `EPISODIC_MEMORY_CLAUDE_BIN`. `src/summarizer.ts`, `src/learn/agent-runner.ts` and `cli/ensure-deps.js` use the module. No other module reads the variable. `cli/ensure-deps.js` imports the compiled module from `dist/`.
-2. **One place to set the variable.** The opt-in is the environment variable and nothing else. The installer, the MCP wrapper, the SessionStart hook and the CLI read the variable through the module. The docs name one place to set the variable. All four processes inherit that place: the Claude Code `env` setting or the user shell profile.
+1. **One resolution module.** `src/claude-bin.ts` reads `EPISODIC_MEMORY_CLAUDE_BIN`. `src/summarizer.ts`, `src/learn/agent-runner.ts` and `cli/ensure-deps.js` use the module. No other module reads the variable. `cli/ensure-deps.js` imports the compiled module from `dist/`.
+2. **One place to set the variable.** The opt-in is the environment variable and nothing else. The installer, the MCP wrapper, the SessionStart hook and the CLI read the variable through the module. The docs name one place to set the variable: the User environment variable on Windows, or the shell profile elsewhere. Every process inherits that place. The Claude Code `env` setting does not reach a scheduled sync task.
 3. **Environment whitelist.** The server process reads the variable. The PR adds the name to `env_vars` in `.mcp.json` and a row to `test/codex-plugin.test.ts`.
 4. **Bounded version probe.** When the variable is set, the module runs `<path> --version` once per process and caches the result.
    - A `.js` or `.mjs` path runs under `process.execPath`. A native path runs directly.
    - The probe captures the child output with `stdio: ['ignore', 'pipe', 'pipe']`. The probe writes only through `console.error`.
    - The probe parses `^\d+\.\d+\.\d+` from stdout. The compare is a numeric compare of three parts.
-   - The probe has a timeout. The bound follows the codex probe in `src/summarizer.ts` (`EPISODIC_MEMORY_CODEX_BIN`).
+   - The probe has a timeout of 10 seconds (`PROBE_TIMEOUT_MS`). A `--version` call returns in well under one second.
    - The floor is the `version` field of `@anthropic-ai/claude-agent-sdk/manifest.json`. The module reads the file at run time. The manifest is in the SDK package, not in the platform package, so the manifest stays on disk.
    - A failed probe, a timeout or a version below the floor is an error. The error writes one stderr line. The line names the path, the found version and the floor. The run stops.
    - The probe does not run for the bundled binary.
-5. **Install-time removal.** In `cli/ensure-deps.js`, when the variable is set and the probe passes, remove every directory that matches `@anthropic-ai/claude-agent-sdk-*` under `node_modules`.
-   - The SDK package itself (no suffix) stays.
+5. **Install-time removal.** In `cli/ensure-deps.js`, when the variable is set and the probe passes, remove every directory that matches `@anthropic-ai/claude-agent-sdk-<platform>-<arch>` under `node_modules`.
+   - The SDK package itself (no suffix) stays. Another package with the same prefix also stays.
+   - The pattern accepts the platform and arch values of Node, and an optional `-musl` or `-android` suffix.
    - On Linux, npm can install more than one candidate (for example `-linux-x64` and `-linux-x64-musl`). The pattern removes every candidate directory.
    - The removal runs in `pruneOptionalWeight` on every call, under the best-effort rule of section 3.3b.
    - The `runNpm` arguments do not change for this step.
@@ -285,15 +286,25 @@ Discriminators:
    - The run never falls back to a path that is not on disk.
 7. **Health check.** `src/deps-health.ts` does not require the platform package. A tree without the package stays healthy.
 8. **Documentation.** The architecture docs and `CLAUDE.md` describe the variable, the opt-in and the failure lines.
+9. **Deferral.** The resolution error is a `ClaudeBinError`. `src/deferral.ts` treats a `ClaudeBinError` as a deferral, like `GpuReservedError`.
+   - The summary loop of `sync`, the backfill, the digest job, the digest compression and the topic job stop at the first deferral.
+   - These steps count no attempt and write no failure record. The queue is the same at the next run.
+   - `summarizeConversation` re-throws the error from a chunk and from the synthesis, so no partial summary is stored.
+   - Sync and the digest run no check before the first call. An Ollama host reaches Claude Code only through the fallback model.
+   - An unusable fallback counts as no fallback: the Ollama error stands, and the attempt counts. A deferral there would hold back the whole queue behind one prompt.
+10. **Learn check.** `tasks` (on the Claude backend), `solve`, `bootstrap` and `improve` check the executable before the lock. On failure the command writes one line and exits 1. The command creates no run row.
 
 The plan does not use an `overrides` entry for the eight platform packages. An override applies to every host, and option (i) needs the default install to keep the package.
 
-**Saving.** 269.2 MB and 1 package on each opt-in Windows x64 host (measured package size). The default install saves 0 MB. The SDK package without the platform package is 5.2 MB (estimate).
+**Saving.** 269.2 MB and 1 package on each opt-in Windows x64 host (measured package size). One `ensureDeps` call with the variable set removed 269,231,840 bytes from an install at the `bun.lock` versions. The default install saves 0 MB. The SDK package without the platform package is 5.2 MB (measured).
 
 **Risk.**
 
 - **Version coupling.** The SDK vendor tests the protocol against the bundled binary only. The floor blocks an older host binary. The floor has no ceiling, so a newer binary can change behaviour that the SDK does not test. The PR body records the live check.
 - **Floor drift.** The root range is `^0.3.299`. A new SDK release can raise the floor. The error line names the floor and the found version, so the host owner knows to update Claude Code.
+  - An install without a lockfile can resolve an SDK release that is newer than the host Claude Code. The floor is then above the host binary.
+  - In a measured case, npm resolves SDK 0.3.323 (floor 2.1.323) on a host with the binary 2.1.318. The probe refuses the binary, and the prune removes nothing.
+  - On such a host the summary work defers until Claude Code reaches the floor. The host loses no data.
 - **Data safety.** The SDK floor test (`test/agent-sdk-floor.test.ts`) protects against a binary that deletes session records. A host binary moves the runtime away from that test, so the version floor is mandatory.
 - **Path drift.** A Claude Code update can move the host binary. The probe then fails loudly.
 
@@ -316,9 +327,12 @@ The plan does not use an `overrides` entry for the eight platform packages. An o
 10. The PR updates the tests of `buildAgentQueryOptions` (`src/learn/agent-runner.ts`) and of the summarizer options builder. The executable field is absent when the variable is unset.
 11. A fresh opt-in install falls by 269.2 MB, inside the band of section 6. `test ! -d` passes for the platform package. A fresh default install keeps the package.
 12. Manual check, recorded in the PR body and not in CI: one live summary through the host binary on a Claude Code host. The record names the host binary version.
+13. Data safety: a sync with the variable set to a missing path and three queued conversations calls the SDK zero times. It writes no summary file and no failure record, counts no attempt, and sets `summariesDeferred`.
+14. The learn commands of item 10 exit 1 with an injected failing check, start no agent and create no run.
 
-**Rollback.** Section 8. Then run `npm install --no-audit --no-fund` in the plugin root. The install restores the platform package.
-`deps-health` does not treat a missing platform package as unhealthy, so `ensureDeps` never reinstalls the package by itself. Remove the variable from the host.
+**Rollback.** Section 8. Remove the variable from the host first. Otherwise the next `ensureDeps` call removes the package again.
+Then run `npm install --omit=dev --no-audit --no-fund` in the plugin root. The install restores the platform package (measured with npm and with bun).
+`deps-health` does not treat a missing platform package as unhealthy, so `ensureDeps` never reinstalls the package by itself.
 
 **Verdict: DO (opt-in; unset selects the bundled binary).** The default install does not change. Each opt-in host saves 269.2 MB.
 
@@ -456,7 +470,7 @@ On Node 26.13 with sqlite-vec 0.1.9, `SELECT vec_version()` returns `v0.1.9`, an
 | `marked` | 0.4 | One import in `src/show.ts`. The package ships its own types. |
 | `sqlite-vec` | 0.3 exclusive | The only vector index. The `vec0` extension loads from an optional platform package, so no step uses `--omit=optional`. |
 | `@huggingface/transformers` (after section 3.3) | 128.8 (estimate) | The embedding pipeline that the code runs. Option B is the only step that removes `@huggingface/transformers`. |
-| `@anthropic-ai/claude-agent-sdk` | 5.2 without the platform package (estimate) | Three import sites. The plan can remove only the platform package (section 3.4). |
+| `@anthropic-ai/claude-agent-sdk` | 5.2 without the platform package (measured) | Three import sites. The plan can remove only the platform package (section 3.4). |
 | `better-sqlite3` | 27.7 | The database layer until section 3.6 lands. |
 | `onnxruntime-common` | 0.0 | Hoist pin: transformers imports `onnxruntime-common` without a declaration. KEEP until option B removes the pin. |
 
@@ -598,8 +612,8 @@ The preparing agent runs steps 1, 2 and 6. The release owner runs steps 3 to 5.
 Special cases:
 
 - PR 3: the revert removes the override and the stub. Run `bun install` to regenerate `bun.lock`.
-- PR 4: `deps-health` treats the pruned tree as healthy, so no automatic reinstall happens. A plain install keeps the pruned tree. Delete `node_modules/onnxruntime-node` in the plugin root, then run `npm install --no-audit --no-fund`.
-- PR 5: `deps-health` treats the tree without the platform package as healthy, so no automatic reinstall happens. Run `npm install --no-audit --no-fund` in the plugin root. The install adds the missing package directory.
+- PR 4: `deps-health` treats the pruned tree as healthy, so no automatic reinstall happens. A plain install keeps the pruned tree. Delete `node_modules/onnxruntime-node` in the plugin root. Then run `npm install --omit=dev --no-audit --no-fund`.
+- PR 5: `deps-health` treats the tree without the platform package as healthy, so no automatic reinstall happens. Remove `EPISODIC_MEMORY_CLAUDE_BIN` from the host first. Then run `npm install --omit=dev --no-audit --no-fund` in the plugin root. The install adds the missing package directory.
 - Option B with a passed parity gate: the old vectors stay valid. No index rollback runs.
 - Option B with a bump, and option C: the old vectors stay under the old `EMBEDDING_VERSION`. A rollback restores the old version.
 

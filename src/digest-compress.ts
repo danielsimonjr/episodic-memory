@@ -1,6 +1,6 @@
 import type Database from 'better-sqlite3';
 import { callDigestModel } from './summarizer.js';
-import { GpuReservedError } from './ollama-backend.js';
+import { deferralDetail } from './deferral.js';
 import { buildCompressPrompt } from './digest-prompts.js';
 import { parseCitedLines, redactEntryText } from './digest-validate.js';
 import { insertDigestEntry, listActiveByTier, supersede, type DigestEntry, type DigestTier } from './digest-db.js';
@@ -22,12 +22,12 @@ export interface CompressOptions {
 /**
  * The counts from one `compressDigest` run.
  *
- * `created` counts the merged entries that the run stored. `failed` counts the model calls that threw an error, except a GPU reservation.
+ * `created` counts the merged entries that the run stored. `failed` counts the model calls that threw an error, except a deferral (a GPU reservation or an unusable Claude Code executable).
  */
 export interface CompressResult {
   created: number;
   failed: number;
-  /** Set when the run stopped because another agent holds the shared GPU. Not a failure. */
+  /** Set when the run stopped for a deferral: another agent holds the shared GPU, or no usable Claude Code executable exists. Not a failure. */
   deferred?: string;
 }
 
@@ -76,8 +76,9 @@ async function mergeGroup(
   try {
     raw = await model(prompt);
   } catch (err) {
-    if (err instanceof GpuReservedError) {
-      result.deferred = err.detail;
+    const deferred = deferralDetail(err);
+    if (deferred !== null) {
+      result.deferred = deferred;
       return;
     }
     console.error(`digest: ${tier} compression failed: ${err instanceof Error ? err.message : String(err)}`);

@@ -3,6 +3,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, existsSync, readdirSync, rmSync 
 import { tmpdir } from 'os';
 import { join, dirname } from 'path';
 import { ensureDeps, pruneOptionalWeight } from '../cli/ensure-deps.js';
+import { spawnSync } from 'child_process';
 
 // onnxruntime-node ships one binding directory for each platform and architecture pair. The process
 // loads only `bin/napi-v6/<process.platform>/<process.arch>`. The process does not load the other pairs.
@@ -178,5 +179,96 @@ describe('ensureDeps prune', () => {
     expect(err).toHaveBeenCalledTimes(1);
     // The healthy tree stays healthy: the binding that the process loads is still on disk.
     expect(existsSync(join(napiDir(root), RUNNING.platform, RUNNING.arch))).toBe(true);
+  });
+});
+
+// The Agent SDK starts a bundled Claude Code binary from a platform package. A host that sets
+// EPISODIC_MEMORY_CLAUDE_BIN to a binary that passes the probe does not need the platform packages.
+describe('pruneOptionalWeight and the Agent SDK platform packages', () => {
+  const AT = ['node_modules', '@anthropic-ai'];
+
+  /** A plugin root with the SDK, its manifest, two linux platform packages and the unrelated `@anthropic-ai/sdk`. */
+  function sdkRoot(): string {
+    const root = fakePluginRoot([RUNNING]);
+    touch(join(root, ...AT, 'claude-agent-sdk', 'package.json'));
+    writeFileSync(join(root, ...AT, 'claude-agent-sdk', 'manifest.json'), JSON.stringify({ version: '2.1.299' }));
+    touch(join(root, ...AT, 'claude-agent-sdk-linux-x64', 'claude'));
+    touch(join(root, ...AT, 'claude-agent-sdk-linux-x64-musl', 'claude'));
+    touch(join(root, ...AT, 'sdk', 'package.json'));
+    return root;
+  }
+
+  function fakeBin(root: string, version: string): string {
+    const bin = join(root, 'fake-claude.mjs');
+    writeFileSync(bin, `process.stdout.write(${JSON.stringify(version + ' (Claude Code)\n')});`);
+    return bin;
+  }
+
+  const anthropic = (root: string) => readdirSync(join(root, ...AT)).sort();
+
+  it('removes every platform package when the variable names a binary that passes the probe', () => {
+    const root = sdkRoot();
+    pruneOptionalWeight(join(root, 'node_modules'), { env: { EPISODIC_MEMORY_CLAUDE_BIN: fakeBin(root, '2.1.318') } });
+    expect(anthropic(root)).toEqual(['claude-agent-sdk', 'sdk']);
+  });
+
+  it('removes only names of the platform form, and keeps another package with the same prefix', () => {
+    const root = sdkRoot();
+    touch(join(root, ...AT, 'claude-agent-sdk-win32-arm64', 'claude.exe'));
+    touch(join(root, ...AT, 'claude-agent-sdk-darwin-x64', 'claude'));
+    touch(join(root, ...AT, 'claude-agent-sdk-tools', 'package.json'));
+    pruneOptionalWeight(join(root, 'node_modules'), { env: { EPISODIC_MEMORY_CLAUDE_BIN: fakeBin(root, '2.1.318') } });
+    expect(anthropic(root)).toEqual(['claude-agent-sdk', 'claude-agent-sdk-tools', 'sdk']);
+  });
+
+  it('removes no platform package when the variable is unset', () => {
+    const root = sdkRoot();
+    const spawn = vi.fn();
+    pruneOptionalWeight(join(root, 'node_modules'), { env: {}, spawn: spawn as unknown as typeof spawnSync });
+    expect(anthropic(root)).toEqual(['claude-agent-sdk', 'claude-agent-sdk-linux-x64', 'claude-agent-sdk-linux-x64-musl', 'sdk']);
+    expect(spawn).not.toHaveBeenCalled();
+  });
+
+  // A failed probe leaves the bundled binary on disk, so the host keeps one working path.
+  it('removes no platform package when the binary is below the floor, and writes one line', () => {
+    const root = sdkRoot();
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    pruneOptionalWeight(join(root, 'node_modules'), { env: { EPISODIC_MEMORY_CLAUDE_BIN: fakeBin(root, '2.1.298') } });
+    expect(anthropic(root)).toHaveLength(4);
+    expect(err).toHaveBeenCalledTimes(1);
+    expect(String(err.mock.calls[0][0])).toMatch(/below the SDK floor 2\.1\.299/);
+  });
+
+  it('writes one line and does not throw when a platform package cannot be removed', () => {
+    const root = sdkRoot();
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const rm = (path: string, opts: Parameters<typeof rmSync>[1]) => {
+      if (path.includes('claude-agent-sdk-')) throw Object.assign(new Error('EBUSY: locked'), { code: 'EBUSY' });
+      rmSync(path, opts);
+    };
+    expect(() =>
+      pruneOptionalWeight(join(root, 'node_modules'), { env: { EPISODIC_MEMORY_CLAUDE_BIN: fakeBin(root, '2.1.318') }, rm })
+    ).not.toThrow();
+    expect(err).toHaveBeenCalledTimes(1);
+  });
+
+  // Stdout of the MCP wrapper is the JSON-RPC transport. The fake binary prints to its stdout, and the
+  // probe must keep those bytes out of the wrapper stdout.
+  it('keeps the stdout of the MCP wrapper empty while the probe and the removal run', () => {
+    const root = sdkRoot();
+    makeHealthy(root);
+    const bin = join(root, 'noisy-claude.mjs');
+    writeFileSync(bin, `process.stdout.write(${JSON.stringify('2.1.318 (Claude Code)\nstray stdout bytes\n')});`);
+    const env: Record<string, string | undefined> = { ...process.env, CLAUDE_PLUGIN_ROOT: root, EPISODIC_MEMORY_CLAUDE_BIN: bin };
+    const r = spawnSync(process.execPath, [join(process.cwd(), 'cli', 'mcp-server-wrapper.js')], {
+      env,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      encoding: 'utf-8',
+      timeout: 60000,
+    });
+    // The fake root has no dist/mcp-server.js, so the wrapper stops after ensureDeps with an error on stderr.
+    expect(r.stderr).toContain('MCP server not found');
+    expect(r.stdout).toBe('');
+    expect(anthropic(root)).toEqual(['claude-agent-sdk', 'sdk']);
   });
 });

@@ -69,6 +69,14 @@ describe('buildSummarizerQueryOptions', () => {
     expect(opts.mcpServers).toEqual({});
   });
 
+  it('names no executable unless the caller passes one, so the SDK runs the bundled binary', () => {
+    expect('pathToClaudeCodeExecutable' in buildSummarizerQueryOptions({ model: 'haiku' })).toBe(false);
+    expect('pathToClaudeCodeExecutable' in buildSummarizerQueryOptions({ model: 'haiku', executable: {} })).toBe(false);
+    const opts = buildSummarizerQueryOptions({ model: 'haiku', executable: { pathToClaudeCodeExecutable: '/opt/claude' } });
+    expect(opts.pathToClaudeCodeExecutable).toBe('/opt/claude');
+    expect(opts.model).toBe('haiku');
+  });
+
   it('passes the learn model through unchanged, alongside the digest model', () => {
     const learn = resolveLearnModels({
       EPISODIC_MEMORY_LEARN_MODEL: 'opus',

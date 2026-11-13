@@ -3,9 +3,9 @@
     "name": "episodic-memory",
     "schemaVersion": "2.0.0",
     "language": "typescript",
-    "totalFiles": 256,
+    "totalFiles": 260,
     "totalModules": 4,
-    "totalExports": 568
+    "totalExports": 578
   },
   "modules": {
     "src": {
@@ -235,6 +235,27 @@
           "batchVerdict"
         ]
       },
+      "src/claude-bin.ts": {
+        "externalDependencies": [],
+        "nodeDependencies": [
+          "child_process",
+          "fs",
+          "module",
+          "path"
+        ],
+        "internalDependencies": [],
+        "exports": [
+          "CLAUDE_BIN_ENV",
+          "PROBE_TIMEOUT_MS",
+          "ClaudeBinError",
+          "ClaudeBinOptions",
+          "resolveSdkDir",
+          "sdkFloor",
+          "bundledBinaryPresent",
+          "probeClaudeBin",
+          "claudeExecutableOption"
+        ]
+      },
       "src/codex-hook-trust.ts": {
         "externalDependencies": [],
         "nodeDependencies": [
@@ -351,6 +372,29 @@
           "deleteExchange"
         ]
       },
+      "src/deferral.ts": {
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "src/claude-bin.ts",
+            "imports": [
+              "ClaudeBinError"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/ollama-backend.ts",
+            "imports": [
+              "GpuReservedError"
+            ],
+            "typeOnly": false
+          }
+        ],
+        "exports": [
+          "deferralDetail"
+        ]
+      },
       "src/deps-health.ts": {
         "externalDependencies": [],
         "nodeDependencies": [
@@ -381,9 +425,9 @@
             "typeOnly": false
           },
           {
-            "file": "src/ollama-backend.ts",
+            "file": "src/deferral.ts",
             "imports": [
-              "GpuReservedError"
+              "deferralDetail"
             ],
             "typeOnly": false
           },
@@ -500,8 +544,14 @@
           {
             "file": "src/ollama-backend.ts",
             "imports": [
-              "GpuReservedError",
               "summarizerBackend"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/deferral.ts",
+            "imports": [
+              "deferralDetail"
             ],
             "typeOnly": false
           },
@@ -1221,6 +1271,13 @@
             "typeOnly": false
           },
           {
+            "file": "src/claude-bin.ts",
+            "imports": [
+              "claudeExecutableOption"
+            ],
+            "typeOnly": false
+          },
+          {
             "file": "src/learn/learn-config.ts",
             "imports": [
               "learnConfig"
@@ -1439,6 +1496,21 @@
             "file": "src/paths.ts",
             "imports": [
               "getSuperpowersDir"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/claude-bin.ts",
+            "imports": [
+              "ClaudeBinError",
+              "claudeExecutableOption"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/ollama-backend.ts",
+            "imports": [
+              "summarizerBackend"
             ],
             "typeOnly": false
           },
@@ -3571,6 +3643,21 @@
               "OllamaCallOptions"
             ],
             "typeOnly": false
+          },
+          {
+            "file": "src/claude-bin.ts",
+            "imports": [
+              "ClaudeBinError",
+              "claudeExecutableOption"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/deferral.ts",
+            "imports": [
+              "deferralDetail"
+            ],
+            "typeOnly": false
           }
         ],
         "exports": [
@@ -3740,8 +3827,14 @@
           {
             "file": "src/ollama-backend.ts",
             "imports": [
-              "GpuReservedError",
               "summarizerBackend"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/deferral.ts",
+            "imports": [
+              "deferralDetail"
             ],
             "typeOnly": false
           },
@@ -3900,8 +3993,14 @@
           {
             "file": "src/ollama-backend.ts",
             "imports": [
-              "GpuReservedError",
               "summarizerBackend"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/deferral.ts",
+            "imports": [
+              "deferralDetail"
             ],
             "typeOnly": false
           },
@@ -4464,6 +4563,94 @@
         ],
         "exports": []
       },
+      "test/claude-bin-deferral.test.ts": {
+        "externalDependencies": [
+          "vitest"
+        ],
+        "nodeDependencies": [
+          "fs",
+          "os",
+          "path"
+        ],
+        "internalDependencies": [
+          {
+            "file": "src/types.ts",
+            "imports": [
+              "ConversationExchange"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "test/test-utils.ts",
+            "imports": [
+              "safeRmSync"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/summarizer.ts",
+            "imports": [
+              "*"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/claude-bin.ts",
+            "imports": [
+              "*"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/deferral.ts",
+            "imports": [
+              "*"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/ollama-backend.ts",
+            "imports": [
+              "*"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/sync.ts",
+            "imports": [
+              "*"
+            ],
+            "typeOnly": false
+          }
+        ],
+        "exports": []
+      },
+      "test/claude-bin.test.ts": {
+        "externalDependencies": [
+          "vitest"
+        ],
+        "nodeDependencies": [
+          "child_process",
+          "fs",
+          "os",
+          "path"
+        ],
+        "internalDependencies": [
+          {
+            "file": "src/claude-bin.ts",
+            "imports": [
+              "CLAUDE_BIN_ENV",
+              "ClaudeBinError",
+              "claudeExecutableOption",
+              "probeClaudeBin",
+              "sdkFloor",
+              "bundledBinaryPresent"
+            ],
+            "typeOnly": false
+          }
+        ],
+        "exports": []
+      },
       "test/claude-e2e-script.test.ts": {
         "externalDependencies": [
           "vitest"
@@ -4933,6 +5120,13 @@
             "file": "src/ollama-backend.ts",
             "imports": [
               "GpuReservedError"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/claude-bin.ts",
+            "imports": [
+              "ClaudeBinError"
             ],
             "typeOnly": false
           },
@@ -5463,6 +5657,7 @@
           "vitest"
         ],
         "nodeDependencies": [
+          "child_process",
           "fs",
           "os",
           "path"
@@ -5693,8 +5888,19 @@
         "externalDependencies": [
           "vitest"
         ],
-        "nodeDependencies": [],
+        "nodeDependencies": [
+          "os",
+          "path"
+        ],
         "internalDependencies": [
+          {
+            "file": "src/claude-bin.ts",
+            "imports": [
+              "CLAUDE_BIN_ENV",
+              "ClaudeBinError"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/learn/agent-runner.ts",
             "imports": [
@@ -6253,7 +6459,15 @@
               "createRun",
               "listTasks",
               "listAttempts",
-              "getRun"
+              "getRun",
+              "latestRun"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/claude-bin.ts",
+            "imports": [
+              "ClaudeBinError"
             ],
             "typeOnly": false
           },
@@ -9080,6 +9294,13 @@
             "typeOnly": false
           },
           {
+            "file": "src/claude-bin.ts",
+            "imports": [
+              "ClaudeBinError"
+            ],
+            "typeOnly": false
+          },
+          {
             "file": "src/summarizer.ts",
             "imports": [
               "promptBudgetChars"
@@ -9382,19 +9603,19 @@
     }
   },
   "statistics": {
-    "totalTypeScriptFiles": 256,
-    "totalSourceFiles": 256,
+    "totalTypeScriptFiles": 260,
+    "totalSourceFiles": 260,
     "totalModules": 4,
-    "totalLinesOfCode": 51825,
-    "totalExports": 568,
+    "totalLinesOfCode": 52834,
+    "totalExports": 578,
     "entryRoots": 6,
-    "reachableFiles": 44,
+    "reachableFiles": 46,
     "dormantFiles": 57,
     "orphanedFiles": 14,
     "testOnlyFiles": 43,
     "runtimeCircularDeps": 0,
     "typeOnlyCircularDeps": 1,
-    "totalTypeOnlyImports": 78,
+    "totalTypeOnlyImports": 79,
     "noImporterFileCount": 14,
     "unusedExportsCount": 113,
     "circularDepsTruncated": false,
@@ -9402,12 +9623,12 @@
     "typeOnlyCyclicComponents": 1,
     "runtimeFilesInCycles": 0,
     "typeOnlyFilesInCycles": 2,
-    "totalClasses": 7,
-    "totalInterfaces": 136,
-    "totalFunctions": 317,
+    "totalClasses": 8,
+    "totalInterfaces": 137,
+    "totalFunctions": 323,
     "totalTypeGuards": 9,
     "totalEnums": 0,
-    "totalConstants": 65,
+    "totalConstants": 67,
     "totalReExports": 8
   },
   "reachability": {
@@ -9419,7 +9640,7 @@
       "test/setup-env.ts",
       "test/global-setup.ts"
     ],
-    "reachableCount": 44,
+    "reachableCount": 46,
     "dormantCount": 57,
     "orphaned": [
       "cli/digest-hook.js",

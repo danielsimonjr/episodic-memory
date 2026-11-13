@@ -1,4 +1,7 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
+import os from 'os';
+import path from 'path';
+import { CLAUDE_BIN_ENV, ClaudeBinError } from '../../src/claude-bin.js';
 import {
   buildAgentQueryOptions,
   listAgentProcesses,
@@ -34,6 +37,13 @@ function optionsFor(over: Partial<Parameters<typeof buildAgentQueryOptions>[0]> 
 
 describe('buildAgentQueryOptions', () => {
   const savedGuard = process.env[SUMMARIZER_GUARD_ENV];
+
+  it('names no executable unless the caller passes one, so the SDK runs the bundled binary', () => {
+    expect('pathToClaudeCodeExecutable' in optionsFor()).toBe(false);
+    const opts = optionsFor({ executable: { pathToClaudeCodeExecutable: '/opt/claude' } });
+    expect(opts.pathToClaudeCodeExecutable).toBe('/opt/claude');
+    expect(opts.tools).toEqual([]);
+  });
 
   afterEach(() => {
     if (savedGuard === undefined) delete process.env[SUMMARIZER_GUARD_ENV];
@@ -216,6 +226,36 @@ describe('runAgent', () => {
     expect(result.trace[0].resultAddress).toBe('/archive/proj/s1.jsonl');
     expect(result.trace[0].resultChars).toBeGreaterThan(0);
     expect(JSON.stringify(result.trace)).not.toContain('Some long result text');
+  });
+
+  it('passes the executable option to the SDK, and a ClaudeBinError of the default stops the run before any call', async () => {
+    const seen: Record<string, unknown>[] = [];
+    await runAgent({
+      ...baseOptions,
+      server: server(),
+      executable: { pathToClaudeCodeExecutable: '/opt/claude' },
+      queryFn: params => {
+        seen.push(params.options);
+        return fakeStream();
+      },
+    });
+    expect(seen[0].pathToClaudeCodeExecutable).toBe('/opt/claude');
+
+    const missing = path.join(os.tmpdir(), 'em-agent-runner-missing', 'claude.exe');
+    const saved = process.env[CLAUDE_BIN_ENV];
+    process.env[CLAUDE_BIN_ENV] = missing;
+    const quiet = vi.spyOn(console, 'error').mockImplementation(() => {});
+    let calls = 0;
+    try {
+      await expect(
+        runAgent({ ...baseOptions, server: server(), queryFn: () => { calls += 1; return fakeStream(); } })
+      ).rejects.toBeInstanceOf(ClaudeBinError);
+    } finally {
+      quiet.mockRestore();
+      if (saved === undefined) delete process.env[CLAUDE_BIN_ENV];
+      else process.env[CLAUDE_BIN_ENV] = saved;
+    }
+    expect(calls).toBe(0);
   });
 
   it('reads the init tool list and the cost from the result', async () => {

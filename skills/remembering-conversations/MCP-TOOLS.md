@@ -26,7 +26,7 @@ Search your episodic memory of past Claude Code and Codex conversations using se
 ### Search Modes
 
 - **`vector`** - Semantic similarity search using embeddings
-- **`text`** - Exact text matching (case-insensitive)
+- **`text`** - Text matching (case-insensitive). Each word of the query must appear in the exchange, in any order
 - **`both`** - Combined semantic + text search (default, recommended)
 
 ### Single-Concept Search

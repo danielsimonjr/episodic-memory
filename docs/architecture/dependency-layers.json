@@ -2478,6 +2478,12 @@
             "imports": [
               "safeArchiveSummaryPath"
             ]
+          },
+          {
+            "file": "./fts-query.js",
+            "imports": [
+              "toFtsQuery"
+            ]
           }
         ],
         "workspaceDependencies": [],

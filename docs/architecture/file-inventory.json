@@ -1,11 +1,11 @@
 {
-  "totalFiles": 278,
+  "totalFiles": 279,
   "byDisposition": {
     "reachable": 43,
     "build-entry": 4,
     "test-only": 46,
     "orphan": 15,
-    "test": 165,
+    "test": 166,
     "tool": 4,
     "config": 1,
     "bench": 0,
@@ -14,11 +14,11 @@
   "byArea": {
     "src": 108,
     "tools": 4,
-    "tests": 165,
+    "tests": 166,
     "config": 1
   },
   "byPackage": {
-    "(root)": 179,
+    "(root)": 180,
     "episodic-memory": 99
   },
   "files": [
@@ -671,7 +671,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 565
+      "loc": 587
     },
     {
       "file": "src/show-cli.ts",
@@ -1876,6 +1876,13 @@
       "area": "tests",
       "disposition": "test",
       "loc": 100
+    },
+    {
+      "file": "test/text-search-multiword.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 109
     },
     {
       "file": "test/tool-calls-cascade.test.ts",

@@ -2,6 +2,7 @@ import { initDatabase, getSharedReaderDatabase } from './db.js';
 import { initEmbeddings, generateQueryEmbedding } from './embeddings.js';
 import { maybeRedactSecrets } from './redact.js';
 import { safeArchiveSummaryPath } from './archive-path.js';
+import { toFtsQuery } from './fts-query.js';
 import fs from 'fs';
 const FALSY = new Set(['0', 'false', 'no', 'off']);
 /** Default on. Set EPISODIC_MEMORY_INCLUDE_SUMMARY=0 to hide summaries. */
@@ -158,14 +159,33 @@ function validateISODate(dateStr, paramName) {
     }
 }
 /**
- * Prepare an FTS5 MATCH query from user input.
- * Quote the whole string, so punctuation / AND/OR tokens in the user query do not become FTS operators.
- * The caller falls back to LIKE when FTS is unavailable.
+ * Prepare an FTS5 MATCH query from user input. Each word in the query must match in any order.
+ *
+ * `toFtsQuery` quotes each word. As a result, `AND`, `OR`, `NEAR` and punctuation in the query do not become
+ * FTS5 operators. When the query holds no word, the function quotes the whole query as one phrase.
+ * The caller falls back to LIKE when FTS5 is unavailable.
  */
 export function buildFtsMatchQuery(query) {
-    // Escape embedded double-quotes for FTS5 phrase syntax
-    const escaped = query.replace(/"/g, '""');
-    return `"${escaped}"`;
+    return toFtsQuery(query) ?? `"${query.replace(/"/g, '""')}"`;
+}
+/**
+ * Build the LIKE condition of the text search.
+ *
+ * Each word of the query must appear in the user or the assistant message.
+ *
+ * The words are the parts of the query between spaces. `%`, `_` and `\` in a word match as text, not as wildcards.
+ * A query with no word matches every message, as `%%` does.
+ */
+function buildLikeClause(query) {
+    const words = query.split(/\s+/).filter(w => w.length > 0);
+    const terms = words.length > 0 ? words : [''];
+    const params = [];
+    for (const term of terms) {
+        const pattern = `%${term.replace(/[\\%_]/g, c => `\\${c}`)}%`;
+        params.push(pattern, pattern);
+    }
+    const one = `(e.user_message LIKE ? ESCAPE '\\' OR e.assistant_message LIKE ? ESCAPE '\\')`;
+    return { sql: terms.map(() => one).join(' AND '), params };
 }
 function resolveSearchDb(options) {
     if (options.db) {
@@ -240,19 +260,20 @@ export async function searchConversations(query, options = {}) {
                 textResults = ftsStmt.all(buildFtsMatchQuery(query), ...filterParams, limit);
             }
             catch {
-                // FTS missing or MATCH syntax edge-case: fall back to LIKE.
+                // FTS missing or MATCH syntax edge-case: fall back to LIKE, with one condition for each word.
+                const like = buildLikeClause(query);
                 const textStmt = db.prepare(`
           SELECT
             ${EXCHANGE_SELECT_COLUMNS},
             0 as distance
           FROM exchanges AS e
-          WHERE (e.user_message LIKE ? OR e.assistant_message LIKE ?)
+          WHERE ${like.sql}
             AND e.is_sidechain = 0
             ${filterClause}
           ORDER BY e.timestamp DESC
           LIMIT ?
         `);
-                textResults = textStmt.all(`%${query}%`, `%${query}%`, ...filterParams, limit);
+                textResults = textStmt.all(...like.params, ...filterParams, limit);
             }
             if (mode === 'both') {
                 // Merge and deduplicate by ID

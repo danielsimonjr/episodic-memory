@@ -3,7 +3,7 @@
     "name": "episodic-memory",
     "schemaVersion": "2.0.0",
     "language": "typescript",
-    "totalFiles": 278,
+    "totalFiles": 279,
     "totalModules": 4,
     "totalExports": 604
   },
@@ -3652,6 +3652,13 @@
             "file": "src/archive-path.ts",
             "imports": [
               "safeArchiveSummaryPath"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/fts-query.ts",
+            "imports": [
+              "toFtsQuery"
             ],
             "typeOnly": false
           }
@@ -9712,6 +9719,50 @@
           "countLines"
         ]
       },
+      "test/text-search-multiword.test.ts": {
+        "externalDependencies": [
+          "better-sqlite3",
+          "vitest"
+        ],
+        "nodeDependencies": [
+          "fs",
+          "os",
+          "path"
+        ],
+        "internalDependencies": [
+          {
+            "file": "src/db.ts",
+            "imports": [
+              "initDatabase",
+              "insertExchange"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/search.ts",
+            "imports": [
+              "buildFtsMatchQuery",
+              "searchConversations"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/types.ts",
+            "imports": [
+              "ConversationExchange"
+            ],
+            "typeOnly": true
+          },
+          {
+            "file": "test/test-utils.ts",
+            "imports": [
+              "safeRmSync"
+            ],
+            "typeOnly": false
+          }
+        ],
+        "exports": []
+      },
       "test/tool-calls-cascade.test.ts": {
         "externalDependencies": [
           "better-sqlite3",
@@ -10182,10 +10233,10 @@
     }
   },
   "statistics": {
-    "totalTypeScriptFiles": 278,
-    "totalSourceFiles": 278,
+    "totalTypeScriptFiles": 279,
+    "totalSourceFiles": 279,
     "totalModules": 4,
-    "totalLinesOfCode": 55477,
+    "totalLinesOfCode": 55608,
     "totalExports": 604,
     "entryRoots": 6,
     "reachableFiles": 47,
@@ -10194,7 +10245,7 @@
     "testOnlyFiles": 46,
     "runtimeCircularDeps": 0,
     "typeOnlyCircularDeps": 1,
-    "totalTypeOnlyImports": 80,
+    "totalTypeOnlyImports": 81,
     "noImporterFileCount": 14,
     "unusedExportsCount": 117,
     "circularDepsTruncated": false,

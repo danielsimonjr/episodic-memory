@@ -140,7 +140,7 @@ episodic-memory index --cleanup
 
 # Search conversations
 episodic-memory search "React Router authentication"
-episodic-memory search --text "exact phrase"
+episodic-memory search --text "database refactor"   # each word must appear, in any order
 episodic-memory search --after 2025-09-01 "refactoring"
 
 # Display a conversation in readable format

@@ -220,16 +220,16 @@ learned knowledge or the learning trace.
 
 ### `learned/knowledge.db`
 
-Owned by `src/learn/knowledge-store.ts`, which opens it with `better-sqlite3` and creates two tables,
-`entities` and `relations`, in the layout the former memoryjs adapter used, so a file written by the former adapter
-opens unchanged: missing columns are added on open and the old `entities_fts` shadow table
-and its triggers are dropped. The `skills` MCP tool opens it read-only and runs no DDL. WAL sidecars
-sit beside the file, so `learned/` is the unit to back up.
+`src/learn/knowledge-store.ts` owns the file. The module opens the file with `better-sqlite3`. The module creates
+two tables, `entities` and `relations`, in the layout of the former memoryjs adapter. A file written by the
+former adapter opens unchanged. The module adds missing columns on open. The module drops the old `entities_fts`
+shadow table and the triggers of the old shadow table. The `skills` MCP tool opens the file read-only and runs
+no DDL. WAL sidecars sit beside the file. Therefore `learned/` is the unit to back up.
 
-Besides learned entries, the same `entities` table holds the learner's records, one row each with a
-typed JSON payload in `agentMetadata`: `heuristic` (`heuristicRecord`), `decision` (`decisionRecord`),
-`failure` (`failureRecord`), `reflection` (`reflectionRecord`), `project_context`
-(`projectContextRecord`) and `procedure` (steps as a `[procedure-steps]:` observation).
+Besides learned entries, the same `entities` table holds the learner's records. Each record is one row
+with a typed JSON payload in `agentMetadata`. The payload types are `heuristic` (`heuristicRecord`),
+`decision` (`decisionRecord`), `failure` (`failureRecord`), `reflection` (`reflectionRecord`),
+`project_context` (`projectContextRecord`) and `procedure` (steps as a `[procedure-steps]:` observation).
 
 An entry is one `entities` row:
 
@@ -248,10 +248,10 @@ The logical `version` lives in the name and in the `version:` observation. The r
 `entities.version` is a write counter that increments on every update and is never read as the
 logical version.
 
-Citations are `cites` relations from the entry to reference entities: `exchange:<id>`
-(`entityType` `exchange-ref`, observations `path:`, `lines:`, `session:`) for an exchange, and
-`attempt:<id>` (`entityType` `attempt-ref`, observations `task:`, `run:`) for a learning attempt.
-Reference entities are created before the relation, because the store validates both endpoints.
+Citations are `cites` relations from the entry to reference entities. The citation for an exchange is
+`exchange:<id>` (`entityType` `exchange-ref`, observations `path:`, `lines:`, `session:`). The citation for a
+learning attempt is `attempt:<id>` (`entityType` `attempt-ref`, observations `task:`, `run:`). The store creates the
+reference entities before the relation, because the store validates both endpoints.
 
 ### `learned/learning.sqlite`
 
@@ -320,19 +320,19 @@ CREATE INDEX idx_learning_attempt_run ON learning_attempt(run_id);
 CREATE INDEX idx_learning_attempt_task ON learning_attempt(task_id);
 ```
 
-`knowledge_snapshot`, `learned_block`, the `learning_*` tables and their indexes are all created by
-`migrateLearningSchema` through `ensureLearningSchema`, with `IF NOT EXISTS` throughout, so opening the
-same file twice is a no-op. `learning_task.truth` is the answer key as an archive address plus the
-session's date range; the text a `recall` task is judged on is read back from the index by address at
-grade time and never stored in the task.
+`migrateLearningSchema` creates `knowledge_snapshot`, `learned_block`, the `learning_*` tables and their indexes
+through `ensureLearningSchema`. Every statement uses `IF NOT EXISTS`, so opening the same file twice is a no-op.
+`learning_task.truth` is the answer key as an archive address plus the date range of the session. At grade time,
+the grader reads the text that a `recall` task is judged on back from the index by address. The task never
+stores that text.
 
 Two reads are constrained in code, not by convention:
 
 - `listTasks` is the only task read path and takes a mandatory `split`, so the held-out `test`
   split cannot reach a learner prompt (§7 rule 13).
-- `passRate` counts the newest `graded` attempt per task, never counts a task whose source went
-  `stale`, and with `signalOnly` restricts to `locate`/`when`/`multi` at tiers 2 and 3 — tier 1 and
-  `recall` are reported but never decide whether an edit is kept.
+- `passRate` counts the newest `graded` attempt per task. `passRate` never counts a task whose source went
+  `stale`. With `signalOnly`, `passRate` restricts to `locate`/`when`/`multi` at tiers 2 and 3. Tier 1 and `recall`
+  appear in the report but never decide whether an edit is kept.
 
 `learned_block` is what the SessionStart hook reads. The hook opens this file **read-only** with
 `migrate: false`, so it never runs DDL, and it never opens `knowledge.db`.

@@ -1,11 +1,11 @@
 {
-  "totalFiles": 266,
+  "totalFiles": 268,
   "byDisposition": {
     "reachable": 42,
     "build-entry": 4,
     "test-only": 44,
     "orphan": 15,
-    "test": 156,
+    "test": 158,
     "tool": 4,
     "config": 1,
     "bench": 0,
@@ -14,11 +14,11 @@
   "byArea": {
     "src": 105,
     "tools": 4,
-    "tests": 156,
+    "tests": 158,
     "config": 1
   },
   "byPackage": {
-    "(root)": 170,
+    "(root)": 172,
     "episodic-memory": 96
   },
   "files": [
@@ -1528,6 +1528,20 @@
       "loc": 19
     },
     {
+      "file": "test/real-sdk-guard.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 45
+    },
+    {
+      "file": "test/real-sdk-guard.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 33
+    },
+    {
       "file": "test/rebuild-native.test.ts",
       "package": "(root)",
       "area": "tests",
@@ -1588,7 +1602,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 12
+      "loc": 27
     },
     {
       "file": "test/show.test.ts",
@@ -1784,7 +1798,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 21
+      "loc": 23
     },
     {
       "file": "test/test-indexer.ts",
@@ -1861,7 +1875,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 320
+      "loc": 328
     },
     {
       "file": "test/version-consistency.test.ts",

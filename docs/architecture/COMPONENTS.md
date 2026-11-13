@@ -198,10 +198,10 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 266 | repo-tools map |
+| totalSourceFiles | 268 | repo-tools map |
 | totalClasses | 8 | repo-tools map |
 | totalInterfaces | 137 | repo-tools map |
-| totalFunctions | 332 | repo-tools map |
-| totalConstants | 69 | repo-tools map |
+| totalFunctions | 334 | repo-tools map |
+| totalConstants | 70 | repo-tools map |
 
 The tool names, the table names and the model name come from a direct reading of `src/mcp-server.ts`, `src/db.ts` and `src/embeddings.ts`. They are not `repo-tools map` metrics.

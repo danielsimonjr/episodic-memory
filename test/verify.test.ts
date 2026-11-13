@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, beforeAll, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, beforeAll, afterEach, vi } from 'vitest';
 import { verifyIndex, repairIndex, VerificationResult } from '../src/verify.js';
 import { safeRmSync, suppressConsole } from './test-utils.js';
 import fs from 'fs';
@@ -7,6 +7,13 @@ import os from 'os';
 import { initDatabase, insertExchange } from '../src/db.js';
 import { initEmbeddings } from '../src/embeddings.js';
 import { ConversationExchange } from '../src/types.js';
+
+// repairIndex writes a summary for each re-indexed file. Without the fake summarizer, the summary step starts a real
+// Claude Code process (the test setup now fails such a test at once).
+vi.mock('../src/summarizer.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../src/summarizer.js')>()),
+  summarizeConversation: vi.fn(async () => 'Fake repair summary'),
+}));
 
 // Suppress console output for clean test runs
 const restoreConsole = suppressConsole();
@@ -314,6 +321,7 @@ describe('repairIndex', () => {
     // Verify no longer outdated
     const verifyAfter = await verifyIndex();
     expect(verifyAfter.outdated.length).toBe(0);
+    expect(fs.readFileSync(summaryPath, 'utf-8')).toBe('Fake repair summary');
 
     dbAfter.close();
   });

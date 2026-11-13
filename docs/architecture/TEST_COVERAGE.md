@@ -9,7 +9,7 @@
 | Metric | Count |
 |--------|-------|
 | Total Source Files | 105 |
-| Total Test Files | 150 |
+| Total Test Files | 151 |
 | Source Files with Tests | 82 |
 | Source Files without Tests | 23 |
 | Coverage (raw, direct-import) | **78.1%** |
@@ -128,7 +128,7 @@ The following 23 source files are not directly imported by any test file:
 | `src/search.ts` | `cosine-similarity.test.ts`, `cross-harness-recall.test.ts`, `integration.test.ts`, `multi-concept.test.ts`, `search-metadata-filters.test.ts`, `search-with-summary.test.ts`, `security-speed-helpers.test.ts`, `sync-incremental-and-db.test.ts` |
 | `src/show.ts` | `mcp-read-redaction.test.ts`, `show.test.ts` |
 | `src/stats.ts` | `stats-format.test.ts`, `stats.test.ts` |
-| `src/summarizer.ts` | `claude-bin-deferral.test.ts`, `ollama-plain-reply.test.ts`, `summarizer-api-env.test.ts`, `summarizer-claude-path.test.ts`, `summarizer-gpu-reservation.test.ts`, `summarizer-ollama-fallback.test.ts`, `summarizer-options.test.ts`, `summarizer-prompt-budget.test.ts`, `summarizer-text.test.ts`, `topic-job.test.ts` |
+| `src/summarizer.ts` | `claude-bin-deferral.test.ts`, `ollama-plain-reply.test.ts`, `real-sdk-guard.test.ts`, `summarizer-api-env.test.ts`, `summarizer-claude-path.test.ts`, `summarizer-gpu-reservation.test.ts`, `summarizer-ollama-fallback.test.ts`, `summarizer-options.test.ts`, `summarizer-prompt-budget.test.ts`, `summarizer-text.test.ts`, `topic-job.test.ts`, `verify.test.ts` |
 | `src/sync-banner.ts` | `sync-banner.test.ts` |
 | `src/sync.ts` | `claude-bin-deferral.test.ts`, `exclude-nested.test.ts`, `sync-copy-retry.test.ts`, `sync-empty-summary-audit.test.ts`, `sync-gpu-reservation.test.ts`, `sync-helpers.test.ts`, `sync-incremental-and-db.test.ts`, `sync-pending-and-legacy-retry.test.ts`, `sync-session-id.test.ts`, `sync-summary-retry.test.ts`, `sync.test.ts` |
 | `src/topic-db.ts` | `topic-db.test.ts`, `topic-job.test.ts`, `topic-tool.test.ts` |
@@ -251,6 +251,7 @@ The following 23 source files are not directly imported by any test file:
 | `test/priority.test.ts` | 1 files |
 | `test/prune.test.ts` | 3 files |
 | `test/query-prefix.test.ts` | 1 files |
+| `test/real-sdk-guard.test.ts` | 1 files |
 | `test/rebuild-native.test.ts` | 0 files |
 | `test/redact-patterns.test.ts` | 1 files |
 | `test/reentrancy.test.ts` | 1 files |
@@ -294,5 +295,5 @@ The following 23 source files are not directly imported by any test file:
 | `test/topic-prompts.test.ts` | 6 files |
 | `test/topic-tool.test.ts` | 5 files |
 | `test/topic-validate.test.ts` | 1 files |
-| `test/verify.test.ts` | 4 files |
+| `test/verify.test.ts` | 5 files |
 | `test/version-consistency.test.ts` | 0 files |

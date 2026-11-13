@@ -1,7 +1,7 @@
 {
   "metadata": {
     "totalSourceFiles": 105,
-    "totalTestFiles": 150,
+    "totalTestFiles": 151,
     "testedCount": 82,
     "untestedCount": 23,
     "coveragePercent": "78.1",
@@ -586,6 +586,7 @@
     "src/summarizer.ts": [
       "test/claude-bin-deferral.test.ts",
       "test/ollama-plain-reply.test.ts",
+      "test/real-sdk-guard.test.ts",
       "test/summarizer-api-env.test.ts",
       "test/summarizer-claude-path.test.ts",
       "test/summarizer-gpu-reservation.test.ts",
@@ -593,7 +594,8 @@
       "test/summarizer-options.test.ts",
       "test/summarizer-prompt-budget.test.ts",
       "test/summarizer-text.test.ts",
-      "test/topic-job.test.ts"
+      "test/topic-job.test.ts",
+      "test/verify.test.ts"
     ],
     "src/sync-banner.ts": [
       "test/sync-banner.test.ts"
@@ -1130,6 +1132,9 @@
     "test/query-prefix.test.ts": [
       "src/embeddings.ts"
     ],
+    "test/real-sdk-guard.test.ts": [
+      "src/summarizer.ts"
+    ],
     "test/rebuild-native.test.ts": [],
     "test/redact-patterns.test.ts": [
       "src/redact.ts"
@@ -1283,7 +1288,8 @@
       "src/verify.ts",
       "src/db.ts",
       "src/embeddings.ts",
-      "src/types.ts"
+      "src/types.ts",
+      "src/summarizer.ts"
     ],
     "test/version-consistency.test.ts": []
   },

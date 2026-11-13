@@ -62,8 +62,8 @@ describe('API base URL validation', () => {
 });
 
 describe('FTS query builder', () => {
-  it('phrase-quotes and escapes embedded quotes', () => {
-    expect(buildFtsMatchQuery('hello world')).toBe('"hello world"');
-    expect(buildFtsMatchQuery('say "hi"')).toBe('"say ""hi"""');
+  it('quotes each word and drops embedded quotes, so no word becomes an FTS5 operator', () => {
+    expect(buildFtsMatchQuery('hello world')).toBe('"hello" "world"');
+    expect(buildFtsMatchQuery('say "hi"')).toBe('"say" "hi"');
   });
 });

@@ -965,6 +965,7 @@ The codebase is organized into the following modules:
 | `./types.js` | `SearchResult, ConversationExchange, MultiConceptResult` | Import |
 | `./redact.js` | `maybeRedactSecrets` | Import |
 | `./archive-path.js` | `safeArchiveSummaryPath` | Import |
+| `./fts-query.js` | `toFtsQuery` | Import |
 
 **Exports:**
 - Interfaces: `SearchOptions`
@@ -2108,13 +2109,13 @@ The codebase is organized into the following modules:
 | `src/learn/skills-tool` | 8 files | 2 files |
 | `src/learn/validate` | 8 files | 2 files |
 | `src/ollama-backend` | 3 files | 7 files |
+| `src/search` | 6 files | 4 files |
 | `src/constants` | 0 files | 9 files |
 | `src/doctor` | 8 files | 1 file |
 | `src/embeddings` | 2 files | 7 files |
 | `src/learn/knowledge-store` | 3 files | 6 files |
 | `src/learn/learned-block` | 5 files | 4 files |
 | `src/learn/tasks` | 7 files | 2 files |
-| `src/search` | 5 files | 4 files |
 | `src/digest-db` | 1 file | 7 files |
 | `src/index` | 8 files | 0 files |
 | `src/indexer` | 6 files | 2 files |
@@ -2230,9 +2231,9 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 278 |
+| Total Source Files | 279 |
 | Subsystems | 5 |
-| Total Lines of Code | 55477 |
+| Total Lines of Code | 55608 |
 | Total Exports | 604 |
 | Total Re-exports | 8 |
 | Total Classes | 9 |
@@ -2240,7 +2241,7 @@ graph TD
 | Total Functions | 343 |
 | Total Type Guards | 11 |
 | Total Enums | 0 |
-| Type-only Imports | 80 |
+| Type-only Imports | 81 |
 | Runtime Cyclic Components | 0 |
 | Type-only Cyclic Components | 1 |
 | Files in Runtime Cycles | 0 |

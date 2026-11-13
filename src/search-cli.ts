@@ -24,7 +24,7 @@ Search indexed conversations using semantic similarity or exact text matching.
 MODES:
   (default)      Combined vector + text search
   --vector       Vector similarity only (semantic)
-  --text         Exact string matching only (for git SHAs, error codes)
+  --text         Text matching only: each word must appear (for git SHAs, error codes)
 
 OPTIONS:
   --after DATE          Only conversations after YYYY-MM-DD

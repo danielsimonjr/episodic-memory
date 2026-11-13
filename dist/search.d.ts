@@ -59,9 +59,11 @@ export interface SearchOptions {
  */
 export declare function l2DistanceToCosineSimilarity(distance: number): number;
 /**
- * Prepare an FTS5 MATCH query from user input.
- * Quote the whole string, so punctuation / AND/OR tokens in the user query do not become FTS operators.
- * The caller falls back to LIKE when FTS is unavailable.
+ * Prepare an FTS5 MATCH query from user input. Each word in the query must match in any order.
+ *
+ * `toFtsQuery` quotes each word. As a result, `AND`, `OR`, `NEAR` and punctuation in the query do not become
+ * FTS5 operators. When the query holds no word, the function quotes the whole query as one phrase.
+ * The caller falls back to LIKE when FTS5 is unavailable.
  */
 export declare function buildFtsMatchQuery(query: string): string;
 /**

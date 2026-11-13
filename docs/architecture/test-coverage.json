@@ -1,7 +1,7 @@
 {
   "metadata": {
     "totalSourceFiles": 108,
-    "totalTestFiles": 158,
+    "totalTestFiles": 159,
     "testedCount": 85,
     "untestedCount": 23,
     "coveragePercent": "78.7",
@@ -201,6 +201,7 @@
       "test/oversized-message-guard.test.ts",
       "test/prune.test.ts",
       "test/sync-incremental-and-db.test.ts",
+      "test/text-search-multiword.test.ts",
       "test/tool-calls-cascade.test.ts",
       "test/topic-job.test.ts",
       "test/topic-phase.test.ts",
@@ -591,7 +592,8 @@
       "test/search-metadata-filters.test.ts",
       "test/search-with-summary.test.ts",
       "test/security-speed-helpers.test.ts",
-      "test/sync-incremental-and-db.test.ts"
+      "test/sync-incremental-and-db.test.ts",
+      "test/text-search-multiword.test.ts"
     ],
     "src/show-cli.ts": [],
     "src/show.ts": [
@@ -678,6 +680,7 @@
       "test/summarizer-gpu-reservation.test.ts",
       "test/summarizer-text.test.ts",
       "test/sync-incremental-and-db.test.ts",
+      "test/text-search-multiword.test.ts",
       "test/topic-prompts.test.ts",
       "test/verify.test.ts"
     ],
@@ -1294,6 +1297,11 @@
       "src/sync.ts"
     ],
     "test/test-env.test.ts": [],
+    "test/text-search-multiword.test.ts": [
+      "src/db.ts",
+      "src/search.ts",
+      "src/types.ts"
+    ],
     "test/tool-calls-cascade.test.ts": [
       "src/db.ts"
     ],

@@ -55,7 +55,7 @@ input (query, mode, limit, dates, project, session, branch)
   │    KNN over vec_exchanges, k = limit (x3 when a metadata filter is active)
   │    join exchanges, drop sidechain rows, apply filters
   ├─ mode text or both:
-  │    FTS5 MATCH over exchanges_fts (falls back to LIKE on an error)
+  │    FTS5 MATCH over exchanges_fts, each word quoted (falls back to LIKE, one condition per word, on an error)
   │    newest first, limit
   ├─ mode both: append text hits whose id the vector step did not return
   └─ for each row: build snippet, load the summary if it lies inside the archive,
@@ -134,7 +134,7 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 278 | repo-tools map |
+| totalSourceFiles | 279 | repo-tools map |
 | runtimeCircularDeps | 0 | repo-tools map |
 
 The step orders above come from a direct reading of `src/sync.ts`, `src/search.ts`, `src/digest-job.ts`, `src/learn/learner.ts` and `cli/sync-hook.js`. They are not `repo-tools map` metrics.

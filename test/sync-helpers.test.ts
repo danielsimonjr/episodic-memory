@@ -35,6 +35,7 @@ describe('sync helpers', () => {
     const keep = path.join(testDir, 'keep.jsonl');
     fs.writeFileSync(keep, '{"type":"user"}\n', 'utf-8');
     expect(shouldSkipConversation(keep)).toBe(false);
-    expect(shouldSkipConversation(path.join(testDir, 'missing.jsonl'))).toBe(false);
+    // A file that cannot be read is skipped: the scan cannot show that the file has no marker.
+    expect(shouldSkipConversation(path.join(testDir, 'missing.jsonl'))).toBe(true);
   });
 });

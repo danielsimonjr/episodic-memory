@@ -11,30 +11,55 @@ const EXCLUSION_MARKERS = [
     'Only use NO_INSIGHTS_FOUND',
     SUMMARIZER_CONTEXT_MARKER,
 ];
-/** How many leading bytes to scan for exclusion markers (avoids full-file reads). */
-const SKIP_MARKER_SCAN_BYTES = 256 * 1024;
+/** The size of one read of the marker scan. The scan reads the whole file, one chunk at a time. */
+const MARKER_SCAN_CHUNK_BYTES = 1 << 20;
+const EXCLUSION_MARKER_BYTES = EXCLUSION_MARKERS.map(marker => Buffer.from(marker, 'utf-8'));
+const LONGEST_MARKER_BYTES = Math.max(...EXCLUSION_MARKER_BYTES.map(marker => marker.length));
 /**
- * True when the conversation should be excluded from indexing / summarization.
- * The scan reads only the first SKIP_MARKER_SCAN_BYTES bytes.
- * Markers are emitted early in agent prompts, so a head scan is sufficient.
- * A head scan is vastly cheaper on huge JSONL.
+ * Tell whether the conversation must stay out of the index and out of the summaries.
+ *
+ * The function returns true when an exclusion marker occurs anywhere in the file. When the scan cannot read the
+ * file, the function also returns true. The scan cannot then show that the file has no marker.
  */
 export function shouldSkipConversation(filePath) {
+    return scanExclusionMarkers(filePath) !== 'clean';
+}
+/**
+ * Scan the whole file for an exclusion marker.
+ *
+ * The scan compares bytes, one chunk at a time. Each chunk starts with the last bytes of the previous chunk.
+ * As a result, a marker that crosses a chunk boundary still matches.
+ */
+function scanExclusionMarkers(filePath) {
+    let fd;
     try {
-        const fd = fs.openSync(filePath, 'r');
-        try {
-            const buf = Buffer.alloc(SKIP_MARKER_SCAN_BYTES);
-            const bytesRead = fs.readSync(fd, buf, 0, SKIP_MARKER_SCAN_BYTES, 0);
-            const content = buf.subarray(0, bytesRead).toString('utf-8');
-            return EXCLUSION_MARKERS.some(marker => content.includes(marker));
+        fd = fs.openSync(filePath, 'r');
+        const carryBytes = LONGEST_MARKER_BYTES - 1;
+        const window = Buffer.allocUnsafe(carryBytes + MARKER_SCAN_CHUNK_BYTES);
+        let carried = 0;
+        let bytesRead;
+        while ((bytesRead = fs.readSync(fd, window, carried, MARKER_SCAN_CHUNK_BYTES, null)) > 0) {
+            const filled = window.subarray(0, carried + bytesRead);
+            if (EXCLUSION_MARKER_BYTES.some(marker => filled.includes(marker))) {
+                return 'marker';
+            }
+            carried = Math.min(carryBytes, filled.length);
+            filled.copy(window, 0, filled.length - carried);
         }
-        finally {
-            fs.closeSync(fd);
-        }
+        return 'clean';
     }
     catch {
-        // If we can't read the file, don't skip it
-        return false;
+        return 'unreadable';
+    }
+    finally {
+        if (fd !== undefined) {
+            try {
+                fs.closeSync(fd);
+            }
+            catch {
+                // The scan result stands. A failed close leaks one descriptor until the process exits.
+            }
+        }
     }
 }
 /**
@@ -283,9 +308,16 @@ export async function syncConversations(sourceDir, destDir, options = {}) {
             try {
                 for (const file of filesToIndex) {
                     try {
-                        // Check for DO NOT INDEX marker
-                        if (shouldSkipConversation(file)) {
-                            continue; // Skip indexing but file is already copied
+                        // An excluded file stays in the archive and out of the index. A file that the scan cannot read is not
+                        // indexed either. The run records an error and re-queues the file, so the next sync scans the file again.
+                        const markerScan = scanExclusionMarkers(file);
+                        if (markerScan === 'marker') {
+                            continue;
+                        }
+                        if (markerScan === 'unreadable') {
+                            result.errors.push({ file, error: 'the exclusion-marker scan could not read the archive copy; not indexed' });
+                            requeueForIndex([file]);
+                            continue;
                         }
                         const project = path.basename(path.dirname(file));
                         const exchanges = await parseConversation(file, project, file);

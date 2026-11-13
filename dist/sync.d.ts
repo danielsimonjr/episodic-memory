@@ -1,9 +1,9 @@
 import type { ConversationExchange } from './types.js';
 /**
- * True when the conversation should be excluded from indexing / summarization.
- * The scan reads only the first SKIP_MARKER_SCAN_BYTES bytes.
- * Markers are emitted early in agent prompts, so a head scan is sufficient.
- * A head scan is vastly cheaper on huge JSONL.
+ * Tell whether the conversation must stay out of the index and out of the summaries.
+ *
+ * The function returns true when an exclusion marker occurs anywhere in the file. When the scan cannot read the
+ * file, the function also returns true. The scan cannot then show that the file has no marker.
  */
 export declare function shouldSkipConversation(filePath: string): boolean;
 /**

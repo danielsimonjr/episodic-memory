@@ -59,7 +59,7 @@ Holds `EMBEDDING_VERSION`. It finds rows with an older version and re-embeds the
 
 ### `src/sync.ts`
 
-`syncConversations(sourceDir, destDir, options)` is the core of ingest. The function walks the source folders and copies a transcript only when it is newer than the archive copy. It queues new files for indexing and queues missing summaries. It skips summarizer conversations and excluded projects. Summary work runs in this order: fresh work, then retries, then retries of legacy empty summaries. A deferral (see `src/deferral.ts`) stops the summary loop and sets `summariesDeferred`. When `initEmbeddings` fails, the function records one `(embeddings)` error and skips the index step. The summaries still run. The function sets the time of each copy of that run to the epoch. The next sync therefore copies the files again and indexes them. The function returns a `SyncResult` with counts. `summarizeOneFile` summarizes a single archive file.
+`syncConversations(sourceDir, destDir, options)` is the core of ingest. The function walks the source folders and copies a transcript only when it is newer than the archive copy. It queues new files for indexing and queues missing summaries. It skips summarizer conversations and excluded projects. `shouldSkipConversation` scans the whole file for an exclusion marker, one 1 MiB chunk at a time. A file that the scan cannot read counts as excluded. The index step records an error for that file and re-queues the file. Summary work runs in this order: fresh work, then retries, then retries of legacy empty summaries. A deferral (see `src/deferral.ts`) stops the summary loop and sets `summariesDeferred`. When `initEmbeddings` fails, the function records one `(embeddings)` error and skips the index step. The summaries still run. The function sets the time of each copy of that run to the epoch. The next sync therefore copies the files again and indexes them. The function returns a `SyncResult` with counts. `summarizeOneFile` summarizes a single archive file.
 
 The copy writes a temporary file. The copy renames the temporary file over the archive copy with `renameWithRetry` (see `src/fs-retry.ts`). When every attempt fails, the copy removes the temporary file. The copy then records one error for the transcript.
 
@@ -199,7 +199,7 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 282 | repo-tools map |
+| totalSourceFiles | 283 | repo-tools map |
 | totalClasses | 10 | repo-tools map |
 | totalInterfaces | 139 | repo-tools map |
 | totalFunctions | 343 | repo-tools map |

@@ -2862,7 +2862,7 @@
         "exports": []
       },
       "src/sync.ts": {
-        "description": "True when the conversation should be excluded from indexing / summarization.",
+        "description": "Tell whether the conversation must stay out of the index and out of the summaries.",
         "externalDependencies": [],
         "nodeDependencies": [
           {

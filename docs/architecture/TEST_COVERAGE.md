@@ -9,7 +9,7 @@
 | Metric | Count |
 |--------|-------|
 | Total Source Files | 108 |
-| Total Test Files | 162 |
+| Total Test Files | 163 |
 | Source Files with Tests | 85 |
 | Source Files without Tests | 23 |
 | Coverage (raw, direct-import) | **78.7%** |
@@ -80,7 +80,7 @@ The following 23 source files are not directly imported by any test file:
 | `src/doctor-learn.ts` | `doctor.test.ts` |
 | `src/doctor.ts` | `codex-doctor.test.ts`, `doctor.test.ts` |
 | `src/embedding-migration.ts` | `embedding-migration-helpers.test.ts`, `embedding-migration.test.ts` |
-| `src/embeddings.ts` | `embedding-migration.test.ts`, `embeddings-format.test.ts`, `embeddings-unavailable.test.ts`, `indexer-db-close.test.ts`, `integration.test.ts`, `multi-concept.test.ts`, `query-prefix.test.ts`, `sync-embeddings-unavailable.test.ts`, `vector-search-filters.test.ts`, `verify.test.ts` |
+| `src/embeddings.ts` | `embedding-migration.test.ts`, `embeddings-format.test.ts`, `embeddings-unavailable.test.ts`, `indexer-db-close.test.ts`, `integration.test.ts`, `multi-concept.test.ts`, `query-prefix.test.ts`, `sync-embeddings-unavailable.test.ts`, `sync-marker-scan.test.ts`, `vector-search-filters.test.ts`, `verify.test.ts` |
 | `src/fs-retry.ts` | `sync-copy-retry.test.ts` |
 | `src/gpu-reservation.ts` | `gpu-reservation.test.ts` |
 | `src/indexer.ts` | `dangling-project-link.test.ts`, `exclude-nested.test.ts`, `incremental-indexing.test.ts`, `indexer-db-close.test.ts`, `learn-handlers.test.ts`, `search-metadata-filters.test.ts`, `vanished-transcript.test.ts` |
@@ -133,7 +133,7 @@ The following 23 source files are not directly imported by any test file:
 | `src/stats.ts` | `stats-format.test.ts`, `stats.test.ts` |
 | `src/summarizer.ts` | `claude-auth-deferral.test.ts`, `claude-bin-deferral.test.ts`, `ollama-plain-reply.test.ts`, `real-sdk-guard.test.ts`, `summarizer-api-env.test.ts`, `summarizer-claude-path.test.ts`, `summarizer-gpu-reservation.test.ts`, `summarizer-ollama-fallback.test.ts`, `summarizer-options.test.ts`, `summarizer-prompt-budget.test.ts`, `summarizer-text.test.ts`, `topic-job.test.ts`, `verify.test.ts` |
 | `src/sync-banner.ts` | `sync-banner.test.ts` |
-| `src/sync.ts` | `claude-auth-deferral.test.ts`, `claude-bin-deferral.test.ts`, `dangling-project-link.test.ts`, `exclude-nested.test.ts`, `sync-copy-retry.test.ts`, `sync-embeddings-unavailable.test.ts`, `sync-empty-summary-audit.test.ts`, `sync-gpu-reservation.test.ts`, `sync-helpers.test.ts`, `sync-incremental-and-db.test.ts`, `sync-pending-and-legacy-retry.test.ts`, `sync-session-id.test.ts`, `sync-summary-retry.test.ts`, `sync.test.ts` |
+| `src/sync.ts` | `claude-auth-deferral.test.ts`, `claude-bin-deferral.test.ts`, `dangling-project-link.test.ts`, `exclude-nested.test.ts`, `sync-copy-retry.test.ts`, `sync-embeddings-unavailable.test.ts`, `sync-empty-summary-audit.test.ts`, `sync-gpu-reservation.test.ts`, `sync-helpers.test.ts`, `sync-incremental-and-db.test.ts`, `sync-marker-scan.test.ts`, `sync-pending-and-legacy-retry.test.ts`, `sync-session-id.test.ts`, `sync-summary-retry.test.ts`, `sync.test.ts` |
 | `src/topic-db.ts` | `topic-db.test.ts`, `topic-job.test.ts`, `topic-tool.test.ts` |
 | `src/topic-format.ts` | `topic-format.test.ts`, `topic-prompts.test.ts` |
 | `src/topic-job.ts` | `topic-job.test.ts` |
@@ -293,6 +293,7 @@ The following 23 source files are not directly imported by any test file:
 | `test/sync-hook-learn-pids.test.ts` | 0 files |
 | `test/sync-hook-logging.test.ts` | 1 files |
 | `test/sync-incremental-and-db.test.ts` | 4 files |
+| `test/sync-marker-scan.test.ts` | 2 files |
 | `test/sync-pending-and-legacy-retry.test.ts` | 1 files |
 | `test/sync-session-id.test.ts` | 1 files |
 | `test/sync-summary-retry.test.ts` | 1 files |

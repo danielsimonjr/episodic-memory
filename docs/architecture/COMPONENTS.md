@@ -61,7 +61,7 @@ Holds `EMBEDDING_VERSION`. It finds rows with an older version and re-embeds the
 
 `syncConversations(sourceDir, destDir, options)` is the core of ingest. The function walks the source folders and copies a transcript only when it is newer than the archive copy. It queues new files for indexing and queues missing summaries. It skips summarizer conversations and excluded projects. The index step scans each queued file for an exclusion marker (see `src/exclusion-marker.ts`). The index step records an error for a file that the scan cannot read, and re-queues the file. Summary work runs in this order: fresh work, then retries, then retries of legacy empty summaries. A deferral (see `src/deferral.ts`) stops the summary loop and sets `summariesDeferred`. When `initEmbeddings` fails, the function records one `(embeddings)` error and skips the index step. The summaries still run. The function sets the time of each copy of that run to the epoch. The next sync therefore copies the files again and indexes them. The function returns a `SyncResult` with counts. `summarizeOneFile` summarizes a single archive file.
 
-The copy writes a temporary file. The copy renames the temporary file over the archive copy with `renameWithRetry` (see `src/fs-retry.ts`). When every attempt fails, the copy removes the temporary file. The copy then records one error for the transcript.
+The copy writes a temporary file. The copy renames the temporary file over the archive copy with `renameWithRetry` (see `src/fs-retry.ts`). The rename makes `ARCHIVE_RENAME_ATTEMPTS` (8) attempts, with waits of 2.54 s in total. On Windows any open handle on the archive copy stops the rename. A reader such as the `read` tool can hold the copy for longer than the 300 ms of the default attempts. When every attempt fails, the copy removes the temporary file. The copy then records one error for the transcript. The archive copy keeps its older time, so the next sync copies the file again. The error text says so.
 
 ### `src/exclusion-marker.ts`
 
@@ -69,7 +69,7 @@ The copy writes a temporary file. The copy renames the temporary file over the a
 
 ### `src/fs-retry.ts`
 
-On Windows, another process can hold a file open for a moment. A rename over that file then fails with `EPERM` or `EBUSY`. `renameWithRetry(from, to)` tries the rename `RETRY_ATTEMPTS` (5) times. The waits between attempts grow from 20 ms to 160 ms. Any other error stops the retry at once. `sleepSync` waits with `Atomics.wait`. The wait does not use the CPU. `src/sync.ts` and `src/learn/export.ts` use this module.
+On Windows, another process can hold a file open for a moment. A rename over that file then fails with `EPERM` or `EBUSY`. `renameWithRetry(from, to, attempts)` tries the rename `attempts` times. The default is `RETRY_ATTEMPTS` (5). The wait between two attempts starts at 20 ms. The wait doubles after each failed attempt. Any other error stops the retry at once. `sleepSync` waits with `Atomics.wait`. The wait does not use the CPU. `src/sync.ts` and `src/learn/export.ts` use this module.
 
 ### `src/backfill.ts`
 
@@ -207,6 +207,6 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 | totalClasses | 10 | repo-tools map |
 | totalInterfaces | 139 | repo-tools map |
 | totalFunctions | 347 | repo-tools map |
-| totalConstants | 70 | repo-tools map |
+| totalConstants | 71 | repo-tools map |
 
 The tool names, the table names and the model name come from a direct reading of `src/mcp-server.ts`, `src/db.ts` and `src/embeddings.ts`. They are not `repo-tools map` metrics.

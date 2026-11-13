@@ -2975,7 +2975,8 @@
           {
             "file": "./fs-retry.js",
             "imports": [
-              "renameWithRetry"
+              "renameWithRetry",
+              "isSharingViolation"
             ]
           },
           {
@@ -3008,6 +3009,7 @@
           "shouldSkipConversation",
           "buildSyncOptionsFromEnv",
           "isTerminalFailRecord",
+          "ARCHIVE_RENAME_ATTEMPTS",
           "extractSessionIdFromPath",
           "syncConversations",
           "summarizeOneFile"
@@ -3022,6 +3024,9 @@
           "extractSessionIdFromPath",
           "syncConversations",
           "summarizeOneFile"
+        ],
+        "constants": [
+          "ARCHIVE_RENAME_ATTEMPTS"
         ]
       },
       "src/topic-db.ts": {

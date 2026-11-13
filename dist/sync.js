@@ -5,7 +5,7 @@ import { getExcludedProjects, findJsonlFiles, statIfExists } from './paths.js';
 import { gpuReservationBlock } from './gpu-reservation.js';
 import { summarizerBackend } from './ollama-backend.js';
 import { deferralDetail } from './deferral.js';
-import { renameWithRetry } from './fs-retry.js';
+import { renameWithRetry, isSharingViolation } from './fs-retry.js';
 // The scan lives in exclusion-marker.ts. sync.ts re-exports the predicate for its earlier callers.
 export { shouldSkipConversation };
 /**
@@ -89,6 +89,13 @@ function requeueForIndex(files) {
         }
     }
 }
+/**
+ * Attempts of the rename that replaces an archive copy. The waits are 20 ms to 1.28 s, 2.54 s in total.
+ *
+ * On Windows an open handle on the archive copy stops the rename. A reader such as the `read` tool or a search
+ * can hold the copy for longer than the 300 ms of the default attempts.
+ */
+export const ARCHIVE_RENAME_ATTEMPTS = 8;
 function copyIfNewer(src, dest) {
     // Ensure destination directory exists
     const destDir = path.dirname(dest);
@@ -106,16 +113,21 @@ function copyIfNewer(src, dest) {
     // Atomic copy: temp file + rename. On Windows another process can hold dest open for a moment
     // (a reader, the search indexer, a virus scanner). The rename then retries EPERM and EBUSY.
     // When every attempt fails, the copy removes the temp file. The archive then keeps no *.tmp.* file (F10).
+    // The archive copy keeps its older time, so the next sync copies the file again.
     const tempDest = `${dest}.tmp.${process.pid}.${Math.random().toString(36).slice(2)}`;
     try {
         fs.copyFileSync(src, tempDest);
-        renameWithRetry(tempDest, dest); // Atomic on same filesystem
+        renameWithRetry(tempDest, dest, ARCHIVE_RENAME_ATTEMPTS); // Atomic on same filesystem
     }
     catch (err) {
         try {
             fs.unlinkSync(tempDest);
         }
         catch { }
+        if (isSharingViolation(err)) {
+            const message = err instanceof Error ? err.message : String(err);
+            throw new Error(`${message}. Another process holds the archive copy open; the next sync copies the file again`, { cause: err });
+        }
         throw err;
     }
     return true;

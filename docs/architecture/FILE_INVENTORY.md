@@ -83,7 +83,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/embedding-migration.ts` | episodic-memory | src | reachable | 197 |
 | `src/embeddings.ts` | episodic-memory | src | reachable | 205 |
 | `src/exclusion-marker.ts` | episodic-memory | src | reachable | 67 |
-| `src/fs-retry.ts` | episodic-memory | src | test-only | 45 |
+| `src/fs-retry.ts` | episodic-memory | src | test-only | 46 |
 | `src/fts-query.ts` | episodic-memory | src | reachable | 14 |
 | `src/gpu-reservation.ts` | episodic-memory | src | reachable | 98 |
 | `src/index-cli.ts` | episodic-memory | src | build-entry | 306 |
@@ -146,7 +146,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/summarizer.ts` | episodic-memory | src | reachable | 865 |
 | `src/sync-banner.ts` | episodic-memory | src | test-only | 33 |
 | `src/sync-cli.ts` | episodic-memory | src | orphan | 268 |
-| `src/sync.ts` | episodic-memory | src | test-only | 563 |
+| `src/sync.ts` | episodic-memory | src | test-only | 576 |
 | `src/topic-db.ts` | episodic-memory | src | reachable | 521 |
 | `src/topic-format.ts` | episodic-memory | src | reachable | 462 |
 | `src/topic-job.ts` | episodic-memory | src | test-only | 309 |
@@ -300,7 +300,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/sync-cli-disable-auto-sync.test.ts` | (root) | tests | test | 84 |
 | `test/sync-cli-lock.test.ts` | (root) | tests | test | 46 |
 | `test/sync-cli-reentrancy.test.ts` | (root) | tests | test | 35 |
-| `test/sync-copy-retry.test.ts` | (root) | tests | test | 110 |
+| `test/sync-copy-retry.test.ts` | (root) | tests | test | 165 |
 | `test/sync-embeddings-unavailable.test.ts` | (root) | tests | test | 124 |
 | `test/sync-empty-summary-audit.test.ts` | (root) | tests | test | 103 |
 | `test/sync-gpu-reservation.test.ts` | (root) | tests | test | 142 |

@@ -1,6 +1,7 @@
 ## [Unreleased]
 
 ### Fixed
+- **The archive copy waits up to 2.54 s for a reader before the rename fails.** On Windows any open handle on the archive copy stops the rename that replaces the copy. A reader such as the `read` tool or a search can hold the copy for longer than 300 ms. The copy waited for 300 ms before. The copy now makes 8 attempts (`ARCHIVE_RENAME_ATTEMPTS` of `src/sync.ts`). If every attempt fails, the error says that the next sync copies the file again. `renameWithRetry` takes the number of attempts as a third argument. The other callers keep the 5 attempts.
 - **A `both` search returns the text results when the embedding backend cannot load.** Before, `EmbeddingsUnavailableError` failed the default search, although the text step needs no embedder. The search now sends one notice. The notice names the missing vector step. In the markdown result, the `search` tool puts the notice in a `Note:` line. In the JSON result, the `search` tool puts the notice in the `notices` array. These text results have no similarity. A `vector` search and a multi-concept search still fail, because both searches need the embeddings. Any other embedding error still fails the search. The new `onNotice` option of `searchConversations` receives the notice.
 
 ## [1.9.0] - 2026-11-13

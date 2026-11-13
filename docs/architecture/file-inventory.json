@@ -293,7 +293,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 45
+      "loc": 46
     },
     {
       "file": "src/fts-query.ts",
@@ -734,7 +734,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 563
+      "loc": 576
     },
     {
       "file": "src/topic-db.ts",
@@ -1812,7 +1812,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 110
+      "loc": 165
     },
     {
       "file": "test/sync-embeddings-unavailable.test.ts",

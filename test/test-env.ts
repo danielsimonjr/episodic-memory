@@ -20,4 +20,8 @@ export const TEST_ENV: Readonly<Record<string, string>> = {
   FLEET_GPU_RESERVATION: join(tmpdir(), 'episodic-memory-test-no-gpu-reservation.json'),
   // A path that does not exist. A Codex summary in a test fails at once. The summary never starts a real Codex.
   EPISODIC_MEMORY_CODEX_BIN: join(tmpdir(), 'episodic-memory-test-no-codex', 'codex'),
+  // The folders hold no transcript.
+  // A test without its own folder reads no real ~/.claude or ~/.codex transcript of the machine.
+  CLAUDE_CONFIG_DIR: join(tmpdir(), 'episodic-memory-test-claude'),
+  CODEX_HOME: join(tmpdir(), 'episodic-memory-test-codex'),
 };

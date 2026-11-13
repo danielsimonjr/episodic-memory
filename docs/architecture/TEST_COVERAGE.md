@@ -9,7 +9,7 @@
 | Metric | Count |
 |--------|-------|
 | Total Source Files | 109 |
-| Total Test Files | 166 |
+| Total Test Files | 167 |
 | Source Files with Tests | 85 |
 | Source Files without Tests | 24 |
 | Coverage (raw, direct-import) | **78.0%** |
@@ -134,7 +134,7 @@ The following 24 source files are not directly imported by any test file:
 | `src/stats.ts` | `stats-format.test.ts`, `stats.test.ts` |
 | `src/summarizer.ts` | `claude-auth-deferral.test.ts`, `claude-bin-deferral.test.ts`, `index-honours-marker.test.ts`, `ollama-plain-reply.test.ts`, `real-sdk-guard.test.ts`, `summarizer-api-env.test.ts`, `summarizer-claude-path.test.ts`, `summarizer-gpu-reservation.test.ts`, `summarizer-ollama-fallback.test.ts`, `summarizer-options.test.ts`, `summarizer-prompt-budget.test.ts`, `summarizer-text.test.ts`, `topic-job.test.ts`, `verify.test.ts` |
 | `src/sync-banner.ts` | `sync-banner.test.ts` |
-| `src/sync.ts` | `claude-auth-deferral.test.ts`, `claude-bin-deferral.test.ts`, `dangling-project-link.test.ts`, `exclude-nested.test.ts`, `sync-copy-retry.test.ts`, `sync-embeddings-unavailable.test.ts`, `sync-empty-summary-audit.test.ts`, `sync-gpu-reservation.test.ts`, `sync-helpers.test.ts`, `sync-incremental-and-db.test.ts`, `sync-marker-scan.test.ts`, `sync-pending-and-legacy-retry.test.ts`, `sync-session-id.test.ts`, `sync-summary-retry.test.ts`, `sync.test.ts` |
+| `src/sync.ts` | `claude-auth-deferral.test.ts`, `claude-bin-deferral.test.ts`, `dangling-project-link.test.ts`, `exclude-nested.test.ts`, `sync-copy-retry.test.ts`, `sync-embeddings-unavailable.test.ts`, `sync-empty-summary-audit.test.ts`, `sync-gpu-reservation.test.ts`, `sync-helpers.test.ts`, `sync-incremental-and-db.test.ts`, `sync-marker-scan.test.ts`, `sync-pending-and-legacy-retry.test.ts`, `sync-session-id.test.ts`, `sync-skip-summaries.test.ts`, `sync-summary-retry.test.ts`, `sync.test.ts` |
 | `src/topic-db.ts` | `topic-db.test.ts`, `topic-job.test.ts`, `topic-tool.test.ts` |
 | `src/topic-format.ts` | `topic-format.test.ts`, `topic-prompts.test.ts` |
 | `src/topic-job.ts` | `topic-job.test.ts` |
@@ -300,6 +300,7 @@ The following 24 source files are not directly imported by any test file:
 | `test/sync-marker-scan.test.ts` | 2 files |
 | `test/sync-pending-and-legacy-retry.test.ts` | 1 files |
 | `test/sync-session-id.test.ts` | 1 files |
+| `test/sync-skip-summaries.test.ts` | 1 files |
 | `test/sync-summary-retry.test.ts` | 1 files |
 | `test/sync.test.ts` | 1 files |
 | `test/test-env.test.ts` | 0 files |

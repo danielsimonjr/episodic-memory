@@ -43,6 +43,7 @@ OPTIONS:
 ENVIRONMENT:
   EPISODIC_MEMORY_DISABLE_AUTO_SYNC=1   sync --background exits 0 and starts no sync. A sync in the
                                         foreground still runs.
+  EPISODIC_MEMORY_SKIP_SUMMARIES=1      The sync copies and indexes. The sync writes no summary.
 
 EXAMPLES:
   # Sync all new conversations
@@ -123,7 +124,7 @@ if (lowerPriorityIfBackgroundWorker()) {
 // Past the early-exit checks: now load the heavy native-dep modules. Doing this
 // lazily (rather than as top-level static imports) keeps the guard/help/background
 // paths above fast — they never load transformers or better-sqlite3.
-const { syncConversations } = await import('./sync.js');
+const { buildSyncOptionsFromEnv, syncConversations } = await import('./sync.js');
 const { initDatabase } = await import('./db.js');
 const { generateExchangeEmbedding, initEmbeddings } = await import('./embeddings.js');
 const { runMigrationBatch, countStale } = await import('./embedding-migration.js');
@@ -152,8 +153,10 @@ async function syncAll() {
     // Guard against a garbage env value (NaN would slice(0, NaN) → silently summarize
     // nothing forever, with no error).
     let summaryBudget = Number.isFinite(configuredLimit) && configuredLimit > 0 ? configuredLimit : 10;
+    // EPISODIC_MEMORY_SKIP_SUMMARIES=1 turns off the summary step. Ported from upstream c8d0e3f.
+    const syncOptions = buildSyncOptionsFromEnv(process.env);
     for (const sourceDir of sourceDirs) {
-        const result = await syncConversations(sourceDir, destDir, { summaryLimit: Math.max(0, summaryBudget) });
+        const result = await syncConversations(sourceDir, destDir, { ...syncOptions, summaryLimit: Math.max(0, summaryBudget) });
         totals.copied += result.copied;
         totals.skipped += result.skipped;
         totals.indexed += result.indexed;
@@ -175,7 +178,12 @@ async function syncAll() {
     console.log(`  Copied: ${totals.copied}`);
     console.log(`  Skipped: ${totals.skipped}`);
     console.log(`  Indexed: ${totals.indexed}`);
-    console.log(`  Summarized: ${totals.summarized}${totals.pendingSummaries > 0 ? ` (${totals.pendingSummaries} still pending)` : ''}`);
+    if (syncOptions.skipSummaries) {
+        console.log('  Summaries: skipped (EPISODIC_MEMORY_SKIP_SUMMARIES=1)');
+    }
+    else {
+        console.log(`  Summarized: ${totals.summarized}${totals.pendingSummaries > 0 ? ` (${totals.pendingSummaries} still pending)` : ''}`);
+    }
     // EMPTY SUMMARIES ARE NOT PENDING AND NOT DONE, and until 1.5.2 nothing said either.
     // pendingSummaries counts conversations with NO summary file; an empty one satisfies the
     // needs-summary gate forever, so a failed summariser leaves no trace in any number printed

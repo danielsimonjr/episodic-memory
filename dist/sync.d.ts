@@ -46,6 +46,18 @@ export interface SyncOptions {
     summaryLimit?: number;
 }
 /**
+ * Read the sync options that the environment sets.
+ *
+ * `EPISODIC_MEMORY_SKIP_SUMMARIES=1` sets `skipSummaries`. Only the exact value 1 sets the option.
+ * An unset variable, `0`, `true` and every other value leave the summaries on.
+ * A stray value therefore never turns off a step that the user expects.
+ * A summary only decorates a search result. The index never embeds or searches a summary, so the option does not
+ * change what a search finds. Each summary is a model call. Ported from upstream c8d0e3f.
+ *
+ * @param env the environment to read, usually `process.env`
+ */
+export declare function buildSyncOptionsFromEnv(env: NodeJS.ProcessEnv): SyncOptions;
+/**
  * A failure record is TERMINAL when it explains an empty summary for good.
  * The record holds a recorded reason (for example no-exchanges), a give-up, or an oversize skip.
  * A bare {attempts, lastError} is a retry in progress.

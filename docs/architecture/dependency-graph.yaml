@@ -2,9 +2,9 @@ metadata:
   name: episodic-memory
   schemaVersion: 2.0.0
   language: typescript
-  totalFiles: 287
+  totalFiles: 288
   totalModules: 4
-  totalExports: 609
+  totalExports: 610
 modules:
   src:
     cli/digest-hook.js:
@@ -2810,6 +2810,7 @@ modules:
         - shouldSkipConversation
         - SyncResult
         - SyncOptions
+        - buildSyncOptionsFromEnv
         - isTerminalFailRecord
         - extractSessionIdFromPath
         - syncConversations
@@ -6587,6 +6588,23 @@ modules:
             - extractSessionIdFromPath
           typeOnly: false
       exports: []
+    test/sync-skip-summaries.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - fs
+        - os
+        - path
+      internalDependencies:
+        - file: test/test-utils.ts
+          imports:
+            - safeRmSync
+          typeOnly: false
+        - file: src/sync.ts
+          imports:
+            - '*'
+          typeOnly: false
+      exports: []
     test/sync-summary-retry.test.ts:
       externalDependencies:
         - vitest
@@ -7036,11 +7054,11 @@ modules:
           typeOnly: false
       exports: []
 statistics:
-  totalTypeScriptFiles: 287
-  totalSourceFiles: 287
+  totalTypeScriptFiles: 288
+  totalSourceFiles: 288
   totalModules: 4
-  totalLinesOfCode: 56967
-  totalExports: 609
+  totalLinesOfCode: 57080
+  totalExports: 610
   entryRoots: 6
   reachableFiles: 49
   dormantFiles: 60
@@ -7058,7 +7076,7 @@ statistics:
   typeOnlyFilesInCycles: 2
   totalClasses: 10
   totalInterfaces: 139
-  totalFunctions: 346
+  totalFunctions: 347
   totalTypeGuards: 11
   totalEnums: 0
   totalConstants: 70

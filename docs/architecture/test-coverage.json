@@ -1,7 +1,7 @@
 {
   "metadata": {
     "totalSourceFiles": 109,
-    "totalTestFiles": 166,
+    "totalTestFiles": 167,
     "testedCount": 85,
     "untestedCount": 24,
     "coveragePercent": "78.0",
@@ -653,6 +653,7 @@
       "test/sync-marker-scan.test.ts",
       "test/sync-pending-and-legacy-retry.test.ts",
       "test/sync-session-id.test.ts",
+      "test/sync-skip-summaries.test.ts",
       "test/sync-summary-retry.test.ts",
       "test/sync.test.ts"
     ],
@@ -1332,6 +1333,9 @@
       "src/sync.ts"
     ],
     "test/sync-session-id.test.ts": [
+      "src/sync.ts"
+    ],
+    "test/sync-skip-summaries.test.ts": [
       "src/sync.ts"
     ],
     "test/sync-summary-retry.test.ts": [

@@ -182,6 +182,8 @@ function validationFor(before, after, sample) {
         meanTurnsAfter: after.total > 0 ? after.meanTurns : null,
         usdBefore: before.total > 0 ? before.usd : null,
         usdAfter: after.total > 0 ? after.usd : null,
+        gradedBefore: before.total,
+        gradedAfter: after.total,
     };
 }
 /**
@@ -484,7 +486,10 @@ export async function runBootstrap(dbs, options) {
         const validation = validationFor(before, after, sample);
         for (const entry of accepted) {
             if (!verdict.keep) {
-                await dbs.store.setValidation(entry.id, validation);
+                // An unmeasured verdict has no measurement to store. The candidate stays unvalidated, as in
+                // validate.ts. `learn approve` refuses the candidate until a run measures the candidate.
+                if (verdict.reason !== 'unmeasured')
+                    await dbs.store.setValidation(entry.id, validation);
                 pending.push(entry.id);
                 continue;
             }

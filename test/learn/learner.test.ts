@@ -440,6 +440,8 @@ describe('runLearn', () => {
     );
     expect(active).toHaveLength(1);
     expect(active[0].version).toBe(3);
+    // The merge-check graded both child tasks after the merge.
+    expect(active[0].validation?.gradedAfter).toBe(2);
     expect(active[0].body).toContain(sourceOf.get(first.id)!);
     expect(active[0].body).toContain(sourceOf.get(second.id)!);
 

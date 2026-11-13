@@ -321,7 +321,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 846
+      "loc": 850
     },
     {
       "file": "src/learn/cited-ids.ts",
@@ -335,7 +335,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 864
+      "loc": 894
     },
     {
       "file": "src/learn/export.ts",
@@ -426,7 +426,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 1327
+      "loc": 1328
     },
     {
       "file": "src/learn/learning-db.ts",
@@ -503,7 +503,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 216
+      "loc": 227
     },
     {
       "file": "src/learn/usage.ts",
@@ -517,7 +517,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 358
+      "loc": 359
     },
     {
       "file": "src/lockfile.ts",
@@ -1112,7 +1112,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 884
+      "loc": 908
     },
     {
       "file": "test/learn/cited-ids.test.ts",
@@ -1126,7 +1126,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 482
+      "loc": 557
     },
     {
       "file": "test/learn/grade.test.ts",
@@ -1224,7 +1224,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 670
+      "loc": 672
     },
     {
       "file": "test/learn/learning-db.test.ts",
@@ -1350,7 +1350,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 444
+      "loc": 473
     },
     {
       "file": "test/lockfile.test.ts",

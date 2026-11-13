@@ -226,6 +226,7 @@ export async function validateCandidate(dbs, candidateName, opts) {
         meanTurnsAfter: mean(afterTotals.turns, afterTotals.measured),
         usdBefore: beforeTotals.measured === 0 ? null : beforeTotals.usd,
         usdAfter: afterTotals.measured === 0 ? null : afterTotals.usd,
+        gradedAfter: [...targeted, ...sample].filter(taskId => after.get(taskId)?.outcome === 'graded').length,
     };
     if (!keep) {
         await dbs.store.setValidation(candidateName, record);

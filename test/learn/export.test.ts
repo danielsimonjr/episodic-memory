@@ -48,7 +48,7 @@ function record(over: Partial<ValidationRecord> = {}): ValidationRecord {
     regressions: [],
     judgedAt: '2026-11-05T00:00:00.000Z',
     meanTurnsBefore: null,
-    meanTurnsAfter: null,
+    meanTurnsAfter: 4,
     usdBefore: null,
     usdAfter: null,
     ...over,
@@ -359,6 +359,81 @@ describe('learn approve', () => {
     expect(await runLearnCli(['approve', regressed, '--yes'], { ...second.deps, dbs })).toBe(1);
     expect(second.stderr()).toMatch(/regress/i);
     expect((await store.getEntry(regressed))?.status).toBe('candidate');
+  });
+
+  it('approve refuses a record that measured no task, or whose pass count fell', async () => {
+    // The shape an unmeasured bootstrap verdict stored: no task, no attempt after the change.
+    const empty = await insertKnowledgeEntry(store, nk({ slug: 'empty' }));
+    await store.setValidation(
+      empty,
+      record({ targeted: [], sample: [], passedBefore: 0, passedAfter: 0, meanTurnsBefore: null, meanTurnsAfter: null })
+    );
+    const first = capture();
+    expect(await runLearnCli(['approve', empty, '--yes'], { ...first.deps, dbs })).toBe(1);
+    expect(first.stderr()).toContain('measured no task');
+    expect((await store.getEntry(empty))?.status).toBe('candidate');
+
+    // Tasks were listed, but no attempt landed after the change.
+    const noAfter = await insertKnowledgeEntry(store, nk({ slug: 'noafter' }));
+    await store.setValidation(noAfter, record({ meanTurnsAfter: null }));
+    const second = capture();
+    expect(await runLearnCli(['approve', noAfter, '--yes'], { ...second.deps, dbs })).toBe(1);
+    expect(second.stderr()).toContain('measured no task');
+
+    // A bootstrap verdict 'pass-rate-fell' stores no per-task regression, only the two counts.
+    const fell = await insertKnowledgeEntry(store, nk({ slug: 'fell' }));
+    await store.setValidation(fell, record({ targeted: [], passedBefore: 2, passedAfter: 1 }));
+    const third = capture();
+    expect(await runLearnCli(['approve', fell, '--yes'], { ...third.deps, dbs })).toBe(1);
+    expect(third.stderr()).toContain('passed 2 task(s) before the change and 1 after');
+    expect((await store.getEntry(fell))?.status).toBe('candidate');
+
+    // Attempt rows landed after the change, but none was graded.
+    const ungraded = await insertKnowledgeEntry(store, nk({ slug: 'ungraded' }));
+    await store.setValidation(ungraded, record({ gradedBefore: 1, gradedAfter: 0 }));
+    const fourth = capture();
+    expect(await runLearnCli(['approve', ungraded, '--yes'], { ...fourth.deps, dbs })).toBe(1);
+    expect(fourth.stderr()).toContain('measured no task');
+
+    // Equal counts, but half the graded tasks: the pass rate fell from 2 of 2 to 2 of 4.
+    const rateFell = await insertKnowledgeEntry(store, nk({ slug: 'ratefell' }));
+    await store.setValidation(
+      rateFell,
+      record({ targeted: [], passedBefore: 2, passedAfter: 2, gradedBefore: 2, gradedAfter: 4 })
+    );
+    const fifth = capture();
+    expect(await runLearnCli(['approve', rateFell, '--yes'], { ...fifth.deps, dbs })).toBe(1);
+    expect(fifth.stderr()).toContain('passed 2 of 2 graded task(s) before the change and 2 of 4 after');
+  });
+
+  // Unequal coverage: the count fell from 4 to 3, but the pass rate rose from 4 of 5 to 3 of 3.
+  it('approve compares pass rates, not counts, when the graded totals differ', async () => {
+    const partial = await insertKnowledgeEntry(store, nk({ slug: 'partial' }));
+    await store.setValidation(
+      partial,
+      record({ targeted: [], passedBefore: 4, passedAfter: 3, gradedBefore: 5, gradedAfter: 3 })
+    );
+    const run = capture();
+    expect(await runLearnCli(['approve', partial, '--yes'], { ...run.deps, dbs })).toBe(0);
+    expect((await store.getEntry(partial))?.status).toBe('active');
+
+    // An equal pass rate on fewer graded tasks (2 of 4, then 1 of 2) is no fall.
+    const equalRate = await insertKnowledgeEntry(store, nk({ slug: 'equalrate' }));
+    await store.setValidation(
+      equalRate,
+      record({ targeted: [], passedBefore: 2, passedAfter: 1, gradedBefore: 4, gradedAfter: 2 })
+    );
+    const second = capture();
+    expect(await runLearnCli(['approve', equalRate, '--yes'], { ...second.deps, dbs })).toBe(0);
+  });
+
+  // Spec §7 rule 5: a human may approve a measured candidate that missed the gain.
+  it('approve still activates a measured candidate with no targeted pass and no fall', async () => {
+    const missed = await insertKnowledgeEntry(store, nk({ slug: 'missed' }));
+    await store.setValidation(missed, record({ targeted: [4], sample: [], passedBefore: 0, passedAfter: 0 }));
+    const run = capture();
+    expect(await runLearnCli(['approve', missed, '--yes'], { ...run.deps, dbs })).toBe(0);
+    expect((await store.getEntry(missed))?.status).toBe('active');
   });
 
   it('approve prints a diff against the superseded version and requires --yes off a TTY', async () => {

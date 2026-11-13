@@ -433,7 +433,7 @@ episodic-memory learn status             # candidates awaiting approval
 episodic-memory learn approve kind/project/slug
 ```
 
-`learn approve` refuses an entry with no measurement or with a recorded regression. The command then prints the entry, its validation record and a unified diff against the version the entry revises. On a TTY the command asks for `y` (`--yes` for non-interactive use). `EPISODIC_MEMORY_LEARN_APPROVE=all` holds skills back too, and `none` activates both without review.
+`learn approve` refuses an entry with no measurement, with a recorded regression, or with a lower pass count. A human can still approve a measured candidate that misses the gain. The command then prints the entry, its validation record and a unified diff against the version the entry revises. On a TTY the command asks for `y` (`--yes` for non-interactive use). `EPISODIC_MEMORY_LEARN_APPROVE=all` holds skills back too, and `none` activates both without review.
 
 ### Cost expectations
 

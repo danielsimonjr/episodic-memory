@@ -177,7 +177,10 @@ async function addSkill(
  * A fake solver: `pass` decides the grade from the evaluation snapshot's entry names.
  * The entry names are the only thing a candidate can change.
  */
-function fakeSolve(pass: (names: string[], task: LearningTask, role: string) => boolean) {
+function fakeSolve(
+  pass: (names: string[], task: LearningTask, role: string) => boolean,
+  outcome: AttemptRow['outcome'] = 'graded'
+) {
   const calls: Array<{ taskId: number; role: string; names: string[] }> = [];
   const fn = async (
     solverDbs: LearnDbs,
@@ -198,7 +201,7 @@ function fakeSolve(pass: (names: string[], task: LearningTask, role: string) => 
       answer,
       trace: [],
       cost: { turns: 3, inputTokens: 8, outputTokens: 4, usd: 0.01 },
-      outcome: 'graded' as const,
+      outcome,
     };
     const id = insertAttempt(solverDbs.learning, attempt);
     return { ...attempt, id, createdAt: new Date().toISOString() };
@@ -321,7 +324,33 @@ describe('validateCandidate', () => {
     });
 
     expect(record.keep).toBe(false);
+    // One task set before and after, so the record compares counts and holds no gradedBefore.
+    expect(record.gradedBefore).toBeUndefined();
+    expect(record.gradedAfter).toBe(1);
     expect((await getEntry(store, candidate))!.status).toBe('candidate');
+  });
+
+  // An errored re-solve still stores an attempt row, so meanTurnsAfter alone cannot show that nothing was graded.
+  it('records no graded task after the change when every re-solve errors', async () => {
+    const target = addTask();
+    seedAttempt(target.id, false);
+    const candidate = await addSkill();
+    const solve = fakeSolve(() => false, 'error');
+
+    const record = await validateCandidate(dbs, candidate, {
+      targeted: [target.id],
+      sampleFrom: [],
+      sampleSize: 5,
+      seed: 3,
+      solve: solve.fn,
+      runId,
+      budget: new CallBudget(20),
+    });
+
+    expect(record.keep).toBe(false);
+    expect(record.meanTurnsAfter).not.toBeNull();
+    expect(record.gradedAfter).toBe(0);
+    expect((await getEntry(store, candidate))!.validation?.gradedAfter).toBe(0);
   });
 
   it('leaves an instruction candidate under the default approve mode', async () => {

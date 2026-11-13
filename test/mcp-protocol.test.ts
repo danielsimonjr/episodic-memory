@@ -216,6 +216,53 @@ describe('MCP protocol compliance', () => {
     expect(skillsText).not.toMatch(/forbidden module/);
   });
 
+  /**
+   * The bundle keeps `@huggingface/transformers` external.
+   * A static import of the package in `embeddings.ts` became a top-level import of the bundle.
+   * Every server start therefore loaded transformers and its native bindings (onnxruntime-node, sharp).
+   * A host where a binding cannot load lost every tool.
+   * The probe makes the package fail to resolve. The handshake, ListTools and a text search must still work.
+   */
+  it('does not load transformers at start or for a text search', async () => {
+    const probe = 'file://' + join(REPO_ROOT, 'test/helpers/forbid-modules.mjs');
+    const { stdout } = await sendLines(
+      [
+        JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'initialize',
+          params: {
+            protocolVersion: '2025-11-25',
+            capabilities: {},
+            clientInfo: { name: 'probe', version: '0.0' },
+          },
+        }),
+        JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized', params: {} }),
+        JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} }),
+        JSON.stringify({
+          jsonrpc: '2.0',
+          id: 3,
+          method: 'tools/call',
+          params: { name: 'search', arguments: { query: 'auth flow', mode: 'text' } },
+        }),
+      ],
+      {
+        FORBID_MODULES: '@huggingface/transformers',
+        NODE_OPTIONS: `--import=${probe}`,
+      }
+    );
+
+    const messages = parseStdoutLines(stdout);
+    expect(messages.find((m) => m.id === 1)?.error).toBeUndefined();
+    const tools = messages.find((m) => m.id === 2);
+    const toolNames = (tools?.result as { tools: Array<{ name: string }> })?.tools.map((t) => t.name);
+    expect(toolNames).toEqual(['search', 'read', 'digest', 'skills', 'topics']);
+    const search = messages.find((m) => m.id === 3);
+    expect(search?.error).toBeUndefined();
+    const searchText = (search?.result as { content?: Array<{ text: string }> })?.content?.[0]?.text ?? '';
+    expect(searchText).not.toMatch(/forbidden module/);
+  });
+
   it('loads skills-tool on a flag-on skills call and not before', async () => {
     const probe = 'file://' + join(REPO_ROOT, 'test/helpers/forbid-modules.mjs');
     const { stdout } = await sendLines(

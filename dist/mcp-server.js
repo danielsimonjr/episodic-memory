@@ -672,9 +672,9 @@ var init_archive_path = __esm({
 });
 
 // src/embeddings.ts
-import { pipeline, env } from "@huggingface/transformers";
 async function initEmbeddings() {
   if (!embeddingPipeline) {
+    const pipeline = await loadPipelineFactory();
     console.error("Loading embedding model (first run may take time)...");
     embeddingPipeline = await pipeline(
       "feature-extraction",
@@ -683,6 +683,19 @@ async function initEmbeddings() {
       } }
     );
     console.error("Embedding model loaded");
+  }
+}
+async function loadPipelineFactory() {
+  try {
+    const transformers = await import("@huggingface/transformers");
+    transformers.env.allowLocalModels = true;
+    transformers.env.useBrowserCache = false;
+    return transformers.pipeline;
+  } catch (error62) {
+    throw new EmbeddingsUnavailableError(
+      `Failed to load the embedding backend (@huggingface/transformers). A native binding, for example the binding of sharp (libvips) or onnxruntime-node, usually causes this failure. Vector search and indexing stay off until the binding loads. Underlying error: ${error62 instanceof Error ? error62.message : String(error62)}`,
+      { cause: error62 }
+    );
   }
 }
 function truncateForEmbed(text) {
@@ -720,18 +733,22 @@ function withQueryPrefix(query) {
 async function generateQueryEmbedding(query) {
   return generateEmbedding(withQueryPrefix(query));
 }
-var MODEL_ID, MODEL_DTYPE, BGE_QUERY_PREFIX, embeddingPipeline, EMBED_DIM;
+var MODEL_ID, MODEL_DTYPE, BGE_QUERY_PREFIX, embeddingPipeline, EmbeddingsUnavailableError, EMBED_DIM;
 var init_embeddings = __esm({
   "src/embeddings.ts"() {
     "use strict";
     init_redact();
     init_constants();
-    env.allowLocalModels = true;
-    env.useBrowserCache = false;
     MODEL_ID = "Xenova/bge-small-en-v1.5";
     MODEL_DTYPE = "q8";
     BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages: ";
     embeddingPipeline = null;
+    EmbeddingsUnavailableError = class extends Error {
+      constructor(message, options) {
+        super(message, options);
+        this.name = "EmbeddingsUnavailableError";
+      }
+    };
     EMBED_DIM = 384;
   }
 });

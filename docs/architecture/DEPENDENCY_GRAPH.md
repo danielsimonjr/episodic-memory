@@ -607,7 +607,7 @@ The codebase is organized into the following modules:
 **External Dependencies:**
 | Package | Import |
 |---------|--------|
-| `@huggingface/transformers` | `pipeline, FeatureExtractionPipeline, env` |
+| `@huggingface/transformers` | `FeatureExtractionPipeline` |
 
 **Internal Dependencies:**
 | File | Imports | Type |
@@ -616,6 +616,7 @@ The codebase is organized into the following modules:
 | `./constants.js` | `truncateForIndex` | Import |
 
 **Exports:**
+- Classes: `EmbeddingsUnavailableError`
 - Functions: `initEmbeddings`, `generateEmbeddings`, `generateEmbedding`, `withQueryPrefix`, `generateQueryEmbedding`, `formatExchangeEmbeddingText`, `generateExchangeEmbedding`, `generateExchangeEmbeddings`
 - Constants: `BGE_QUERY_PREFIX`
 
@@ -2231,12 +2232,12 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 280 |
+| Total Source Files | 282 |
 | Subsystems | 5 |
-| Total Lines of Code | 55783 |
-| Total Exports | 604 |
+| Total Lines of Code | 56067 |
+| Total Exports | 605 |
 | Total Re-exports | 8 |
-| Total Classes | 9 |
+| Total Classes | 10 |
 | Total Interfaces | 139 |
 | Total Functions | 343 |
 | Total Type Guards | 11 |

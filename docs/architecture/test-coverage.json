@@ -1,7 +1,7 @@
 {
   "metadata": {
     "totalSourceFiles": 108,
-    "totalTestFiles": 160,
+    "totalTestFiles": 162,
     "testedCount": 85,
     "untestedCount": 23,
     "coveragePercent": "78.7",
@@ -273,10 +273,12 @@
     "src/embeddings.ts": [
       "test/embedding-migration.test.ts",
       "test/embeddings-format.test.ts",
+      "test/embeddings-unavailable.test.ts",
       "test/indexer-db-close.test.ts",
       "test/integration.test.ts",
       "test/multi-concept.test.ts",
       "test/query-prefix.test.ts",
+      "test/sync-embeddings-unavailable.test.ts",
       "test/vector-search-filters.test.ts",
       "test/verify.test.ts"
     ],
@@ -633,6 +635,7 @@
       "test/dangling-project-link.test.ts",
       "test/exclude-nested.test.ts",
       "test/sync-copy-retry.test.ts",
+      "test/sync-embeddings-unavailable.test.ts",
       "test/sync-empty-summary-audit.test.ts",
       "test/sync-gpu-reservation.test.ts",
       "test/sync-helpers.test.ts",
@@ -865,6 +868,9 @@
     "test/embeddings-format.test.ts": [
       "src/embeddings.ts",
       "src/constants.ts"
+    ],
+    "test/embeddings-unavailable.test.ts": [
+      "src/embeddings.ts"
     ],
     "test/ensure-deps-prune.test.ts": [
       "cli/ensure-deps.js"
@@ -1265,6 +1271,10 @@
     "test/sync-copy-retry.test.ts": [
       "src/sync.ts",
       "src/fs-retry.ts"
+    ],
+    "test/sync-embeddings-unavailable.test.ts": [
+      "src/embeddings.ts",
+      "src/sync.ts"
     ],
     "test/sync-empty-summary-audit.test.ts": [
       "src/sync.ts"

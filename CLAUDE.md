@@ -51,7 +51,7 @@ dependency, no `MEMORY_*` environment handling and no per-handle cache. Each ope
 - **TypeScript source** in `src/`, compiled to `dist/` by `tsc && esbuild`. **Both are committed.**
 - **CLI entry points** in `cli/` (Node.js wrappers — no bash).
 - **MCP server** is `dist/mcp-server.js`, launched by `cli/mcp-server-wrapper.js` from the plugin manifest.
-- **Tests** in `test/` with vitest (160 files, 1591 tests).
+- **Tests** in `test/` with vitest (162 files, 1596 tests).
 - **Generated files** in `dist/` AND `src/version.ts`. The latter is gitignored; never edit it.
 - **`bun.lock` is committed** — CI uses `bun install --frozen-lockfile` + `bun audit --audit-level=critical`. Do not commit `package-lock.json` (gitignored).
 
@@ -117,7 +117,7 @@ scripts/
 
 test/
   test-utils.ts          # createTestDb, safeRmSync (fork-added), suppressConsole, fixtures
-  *.test.ts              # 160 test files, 1591 tests
+  *.test.ts              # 162 test files, 1596 tests
   learn/                 # the Recursa suite; fakes for every model call
   fixtures/              # JSONL conversation fixtures
 
@@ -175,12 +175,12 @@ scheduled task. To roll back, remove the variable first. Then run `npm install -
 
 ### Current test state
 
-- **Full suite: 1591 tests in 160 files pass** in about 17 s of wall clock on Linux. Windows runs are slower.
+- **Full suite: 1596 tests in 162 files pass** in about 17 s of wall clock on Linux. Windows runs are slower.
   The suite no longer has the former `integration.test.ts` / `verify.test.ts` cold-embedding timeout flakes.
   `beforeAll` pre-warms the embedder once per worker. `vitest.config.ts` sets `hookTimeout: 30000`.
   The repair re-index test gets 60s. If you see a fresh timeout flake, suspect a new embedding-heavy hook
   without warm-up, not the old cold-start cause.
-- The learn tests are the bulk of the suite (`test/learn/`, 38 files; the other 122 test files sit directly in `test/`). The learn tests never reach a model: every agent and
+- The learn tests are the bulk of the suite (`test/learn/`, 38 files; the other 124 test files sit directly in `test/`). The learn tests never reach a model: every agent and
   text call is injectable and tests pass fakes. `test/test-env.ts` pins the Claude backend, a closed ollama URL,
   a temporary config directory and temporary Claude and Codex homes. `test/setup-env.ts` deletes every other `EPISODIC_MEMORY_*` variable of
   the machine. A local run therefore uses the CI settings and cannot reach a model or the live data.
@@ -217,6 +217,8 @@ Dynamic imports load these modules only inside a branch:
 - `topics`: `topic-tool.ts`, `topic-db.ts`, `topic-format.ts`, `digest-inject.ts`, `digest-validate.ts`
 
 `topic-tool.ts` is imported lazily, like `skills-tool.ts`. `fts-query.ts` and `topic-time.ts` are already eager. The topic branch adds nothing to them. `mcp-schemas.ts` imports only `topic-time.ts` eagerly.
+
+`embeddings.ts` imports `@huggingface/transformers` with `await import()` inside `initEmbeddings`. The bundle keeps the package external, so a static import there becomes a top-level import of `dist/mcp-server.js`. Every server start would then load transformers and its native bindings. `test/mcp-protocol.test.ts` fails when the server resolves the package at start or for a text search.
 
 CLI files use some modules that the server never loads, for example `indexer.ts`, `sync.ts` and `learn/cli-main.ts`. These modules can use `console.log`.
 

@@ -9,6 +9,18 @@ export declare const BGE_QUERY_PREFIX = "Represent this sentence for searching r
  */
 export declare function initEmbeddings(): Promise<void>;
 /**
+ * The embedding backend did not load.
+ *
+ * `@huggingface/transformers` loads native bindings, for example the binding of `sharp`. On some hosts a binding
+ * cannot load, although the text embedding does not use it. A caller that can work without embeddings catches this
+ * error. The sync, for example, still copies the transcripts and runs the summaries. `cause` holds the load error.
+ */
+export declare class EmbeddingsUnavailableError extends Error {
+    constructor(message: string, options?: {
+        cause?: unknown;
+    });
+}
+/**
  * Embed one or more texts in one pipeline call. The function returns an empty list for an empty input.
  *
  * Each text gets the same truncation, mean pooling and normalization as a single-text call.

@@ -2,7 +2,7 @@
  * The learning trace database: `<configDir>/learned/learning.sqlite`.
  *
  * The file is the plugin's own database. The module opens the file directly with
- * `better-sqlite3`. A SessionStart hook can then read the rendered learned block
+ * the node:sqlite adapter. A SessionStart hook can then read the rendered learned block
  * without opening the
  * knowledge store (§6.3 of the Recursa spec). The file sits beside `knowledge.db` under
  * `learned/`, a sibling of `conversation-index/`, so an index reset never

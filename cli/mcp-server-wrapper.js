@@ -19,7 +19,7 @@ const PLUGIN_ROOT = process.env.CLAUDE_PLUGIN_ROOT || join(__dirname, '..');
 
 async function main() {
   try {
-    // better-sqlite3 13 requires Node >= 22 and `engines` only warns.
+    // node:sqlite requires Node >= 22.16.0 and `engines` only warns.
     // Bail before the install check: a too-old Node would otherwise run a 200-package install and
     // then fail inside a dependency on a tool call.
     const floorError = assertNodeFloor();
@@ -28,8 +28,8 @@ async function main() {
       process.exit(1);
     }
 
-    // Install missing dependencies and build a missing native binding. Directory existence, and
-    // even better-sqlite3's JS, are not enough - see NATIVE_ADDON in src/deps-health.ts.
+    // Install missing dependencies and reinstall a damaged onnxruntime-node binding. Directory
+    // existence is not enough - see nodeModulesIsHealthy in src/deps-health.ts.
     ensureDeps(PLUGIN_ROOT);
 
     // Start the MCP server

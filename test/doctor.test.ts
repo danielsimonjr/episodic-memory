@@ -7,6 +7,7 @@ import {
   buildDoctorReport,
   readRecentLogErrors,
   collectDoctorSnapshot,
+  formatSqliteLine,
 } from '../src/doctor.js';
 import { emptyLearnSection, collectLearnDoctorSection } from '../src/doctor-learn.js';
 import { formatLogLine } from '../src/logging.js';
@@ -251,7 +252,7 @@ describe('doctor learn section', () => {
       'learned:instruction:proj-a:search-first:v1',
       'learned:skill:proj-a:alpha:v1',
     ]);
-    expect(learn.betterSqlite3TopLevel).toMatch(/better-sqlite3/);
+    expect(learn.sqliteVersion).toMatch(/^3\.\d+\.\d+$/);
 
     const report = buildDoctorReport({ ...(await collectDoctorSnapshot()), learn });
     const text = report.text;
@@ -265,7 +266,8 @@ describe('doctor learn section', () => {
     expect(text).toContain('latest run:');
     expect(text).toContain('unresolved sources: 2');
     expect(text).toContain('learned-skills: found (1 file(s)');
-    expect(text).toMatch(/better-sqlite3: \S*better-sqlite3/);
+    expect(text).toMatch(/node:sqlite: SQLite 3\.\d+\.\d+, Node v\d+/);
+    expect(text).not.toContain('better-sqlite3');
     expect(text).toContain('Warnings:');
     expect(text).toMatch(/exchange id\(s\) the index no longer has/);
 
@@ -277,7 +279,7 @@ describe('doctor learn section', () => {
     expect(Array.isArray(json.unresolvedSources)).toBe(true);
     expect(json.unresolvedSources).toHaveLength(2);
     expect((json.exportTree as Record<string, unknown>).files).toBe(1);
-    expect(typeof json.betterSqlite3TopLevel).toBe('string');
+    expect(json.sqliteVersion).toMatch(/^3\.\d+\.\d+$/);
     // No audit-chain item: the store keeps no governance chain.
     expect(report.text).not.toMatch(/audit/i);
     expect(Object.keys(json)).not.toContain('auditChain');
@@ -341,15 +343,21 @@ describe('doctor learn section', () => {
     expect(report.ok).toBe(true);
   });
 
-  it('prints the resolved better-sqlite3 path in the learn section', () => {
+  it('prints the SQLite version of node:sqlite in the learn section', () => {
     const section = {
       ...emptyLearnSection('/tmp/cfg/learned'),
       present: true,
-      betterSqlite3TopLevel: '/top/better-sqlite3/lib/index.js',
+      sqliteVersion: '3.50.1',
     };
     const report = buildDoctorReport({ ...healthy, learn: section });
-    expect(report.text).toContain('better-sqlite3: /top/better-sqlite3/lib/index.js');
+    expect(report.text).toContain(`node:sqlite: SQLite 3.50.1, Node ${process.version}`);
+    expect(report.text).not.toContain('better-sqlite3');
     expect(report.text).not.toContain('Warnings:');
+  });
+
+  it('prints a FAIL line for node:sqlite below the Node floor', () => {
+    expect(formatSqliteLine('3.49.1', 'v22.15.1')).toMatch(/^  node:sqlite: FAIL .*22\.16\.0/);
+    expect(formatSqliteLine('3.50.1', 'v24.1.0')).toBe('  node:sqlite: SQLite 3.50.1, Node v24.1.0');
   });
 
   it('omits the section entirely when doctor was given none', () => {

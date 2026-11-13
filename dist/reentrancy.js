@@ -9,7 +9,7 @@
  *
  * This logic lives in its own tiny module (no SDK, no native deps) so `sync-cli`
  * can check the guard BEFORE importing the heavy stack (transformers,
- * better-sqlite3). Loading those just to exit on a guarded subprocess wasted
+ * node:sqlite). Loading those just to exit on a guarded subprocess wasted
  * seconds per spawn.
  */
 /** Env var the summarizer sets on SDK-spawned subprocesses to mark reentrancy. */

@@ -11,7 +11,7 @@ const command = process.argv[2];
 const args = process.argv.slice(3);
 
 /**
- * `learn` opens the knowledge store on better-sqlite3 13, which requires Node >= 22; `engines` only warns.
+ * `learn` opens the knowledge store on node:sqlite, which requires Node >= 22.16.0; `engines` only warns.
  * The function runs the check before the learn entry point is spawned.
  * A too-old Node then gets one readable line, not a failure deep inside a dependency.
  * The node-floor module is imported lazily, so every other command works on a tree whose dist/ is not built yet.

@@ -6,6 +6,7 @@
  * Database and Statement from here.
  */
 import { createRequire } from 'module';
+import { NODE_FLOOR, assertNodeFloor } from './node-floor.js';
 /** The start of the warning that node:sqlite writes when it loads. */
 const SQLITE_WARNING_PREFIX = 'SQLite is an experimental feature';
 /** The message of a transaction function that returns a promise. */
@@ -98,6 +99,22 @@ function isThenable(value) {
  * A database connection with the better-sqlite3 method names.
  * Every connection turns foreign key enforcement on.
  */
+/**
+ * Refuse a node:sqlite handle that has no `isTransaction` property.
+ *
+ * The transaction wrapper reads `isTransaction` to select a savepoint for a nested call.
+ * Below Node 22.16.0 the property is absent, so a nested call starts a second BEGIN and fails.
+ * The function closes the handle before it throws, so the file stays unlocked.
+ *
+ * @throws Error that names the Node floor, when the handle has no boolean `isTransaction`.
+ */
+export function requireTransactionState(handle) {
+    if (typeof handle.isTransaction === 'boolean')
+        return;
+    handle.close();
+    throw new Error(assertNodeFloor(process.versions.node) ??
+        `node:sqlite has no DatabaseSync.isTransaction. Use Node ${NODE_FLOOR} or newer.`);
+}
 export class Database {
     db;
     /** The path that the constructor opened. */
@@ -114,6 +131,7 @@ export class Database {
             readOnly: !!options.readonly,
             enableForeignKeyConstraints: true,
         });
+        requireTransactionState(this.db);
     }
     /** True while the connection is open. */
     get open() {

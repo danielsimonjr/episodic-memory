@@ -60,6 +60,19 @@ export type Transaction<F extends (...args: never[]) => unknown> = F & {
  * A database connection with the better-sqlite3 method names.
  * Every connection turns foreign key enforcement on.
  */
+/**
+ * Refuse a node:sqlite handle that has no `isTransaction` property.
+ *
+ * The transaction wrapper reads `isTransaction` to select a savepoint for a nested call.
+ * Below Node 22.16.0 the property is absent, so a nested call starts a second BEGIN and fails.
+ * The function closes the handle before it throws, so the file stays unlocked.
+ *
+ * @throws Error that names the Node floor, when the handle has no boolean `isTransaction`.
+ */
+export declare function requireTransactionState(handle: {
+    isTransaction?: unknown;
+    close(): void;
+}): void;
 export declare class Database {
     private readonly db;
     /** The path that the constructor opened. */

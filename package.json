@@ -14,19 +14,17 @@
     "generate-version": "node scripts/generate-version.js",
     "prebuild": "bun run generate-version",
     "build": "tsc && bun run bundle",
-    "bundle": "esbuild src/mcp-server.ts --bundle --platform=node --format=esm --outfile=dist/mcp-server.js --external:fsevents --external:@anthropic-ai/claude-agent-sdk --external:@modelcontextprotocol/server --external:@modelcontextprotocol/core --external:sharp --external:onnxruntime-node --external:better-sqlite3 --external:@huggingface/transformers --external:sqlite-vec --external:./learn/skills-tool.js --external:./topic-tool.js",
+    "bundle": "esbuild src/mcp-server.ts --bundle --platform=node --format=esm --outfile=dist/mcp-server.js --external:fsevents --external:@anthropic-ai/claude-agent-sdk --external:@modelcontextprotocol/server --external:@modelcontextprotocol/core --external:sharp --external:onnxruntime-node --external:@huggingface/transformers --external:./learn/skills-tool.js --external:./topic-tool.js",
     "pretest": "bun run generate-version",
     "typecheck": "bun run generate-version && tsc --noEmit",
     "test": "vitest run",
     "test:claude-e2e": "node scripts/claude-e2e.js",
     "test:codex-e2e": "node scripts/codex-e2e.js",
-    "test:watch": "vitest",
-    "postinstall": "node scripts/rebuild-native.mjs",
-    "rebuild:native": "node scripts/rebuild-native.mjs"
+    "test:watch": "vitest"
   },
   "packageManager": "bun@1.4.0",
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=22.16.0"
   },
   "keywords": [
     "claude-code",
@@ -46,14 +44,11 @@
     "@anthropic-ai/claude-agent-sdk": "^0.3.299",
     "@huggingface/transformers": "^4.2.0",
     "@modelcontextprotocol/server": "^2.0.0",
-    "better-sqlite3": "13.0.3",
     "marked": "^16.4.0",
     "onnxruntime-common": "1.24.3",
-    "sqlite-vec": "^0.1.9",
     "zod": "^4.6.6"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^24.7.0",
     "esbuild": "^0.25.11",
     "typescript": "^5.9.3",
@@ -71,10 +66,6 @@
   },
   "homepage": "https://github.com/obra/episodic-memory",
   "allowScripts": {
-    "better-sqlite3@13.0.3": true,
     "onnxruntime-node": false
-  },
-  "trustedDependencies": [
-    "better-sqlite3"
-  ]
+  }
 }

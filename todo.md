@@ -32,9 +32,13 @@ items move between sections as state changes.
 
 - [ ] **Run on node:sqlite: drop better-sqlite3 and sqlite-vec.** One branch `deps/node-sqlite`, four slices: the adapter `src/sqlite.ts`; the type swap, the `exchange_vectors` table, the distance function and the vec0 migration; the dependency and repair removal; the docs. Node floor 22.16.0, CI on 22.16.0 and 24.
   - [x] S1: the adapter `src/sqlite.ts` and its tests
-  - [ ] S2: type swap, vector table, migration, search
-  - [ ] S3: dependency and repair removal, CI matrix, floor
+  - [x] S2: type swap, vector table, migration, search
+  - [x] S3: dependency and repair removal, CI matrix, floor
   - [ ] S4: docs
+- [ ] **A failed dependency install retries at every start.** `cli/ensure-deps.js` runs `npm install` again at each start after a failure. Add a failure marker with a 24-hour wait, like the onnx marker.
+- [ ] **The dependency sentinels check only that a `package.json` exists.** A package without its `dist/` passes. Measure first whether npm's `node_modules/.package-lock.json` can serve as an install-complete marker.
+- [ ] **Drop the four vec0 shadow tables and record `vec_exchanges` as kept.** `DROP TABLE vec_exchanges` fails with `no such module: vec0`. The shadow tables can go after the copy; `vec_exchanges` itself stays.
+- [ ] **`doctor` creates an empty config directory when none exists.** Reported by the S3 challenger; verify, then make doctor read-only.
 - [x] **Self-organized topic memory (SOMEM)** — from arXiv paper "Can LLM Agents Organize Their Own Memory?" (Fu, Qi et al.). The sync job writes agent-organized Topic documents that cite exchanges; the runtime validates each edit and derives backlinks and a timeline. Scope: Topic + validation + backlinks + timeline + MCP search/read; Core and Recent left out (the digest covers them; paper ablation shows them within noise). Spec and plan under `docs/superpowers/`.
   - [x] Tasks 1-3 (format, validator, store) plus the fix list of the Sonnet review and the Haiku challenger: fences, one reference per label, bare marks, links by unit id, range bounds, leap years, shared FTS query, pinned test arrays.
   - [x] Task 4: prompt, answer parser and prepare (worker df74821), plus the review fix list: fenced `===` lines, caller-order-independent doc order, bearer rule on one line, malformed blocks kept verbatim, link rewrite across lines, link targets kept by redaction.

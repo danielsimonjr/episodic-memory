@@ -2,7 +2,7 @@
  * The learned-knowledge feature switch and its settings.
  *
  * This module imports nothing on purpose: the SessionStart hook loads it on its
- * fast path, next to `better-sqlite3` and the small `dist/` modules, and must not
+ * fast path, next to the node:sqlite adapter and the small `dist/` modules, and must not
  * pull in transformers, the SDK or the knowledge store to read one environment variable.
  */
 const TRUTHY = new Set(['1', 'true', 'yes', 'on']);

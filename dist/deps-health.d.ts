@@ -2,17 +2,6 @@
  * node_modules health check shared by the MCP wrapper, the SessionStart sync hook and `doctor`.
  * Dependency-free (fs/path only) so callers can import it before npm install.
  */
-/**
- * better-sqlite3's COMPILED binding, in the layout v12 and earlier used. The plugin installer skips
- * install scripts, so a tree can hold better-sqlite3's JS with no binding at all; lib/index.js alone
- * passed for 1.5.2-1.5.6 while every sync failed. A compiled binding is the only honest sentinel for
- * "the database can open".
- *
- * KEPT AS THE LEGACY PATH, NOT THE ONLY ONE. See nativeAddonPresent().
- */
-export declare const NATIVE_ADDON = "better-sqlite3/build/Release/better_sqlite3.node";
-/** True when a compiled binding exists in EITHER the v12 or the v13+ layout. */
-export declare function nativeAddonPresent(nodeModulesPath: string): boolean;
 /** JS-only sentinels: present whenever the packages are installed at all, binding or not. */
 export declare const JS_SENTINELS: string[];
 /** The path of the `onnxruntime-node` binding of one pair, relative to `node_modules`. */
@@ -20,8 +9,7 @@ export declare function onnxBindingPath(platform: string, arch: string): string;
 /** The `onnxruntime-node` binding of the running pair. The first embedding loads this file. */
 export declare const ONNX_BINDING: string;
 /**
- * The JS sentinels, the legacy better-sqlite3 binding path and the `onnxruntime-node` binding of the running pair.
- * Derived so the lists cannot drift.
+ * The JS sentinels and the `onnxruntime-node` binding of the running pair. Derived so the lists cannot drift.
  */
 export declare const DEP_SENTINELS: string[];
 /**
@@ -45,10 +33,10 @@ export declare const DEP_SENTINELS: string[];
  */
 export declare function onnxBindingState(nodeModulesPath: string, platform?: string, arch?: string): 'present' | 'missing' | 'unshipped';
 /**
- * Return true when `node_modules` holds the packages and the native binding that the plugin needs.
+ * Return true when `node_modules` holds the packages that the plugin needs.
  *
- * The folder must exist. Every path in `JS_SENTINELS` must exist. A compiled better-sqlite3 binding must exist in a layout that `nativeAddonPresent` accepts.
- * The `onnxruntime-node` binding must not be `missing` (see `onnxBindingState`). The function checks file names only and loads no package.
+ * The folder must exist. Every path in `JS_SENTINELS` must exist, and the `onnxruntime-node` binding must not be
+ * `missing` (see `onnxBindingState`). The function checks file names only and loads no package.
  */
 export declare function nodeModulesIsHealthy(nodeModulesPath: string): boolean;
 /**
@@ -57,10 +45,8 @@ export declare function nodeModulesIsHealthy(nodeModulesPath: string): boolean;
  * - `install`: the folder or a package is missing.
  * - `reinstall-onnx`: the `onnxruntime-node` binding is `missing`. `npm install` does not restore
  *   one file inside an installed package, so the caller deletes the package directory first.
- * - `rebuild`: only the better-sqlite3 binding is missing. `npm install` on a tree that already
- *   lists better-sqlite3 does not build its binding, so the caller runs `npm rebuild`.
  *
  * One tree can need more than one step. The function returns the first step in this order. The
  * caller calls the function again after each step.
  */
-export declare function repairPlan(nodeModulesPath: string): 'none' | 'install' | 'reinstall-onnx' | 'rebuild';
+export declare function repairPlan(nodeModulesPath: string): 'none' | 'install' | 'reinstall-onnx';

@@ -9,8 +9,6 @@
  */
 import fs from 'fs';
 import path from 'path';
-import { createRequire } from 'module';
-import { fileURLToPath } from 'url';
 import { getSuperpowersDir } from './paths.js';
 const LEARNED_SKILLS_DIR = 'learned-skills';
 const LEARNED_DIR_NAME = 'learned';
@@ -39,7 +37,7 @@ export function emptyLearnSection(learnedDir = '') {
         latestRun: null,
         unresolvedSources: [],
         exportTree: { present: false, files: 0, bytes: 0 },
-        betterSqlite3TopLevel: null,
+        sqliteVersion: null,
     };
 }
 function sizeOf(filePath) {
@@ -79,64 +77,29 @@ function treeSize(root) {
     return { present: true, files, bytes };
 }
 /**
- * Return the plugin package root, or `null` when none is found.
+ * The SQLite version that node:sqlite reports, read from an in-memory database.
  *
- * The function reads `CLAUDE_PLUGIN_ROOT` and `PLUGIN_ROOT` first. Then it walks up from this file
- * to a `package.json` named `episodic-memory`.
- *
- * Deliberately not `process.cwd()`. Doctor is often started from a project directory.
- * Resolving `better-sqlite3` from there either misses the plugin copy or finds an unrelated one.
- * A null result then used to count as "shared", and the check passed without looking at the install.
+ * Returns null when the probe fails. The connection closes in every case.
  */
-function pluginPackageRoot() {
-    const fromEnv = [process.env.CLAUDE_PLUGIN_ROOT, process.env.PLUGIN_ROOT].filter((base) => typeof base === 'string' && base.length > 0);
-    for (const base of fromEnv) {
-        if (fs.existsSync(path.join(base, 'package.json')))
-            return base;
+async function readSqliteVersion() {
+    let db = null;
+    try {
+        const sqlite = await import('./sqlite.js');
+        db = new sqlite.Database(':memory:');
+        const row = db.prepare('SELECT sqlite_version() AS v').get();
+        return row?.v ?? null;
     }
-    let dir = path.dirname(fileURLToPath(import.meta.url));
-    for (let i = 0; i < 8; i += 1) {
-        const manifest = path.join(dir, 'package.json');
-        if (fs.existsSync(manifest)) {
-            try {
-                const parsed = JSON.parse(fs.readFileSync(manifest, 'utf-8'));
-                if (parsed.name === 'episodic-memory')
-                    return dir;
-            }
-            catch {
-                // Keep walking; a broken manifest is not the plugin root.
-            }
-        }
-        const parent = path.dirname(dir);
-        if (parent === dir)
-            break;
-        dir = parent;
-    }
-    return null;
-}
-/**
- * Where `better-sqlite3` resolves from a given base directory.
- *
- * `require.resolve`'s `paths` option is the only way to ask what a module living *here* would load.
- * A plain import from this module would always answer for the plugin root and hide a nested duplicate.
- */
-function resolveBetterSqlite3(paths) {
-    if (paths.length === 0)
+    catch {
         return null;
-    const bases = [
-        pluginPackageRoot(),
-        path.dirname(fileURLToPath(import.meta.url)),
-    ].filter((base) => typeof base === 'string' && base.length > 0);
-    for (const base of bases) {
+    }
+    finally {
         try {
-            const requireFrom = createRequire(path.join(base, 'package.json'));
-            return requireFrom.resolve('better-sqlite3', { paths });
+            db?.close();
         }
         catch {
-            // Try the next base.
+            // best effort
         }
     }
-    return null;
 }
 function metricsSummary(metrics) {
     const parts = [];
@@ -180,8 +143,7 @@ export async function collectLearnDoctorSection() {
     section.learningDbSizeBytes = sizeOf(learningDb);
     section.present = section.knowledgeDbSizeBytes !== null || section.learningDbSizeBytes !== null;
     section.exportTree = treeSize(path.join(getSuperpowersDir(), LEARNED_SKILLS_DIR));
-    const pluginRoot = pluginPackageRoot();
-    section.betterSqlite3TopLevel = resolveBetterSqlite3(pluginRoot ? [pluginRoot] : []);
+    section.sqliteVersion = await readSqliteVersion();
     if (!section.present)
         return section;
     let openedStore = null;

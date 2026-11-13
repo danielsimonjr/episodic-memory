@@ -6,6 +6,7 @@ import { initDatabase } from './db.js';
 import { getArchiveDir, getDbPath, getIndexDir, getSuperpowersDir, } from './paths.js';
 import { getSyncErrorsLogPath, getSyncLogPath } from './logging.js';
 import { nodeModulesIsHealthy } from './deps-health.js';
+import { assertNodeFloor } from './node-floor.js';
 import { collectLearnDoctorSection } from './doctor-learn.js';
 function parseFeatureState(featuresOutput, feature) {
     const line = featuresOutput
@@ -228,8 +229,22 @@ function learnTextLines(learn) {
         lines.push(`    ${entry.id}: ${entry.sources} missing exchange id(s)`);
     }
     lines.push(`  learned-skills: ${learn.exportTree.present ? 'found' : 'absent'} (${learn.exportTree.files} file(s), ${formatBytes(learn.exportTree.bytes)})`);
-    lines.push(`  better-sqlite3: ${learn.betterSqlite3TopLevel ?? 'unresolved'}`);
+    lines.push(formatSqliteLine(learn.sqliteVersion, process.version));
     return lines;
+}
+/**
+ * Format the node:sqlite line of the doctor report.
+ *
+ * Below the Node floor the line starts with FAIL and names the floor, because the adapter refuses to open a database there.
+ *
+ * @param sqliteVersion The SQLite version that node:sqlite reports, or null when no database opened.
+ * @param nodeVersion The Node version, as `process.version` gives it.
+ */
+export function formatSqliteLine(sqliteVersion, nodeVersion) {
+    const floor = assertNodeFloor(nodeVersion.replace(/^v/, ''));
+    if (floor)
+        return `  node:sqlite: FAIL ${floor}`;
+    return `  node:sqlite: SQLite ${sqliteVersion ?? 'unavailable'}, Node ${nodeVersion}`;
 }
 /**
  * Build the doctor report from a snapshot of the installation.

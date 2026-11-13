@@ -4,7 +4,7 @@
  * This module is on the digest hook's fast path, so its import graph is kept to
  * `./types.js` (types only, erased at compile time), `./learned-text-screen.js`
  * and `../redact.js` — never `knowledge-db.js` or `knowledge-store.js`, and
- * therefore never `better-sqlite3`'s heavier callers. The hook reads the rendered text from
+ * therefore never the heavier database callers. The hook reads the rendered text from
  * `learning.sqlite` and must load in a few hundred milliseconds.
  *
  * The block is data, not instructions: it names where to look in past

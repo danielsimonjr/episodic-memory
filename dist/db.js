@@ -68,7 +68,7 @@ export function migrateToolCallsCascade(db) {
     if (orphanCount > 0) {
         console.error(`  Removing ${orphanCount} orphaned tool_calls row(s)`);
     }
-    // FK is enforced by default in better-sqlite3, but ALTER ... RENAME of a
+    // FK is enforced on every connection (src/sqlite.ts enables it), but ALTER ... RENAME of a
     // table that other objects reference can trip checks during the rebuild.
     // Disable temporarily; the post-migration FK_check verifies integrity.
     db.pragma('foreign_keys = OFF');

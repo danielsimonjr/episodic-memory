@@ -3,7 +3,8 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { spawn } from 'child_process';
-import { Database } from '../src/sqlite.js';
+import { Database, requireTransactionState } from '../src/sqlite.js';
+import { NODE_FLOOR } from '../src/node-floor.js';
 import { safeRmSync } from './test-utils.js';
 
 // This block runs first, before any other test of the file opens a database, so node:sqlite loads inside it.
@@ -319,5 +320,23 @@ describe('Database adapter over node:sqlite', () => {
         db.close();
       }
     });
+  });
+});
+
+describe('a node:sqlite without isTransaction (Node below the floor)', () => {
+  it('closes the handle and throws an error that names the floor', () => {
+    let closed = false;
+    const old = { close: () => { closed = true; } };
+    expect(() => requireTransactionState(old)).toThrow(NODE_FLOOR);
+    expect(closed).toBe(true);
+  });
+
+  it('accepts the handle of this Node', () => {
+    const db = new Database(':memory:');
+    try {
+      expect(db.inTransaction).toBe(false);
+    } finally {
+      db.close();
+    }
   });
 });

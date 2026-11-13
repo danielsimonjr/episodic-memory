@@ -9,6 +9,34 @@ var __export = (target, all) => {
     __defProp(target, name, { get: all[name], enumerable: true });
 };
 
+// src/node-floor.ts
+function parseVersion(version2) {
+  const m2 = /^v?(\d+)\.(\d+)\.(\d+)/.exec(version2.trim());
+  if (!m2) return null;
+  return [Number(m2[1]), Number(m2[2]), Number(m2[3])];
+}
+function compare(a, b2) {
+  for (let i = 0; i < 3; i++) {
+    if (a[i] !== b2[i]) return a[i] < b2[i] ? -1 : 1;
+  }
+  return 0;
+}
+function assertNodeFloor(version2 = process.versions.node) {
+  const actual = parseVersion(version2);
+  if (actual === null) {
+    return `episodic-memory: cannot read the Node version "${version2}"; ${NODE_FLOOR} or newer is required.`;
+  }
+  if (compare(actual, parseVersion(NODE_FLOOR)) >= 0) return null;
+  return `episodic-memory: Node ${NODE_FLOOR} or newer is required (this is ${version2}). Upgrade Node and retry.`;
+}
+var NODE_FLOOR;
+var init_node_floor = __esm({
+  "src/node-floor.ts"() {
+    "use strict";
+    NODE_FLOOR = "22.16.0";
+  }
+});
+
 // src/sqlite.ts
 import { createRequire } from "module";
 function loadSqlite() {
@@ -70,10 +98,18 @@ function isThenable(value) {
   if (value === null || typeof value !== "object" && typeof value !== "function") return false;
   return typeof value.then === "function";
 }
+function requireTransactionState(handle2) {
+  if (typeof handle2.isTransaction === "boolean") return;
+  handle2.close();
+  throw new Error(
+    assertNodeFloor(process.versions.node) ?? `node:sqlite has no DatabaseSync.isTransaction. Use Node ${NODE_FLOOR} or newer.`
+  );
+}
 var SQLITE_WARNING_PREFIX, ASYNC_REFUSED, sqliteModule, Database;
 var init_sqlite = __esm({
   "src/sqlite.ts"() {
     "use strict";
+    init_node_floor();
     SQLITE_WARNING_PREFIX = "SQLite is an experimental feature";
     ASYNC_REFUSED = "A transaction function must not return a promise. Use a synchronous function.";
     Database = class {
@@ -92,6 +128,7 @@ var init_sqlite = __esm({
           readOnly: !!options.readonly,
           enableForeignKeyConstraints: true
         });
+        requireTransactionState(this.db);
       }
       /** True while the connection is open. */
       get open() {

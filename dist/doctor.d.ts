@@ -78,6 +78,15 @@ export declare function readRecentLogErrors(logPath: string, limit?: number): st
  */
 export declare function collectDoctorSnapshot(): Promise<DoctorInputs>;
 /**
+ * Format the node:sqlite line of the doctor report.
+ *
+ * Below the Node floor the line starts with FAIL and names the floor, because the adapter refuses to open a database there.
+ *
+ * @param sqliteVersion The SQLite version that node:sqlite reports, or null when no database opened.
+ * @param nodeVersion The Node version, as `process.version` gives it.
+ */
+export declare function formatSqliteLine(sqliteVersion: string | null, nodeVersion: string): string;
+/**
  * Build the doctor report from a snapshot of the installation.
  *
  * A missing archive or index database, a recent hook error and an incomplete `node_modules` folder are issues. A stale embedding version and an unresolved learned source are warnings. `ok` is true when no issue was found. Warnings do not change `ok`.

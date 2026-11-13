@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
+import fs from 'fs';
 import { NODE_FLOOR, assertNodeFloor } from '../src/node-floor.js';
 
-// better-sqlite3 13 declares Node >= 22. `engines` is advisory only: npm warns and continues, so a
+// node:sqlite gained isTransaction in Node 22.16.0, and the adapter needs it. `engines` is advisory only: npm warns and continues, so a
 // machine on Node 20 starts the wrapper, installs 200 packages and then dies inside a dependency
 // with a syntax/runtime error that names nothing useful. The floor is therefore checked in the entry
 // points themselves, through this dependency-free helper.
@@ -17,12 +18,23 @@ describe('assertNodeFloor', () => {
   });
 
   it('passes the floor itself', () => {
-    expect(assertNodeFloor('22.0.0')).toBeNull();
+    expect(assertNodeFloor('22.16.0')).toBeNull();
+  });
+
+  it('is 22.16.0, the first Node with DatabaseSync.isTransaction', () => {
+    expect(NODE_FLOOR).toBe('22.16.0');
+    expect(assertNodeFloor('22.15.1')).not.toBeNull();
+    expect(assertNodeFloor('22.0.0')).not.toBeNull();
+  });
+
+  it('matches engines.node of package.json', () => {
+    const pkg = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
+    expect(pkg.engines.node).toBe(`>=${NODE_FLOOR}`);
   });
 
   it('passes anything above the floor', () => {
-    expect(assertNodeFloor('22.0.1')).toBeNull();
-    expect(assertNodeFloor('22.12.0')).toBeNull();
+    expect(assertNodeFloor('22.16.1')).toBeNull();
+    expect(assertNodeFloor('22.20.0')).toBeNull();
     expect(assertNodeFloor('23.0.0')).toBeNull();
     expect(assertNodeFloor('24.7.0')).toBeNull();
   });

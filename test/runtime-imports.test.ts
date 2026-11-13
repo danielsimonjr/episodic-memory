@@ -9,7 +9,7 @@ import { NPM_INSTALL_ARGS } from '../cli/ensure-deps.js';
 const ROOT = path.resolve(__dirname, '..');
 const SCRIPT = /\.(js|mjs|cjs)$/;
 
-/** Every file that a plugin host runs: the built code, the CLI and hook entry points, and the postinstall script. */
+/** Every file that a plugin host runs: the built code, and the CLI and hook entry points. */
 function runtimeFiles(): string[] {
   const files: string[] = [];
   const walk = (dir: string) => {
@@ -23,7 +23,6 @@ function runtimeFiles(): string[] {
   for (const f of fs.readdirSync(path.join(ROOT, 'cli'))) {
     if (SCRIPT.test(f)) files.push(path.join(ROOT, 'cli', f));
   }
-  files.push(path.join(ROOT, 'scripts', 'rebuild-native.mjs'));
   return files;
 }
 

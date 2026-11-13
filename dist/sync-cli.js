@@ -1,5 +1,5 @@
 // Only light, dependency-free imports at the top. The heavy native stack
-// (better-sqlite3 via ./db.js, transformers via ./embeddings.js and
+// (node:sqlite via ./db.js, transformers via ./embeddings.js and
 // ./embedding-migration.js) is imported lazily AFTER the early-exit checks
 // below, so a guarded reentrant subprocess — or a `--help`/`--background`
 // invocation — exits without paying the multi-second module load. (#87)
@@ -123,7 +123,7 @@ if (lowerPriorityIfBackgroundWorker()) {
 }
 // Past the early-exit checks: now load the heavy native-dep modules. Doing this
 // lazily (rather than as top-level static imports) keeps the guard/help/background
-// paths above fast — they never load transformers or better-sqlite3.
+// paths above fast — they never load transformers or node:sqlite.
 const { buildSyncOptionsFromEnv, syncConversations } = await import('./sync.js');
 const { initDatabase } = await import('./db.js');
 const { generateExchangeEmbedding, initEmbeddings } = await import('./embeddings.js');

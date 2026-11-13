@@ -28,6 +28,7 @@ import { writeLearnedBlocks } from './learned-block.js';
 import type { AttemptRow, KnowledgeEntry, LearnDbs, ValidationRecord } from './types.js';
 import type { CallBudget, solveTask } from './solver.js';
 import type { PidRegistry } from './agent-runner.js';
+import { mulberry32 } from './prng.js';
 
 /** Where a run records the subprocesses it owns. */
 const NO_PIDS: PidRegistry = { add() {}, remove() {} };
@@ -55,18 +56,6 @@ export interface ValidateOptions {
 
 /** A validation verdict, stored on the entry whatever it says. */
 export type ValidationResult = ValidationRecord & { keep: boolean };
-
-/** A deterministic 32-bit generator, so a seed picks the same sample twice. */
-function mulberry32(seed: number): () => number {
-  let state = seed >>> 0;
-  return () => {
-    state = (state + 0x6d2b79f5) >>> 0;
-    let t = state;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 /**
  * A seeded sample of `ids`, without replacement, in a stable order.

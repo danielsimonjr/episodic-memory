@@ -29,6 +29,7 @@ import { screenLearnedText } from './learned-text-screen.js';
 import { insertTask, markStale, type LearningTask } from './learning-db.js';
 import type { LearningKind, LearningTier, SourceRef } from './types.js';
 import { callLearnModel } from '../summarizer.js';
+import { mulberry32 } from './prng.js';
 
 /**
  * The default minimum number of non-sidechain exchanges that a project needs before selectSourceExchanges uses it. The defaults come from spec §4.4.
@@ -57,18 +58,6 @@ export interface SelectSourceOptions {
   minUser?: number;
   /** The minimum length of the assistant message. Default: MIN_ASSISTANT_CHARS. */
   minAssistant?: number;
-}
-
-/** A small, well-distributed PRNG. Deterministic across platforms and Node versions. */
-function mulberry32(seed: number): () => number {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
 }
 
 /** Fold a string into a 32-bit seed so each project shuffles differently. */

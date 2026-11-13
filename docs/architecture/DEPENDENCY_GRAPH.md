@@ -32,9 +32,9 @@ This document provides a comprehensive dependency graph of all files, components
 The codebase is organized into the following modules:
 
 - **cli**: 8 files
-- **root**: 65 files
+- **root**: 66 files
 - **entry**: 1 file
-- **learn**: 30 files
+- **learn**: 32 files
 - **vendor/onnxruntime-web-stub**: 1 file
 
 ---
@@ -75,8 +75,12 @@ The codebase is organized into the following modules:
 |--------|--------|
 | `url` | `fileURLToPath` |
 | `path` | `dirname, join` |
-| `child_process` | `spawn` |
 | `fs` | `realpathSync` |
+
+**Internal Dependencies:**
+| File | Imports | Type |
+|------|---------|------|
+| `./forward-child.js` | `runChild` | Import |
 
 ---
 
@@ -88,7 +92,7 @@ The codebase is organized into the following modules:
 | `child_process` | `spawn` |
 
 **Exports:**
-- Functions: `exitCodeFor`, `forward`
+- Functions: `exitCodeFor`, `forward`, `runChild`
 
 ---
 
@@ -99,9 +103,13 @@ The codebase is organized into the following modules:
 |--------|--------|
 | `url` | `fileURLToPath` |
 | `path` | `dirname, join` |
-| `child_process` | `spawn` |
 | `fs` | `realpathSync` |
 | `readline` | `createInterface` |
+
+**Internal Dependencies:**
+| File | Imports | Type |
+|------|---------|------|
+| `./forward-child.js` | `runChild` | Import |
 
 ---
 
@@ -268,6 +276,13 @@ The codebase is organized into the following modules:
 **Exports:**
 - Functions: `truncationNoticeFor`, `truncateForIndex`, `topicsEnabled`, `envPositiveInt`
 - Constants: `SUMMARIZER_CONTEXT_MARKER`, `MAX_INDEXED_MESSAGE_BYTES`, `OLLAMA_MAX_PROMPT_CHARS_DEFAULT`, `CLAUDE_MAX_PROMPT_CHARS`, `TOPIC_DEFAULTS`
+
+---
+
+### `src/content-text.ts` - Helpers that read the message content of a transcript line. Imports nothing.
+
+**Exports:**
+- Functions: `extractContentText`, `safeParseJson`
 
 ---
 
@@ -851,6 +866,7 @@ The codebase is organized into the following modules:
 | File | Imports | Type |
 |------|---------|------|
 | `./types.js` | `ConversationExchange, ConversationHarness, ToolCall` | Import |
+| `./content-text.js` | `extractContentText, safeParseJson` | Import |
 
 **Exports:**
 - Functions: `parseConversation`, `parseConversationFile`
@@ -982,6 +998,11 @@ The codebase is organized into the following modules:
 | Package | Import |
 |---------|--------|
 | `marked` | `marked` |
+
+**Internal Dependencies:**
+| File | Imports | Type |
+|------|---------|------|
+| `./content-text.js` | `extractContentText, safeParseJson` | Import |
 
 **Exports:**
 - Functions: `formatConversationAsMarkdown`, `formatConversationAsHTML`
@@ -1442,6 +1463,7 @@ The codebase is organized into the following modules:
 | `./learner.js` | `runLearn` | Import |
 | `./usage.js` | `LEARN_USAGE` | Import |
 | `./types.js` | `LearnDbs` | Import (type-only) |
+| `./entry-order.js` | `compareByProject` | Import |
 | `./knowledge-store.js` | `*` | Import |
 | `./learning-store.js` | `*` | Import |
 | `../db.js` | `*` | Import |
@@ -1450,6 +1472,14 @@ The codebase is organized into the following modules:
 **Exports:**
 - Interfaces: `LearnCliDeps`
 - Functions: `baselineCallCount`, `baselineRefusal`, `unifiedDiff`, `runLearnCli`
+
+---
+
+### `src/learn/entry-order.ts` - The sort orders of learned entries. Imports nothing.
+
+**Exports:**
+- Interfaces: `ProjectSlug`, `ProjectKindSlug`
+- Functions: `compareByProject`, `compareByProjectAndKind`
 
 ---
 
@@ -1470,6 +1500,7 @@ The codebase is organized into the following modules:
 | `./learned-text-screen.js` | `screenLearnedText` | Import |
 | `./learn-inject.js` | `redactKeepingMarks, RedactFn` | Import |
 | `./types.js` | `isValidSlug, KnowledgeEntry, LearnDbs, SourceRef` | Import |
+| `./entry-order.js` | `compareByProject` | Import |
 
 **Exports:**
 - Interfaces: `ExportResult`, `ExportOptions`
@@ -1508,6 +1539,7 @@ The codebase is organized into the following modules:
 |------|---------|------|
 | `./knowledge-store.js` | `entryName, procedureIdFor, rootName, KnowledgeStore` | Import |
 | `./types.js` | `isValidSlug, KnowledgeEntry, KnowledgeKind, KnowledgeStatus, NewKnowledgeEntry, ValidationRecord` | Import |
+| `./entry-order.js` | `compareByProjectAndKind` | Import |
 
 **Exports:**
 - Classes: `DuplicateEntry`, `InvalidEntryName`
@@ -1689,6 +1721,7 @@ The codebase is organized into the following modules:
 | `./knowledge-store.js` | `KnowledgeStore` | Import (type-only) |
 | `./learn-inject.js` | `redactPii, renderLearnedBlock, RedactFn, ScreenFn` | Import |
 | `./types.js` | `KnowledgeEntry` | Import (type-only) |
+| `./entry-order.js` | `compareByProjectAndKind` | Import |
 
 **Exports:**
 - Functions: `writeLearnedBlocks`
@@ -1799,6 +1832,13 @@ The codebase is organized into the following modules:
 **Exports:**
 - Functions: `redactPii`
 - Constants: `PII_PATTERNS`
+
+---
+
+### `src/learn/prng.ts` - The seeded generator of the learn feature. Imports nothing.
+
+**Exports:**
+- Functions: `mulberry32`
 
 ---
 
@@ -1959,6 +1999,7 @@ The codebase is organized into the following modules:
 | `./learning-db.js` | `insertTask, markStale, LearningTask` | Import |
 | `./types.js` | `LearningKind, LearningTier, SourceRef` | Import (type-only) |
 | `../summarizer.js` | `callLearnModel` | Import |
+| `./prng.js` | `mulberry32` | Import |
 
 **Exports:**
 - Interfaces: `SelectSourceOptions`, `GenerateTasksOptions`, `GenerateTasksResult`
@@ -2018,6 +2059,7 @@ The codebase is organized into the following modules:
 | `./types.js` | `AttemptRow, KnowledgeEntry, LearnDbs, ValidationRecord` | Import (type-only) |
 | `./solver.js` | `CallBudget, solveTask` | Import (type-only) |
 | `./agent-runner.js` | `PidRegistry` | Import (type-only) |
+| `./prng.js` | `mulberry32` | Import |
 
 **Exports:**
 - Interfaces: `ValidateOptions`
@@ -2044,8 +2086,8 @@ The codebase is organized into the following modules:
 | `src/learn/types` | 1 file | 22 files |
 | `src/paths` | 0 files | 22 files |
 | `src/db` | 6 files | 15 files |
+| `src/learn/cli-main` | 20 files | 1 file |
 | `src/summarizer` | 8 files | 13 files |
-| `src/learn/cli-main` | 19 files | 1 file |
 | `src/learn/bootstrap` | 14 files | 3 files |
 | `src/learn/learner` | 15 files | 1 file |
 | `src/learn/leaf-learner` | 14 files | 1 file |
@@ -2060,26 +2102,26 @@ The codebase is organized into the following modules:
 | `src/learn/learn-config` | 0 files | 11 files |
 | `src/learn/learning-db` | 2 files | 9 files |
 | `src/learn/agent-runner` | 5 files | 5 files |
+| `src/learn/knowledge-db` | 3 files | 7 files |
 | `src/learn/skills-tool` | 8 files | 2 files |
+| `src/learn/validate` | 8 files | 2 files |
 | `src/ollama-backend` | 3 files | 7 files |
 | `src/constants` | 0 files | 9 files |
 | `src/doctor` | 8 files | 1 file |
 | `src/embeddings` | 2 files | 7 files |
-| `src/learn/knowledge-db` | 2 files | 7 files |
 | `src/learn/knowledge-store` | 3 files | 6 files |
-| `src/learn/validate` | 7 files | 2 files |
+| `src/learn/learned-block` | 5 files | 4 files |
+| `src/learn/tasks` | 7 files | 2 files |
 | `src/search` | 5 files | 4 files |
 | `src/digest-db` | 1 file | 7 files |
 | `src/index` | 8 files | 0 files |
 | `src/indexer` | 6 files | 2 files |
+| `src/learn/export` | 7 files | 1 file |
 | `src/learn/knowledge-gate` | 5 files | 3 files |
 | `src/learn/learn-handlers` | 7 files | 1 file |
-| `src/learn/learned-block` | 4 files | 4 files |
-| `src/learn/tasks` | 6 files | 2 files |
 | `src/deferral` | 2 files | 5 files |
 | `src/digest-prompts` | 4 files | 3 files |
 | `src/digest-validate` | 1 file | 6 files |
-| `src/learn/export` | 6 files | 1 file |
 | `src/learn-cli` | 7 files | 0 files |
 
 ---
@@ -2126,9 +2168,9 @@ graph TD
         N13[codex-hook-trust]
         N14[codex-support]
         N15[constants]
-        N16[db]
-        N17[deferral]
-        N18[...55 more]
+        N16[content-text]
+        N17[db]
+        N18[...56 more]
     end
 
     subgraph Entry
@@ -2140,45 +2182,43 @@ graph TD
         N21[bootstrap]
         N22[cited-ids]
         N23[cli-main]
-        N24[export]
-        N25[grade]
-        N26[knowledge-db]
-        N27[knowledge-gate]
-        N28[knowledge-store]
-        N29[leaf-learner]
-        N30[...20 more]
+        N24[entry-order]
+        N25[export]
+        N26[grade]
+        N27[knowledge-db]
+        N28[knowledge-gate]
+        N29[knowledge-store]
+        N30[...22 more]
     end
 
     subgraph Vendor/onnxruntime-web-stub
         N31[index.js]
     end
 
+    N2 --> N3
+    N4 --> N3
     N5 --> N1
     N6 --> N3
     N7 --> N1
     N10 --> N11
-    N16 --> N15
-    N17 --> N12
-    N19 --> N16
+    N17 --> N15
+    N19 --> N17
     N20 --> N12
-    N21 --> N26
     N21 --> N27
+    N21 --> N28
     N21 --> N22
     N21 --> N20
     N23 --> N12
-    N23 --> N26
+    N23 --> N27
+    N23 --> N25
     N23 --> N24
-    N23 --> N28
-    N23 --> N16
+    N23 --> N29
+    N23 --> N17
     N23 --> N21
-    N26 --> N28
-    N27 --> N22
-    N29 --> N21
-    N29 --> N27
-    N29 --> N22
-    N29 --> N26
-    N29 --> N20
-    N29 --> N25
+    N25 --> N24
+    N27 --> N29
+    N27 --> N24
+    N28 --> N22
 ```
 
 ---
@@ -2188,14 +2228,14 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 268 |
+| Total Source Files | 274 |
 | Subsystems | 5 |
-| Total Lines of Code | 54535 |
-| Total Exports | 592 |
+| Total Lines of Code | 54733 |
+| Total Exports | 600 |
 | Total Re-exports | 8 |
 | Total Classes | 8 |
-| Total Interfaces | 137 |
-| Total Functions | 334 |
+| Total Interfaces | 139 |
+| Total Functions | 340 |
 | Total Type Guards | 10 |
 | Total Enums | 0 |
 | Type-only Imports | 79 |

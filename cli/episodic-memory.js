@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { spawn } from 'child_process';
+import { runChild } from './forward-child.js';
 import { realpathSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -24,29 +24,6 @@ async function blockedByNodeFloor() {
   if (floorError === null) return false;
   console.error(floorError);
   return true;
-}
-
-function runScript(scriptPath, args) {
-  return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [scriptPath, ...args], {
-      stdio: 'inherit'
-    });
-
-    // The exit code goes to the caller: 2 means a refused argument. 1 means a failed command or a stop by a signal.
-    child.on('exit', (code, signal) => {
-      if (code === 0) {
-        resolve();
-      } else {
-        const error = new Error(code === null ? `Command ended by signal ${signal}` : `Command failed with exit code ${code}`);
-        error.exitCode = code ?? 1;
-        reject(error);
-      }
-    });
-
-    child.on('error', (err) => {
-      reject(new Error(`Failed to run command: ${err.message}`));
-    });
-  });
 }
 
 function showHelp() {
@@ -89,35 +66,35 @@ async function main() {
 
     switch (command) {
       case 'index':
-        await runScript(join(__dirname, 'index-conversations.js'), args);
+        await runChild(join(__dirname, 'index-conversations.js'), args);
         break;
 
       case 'search':
-        await runScript(join(distDir, 'search-cli.js'), args);
+        await runChild(join(distDir, 'search-cli.js'), args);
         break;
 
       case 'show':
-        await runScript(join(distDir, 'show-cli.js'), args);
+        await runChild(join(distDir, 'show-cli.js'), args);
         break;
 
       case 'stats':
-        await runScript(join(distDir, 'stats-cli.js'), args);
+        await runChild(join(distDir, 'stats-cli.js'), args);
         break;
 
       case 'doctor':
-        await runScript(join(distDir, 'doctor-cli.js'), args);
+        await runChild(join(distDir, 'doctor-cli.js'), args);
         break;
 
       case 'sync':
-        await runScript(join(distDir, 'sync-cli.js'), args);
+        await runChild(join(distDir, 'sync-cli.js'), args);
         break;
 
       case 'backfill':
-        await runScript(join(distDir, 'backfill-cli.js'), args);
+        await runChild(join(distDir, 'backfill-cli.js'), args);
         break;
 
       case 'learn':
-        await runScript(join(distDir, 'learn-cli.js'), args);
+        await runChild(join(distDir, 'learn-cli.js'), args);
         break;
 
       case '--help':

@@ -7,12 +7,12 @@
 ## Summary
 
 - **Files with no in-repo importer**: 14
-- **Dormant files**: 59
+- **Dormant files**: 61
   - **Orphaned (reachable from nothing)**: 15
-  - **Test-only (only a test reaches them)**: 44
-- **Potentially unused exports**: 115
+  - **Test-only (only a test reaches them)**: 46
+- **Potentially unused exports**: 117
   - **Unreferenced anywhere**: 4
-  - **Referenced in their own module**: 111
+  - **Referenced in their own module**: 113
   - **Not classified**: 0
 
 ## Caveats
@@ -62,6 +62,7 @@ Source files that only a test reaches. They ship nothing, but a test uses them.
 - `src/learn/bootstrap.ts`
 - `src/learn/cited-ids.ts`
 - `src/learn/cli-main.ts`
+- `src/learn/entry-order.ts`
 - `src/learn/export.ts`
 - `src/learn/grade.ts`
 - `src/learn/knowledge-db.ts`
@@ -73,6 +74,7 @@ Source files that only a test reaches. They ship nothing, but a test uses them.
 - `src/learn/learner.ts`
 - `src/learn/learning-db.ts`
 - `src/learn/learning-store.ts`
+- `src/learn/prng.ts`
 - `src/learn/prompts.ts`
 - `src/learn/report.ts`
 - `src/learn/sdk-tools.ts`
@@ -144,6 +146,7 @@ No other file imports these names, but their own module uses them.
 - `src/gpu-reservation.ts`: `GpuReservation`
 - `src/learn/agent-runner.ts`: `AgentRunOptions`, `AgentRunResult`, `BuildAgentQueryOptionsArgs`, `DISALLOWED_TOOLS`, `ProcessLister`, `addressFromResultText`, `isAgentSpawnTree`, `looksKilled`
 - `src/learn/cited-ids.ts`: `DropReason`, `IdCitedLines`
+- `src/learn/entry-order.ts`: `ProjectKindSlug`, `ProjectSlug`
 - `src/learn/export.ts`: `ExportOptions`, `ExportResult`
 - `src/learn/grade.ts`: `AnswerLocation`, `Grade`, `ParsedAnswer`, `parseJudgeScore`
 - `src/learn/knowledge-gate.ts`: `GateAccepted`, `GateDeps`, `GateResult`

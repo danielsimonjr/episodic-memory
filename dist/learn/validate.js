@@ -18,19 +18,9 @@ import { learnConfig } from './learn-config.js';
 import { activate, createSnapshot, getBySlug, getEntry, entryName, } from './knowledge-db.js';
 import { listAttempts, listTasks } from './learning-db.js';
 import { writeLearnedBlocks } from './learned-block.js';
+import { mulberry32 } from './prng.js';
 /** Where a run records the subprocesses it owns. */
 const NO_PIDS = { add() { }, remove() { } };
-/** A deterministic 32-bit generator, so a seed picks the same sample twice. */
-function mulberry32(seed) {
-    let state = seed >>> 0;
-    return () => {
-        state = (state + 0x6d2b79f5) >>> 0;
-        let t = state;
-        t = Math.imul(t ^ (t >>> 15), t | 1);
-        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-}
 /**
  * A seeded sample of `ids`, without replacement, in a stable order.
  *

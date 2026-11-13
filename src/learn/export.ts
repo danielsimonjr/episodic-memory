@@ -26,6 +26,7 @@ import { redactSecrets } from '../redact.js';
 import { screenLearnedText } from './learned-text-screen.js';
 import { redactKeepingMarks, type RedactFn } from './learn-inject.js';
 import { isValidSlug, type KnowledgeEntry, type LearnDbs, type SourceRef } from './types.js';
+import { compareByProject } from './entry-order.js';
 
 /** The outcome of an export that exportSkills runs. */
 export interface ExportResult {
@@ -206,15 +207,6 @@ function sourcesText(sources: readonly SourceRef[]): string {
   return sources.map(source => `${source.path}:${source.lineStart}-${source.lineEnd}`).join('; ');
 }
 
-/** Project rows first, then the global ones, then slug — `listActive`'s order. */
-function orderForExport(a: KnowledgeEntry, b: KnowledgeEntry): number {
-  const aGlobal = a.project === '*' ? 1 : 0;
-  const bGlobal = b.project === '*' ? 1 : 0;
-  if (aGlobal !== bGlobal) return aGlobal - bGlobal;
-  if (a.project !== b.project) return a.project < b.project ? -1 : 1;
-  return a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0;
-}
-
 /**
  * One `SKILL.md`, or the reason that the export did not write it.
  *
@@ -290,7 +282,7 @@ export async function exportSkills(
 
   const entries = (await dbs.store.listByStatus(['active'], ['skill']))
     .filter(entry => entry.supersededBy === null)
-    .sort(orderForExport);
+    .sort(compareByProject);
 
   /** `path.relative(root, file)` → content, in the export's own order. */
   const files: Array<{ relative: string; text: string }> = [];

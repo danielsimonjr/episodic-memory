@@ -12,18 +12,7 @@ import { redactSecrets } from '../redact.js';
 import type { KnowledgeStore } from './knowledge-store.js';
 import { redactPii, renderLearnedBlock, type RedactFn, type ScreenFn } from './learn-inject.js';
 import type { KnowledgeEntry } from './types.js';
-
-/** Project rows before `*` rows, then kind order instruction → skill, then slug. */
-function orderForBlock(a: KnowledgeEntry, b: KnowledgeEntry): number {
-  const aGlobal = a.project === '*' ? 1 : 0;
-  const bGlobal = b.project === '*' ? 1 : 0;
-  if (aGlobal !== bGlobal) return aGlobal - bGlobal;
-  const kindOrder: Record<string, number> = { instruction: 0, skill: 1 };
-  const kindDiff = (kindOrder[a.kind] ?? 2) - (kindOrder[b.kind] ?? 2);
-  if (kindDiff !== 0) return kindDiff;
-  if (a.project !== b.project) return a.project < b.project ? -1 : 1;
-  return a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0;
-}
+import { compareByProjectAndKind } from './entry-order.js';
 
 /**
  * Render one block per project that has active entries and one for `*`.
@@ -40,7 +29,7 @@ export async function writeLearnedBlocks(
 ): Promise<void> {
   const entries = (await store.listByStatus(['active'], ['instruction', 'skill']))
     .filter(entry => entry.supersededBy === null)
-    .sort(orderForBlock);
+    .sort(compareByProjectAndKind);
 
   const projects = new Set<string>(['*']);
   for (const entry of entries) projects.add(entry.project);

@@ -97,19 +97,20 @@
             ]
           },
           {
-            "module": "child_process",
-            "imports": [
-              "spawn"
-            ]
-          },
-          {
             "module": "fs",
             "imports": [
               "realpathSync"
             ]
           }
         ],
-        "internalDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./forward-child.js",
+            "imports": [
+              "runChild"
+            ]
+          }
+        ],
         "workspaceDependencies": [],
         "exports": []
       },
@@ -128,11 +129,13 @@
         "workspaceDependencies": [],
         "exports": [
           "exitCodeFor",
-          "forward"
+          "forward",
+          "runChild"
         ],
         "functions": [
           "exitCodeFor",
-          "forward"
+          "forward",
+          "runChild"
         ]
       },
       "cli/index-conversations.js": {
@@ -153,12 +156,6 @@
             ]
           },
           {
-            "module": "child_process",
-            "imports": [
-              "spawn"
-            ]
-          },
-          {
             "module": "fs",
             "imports": [
               "realpathSync"
@@ -171,7 +168,14 @@
             ]
           }
         ],
-        "internalDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./forward-child.js",
+            "imports": [
+              "runChild"
+            ]
+          }
+        ],
         "workspaceDependencies": [],
         "exports": []
       },
@@ -610,6 +614,21 @@
           "OLLAMA_MAX_PROMPT_CHARS_DEFAULT",
           "CLAUDE_MAX_PROMPT_CHARS",
           "TOPIC_DEFAULTS"
+        ]
+      },
+      "src/content-text.ts": {
+        "description": "Helpers that read the message content of a transcript line. Imports nothing.",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "extractContentText",
+          "safeParseJson"
+        ],
+        "functions": [
+          "extractContentText",
+          "safeParseJson"
         ]
       },
       "src/db.ts": {
@@ -2217,6 +2236,13 @@
               "ConversationHarness",
               "ToolCall"
             ]
+          },
+          {
+            "file": "./content-text.js",
+            "imports": [
+              "extractContentText",
+              "safeParseJson"
+            ]
           }
         ],
         "workspaceDependencies": [],
@@ -2505,7 +2531,15 @@
           }
         ],
         "nodeDependencies": [],
-        "internalDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./content-text.js",
+            "imports": [
+              "extractContentText",
+              "safeParseJson"
+            ]
+          }
+        ],
         "workspaceDependencies": [],
         "exports": [
           "formatConversationAsMarkdown",
@@ -3949,6 +3983,12 @@
             "typeOnly": true
           },
           {
+            "file": "./entry-order.js",
+            "imports": [
+              "compareByProject"
+            ]
+          },
+          {
             "file": "./knowledge-store.js",
             "imports": [
               "*"
@@ -3989,6 +4029,25 @@
           "baselineRefusal",
           "unifiedDiff",
           "runLearnCli"
+        ]
+      },
+      "src/learn/entry-order.ts": {
+        "description": "The sort orders of learned entries. Imports nothing.",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "compareByProject",
+          "compareByProjectAndKind"
+        ],
+        "interfaces": [
+          "ProjectSlug",
+          "ProjectKindSlug"
+        ],
+        "functions": [
+          "compareByProject",
+          "compareByProjectAndKind"
         ]
       },
       "src/learn/export.ts": {
@@ -4050,6 +4109,12 @@
               "KnowledgeEntry",
               "LearnDbs",
               "SourceRef"
+            ]
+          },
+          {
+            "file": "./entry-order.js",
+            "imports": [
+              "compareByProject"
             ]
           }
         ],
@@ -4147,6 +4212,12 @@
               "KnowledgeStatus",
               "NewKnowledgeEntry",
               "ValidationRecord"
+            ]
+          },
+          {
+            "file": "./entry-order.js",
+            "imports": [
+              "compareByProjectAndKind"
             ]
           }
         ],
@@ -4733,6 +4804,12 @@
               "KnowledgeEntry"
             ],
             "typeOnly": true
+          },
+          {
+            "file": "./entry-order.js",
+            "imports": [
+              "compareByProjectAndKind"
+            ]
           }
         ],
         "workspaceDependencies": [],
@@ -5076,6 +5153,19 @@
         ],
         "constants": [
           "PII_PATTERNS"
+        ]
+      },
+      "src/learn/prng.ts": {
+        "description": "The seeded generator of the learn feature. Imports nothing.",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "mulberry32"
+        ],
+        "functions": [
+          "mulberry32"
         ]
       },
       "src/learn/prompts.ts": {
@@ -5543,6 +5633,12 @@
             "imports": [
               "callLearnModel"
             ]
+          },
+          {
+            "file": "./prng.js",
+            "imports": [
+              "mulberry32"
+            ]
           }
         ],
         "workspaceDependencies": [],
@@ -5691,6 +5787,12 @@
               "PidRegistry"
             ],
             "typeOnly": true
+          },
+          {
+            "file": "./prng.js",
+            "imports": [
+              "mulberry32"
+            ]
           }
         ],
         "workspaceDependencies": [],
@@ -5759,6 +5861,7 @@
         "src/codex-hook-trust.ts",
         "src/codex-support.ts",
         "src/constants.ts",
+        "src/content-text.ts",
         "src/db.ts",
         "src/deferral.ts",
         "src/deps-health.ts",
@@ -5831,6 +5934,7 @@
         "src/learn/bootstrap.ts",
         "src/learn/cited-ids.ts",
         "src/learn/cli-main.ts",
+        "src/learn/entry-order.ts",
         "src/learn/export.ts",
         "src/learn/grade.ts",
         "src/learn/knowledge-db.ts",
@@ -5847,6 +5951,7 @@
         "src/learn/learning-db.ts",
         "src/learn/learning-store.ts",
         "src/learn/pii-redactor.ts",
+        "src/learn/prng.ts",
         "src/learn/prompts.ts",
         "src/learn/report.ts",
         "src/learn/sdk-tools.ts",

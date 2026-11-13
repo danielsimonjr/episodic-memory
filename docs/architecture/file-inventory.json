@@ -1,25 +1,25 @@
 {
-  "totalFiles": 268,
+  "totalFiles": 274,
   "byDisposition": {
-    "reachable": 42,
+    "reachable": 43,
     "build-entry": 4,
-    "test-only": 44,
+    "test-only": 46,
     "orphan": 15,
-    "test": 158,
+    "test": 161,
     "tool": 4,
     "config": 1,
     "bench": 0,
     "example": 0
   },
   "byArea": {
-    "src": 105,
+    "src": 108,
     "tools": 4,
-    "tests": 158,
+    "tests": 161,
     "config": 1
   },
   "byPackage": {
-    "(root)": 172,
-    "episodic-memory": 96
+    "(root)": 175,
+    "episodic-memory": 99
   },
   "files": [
     {
@@ -41,21 +41,21 @@
       "package": "(root)",
       "area": "src",
       "disposition": "orphan",
-      "loc": 143
+      "loc": 120
     },
     {
       "file": "cli/forward-child.js",
       "package": "(root)",
       "area": "src",
       "disposition": "orphan",
-      "loc": 28
+      "loc": 57
     },
     {
       "file": "cli/index-conversations.js",
       "package": "(root)",
       "area": "src",
       "disposition": "orphan",
-      "loc": 165
+      "loc": 147
     },
     {
       "file": "cli/mcp-server-wrapper.js",
@@ -161,6 +161,13 @@
       "area": "src",
       "disposition": "reachable",
       "loc": 93
+    },
+    {
+      "file": "src/content-text.ts",
+      "package": "episodic-memory",
+      "area": "src",
+      "disposition": "reachable",
+      "loc": 33
     },
     {
       "file": "src/db.ts",
@@ -349,14 +356,21 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 894
+      "loc": 884
+    },
+    {
+      "file": "src/learn/entry-order.ts",
+      "package": "episodic-memory",
+      "area": "src",
+      "disposition": "test-only",
+      "loc": 57
     },
     {
       "file": "src/learn/export.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 414
+      "loc": 406
     },
     {
       "file": "src/learn/grade.ts",
@@ -370,7 +384,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 356
+      "loc": 341
     },
     {
       "file": "src/learn/knowledge-gate.ts",
@@ -426,7 +440,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 89
+      "loc": 78
     },
     {
       "file": "src/learn/learned-text-screen.ts",
@@ -462,6 +476,13 @@
       "area": "src",
       "disposition": "reachable",
       "loc": 60
+    },
+    {
+      "file": "src/learn/prng.ts",
+      "package": "episodic-memory",
+      "area": "src",
+      "disposition": "test-only",
+      "loc": 25
     },
     {
       "file": "src/learn/prompts.ts",
@@ -510,7 +531,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 533
+      "loc": 522
     },
     {
       "file": "src/learn/types.ts",
@@ -531,7 +552,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 359
+      "loc": 348
     },
     {
       "file": "src/lockfile.ts",
@@ -601,7 +622,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 574
+      "loc": 553
     },
     {
       "file": "src/paths.ts",
@@ -664,7 +685,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 1047
+      "loc": 1027
     },
     {
       "file": "src/stats-cli.ts",
@@ -853,7 +874,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 123
+      "loc": 174
     },
     {
       "file": "test/codex-doctor.test.ts",
@@ -917,6 +938,13 @@
       "area": "tests",
       "disposition": "test",
       "loc": 27
+    },
+    {
+      "file": "test/content-text.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 47
     },
     {
       "file": "test/cosine-similarity.test.ts",
@@ -1150,6 +1178,13 @@
       "loc": 211
     },
     {
+      "file": "test/learn/entry-order.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 62
+    },
+    {
       "file": "test/learn/export.test.ts",
       "package": "(root)",
       "area": "tests",
@@ -1267,6 +1302,13 @@
       "area": "tests",
       "disposition": "test",
       "loc": 271
+    },
+    {
+      "file": "test/learn/prng.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 42
     },
     {
       "file": "test/learn/prompts.test.ts",

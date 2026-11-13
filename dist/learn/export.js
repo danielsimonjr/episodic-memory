@@ -25,6 +25,7 @@ import { redactSecrets } from '../redact.js';
 import { screenLearnedText } from './learned-text-screen.js';
 import { redactKeepingMarks } from './learn-inject.js';
 import { isValidSlug } from './types.js';
+import { compareByProject } from './entry-order.js';
 /** The default root, a sibling of `learned/` under the config dir. */
 const DEFAULT_ROOT_NAME = 'learned-skills';
 /** A directory name for a project key. `*` (the global scope) becomes `global`. */
@@ -189,16 +190,6 @@ function sourcesText(sources) {
         return 'none';
     return sources.map(source => `${source.path}:${source.lineStart}-${source.lineEnd}`).join('; ');
 }
-/** Project rows first, then the global ones, then slug — `listActive`'s order. */
-function orderForExport(a, b) {
-    const aGlobal = a.project === '*' ? 1 : 0;
-    const bGlobal = b.project === '*' ? 1 : 0;
-    if (aGlobal !== bGlobal)
-        return aGlobal - bGlobal;
-    if (a.project !== b.project)
-        return a.project < b.project ? -1 : 1;
-    return a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0;
-}
 /**
  * One `SKILL.md`, or the reason that the export did not write it.
  *
@@ -263,7 +254,7 @@ export async function exportSkills(dbs, rootDir = path.join(getSuperpowersDir(),
     const redact = (text) => dbs.store.redactPii(redactSecrets(text));
     const entries = (await dbs.store.listByStatus(['active'], ['skill']))
         .filter(entry => entry.supersededBy === null)
-        .sort(orderForExport);
+        .sort(compareByProject);
     /** `path.relative(root, file)` → content, in the export's own order. */
     const files = [];
     for (const entry of entries) {

@@ -25,6 +25,7 @@ import { redactSecrets } from '../redact.js';
 import { screenLearnedText } from './learned-text-screen.js';
 import { insertTask, markStale } from './learning-db.js';
 import { callLearnModel } from '../summarizer.js';
+import { mulberry32 } from './prng.js';
 /**
  * The default minimum number of non-sidechain exchanges that a project needs before selectSourceExchanges uses it. The defaults come from spec §4.4.
  */
@@ -37,17 +38,6 @@ export const MIN_ASSISTANT_CHARS = 200;
 const TRAIN_SHARE = 0.6;
 const KINDS = ['locate', 'recall', 'when', 'multi'];
 const TIERS = [1, 2, 3];
-/** A small, well-distributed PRNG. Deterministic across platforms and Node versions. */
-function mulberry32(seed) {
-    let a = seed >>> 0;
-    return () => {
-        a = (a + 0x6d2b79f5) >>> 0;
-        let t = a;
-        t = Math.imul(t ^ (t >>> 15), t | 1);
-        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-}
 /** Fold a string into a 32-bit seed so each project shuffles differently. */
 function stringSeed(text) {
     let hash = 2166136261;

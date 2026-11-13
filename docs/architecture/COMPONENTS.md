@@ -29,7 +29,7 @@ These modules import nothing from the repository, or only other leaf modules. A 
 
 ### `src/db.ts`
 
-Opens the database and owns the schema. `initDatabase` creates the tables `exchanges` and `tool_calls`, the virtual tables `vec_exchanges` (vector, 384 dimensions) and `exchanges_fts` (full text), and the indexes. It then runs migrations. `getSharedReaderDatabase` returns a shared read connection that the MCP server uses, so each call does not re-run the schema step. A caller that knows the schema is current can pass `migrate: false`. The migrations log to standard error.
+Opens the database and owns the schema. `initDatabase` creates the tables `exchanges` and `tool_calls`, the virtual tables `vec_exchanges` (vector, 384 dimensions) and `exchanges_fts` (full text), and the indexes. It then runs migrations. `deleteExchangesForArchive` deletes every exchange of one archive file in one transaction. `deleteExchangesForArchive` deletes the vector rows, full-text rows and tool-call rows of each exchange. `getSharedReaderDatabase` returns a shared read connection that the MCP server uses, so each call does not re-run the schema step. A caller that knows the schema is current can pass `migrate: false`. The migrations log to standard error.
 
 ### `src/digest-db.ts`
 
@@ -55,17 +55,17 @@ Holds `EMBEDDING_VERSION`. It finds rows with an older version and re-embeds the
 
 ### `src/indexer.ts`
 
-`indexConversations`, `indexSession` and `indexUnprocessed` write exchanges, tool calls and vectors to the database. They can call the summarizer for conversations that lack a summary. Each function scans the source transcript with `shouldSkipConversation` after the parse. A transcript with an exclusion marker keeps its archive copy and gets no index rows and no summary.
+`indexConversations`, `indexSession` and `indexUnprocessed` write exchanges, tool calls and vectors to the database. They can call the summarizer for conversations that lack a summary. Each function scans the source transcript with `scanExclusionMarkers` after the parse. A transcript with an exclusion marker keeps its archive copy and gets no summary. The function deletes the index rows that an earlier run wrote for that transcript. The function skips a transcript that the scan cannot read. The rows of the transcript stay.
 
 ### `src/sync.ts`
 
-`syncConversations(sourceDir, destDir, options)` is the core of ingest. The function walks the source folders and copies a transcript only when it is newer than the archive copy. It queues new files for indexing and queues missing summaries. It skips summarizer conversations and excluded projects. The index step scans each queued file for an exclusion marker (see `src/exclusion-marker.ts`). The index step records an error for a file that the scan cannot read, and re-queues the file. Summary work runs in this order: fresh work, then retries, then retries of legacy empty summaries. A deferral (see `src/deferral.ts`) stops the summary loop and sets `summariesDeferred`. When `initEmbeddings` fails, the function records one `(embeddings)` error and skips the index step. The summaries still run. The function sets the time of each copy of that run to the epoch. The next sync therefore copies the files again and indexes them. The function returns a `SyncResult` with counts. `summarizeOneFile` summarizes a single archive file.
+`syncConversations(sourceDir, destDir, options)` is the core of ingest. The function walks the source folders and copies a transcript only when it is newer than the archive copy. It queues new files for indexing and queues missing summaries. It skips summarizer conversations and excluded projects. The index step scans each queued file for an exclusion marker (see `src/exclusion-marker.ts`). The index step deletes the earlier rows of a file with a marker. The index step records an error for a file that the scan cannot read, and re-queues the file. Summary work runs in this order: fresh work, then retries, then retries of legacy empty summaries. A deferral (see `src/deferral.ts`) stops the summary loop and sets `summariesDeferred`. When `initEmbeddings` fails, the function records one `(embeddings)` error and skips the index step. The summaries still run. The function sets the time of each copy of that run to the epoch. The next sync therefore copies the files again and indexes them. The function returns a `SyncResult` with counts. `summarizeOneFile` summarizes a single archive file.
 
 The copy writes a temporary file. The copy renames the temporary file over the archive copy with `renameWithRetry` (see `src/fs-retry.ts`). The rename makes `ARCHIVE_RENAME_ATTEMPTS` (8) attempts, with waits of 2.54 s in total. On Windows any open handle on the archive copy stops the rename. A reader such as the `read` tool can hold the copy for longer than the 300 ms of the default attempts. When every attempt fails, the copy removes the temporary file. The copy then records one error for the transcript. The archive copy keeps its older time, so the next sync copies the file again. The error text says so.
 
 ### `src/exclusion-marker.ts`
 
-`scanExclusionMarkers(filePath)` reads the whole file, one 1 MiB chunk at a time, and compares bytes. Each chunk starts with the last bytes of the previous chunk, so a marker that crosses a chunk boundary still matches. The function returns `'marker'`, `'clean'` or `'unreadable'`, and never throws. `shouldSkipConversation(filePath)` returns true for every result except `'clean'`. The three markers are the DO NOT INDEX instruction, the NO_INSIGHTS_FOUND prompt text and `SUMMARIZER_CONTEXT_MARKER`. `src/sync.ts`, `src/indexer.ts`, `src/verify.ts` and `src/backfill.ts` use this module. `src/sync.ts` re-exports `shouldSkipConversation`.
+`scanExclusionMarkers(filePath)` reads the whole file, one 1 MiB chunk at a time, and checks one line at a time. The function joins a line that crosses a chunk boundary before the check. The function parses only a line that holds the bytes of a marker. A marker counts only in the text of a user or assistant message. For Claude Code, that text is the string content or the `text` blocks. For Codex, that text is a `message` from the user or the assistant. Tool uses, tool results, `toolUseResult` and thinking blocks do not count. A line that does not parse counts. The function returns `'marker'`, `'clean'` or `'unreadable'`, and never throws. `shouldSkipConversation(filePath)` returns true for every result except `'clean'`. The three markers are the DO NOT INDEX instruction, the NO_INSIGHTS_FOUND prompt text and `SUMMARIZER_CONTEXT_MARKER`. `src/sync.ts`, `src/indexer.ts`, `src/verify.ts` and `src/backfill.ts` use this module. `src/sync.ts` re-exports `shouldSkipConversation`.
 
 ### `src/fs-retry.ts`
 
@@ -206,7 +206,7 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 | totalSourceFiles | 291 | repo-tools map |
 | totalClasses | 10 | repo-tools map |
 | totalInterfaces | 139 | repo-tools map |
-| totalFunctions | 347 | repo-tools map |
+| totalFunctions | 348 | repo-tools map |
 | totalConstants | 71 | repo-tools map |
 
 The tool names, the table names and the model name come from a direct reading of `src/mcp-server.ts`, `src/db.ts` and `src/embeddings.ts`. They are not `repo-tools map` metrics.

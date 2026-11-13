@@ -127,3 +127,13 @@ export declare function vacuumDatabase(db: Database.Database): void;
  * The database deletes the exchange's tool-call rows through `ON DELETE CASCADE`. Foreign-key enforcement must be on for the connection.
  */
 export declare function deleteExchange(db: Database.Database, id: string): void;
+/**
+ * Deletes every exchange of one archive file, in one transaction. Returns the number of exchanges deleted.
+ *
+ * The path must match the `archive_path` column exactly. Each exchange goes through `deleteExchange`, so the vector,
+ * full-text and tool-call rows go too.
+ *
+ * @param db The open database connection to change. The connection must load the sqlite-vec extension.
+ * @param archivePath The archive path of the conversation, as stored in the `archive_path` column.
+ */
+export declare function deleteExchangesForArchive(db: Database.Database, archivePath: string): number;

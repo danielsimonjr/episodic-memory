@@ -438,3 +438,23 @@ export function deleteExchange(db, id) {
     // Delete from main table
     db.prepare(`DELETE FROM exchanges WHERE id = ?`).run(id);
 }
+/**
+ * Deletes every exchange of one archive file, in one transaction. Returns the number of exchanges deleted.
+ *
+ * The path must match the `archive_path` column exactly. Each exchange goes through `deleteExchange`, so the vector,
+ * full-text and tool-call rows go too.
+ *
+ * @param db The open database connection to change. The connection must load the sqlite-vec extension.
+ * @param archivePath The archive path of the conversation, as stored in the `archive_path` column.
+ */
+export function deleteExchangesForArchive(db, archivePath) {
+    const ids = db.prepare('SELECT id FROM exchanges WHERE archive_path = ?').all(archivePath)
+        .map(row => row.id);
+    if (ids.length === 0)
+        return 0;
+    db.transaction(() => {
+        for (const id of ids)
+            deleteExchange(db, id);
+    })();
+    return ids.length;
+}

@@ -140,6 +140,111 @@ describe('the index and verify commands honour the DO NOT INDEX marker', () => {
     expect(vi.mocked(summarizeConversation)).not.toHaveBeenCalled();
   }, 60000);
 
+  // A conversation can gain the marker after an index run wrote its rows. The README says that the marker excludes the
+  // entire conversation, so the next index run removes the earlier rows from every table.
+  function writeUnmarkedSources(): void {
+    fs.writeFileSync(path.join(sourceProject, `${CLEAN}.jsonl`), transcript(CLEAN, 'A plain question.'), 'utf-8');
+    fs.writeFileSync(path.join(sourceProject, `${MARKED}.jsonl`), transcript(MARKED, 'A question.'), 'utf-8');
+  }
+
+  function addMarker(sessionId: string): string {
+    const source = path.join(sourceProject, `${sessionId}.jsonl`);
+    const line = { type: 'user', uuid: `user-2-${sessionId}`, message: { role: 'user', content: `Keep this private. ${MARKER}` } };
+    fs.appendFileSync(source, JSON.stringify(line) + '\n', 'utf-8');
+    return source;
+  }
+
+  function tableCounts(): { exchanges: number; vectors: number; text: number } {
+    const db = initDatabase();
+    try {
+      const count = (table: string) => (db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get() as { n: number }).n;
+      return { exchanges: count('exchanges'), vectors: count('vec_exchanges'), text: count('exchanges_fts') };
+    } finally {
+      db.close();
+    }
+  }
+
+  const ONE_CONVERSATION = { exchanges: 1, vectors: 1, text: 1 };
+
+  it('indexConversations removes the earlier rows of a conversation that gains the marker', async () => {
+    writeUnmarkedSources();
+    await indexConversations(undefined, undefined, 1, true);
+    expect(indexedSessions().sort()).toEqual([CLEAN, MARKED]);
+
+    addMarker(MARKED);
+    await indexConversations(undefined, undefined, 1, true);
+    expect(indexedSessions()).toEqual([CLEAN]);
+    expect(tableCounts()).toEqual(ONE_CONVERSATION);
+  }, 60000);
+
+  it('indexUnprocessed removes the earlier rows of a conversation that gains the marker', async () => {
+    writeUnmarkedSources();
+    await indexUnprocessed(1, true);
+    expect(indexedSessions().sort()).toEqual([CLEAN, MARKED]);
+
+    addMarker(MARKED);
+    await indexUnprocessed(1, true);
+    expect(indexedSessions()).toEqual([CLEAN]);
+    expect(tableCounts()).toEqual(ONE_CONVERSATION);
+  }, 60000);
+
+  it('indexSession removes the earlier rows of a conversation that gains the marker', async () => {
+    writeUnmarkedSources();
+    await indexConversations(undefined, undefined, 1, true);
+    expect(indexedSessions().sort()).toEqual([CLEAN, MARKED]);
+
+    addMarker(MARKED);
+    await indexSession(MARKED, 1, true);
+    expect(indexedSessions()).toEqual([CLEAN]);
+    expect(tableCounts()).toEqual(ONE_CONVERSATION);
+  }, 60000);
+
+  it('indexSession removes the earlier rows of a marked conversation that has no exchanges', async () => {
+    // The source holds only a user line with the marker, so the parse gives no exchanges. Rows of the archive path stay
+    // from an earlier run. The marker check must run before the check for an empty conversation.
+    const source = path.join(sourceProject, `${MARKED}.jsonl`);
+    const line = { type: 'user', uuid: 'user-only', message: { role: 'user', content: `Keep this private. ${MARKER}` } };
+    fs.writeFileSync(source, JSON.stringify(line) + '\n', 'utf-8');
+    expect(await parseConversation(source, PROJECT, source)).toEqual([]);
+    fs.mkdirSync(archiveProject, { recursive: true });
+    const archived = path.join(archiveProject, `${MARKED}.jsonl`);
+    fs.writeFileSync(archived, transcript(MARKED, 'A question.'), 'utf-8');
+    const db = initDatabase();
+    try {
+      for (const exchange of await parseConversation(archived, PROJECT, archived)) {
+        insertExchange(db, exchange, new Array(384).fill(0.05), []);
+      }
+    } finally {
+      db.close();
+    }
+    expect(indexedSessions()).toEqual([MARKED]);
+
+    await indexSession(MARKED, 1, true);
+    expect(indexedSessions()).toEqual([]);
+  }, 60000);
+
+  it('an index run keeps the rows of a conversation that the marker scan cannot read (the control)', async () => {
+    writeUnmarkedSources();
+    await indexConversations(undefined, undefined, 1, true);
+    const locked = addMarker(MARKED);
+    // The scan cannot show the marker, so the run removes nothing. The parse reads through a stream and still works.
+    const realOpen = fs.openSync;
+    const spy = vi.spyOn(fs, 'openSync').mockImplementation(((file: fs.PathLike, ...rest: unknown[]) => {
+      if (String(file) === locked) {
+        throw Object.assign(new Error('EBUSY: resource busy or locked'), { code: 'EBUSY' });
+      }
+      return (realOpen as (...args: unknown[]) => number)(file, ...rest);
+    }) as typeof fs.openSync);
+    try {
+      await indexConversations(undefined, undefined, 1, true);
+      await indexUnprocessed(1, true);
+      await indexSession(MARKED, 1, true);
+    } finally {
+      spy.mockRestore();
+    }
+    expect(indexedSessions().sort()).toEqual([CLEAN, MARKED]);
+  }, 60000);
+
   it('verifyIndex does not report an excluded archive file as missing', async () => {
     fs.mkdirSync(archiveProject, { recursive: true });
     fs.writeFileSync(path.join(archiveProject, `${MARKED}.jsonl`), transcript(MARKED, `A private question. ${MARKER}`), 'utf-8');

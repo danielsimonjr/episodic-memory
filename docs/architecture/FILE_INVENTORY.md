@@ -66,7 +66,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/codex-support.ts` | episodic-memory | src | reachable | 66 |
 | `src/constants.ts` | episodic-memory | src | reachable | 93 |
 | `src/content-text.ts` | episodic-memory | src | reachable | 33 |
-| `src/db.ts` | episodic-memory | src | reachable | 546 |
+| `src/db.ts` | episodic-memory | src | reachable | 565 |
 | `src/deferral.ts` | episodic-memory | src | reachable | 60 |
 | `src/deps-health.ts` | episodic-memory | src | test-only | 149 |
 | `src/digest-compress.ts` | episodic-memory | src | test-only | 137 |
@@ -82,13 +82,13 @@ This report lists each source file that the map census finds, with a disposition
 | `src/doctor.ts` | episodic-memory | src | test-only | 455 |
 | `src/embedding-migration.ts` | episodic-memory | src | reachable | 197 |
 | `src/embeddings.ts` | episodic-memory | src | reachable | 205 |
-| `src/exclusion-marker.ts` | episodic-memory | src | reachable | 67 |
+| `src/exclusion-marker.ts` | episodic-memory | src | reachable | 120 |
 | `src/fs-retry.ts` | episodic-memory | src | test-only | 46 |
 | `src/fts-query.ts` | episodic-memory | src | reachable | 14 |
 | `src/gpu-reservation.ts` | episodic-memory | src | reachable | 98 |
 | `src/index-cli.ts` | episodic-memory | src | build-entry | 306 |
 | `src/index.ts` | episodic-memory | src | build-entry | 9 |
-| `src/indexer.ts` | episodic-memory | src | reachable | 455 |
+| `src/indexer.ts` | episodic-memory | src | reachable | 465 |
 | `src/learn-cli.ts` | episodic-memory | src | orphan | 94 |
 | `src/learn/agent-runner.ts` | episodic-memory | src | test-only | 568 |
 | `src/learn/bootstrap.ts` | episodic-memory | src | test-only | 850 |
@@ -146,7 +146,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/summarizer.ts` | episodic-memory | src | reachable | 870 |
 | `src/sync-banner.ts` | episodic-memory | src | test-only | 33 |
 | `src/sync-cli.ts` | episodic-memory | src | orphan | 268 |
-| `src/sync.ts` | episodic-memory | src | test-only | 576 |
+| `src/sync.ts` | episodic-memory | src | test-only | 580 |
 | `src/topic-db.ts` | episodic-memory | src | reachable | 521 |
 | `src/topic-format.ts` | episodic-memory | src | reachable | 462 |
 | `src/topic-job.ts` | episodic-memory | src | test-only | 309 |
@@ -212,7 +212,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/incremental-indexing.test.ts` | (root) | tests | test | 108 |
 | `test/index-cli-args.test.ts` | (root) | tests | test | 221 |
 | `test/index-cli-sync-lock.test.ts` | (root) | tests | test | 115 |
-| `test/index-honours-marker.test.ts` | (root) | tests | test | 219 |
+| `test/index-honours-marker.test.ts` | (root) | tests | test | 324 |
 | `test/indexer-db-close.test.ts` | (root) | tests | test | 84 |
 | `test/integration.test.ts` | (root) | tests | test | 253 |
 | `test/learn/agent-runner.test.ts` | (root) | tests | test | 521 |
@@ -311,7 +311,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/sync-hook-learn-pids.test.ts` | (root) | tests | test | 151 |
 | `test/sync-hook-logging.test.ts` | (root) | tests | test | 27 |
 | `test/sync-incremental-and-db.test.ts` | (root) | tests | test | 187 |
-| `test/sync-marker-scan.test.ts` | (root) | tests | test | 161 |
+| `test/sync-marker-scan.test.ts` | (root) | tests | test | 313 |
 | `test/sync-pending-and-legacy-retry.test.ts` | (root) | tests | test | 177 |
 | `test/sync-session-id.test.ts` | (root) | tests | test | 14 |
 | `test/sync-skip-summaries.test.ts` | (root) | tests | test | 91 |

@@ -4,7 +4,7 @@ metadata:
   language: typescript
   totalFiles: 291
   totalModules: 4
-  totalExports: 611
+  totalExports: 612
 modules:
   src:
     cli/digest-hook.js:
@@ -296,6 +296,7 @@ modules:
         - getFreelistInfo
         - vacuumDatabase
         - deleteExchange
+        - deleteExchangesForArchive
     src/deferral.ts:
       externalDependencies: []
       nodeDependencies: []
@@ -715,6 +716,10 @@ modules:
           imports:
             - SUMMARIZER_CONTEXT_MARKER
           typeOnly: false
+        - file: src/content-text.ts
+          imports:
+            - extractContentText
+          typeOnly: false
       exports:
         - shouldSkipConversation
         - scanExclusionMarkers
@@ -807,6 +812,7 @@ modules:
             - closeSharedReaderDatabase
             - deleteExchange
             - deleteExchangeFts
+            - deleteExchangesForArchive
             - ensureFts
             - getAllExchanges
             - getFileLastIndexed
@@ -898,7 +904,8 @@ modules:
           typeOnly: false
       exports: []
     src/indexer.ts:
-      externalDependencies: []
+      externalDependencies:
+        - better-sqlite3
       nodeDependencies:
         - events
         - fs
@@ -910,6 +917,7 @@ modules:
             - initDatabase
             - insertExchange
             - getMaxIndexedLine
+            - deleteExchangesForArchive
           typeOnly: false
         - file: src/parser.ts
           imports:
@@ -939,7 +947,7 @@ modules:
           typeOnly: false
         - file: src/exclusion-marker.ts
           imports:
-            - shouldSkipConversation
+            - scanExclusionMarkers
           typeOnly: false
       exports:
         - indexConversations
@@ -6647,6 +6655,14 @@ modules:
           imports:
             - '*'
           typeOnly: false
+        - file: src/exclusion-marker.ts
+          imports:
+            - '*'
+          typeOnly: false
+        - file: src/db.ts
+          imports:
+            - '*'
+          typeOnly: false
       exports: []
     test/sync-pending-and-legacy-retry.test.ts:
       externalDependencies:
@@ -7140,8 +7156,8 @@ statistics:
   totalTypeScriptFiles: 291
   totalSourceFiles: 291
   totalModules: 4
-  totalLinesOfCode: 57529
-  totalExports: 611
+  totalLinesOfCode: 57872
+  totalExports: 612
   entryRoots: 6
   reachableFiles: 49
   dormantFiles: 60
@@ -7159,7 +7175,7 @@ statistics:
   typeOnlyFilesInCycles: 2
   totalClasses: 10
   totalInterfaces: 139
-  totalFunctions: 347
+  totalFunctions: 348
   totalTypeGuards: 11
   totalEnums: 0
   totalConstants: 71

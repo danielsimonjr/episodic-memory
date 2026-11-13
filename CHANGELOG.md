@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [1.10.0] - 2026-11-13
+
 ### Changed
 - **An exclusion marker counts only in the text of a user or assistant message.** The scan found the marker anywhere in a transcript. A session can read a file with the marker, for example the source of this repo. That session held the marker in a tool input or a tool result. The scan then excluded the whole session. The scan now parses each line that holds the bytes of a marker. The marker counts in Claude Code string content and `text` blocks, and in a Codex `message` from the user or the assistant. Tool uses, tool results, `toolUseResult` and thinking blocks do not count. A line that does not parse counts.
 

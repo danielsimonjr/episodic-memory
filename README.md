@@ -472,6 +472,8 @@ Features:
 
 To stop the sync that the SessionStart hook starts, set `EPISODIC_MEMORY_DISABLE_AUTO_SYNC=1`. `sync --background` then exits 0. The command starts no sync. A sync in the foreground still runs, for example a manual `episodic-memory sync` or a scheduled task. Only the value `1` turns the switch on. Set the variable where the Claude Code process inherits it, because the hook gets the environment of that process.
 
+To keep the sync and turn off only its summary step, set `EPISODIC_MEMORY_SKIP_SUMMARIES=1`. The sync then copies and indexes. The sync writes no summary and prints `Summaries: skipped`. A summary only decorates a search result, so a search finds the same exchanges. Each summary is a model call. Only the value `1` turns the switch on. The digest and the topic step keep their own switches, and `backfill` still writes summaries.
+
 **Usage in Claude Code:**
 Add to `.claude/hooks/session-end`:
 ```bash

@@ -3005,6 +3005,7 @@
         "workspaceDependencies": [],
         "exports": [
           "shouldSkipConversation",
+          "buildSyncOptionsFromEnv",
           "isTerminalFailRecord",
           "extractSessionIdFromPath",
           "syncConversations",
@@ -3015,6 +3016,7 @@
           "SyncOptions"
         ],
         "functions": [
+          "buildSyncOptionsFromEnv",
           "isTerminalFailRecord",
           "extractSessionIdFromPath",
           "syncConversations",

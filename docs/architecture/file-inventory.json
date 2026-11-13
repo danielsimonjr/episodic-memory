@@ -1,11 +1,11 @@
 {
-  "totalFiles": 287,
+  "totalFiles": 288,
   "byDisposition": {
     "reachable": 45,
     "build-entry": 4,
     "test-only": 45,
     "orphan": 15,
-    "test": 173,
+    "test": 174,
     "tool": 4,
     "config": 1,
     "bench": 0,
@@ -14,11 +14,11 @@
   "byArea": {
     "src": 109,
     "tools": 4,
-    "tests": 173,
+    "tests": 174,
     "config": 1
   },
   "byPackage": {
-    "(root)": 187,
+    "(root)": 188,
     "episodic-memory": 100
   },
   "files": [
@@ -727,14 +727,14 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "orphan",
-      "loc": 261
+      "loc": 268
     },
     {
       "file": "src/sync.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 548
+      "loc": 563
     },
     {
       "file": "src/topic-db.ts",
@@ -1883,6 +1883,13 @@
       "area": "tests",
       "disposition": "test",
       "loc": 14
+    },
+    {
+      "file": "test/sync-skip-summaries.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 91
     },
     {
       "file": "test/sync-summary-retry.test.ts",

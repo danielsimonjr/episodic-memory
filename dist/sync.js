@@ -9,6 +9,20 @@ import { renameWithRetry } from './fs-retry.js';
 // The scan lives in exclusion-marker.ts. sync.ts re-exports the predicate for its earlier callers.
 export { shouldSkipConversation };
 /**
+ * Read the sync options that the environment sets.
+ *
+ * `EPISODIC_MEMORY_SKIP_SUMMARIES=1` sets `skipSummaries`. Only the exact value 1 sets the option.
+ * An unset variable, `0`, `true` and every other value leave the summaries on.
+ * A stray value therefore never turns off a step that the user expects.
+ * A summary only decorates a search result. The index never embeds or searches a summary, so the option does not
+ * change what a search finds. Each summary is a model call. Ported from upstream c8d0e3f.
+ *
+ * @param env the environment to read, usually `process.env`
+ */
+export function buildSyncOptionsFromEnv(env) {
+    return { skipSummaries: env.EPISODIC_MEMORY_SKIP_SUMMARIES === '1' };
+}
+/**
  * Max times a single conversation may fail to summarize before we give up and
  * write an empty sentinel. Without this cap a conversation that deterministically
  * fails (corrupt transcript, persistent API error) is re-queued on EVERY sync

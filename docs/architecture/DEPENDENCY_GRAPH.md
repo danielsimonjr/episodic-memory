@@ -1157,7 +1157,7 @@ The codebase is organized into the following modules:
 
 **Exports:**
 - Interfaces: `SyncResult`, `SyncOptions`
-- Functions: `isTerminalFailRecord`, `extractSessionIdFromPath`, `syncConversations`, `summarizeOneFile`
+- Functions: `buildSyncOptionsFromEnv`, `isTerminalFailRecord`, `extractSessionIdFromPath`, `syncConversations`, `summarizeOneFile`
 
 ---
 
@@ -2253,14 +2253,14 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 287 |
+| Total Source Files | 288 |
 | Subsystems | 5 |
-| Total Lines of Code | 56967 |
-| Total Exports | 609 |
+| Total Lines of Code | 57080 |
+| Total Exports | 610 |
 | Total Re-exports | 8 |
 | Total Classes | 10 |
 | Total Interfaces | 139 |
-| Total Functions | 346 |
+| Total Functions | 347 |
 | Total Type Guards | 11 |
 | Total Enums | 0 |
 | Type-only Imports | 82 |

@@ -1,0 +1,12 @@
+{
+  "name": "onnxruntime-web",
+  "version": "0.0.0-stub",
+  "private": true,
+  "description": "Stub for the onnxruntime-web package. The node build of @huggingface/transformers does not import it.",
+  "license": "MIT",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  }
+}

@@ -8,16 +8,16 @@
 
 | Metric | Count |
 |--------|-------|
-| Total Source Files | 100 |
-| Total Test Files | 142 |
+| Total Source Files | 101 |
+| Total Test Files | 143 |
 | Source Files with Tests | 79 |
-| Source Files without Tests | 21 |
-| Coverage (raw, direct-import) | **79.0%** |
+| Source Files without Tests | 22 |
+| Coverage (raw, direct-import) | **78.2%** |
 ---
 
 ## Source Files Not Imported By A Test
 
-The following 21 source files are not directly imported by any test file:
+The following 22 source files are not directly imported by any test file:
 
 ### root/
 
@@ -45,6 +45,10 @@ The following 21 source files are not directly imported by any test file:
 
 - `src/learn/pii-redactor.ts`
 - `src/learn/usage.ts`
+
+### onnxruntime-web-stub/
+
+- `vendor/onnxruntime-web-stub/index.js`
 
 ---
 
@@ -228,6 +232,7 @@ The following 21 source files are not directly imported by any test file:
 | `test/node-floor.test.ts` | 1 files |
 | `test/ollama-backend.test.ts` | 1 files |
 | `test/ollama-plain-reply.test.ts` | 2 files |
+| `test/onnxruntime-web-stub.test.ts` | 0 files |
 | `test/orphan-reaper.test.ts` | 1 files |
 | `test/oversized-message-guard.test.ts` | 3 files |
 | `test/parser-tool-result.test.ts` | 1 files |

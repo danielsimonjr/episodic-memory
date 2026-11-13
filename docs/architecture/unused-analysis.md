@@ -6,9 +6,9 @@
 
 ## Summary
 
-- **Files with no in-repo importer**: 13
-- **Dormant files**: 56
-  - **Orphaned (reachable from nothing)**: 13
+- **Files with no in-repo importer**: 14
+- **Dormant files**: 57
+  - **Orphaned (reachable from nothing)**: 14
   - **Test-only (only a test reaches them)**: 43
 - **Potentially unused exports**: 113
   - **Unreferenced anywhere**: 4
@@ -40,6 +40,7 @@ Source files that no root and no test reaches. Verify each one before you delete
 - `src/show-cli.ts`
 - `src/stats-cli.ts`
 - `src/sync-cli.ts`
+- `vendor/onnxruntime-web-stub/index.js`
 
 ## Dormant files: test-only
 
@@ -106,6 +107,7 @@ No file of this repository imports these files. Do not use the list as a deletio
 - `src/show-cli.ts`
 - `src/stats-cli.ts`
 - `src/sync-cli.ts`
+- `vendor/onnxruntime-web-stub/index.js`
 
 ## Exports unreferenced anywhere
 

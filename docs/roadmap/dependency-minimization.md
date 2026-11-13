@@ -69,7 +69,7 @@ Dependency facts:
 ## 2. Repo facts that bind the plan
 
 - The package is a fork of `obra/episodic-memory`. Fork divergence has an ongoing merge cost (`docs/roadmap/upstream-sync.md`). `package.json` is in the fork-patched set.
-- `package.json` has an `overrides` block (`hono`, `protobufjs`, `sharp`, `adm-zip`). A new override extends that block.
+- `package.json` has an `overrides` block (`hono`, `sharp`, `adm-zip`, `onnxruntime-web`). A new override extends that block.
 - `package.json` has no `files` field. The plugin cache holds the whole repo, so a folder inside the repo ships to every plugin host.
 - The plugin runs under Claude Code and under Codex (`README.md`, `.codex-plugin/plugin.json`, codex-cli 0.130.0 or later). A Codex host can have no `claude` executable.
 - `engines.node` is `>=22.0.0`. `src/node-floor.ts` sets `NODE_FLOOR` to `22.0.0`. CI runs Node 24 only.
@@ -164,13 +164,13 @@ This workstream changes no embedding code. The embedding backend stays the same.
 - Add `"onnxruntime-web": "file:./vendor/onnxruntime-web-stub"` to `overrides`. An override cannot delete a package. An override can only replace a package.
 - Do not publish a package. A published placeholder is an outward-facing act and adds a supply-chain trust.
 - Regenerate `bun.lock`.
-- Check the `protobufjs` override. Only `onnxruntime-web` reaches `protobufjs`. Keep that override only with a stated reason.
+- Remove the `protobufjs` override and the `protobufjs` entry of `allowScripts`. Only `onnxruntime-web` reaches `protobufjs`, so with the stub no package reaches `protobufjs`.
 
-**UNVERIFIED.** No install has proved that `npm` and `bun` both accept a `file:` override. The first step of PR 3 proves the override in a scratch tree.
-npm can install a `file:` directory as a symbolic link. The check in acceptance step 2 reads the stub through the link.
+npm and bun accept the `file:` override. npm links `node_modules/onnxruntime-web` to the stub. bun writes the stub into `bun.lock` and installs no `onnxruntime-web` directory. Neither tree holds the registry package.
 
-**Saving.** 140.7 MB and 18 packages (measured by reachability; estimate until installed).
-The `onnxruntime-web` directory is 134.5 MB. The other 6.2 MB belongs to packages that only `onnxruntime-web` reaches.
+**Saving.** 140.7 MB and 18 packages at the `bun.lock` versions. The figure is the install-cache size of the 18 removed lock entries.
+The `onnxruntime-web` directory is 133.9 MB. The other 6.8 MB belongs to packages that only `onnxruntime-web` reaches.
+A plugin host installs with npm and no lockfile. That install resolves a later `onnxruntime-web` release. On that host, two fresh npm trees differ by 151.9 MB.
 
 **Risk.**
 
@@ -181,7 +181,7 @@ The `onnxruntime-web` directory is 134.5 MB. The other 6.2 MB belongs to package
 **Acceptance test, in this order.** Each step can fail.
 
 1. `bun run typecheck` exits 0 with the override.
-2. Run `bun install --frozen-lockfile` with the CI Bun version. Run `npm install --no-audit --no-fund`. In each tree, `node_modules/onnxruntime-web/package.json` names the stub.
+2. Run `bun install --frozen-lockfile` with the CI Bun version. Run `npm install --no-audit --no-fund`. In the npm tree, `node_modules/onnxruntime-web/package.json` names the stub. The bun tree holds no `onnxruntime-web` directory.
 3. If either installer rejects the `file:` override, PR 3 stops. This plan then gets a new decision. The plan does not fall back to a published package.
 4. The size-walk total of each fresh install falls by 140.7 MB, inside the band of section 6.
 5. `import('@huggingface/transformers')` succeeds. One embedding call returns a vector of 384 dimensions.
@@ -190,7 +190,7 @@ The `onnxruntime-web` directory is 134.5 MB. The other 6.2 MB belongs to package
 
 **Rollback.** Section 8. The revert removes the override and the stub. Run `bun install` to regenerate `bun.lock`.
 
-**Verdict: DO**, labelled UNVERIFIED until step 2 passes under both installers. The step is the largest removal that keeps the embedding stack unchanged.
+**Verdict: DO.** Step 2 passes under both installers. The step is the largest removal that keeps the embedding stack unchanged.
 
 #### 3.3b Prune idle `onnxruntime-node` binaries (PR 4)
 
@@ -481,7 +481,7 @@ The removal of `@types/marked` in section 3.1 uses the types that `marked` 16 sh
 |---|---|---|---|---|
 | 3.1 quick wins | DO | 12.4 on a plugin host; 0 on a repo checkout | 4 | reachability |
 | 3.2 `--omit=dev` | DO | 78.4 on a plugin host (includes 3.1) | 54 | reachability; estimate until installed |
-| 3.3a `onnxruntime-web` stub | DO (UNVERIFIED) | 140.7 | 18 | reachability; estimate until installed |
+| 3.3a `onnxruntime-web` stub | DO | 140.7 | 18 | install cache at the `bun.lock` versions; 151.9 MB on an npm host |
 | 3.3b idle ORT binaries | DO | 158.1 on Windows x64 | 0 | measured directory sizes; estimate until pruned |
 | 3.4 SDK platform package | DO (opt-in) | 269.2 on opt-in hosts; 0 by default | 1 | measured package size |
 | 3.5 option B | DO LATER | 65.5 | 6 | reachability; estimate |
@@ -528,7 +528,7 @@ Each PR regenerates `bun.lock` from its own parent commit. Each PR reverts on it
 |---|---|---|---|---|
 | 1 | Quick wins | 3.1 | DO | 12.4 MB on a plugin host |
 | 2 | `--omit=dev` on plugin hosts | 3.2 | DO | 78.4 MB on a plugin host (includes PR 1) |
-| 3 | `onnxruntime-web` stub override | 3.3a | DO (UNVERIFIED) | 140.7 MB |
+| 3 | `onnxruntime-web` stub override | 3.3a | DO | 140.7 MB (measured) |
 | 4 | Prune idle `onnxruntime-node` binaries | 3.3b | DO | 158.1 MB on Windows x64 |
 | 5 | SDK platform package, opt-in | 3.4 | DO | 269.2 MB on opt-in hosts; 0 by default |
 | 6 | Embedding option B, with parity gate | 3.5 | DO LATER | 65.5 MB |

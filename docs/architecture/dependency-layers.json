@@ -1569,6 +1569,35 @@
           "BGE_QUERY_PREFIX"
         ]
       },
+      "src/exclusion-marker.ts": {
+        "description": "The exclusion-marker scan of a transcript.",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "./constants.js",
+            "imports": [
+              "SUMMARIZER_CONTEXT_MARKER"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "shouldSkipConversation",
+          "scanExclusionMarkers"
+        ],
+        "functions": [
+          "shouldSkipConversation",
+          "scanExclusionMarkers"
+        ]
+      },
       "src/fs-retry.ts": {
         "description": "Retry of the file operations that a Windows sharing violation stops for a moment.",
         "externalDependencies": [],
@@ -1700,7 +1729,7 @@
         "exports": []
       },
       "src/indexer.ts": {
-        "description": "Run the copy and the parse of one listed transcript. Return `null` when the transcript is gone.",
+        "description": "Tell whether a listed transcript must stay out of the index and out of the summaries, and log the skip.",
         "externalDependencies": [],
         "nodeDependencies": [
           {
@@ -1771,6 +1800,12 @@
               "getConversationSourceDirs",
               "findJsonlFiles",
               "statIfExists"
+            ]
+          },
+          {
+            "file": "./exclusion-marker.js",
+            "imports": [
+              "shouldSkipConversation"
             ]
           }
         ],
@@ -2862,7 +2897,7 @@
         "exports": []
       },
       "src/sync.ts": {
-        "description": "Tell whether the conversation must stay out of the index and out of the summaries.",
+        "description": "The counts and errors of one `syncConversations` run.",
         "externalDependencies": [],
         "nodeDependencies": [
           {
@@ -2887,9 +2922,10 @@
             "typeOnly": true
           },
           {
-            "file": "./constants.js",
+            "file": "./exclusion-marker.js",
             "imports": [
-              "SUMMARIZER_CONTEXT_MARKER"
+              "scanExclusionMarkers",
+              "shouldSkipConversation"
             ]
           },
           {
@@ -2962,7 +2998,6 @@
           "SyncOptions"
         ],
         "functions": [
-          "shouldSkipConversation",
           "isTerminalFailRecord",
           "extractSessionIdFromPath",
           "syncConversations",
@@ -3493,6 +3528,13 @@
               "getExcludedProjects",
               "findJsonlFiles",
               "statIfExists"
+            ]
+          },
+          {
+            "file": "./exclusion-marker.js",
+            "imports": [
+              "scanExclusionMarkers",
+              "shouldSkipConversation"
             ]
           },
           {
@@ -5908,6 +5950,7 @@
         "src/doctor.ts",
         "src/embedding-migration.ts",
         "src/embeddings.ts",
+        "src/exclusion-marker.ts",
         "src/fs-retry.ts",
         "src/fts-query.ts",
         "src/gpu-reservation.ts",

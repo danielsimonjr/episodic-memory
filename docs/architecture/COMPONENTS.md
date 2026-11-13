@@ -55,13 +55,17 @@ Holds `EMBEDDING_VERSION`. It finds rows with an older version and re-embeds the
 
 ### `src/indexer.ts`
 
-`indexConversations`, `indexSession` and `indexUnprocessed` write exchanges, tool calls and vectors to the database. They can call the summarizer for conversations that lack a summary.
+`indexConversations`, `indexSession` and `indexUnprocessed` write exchanges, tool calls and vectors to the database. They can call the summarizer for conversations that lack a summary. Each function scans the source transcript with `shouldSkipConversation` after the parse. A transcript with an exclusion marker keeps its archive copy and gets no index rows and no summary.
 
 ### `src/sync.ts`
 
-`syncConversations(sourceDir, destDir, options)` is the core of ingest. The function walks the source folders and copies a transcript only when it is newer than the archive copy. It queues new files for indexing and queues missing summaries. It skips summarizer conversations and excluded projects. `shouldSkipConversation` scans the whole file for an exclusion marker, one 1 MiB chunk at a time. A file that the scan cannot read counts as excluded. The index step records an error for that file and re-queues the file. Summary work runs in this order: fresh work, then retries, then retries of legacy empty summaries. A deferral (see `src/deferral.ts`) stops the summary loop and sets `summariesDeferred`. When `initEmbeddings` fails, the function records one `(embeddings)` error and skips the index step. The summaries still run. The function sets the time of each copy of that run to the epoch. The next sync therefore copies the files again and indexes them. The function returns a `SyncResult` with counts. `summarizeOneFile` summarizes a single archive file.
+`syncConversations(sourceDir, destDir, options)` is the core of ingest. The function walks the source folders and copies a transcript only when it is newer than the archive copy. It queues new files for indexing and queues missing summaries. It skips summarizer conversations and excluded projects. The index step scans each queued file for an exclusion marker (see `src/exclusion-marker.ts`). The index step records an error for a file that the scan cannot read, and re-queues the file. Summary work runs in this order: fresh work, then retries, then retries of legacy empty summaries. A deferral (see `src/deferral.ts`) stops the summary loop and sets `summariesDeferred`. When `initEmbeddings` fails, the function records one `(embeddings)` error and skips the index step. The summaries still run. The function sets the time of each copy of that run to the epoch. The next sync therefore copies the files again and indexes them. The function returns a `SyncResult` with counts. `summarizeOneFile` summarizes a single archive file.
 
 The copy writes a temporary file. The copy renames the temporary file over the archive copy with `renameWithRetry` (see `src/fs-retry.ts`). When every attempt fails, the copy removes the temporary file. The copy then records one error for the transcript.
+
+### `src/exclusion-marker.ts`
+
+`scanExclusionMarkers(filePath)` reads the whole file, one 1 MiB chunk at a time, and compares bytes. Each chunk starts with the last bytes of the previous chunk, so a marker that crosses a chunk boundary still matches. The function returns `'marker'`, `'clean'` or `'unreadable'`, and never throws. `shouldSkipConversation(filePath)` returns true for every result except `'clean'`. The three markers are the DO NOT INDEX instruction, the NO_INSIGHTS_FOUND prompt text and `SUMMARIZER_CONTEXT_MARKER`. `src/sync.ts`, `src/indexer.ts`, `src/verify.ts` and `src/backfill.ts` use this module. `src/sync.ts` re-exports `shouldSkipConversation`.
 
 ### `src/fs-retry.ts`
 
@@ -73,7 +77,7 @@ Summarizes archived conversations that `sync` cannot reach. It checks the GPU re
 
 ### `src/verify.ts` and `src/prune.ts`
 
-`verify` compares the archive with the index and can repair a mismatch. `prune` removes every indexed row that belongs to a set of projects.
+`verify` compares the archive with the index and can repair a mismatch. `verifyIndex` skips an archive file with an exclusion marker. The index rows of that file therefore count as orphaned, and `repairIndex` deletes the rows. An archive file that the marker scan cannot read keeps its rows, and `verifyIndex` lists the file as corrupted. `repairIndex` skips a listed file with a marker, so the file gets no summary call. `prune` removes every indexed row that belongs to a set of projects.
 
 ## Summaries
 
@@ -199,10 +203,10 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 283 | repo-tools map |
+| totalSourceFiles | 285 | repo-tools map |
 | totalClasses | 10 | repo-tools map |
 | totalInterfaces | 139 | repo-tools map |
-| totalFunctions | 343 | repo-tools map |
+| totalFunctions | 344 | repo-tools map |
 | totalConstants | 70 | repo-tools map |
 
 The tool names, the table names and the model name come from a direct reading of `src/mcp-server.ts`, `src/db.ts` and `src/embeddings.ts`. They are not `repo-tools map` metrics.

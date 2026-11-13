@@ -1,19 +1,19 @@
 {
   "metadata": {
-    "totalSourceFiles": 108,
-    "totalTestFiles": 163,
+    "totalSourceFiles": 109,
+    "totalTestFiles": 164,
     "testedCount": 85,
-    "untestedCount": 23,
-    "coveragePercent": "78.7",
+    "untestedCount": 24,
+    "coveragePercent": "78.0",
     "effectiveCoverage": {
       "policyLoaded": false,
-      "activeFiles": 108,
+      "activeFiles": 109,
       "testedActive": 85,
-      "activeUntested": 23,
+      "activeUntested": 24,
       "excludedTotal": 0,
-      "percent": "78.7",
+      "percent": "78.0",
       "breakdown": {
-        "active_untested": 23
+        "active_untested": 24
       }
     }
   },
@@ -27,6 +27,7 @@
     "cli/sync-hook.js",
     "src/backfill-cli.ts",
     "src/doctor-cli.ts",
+    "src/exclusion-marker.ts",
     "src/fts-query.ts",
     "src/index-cli.ts",
     "src/index.ts",
@@ -194,6 +195,7 @@
       "test/digest-prompt-budget.test.ts",
       "test/doctor.test.ts",
       "test/embedding-migration-helpers.test.ts",
+      "test/index-honours-marker.test.ts",
       "test/indexer-db-close.test.ts",
       "test/integration.test.ts",
       "test/learn/learn-handlers.test.ts",
@@ -274,6 +276,7 @@
       "test/embedding-migration.test.ts",
       "test/embeddings-format.test.ts",
       "test/embeddings-unavailable.test.ts",
+      "test/index-honours-marker.test.ts",
       "test/indexer-db-close.test.ts",
       "test/integration.test.ts",
       "test/multi-concept.test.ts",
@@ -283,6 +286,7 @@
       "test/vector-search-filters.test.ts",
       "test/verify.test.ts"
     ],
+    "src/exclusion-marker.ts": [],
     "src/fs-retry.ts": [
       "test/sync-copy-retry.test.ts"
     ],
@@ -296,6 +300,7 @@
       "test/dangling-project-link.test.ts",
       "test/exclude-nested.test.ts",
       "test/incremental-indexing.test.ts",
+      "test/index-honours-marker.test.ts",
       "test/indexer-db-close.test.ts",
       "test/learn/learn-handlers.test.ts",
       "test/search-metadata-filters.test.ts",
@@ -550,6 +555,7 @@
     ],
     "src/parser.ts": [
       "test/codex-transcripts.test.ts",
+      "test/index-honours-marker.test.ts",
       "test/integration.test.ts",
       "test/parser-tool-result.test.ts",
       "test/parser.test.ts"
@@ -614,6 +620,7 @@
     "src/summarizer.ts": [
       "test/claude-auth-deferral.test.ts",
       "test/claude-bin-deferral.test.ts",
+      "test/index-honours-marker.test.ts",
       "test/ollama-plain-reply.test.ts",
       "test/real-sdk-guard.test.ts",
       "test/summarizer-api-env.test.ts",
@@ -695,6 +702,7 @@
     ],
     "src/verify.ts": [
       "test/dangling-project-link.test.ts",
+      "test/index-honours-marker.test.ts",
       "test/verify.test.ts"
     ],
     "vendor/onnxruntime-web-stub/index.js": []
@@ -895,6 +903,14 @@
       "src/indexer.ts"
     ],
     "test/index-cli-args.test.ts": [],
+    "test/index-honours-marker.test.ts": [
+      "src/embeddings.ts",
+      "src/summarizer.ts",
+      "src/indexer.ts",
+      "src/verify.ts",
+      "src/db.ts",
+      "src/parser.ts"
+    ],
     "test/indexer-db-close.test.ts": [
       "src/db.ts",
       "src/embeddings.ts",
@@ -1417,6 +1433,10 @@
     },
     {
       "file": "src/doctor-cli.ts",
+      "category": null
+    },
+    {
+      "file": "src/exclusion-marker.ts",
       "category": null
     },
     {

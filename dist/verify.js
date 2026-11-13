@@ -3,10 +3,11 @@ import path from 'path';
 import { parseConversation } from './parser.js';
 import { initDatabase, getAllExchanges, getFileLastIndexed } from './db.js';
 import { getArchiveDir, getExcludedProjects, findJsonlFiles, statIfExists } from './paths.js';
+import { scanExclusionMarkers, shouldSkipConversation } from './exclusion-marker.js';
 /**
  * Compare the conversation archive with the index and list the differences.
  *
- * The function checks each archived conversation in a project that is not excluded. The function then checks each indexed exchange for an archive file. The function opens the index with `initDatabase`, which runs its migrations, and prints progress lines to standard output.
+ * The function checks each archived conversation in a project that is not excluded. The function skips a conversation with an exclusion marker, so the index rows of that conversation count as orphaned. The function then checks each indexed exchange for an archive file. The function opens the index with `initDatabase`, which runs its migrations, and prints progress lines to standard output.
  *
  * The function returns an empty result when the archive folder does not exist. The function repairs nothing.
  */
@@ -45,7 +46,17 @@ export async function verifyIndex() {
                 console.log(`  Checked ${totalChecked} conversations...`);
             }
             const conversationPath = path.join(projectPath, file);
+            // An excluded conversation stays out of the index. The file of the excluded conversation does not go into
+            // foundFiles. As a result, any index rows of the file count as orphaned, and a repair deletes the rows. A file
+            // that the scan cannot read keeps its rows. verifyIndex lists that file as corrupted, for manual review.
+            const markerScan = scanExclusionMarkers(conversationPath);
+            if (markerScan === 'marker')
+                continue;
             foundFiles.add(conversationPath);
+            if (markerScan === 'unreadable') {
+                result.corrupted.push({ path: conversationPath, error: 'the exclusion-marker scan could not read the file' });
+                continue;
+            }
             const summaryPath = conversationPath.replace('.jsonl', '-summary.txt');
             // Check for missing summary
             if (!fs.existsSync(summaryPath)) {
@@ -97,7 +108,7 @@ export async function verifyIndex() {
 /**
  * Repair the problems that `verifyIndex` found.
  *
- * The function deletes the index rows of orphaned exchanges. For each missing or outdated conversation, the function parses the conversation again. The function then writes the summary file when the summary succeeds, and indexes the exchanges with new embeddings. A conversation that fails is logged and skipped, and the other conversations still run.
+ * The function deletes the index rows of orphaned exchanges. The function skips a listed conversation with an exclusion marker, so that conversation gets no summary call. For each other missing or outdated conversation, the function parses the conversation again. The function then writes the summary file when the summary succeeds, and indexes the exchanges with new embeddings. A conversation that fails is logged and skipped, and the other conversations still run.
  *
  * The function does not repair corrupted conversations. The function prints them for manual review.
  *
@@ -123,6 +134,11 @@ export async function repairIndex(issues) {
         ...issues.outdated.map(o => o.path)
     ];
     for (const conversationPath of toReindex) {
+        // The file can gain a marker between the verify run and the repair. An excluded file gets no summary call.
+        if (shouldSkipConversation(conversationPath)) {
+            console.log(`Skipped (exclusion marker, or the marker scan could not read the file): ${conversationPath}`);
+            continue;
+        }
         console.log(`Re-indexing: ${conversationPath}`);
         try {
             // Extract project name from path

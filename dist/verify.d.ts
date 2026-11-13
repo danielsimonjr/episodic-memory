@@ -2,9 +2,10 @@
  * The problems that `verifyIndex` found, grouped by kind.
  *
  * - `missing`: an archived conversation has no summary file.
- * - `orphaned`: an indexed exchange names an archive file that `verifyIndex` did not find.
+ * - `orphaned`: an indexed exchange names an archive file that `verifyIndex` did not find. A file with an
+ *   exclusion marker counts as not found.
  * - `outdated`: an archived conversation is newer than its last indexing.
- * - `corrupted`: an archived conversation does not parse.
+ * - `corrupted`: an archived conversation does not parse, or the exclusion-marker scan cannot read the file.
  *
  * `repairIndex` reads these lists.
  */
@@ -30,7 +31,7 @@ export interface VerificationResult {
 /**
  * Compare the conversation archive with the index and list the differences.
  *
- * The function checks each archived conversation in a project that is not excluded. The function then checks each indexed exchange for an archive file. The function opens the index with `initDatabase`, which runs its migrations, and prints progress lines to standard output.
+ * The function checks each archived conversation in a project that is not excluded. The function skips a conversation with an exclusion marker, so the index rows of that conversation count as orphaned. The function then checks each indexed exchange for an archive file. The function opens the index with `initDatabase`, which runs its migrations, and prints progress lines to standard output.
  *
  * The function returns an empty result when the archive folder does not exist. The function repairs nothing.
  */
@@ -38,7 +39,7 @@ export declare function verifyIndex(): Promise<VerificationResult>;
 /**
  * Repair the problems that `verifyIndex` found.
  *
- * The function deletes the index rows of orphaned exchanges. For each missing or outdated conversation, the function parses the conversation again. The function then writes the summary file when the summary succeeds, and indexes the exchanges with new embeddings. A conversation that fails is logged and skipped, and the other conversations still run.
+ * The function deletes the index rows of orphaned exchanges. The function skips a listed conversation with an exclusion marker, so that conversation gets no summary call. For each other missing or outdated conversation, the function parses the conversation again. The function then writes the summary file when the summary succeeds, and indexes the exchanges with new embeddings. A conversation that fails is logged and skipped, and the other conversations still run.
  *
  * The function does not repair corrupted conversations. The function prints them for manual review.
  *

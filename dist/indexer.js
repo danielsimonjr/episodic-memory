@@ -5,6 +5,7 @@ import { parseConversation } from './parser.js';
 import { initEmbeddings, generateExchangeEmbedding, generateExchangeEmbeddings } from './embeddings.js';
 import { summarizeConversation } from './summarizer.js';
 import { getArchiveDir, getExcludedProjects, getConversationSourceDirs, findJsonlFiles, statIfExists } from './paths.js';
+import { shouldSkipConversation } from './exclusion-marker.js';
 // Set max output tokens for Claude SDK (used by summarizer)
 process.env.CLAUDE_CODE_MAX_OUTPUT_TOKENS = '20000';
 // Increase max listeners for concurrent API calls
@@ -22,6 +23,17 @@ async function processBatch(items, processor, concurrency) {
 }
 function sessionIdForSummary(exchanges) {
     return exchanges.find(exchange => exchange.sessionId)?.sessionId;
+}
+/**
+ * Tell whether a listed transcript must stay out of the index and out of the summaries, and log the skip.
+ *
+ * The scan reads the source transcript, because the run parses the source transcript. The archive copy can be older.
+ */
+function excludedByMarker(file, sourcePath) {
+    if (!shouldSkipConversation(sourcePath))
+        return false;
+    console.log(`  Skipped ${file} (exclusion marker, or the marker scan could not read the file)`);
+    return true;
 }
 /**
  * Run the copy and the parse of one listed transcript. Return `null` when the transcript is gone.
@@ -44,7 +56,7 @@ async function skipIfVanished(file, work) {
 /**
  * Index the conversations in every source folder.
  *
- * The function opens the index and loads the embedding model before it scans. Each file is copied to the archive when no copy exists, and then parsed. Files without exchanges are skipped. Unless `noSummaries` is set, the function writes a summary for each conversation that has none.
+ * The function opens the index and loads the embedding model before it scans. Each file is copied to the archive when no copy exists, and then parsed. Files without exchanges are skipped. A file with an exclusion marker keeps its archive copy and gets no index rows and no summary. Unless `noSummaries` is set, the function writes a summary for each conversation that has none.
  *
  * `limitToProject` restricts the run to one project. `maxConversations` stops the run after a project when the processed count reaches that number. `concurrency` sets how many summaries run at once.
  */
@@ -101,6 +113,8 @@ export async function indexConversations(limitToProject, maxConversations, concu
                         return parseConversation(sourcePath, project, archivePath);
                     });
                     if (exchanges === null)
+                        continue;
+                    if (excludedByMarker(file, sourcePath))
                         continue;
                     if (exchanges.length === 0) {
                         console.log(`  Skipped ${file} (no exchanges)`);
@@ -174,7 +188,7 @@ export async function indexConversations(limitToProject, maxConversations, concu
 /**
  * Archive and index the first conversation file whose path contains the session id.
  *
- * The function searches every source folder. The function writes a summary for the file when the file has exchanges and no summary. The function writes no summary when `noSummaries` is set. When no file matches, the function logs a message and returns without an error.
+ * The function searches every source folder. The function writes a summary for the file when the file has exchanges and no summary. The function writes no summary when `noSummaries` is set. A file with an exclusion marker gets no index rows and no summary. When no file matches, the function logs a message and returns without an error.
  *
  * @param sessionId Text that the file path must contain.
  * @param concurrency Has no effect. The function handles one file.
@@ -215,7 +229,7 @@ export async function indexSession(sessionId, concurrency = 1, noSummaries = fal
                         }
                         return parseConversation(sourcePath, project, archivePath);
                     });
-                    if (exchanges && exchanges.length > 0) {
+                    if (exchanges && exchanges.length > 0 && !excludedByMarker(file, sourcePath)) {
                         // Generate summary (unless --no-summaries)
                         const summaryPath = archivePath.replace('.jsonl', '-summary.txt');
                         if (!noSummaries && !fs.existsSync(summaryPath)) {
@@ -249,7 +263,7 @@ export async function indexSession(sessionId, concurrency = 1, noSummaries = fal
 /**
  * Index the new exchanges of every conversation.
  *
- * The transcripts are append-only. For each file, the function reads the last line that the index holds. The function then indexes only the exchanges that start after that line. The function refreshes the archive copy of each file that has indexed lines.
+ * The transcripts are append-only. For each file, the function reads the last line that the index holds. The function then indexes only the exchanges that start after that line. The function refreshes the archive copy of each file that has indexed lines. A file with an exclusion marker gets no new index rows and no summary.
  *
  * Unless `noSummaries` is set, the function writes missing summaries and runs `concurrency` of them at a time. When no file has new exchanges, the function prints a message and returns.
  */
@@ -296,6 +310,8 @@ export async function indexUnprocessed(concurrency = 1, noSummaries = false) {
                         return parseConversation(sourcePath, project, archivePath);
                     });
                     if (exchanges === null)
+                        continue;
+                    if (excludedByMarker(file, sourcePath))
                         continue;
                     const newExchanges = maxIndexedLine > 0
                         ? exchanges.filter(e => e.lineStart > maxIndexedLine)

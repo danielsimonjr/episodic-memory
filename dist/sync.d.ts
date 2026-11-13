@@ -1,11 +1,6 @@
 import type { ConversationExchange } from './types.js';
-/**
- * Tell whether the conversation must stay out of the index and out of the summaries.
- *
- * The function returns true when an exclusion marker occurs anywhere in the file. When the scan cannot read the
- * file, the function also returns true. The scan cannot then show that the file has no marker.
- */
-export declare function shouldSkipConversation(filePath: string): boolean;
+import { shouldSkipConversation } from './exclusion-marker.js';
+export { shouldSkipConversation };
 /**
  * The counts and errors of one `syncConversations` run.
  *

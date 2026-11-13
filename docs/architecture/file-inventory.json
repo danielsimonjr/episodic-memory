@@ -1,11 +1,11 @@
 {
-  "totalFiles": 255,
+  "totalFiles": 256,
   "byDisposition": {
     "reachable": 40,
     "build-entry": 4,
     "test-only": 43,
     "orphan": 14,
-    "test": 149,
+    "test": 150,
     "tool": 4,
     "config": 1,
     "bench": 0,
@@ -14,11 +14,11 @@
   "byArea": {
     "src": 101,
     "tools": 4,
-    "tests": 149,
+    "tests": 150,
     "config": 1
   },
   "byPackage": {
-    "(root)": 162,
+    "(root)": 163,
     "episodic-memory": 93
   },
   "files": [
@@ -34,7 +34,7 @@
       "package": "(root)",
       "area": "src",
       "disposition": "test-only",
-      "loc": 56
+      "loc": 138
     },
     {
       "file": "cli/episodic-memory.js",
@@ -1001,6 +1001,13 @@
       "area": "tests",
       "disposition": "test",
       "loc": 35
+    },
+    {
+      "file": "test/ensure-deps-prune.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 182
     },
     {
       "file": "test/exclude-nested.test.ts",

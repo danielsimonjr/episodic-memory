@@ -9,7 +9,7 @@
 | Metric | Count |
 |--------|-------|
 | Total Source Files | 101 |
-| Total Test Files | 143 |
+| Total Test Files | 144 |
 | Source Files with Tests | 79 |
 | Source Files without Tests | 22 |
 | Coverage (raw, direct-import) | **78.2%** |
@@ -56,7 +56,7 @@ The following 22 source files are not directly imported by any test file:
 
 | Source File | Test Files |
 |-------------|------------|
-| `cli/ensure-deps.js` | `runtime-imports.test.ts` |
+| `cli/ensure-deps.js` | `ensure-deps-prune.test.ts`, `runtime-imports.test.ts` |
 | `src/api-endpoint.ts` | `security-speed-helpers.test.ts` |
 | `src/archive-path.ts` | `archive-path-edges.test.ts`, `archive-path.test.ts` |
 | `src/backfill.ts` | `backfill-gpu-reservation.test.ts`, `backfill.test.ts` |
@@ -178,6 +178,7 @@ The following 22 source files are not directly imported by any test file:
 | `test/embedding-migration-helpers.test.ts` | 3 files |
 | `test/embedding-migration.test.ts` | 2 files |
 | `test/embeddings-format.test.ts` | 2 files |
+| `test/ensure-deps-prune.test.ts` | 1 files |
 | `test/exclude-nested.test.ts` | 2 files |
 | `test/global-setup.test.ts` | 0 files |
 | `test/gpu-reservation.test.ts` | 2 files |

@@ -4,10 +4,9 @@
 > `obra/episodic-memory`. Auto-loaded by Claude Code on every session. Keep terse
 > in this file; details live in `docs/roadmap/`, `todo.md`, and `CHANGELOG.md`.
 
-This is **`danielsimonjr/episodic-memory`** — a downstream fork of
-`obra/episodic-memory@1.4.1` carrying local-only patches for Windows
-correctness, stdio-protocol safety, and prompt-injection hardening. The fork
-exists to ship those fixes immediately without waiting for upstream merge.
+**`danielsimonjr/episodic-memory`** is a downstream fork of `obra/episodic-memory@1.4.1`. The fork carries local-only
+patches for Windows correctness, stdio-protocol safety, and prompt-injection hardening. The fork exists to ship
+those fixes immediately without waiting for upstream merge.
 
 ## Identity invariants
 
@@ -15,7 +14,7 @@ exists to ship those fixes immediately without waiting for upstream merge.
 - **Default branch:** `main` is protected. The CI `build` check is required, so every change goes on a branch and a pull request.
 - **Upstream remote:** `upstream` → `https://github.com/obra/episodic-memory.git`
 - **Install path on this machine:** `episodic-memory@local-marketplace`. The marketplace `local-marketplace` is sourced from the GitHub repo `danielsimonjr/skills`. NOT `@superpowers-marketplace`.
-- **Persistent state lives outside the repo.** This fork uses a relocated copy at `~/.claude/episodic-memory-data/` (configured via `EPISODIC_MEMORY_CONFIG_DIR` user env var), while the original at `~/.config/superpowers/` is preserved untouched as a fallback so upstream installs (if reverted to) still find their data.
+- **Persistent state lives outside the repo.** The fork uses a relocated copy at `~/.claude/episodic-memory-data/`. The `EPISODIC_MEMORY_CONFIG_DIR` user env var selects the relocated copy. The original at `~/.config/superpowers/` stays untouched as a fallback. If you revert to the upstream install, the upstream install still finds its data there.
   - **Active path (fork reads from here):** `C:\Users\danie\.claude\episodic-memory-data\`
     - DB: `…\conversation-index\db.sqlite`
     - Archive: `…\conversation-archive\`
@@ -42,10 +41,10 @@ When upstream merges these (or equivalents), rebase/merge `upstream/main` and dr
 
 ## Knowledge store (no memoryjs)
 
-The `learn` feature's `learned/knowledge.db` is plain better-sqlite3: `src/learn/knowledge-store.ts`
-owns the `entities` / `relations` layout (the one the former `@danielsimonjr/memoryjs` adapter created, so an
-existing file opens unchanged) and every read-modify-write runs under the write lock. There is no memoryjs
-dependency, no `MEMORY_*` environment handling and no per-handle cache: a write is visible to every open handle.
+The `learn` feature's `learned/knowledge.db` uses plain better-sqlite3. `src/learn/knowledge-store.ts` owns the
+`entities` / `relations` layout. This layout is the one that the former `@danielsimonjr/memoryjs` adapter created,
+so an existing file opens unchanged. Every read-modify-write runs under the write lock. The store has no memoryjs
+dependency, no `MEMORY_*` environment handling and no per-handle cache. Each open handle sees every write.
 
 ## Quick orientation
 
@@ -147,10 +146,10 @@ source changes that touch the MCP server or any imported module, run
 `bun run build` so `dist/` reflects source. **Commit `dist/` alongside `src/`** —
 CI doesn't rebuild for you.
 
-**Node floor: `>=22.0.0`** (better-sqlite3 13's floor; `engines` is advisory, so it is enforced at launch).
-`src/node-floor.ts` holds the constant, `cli/mcp-server-wrapper.js` and `cli/episodic-memory.js learn`
-exit with one stderr line below it, and CI runs Node 24. Both of the user's machines run Node 24. This
-is a fork-only divergence from upstream, recorded in `docs/roadmap/upstream-sync.md`.
+**Node floor: `>=22.0.0`** is the floor of better-sqlite3 13. The `engines` field is advisory, so the launch enforces
+the floor. `src/node-floor.ts` holds the constant. `cli/mcp-server-wrapper.js` and `cli/episodic-memory.js learn`
+exit with one stderr line below the floor. CI runs Node 24. Both of the user's machines run Node 24.
+`docs/roadmap/upstream-sync.md` records the floor as a fork-only divergence from upstream.
 
 **Toolchain vs runtime:** Bun is the package manager and script driver (CI + local
 dev). Shipped code still runs under **Node** (CLI shebangs, `.mcp.json`, hooks).
@@ -176,11 +175,11 @@ scheduled task. To roll back, remove the variable first. Then run `npm install -
 
 ### Current test state
 
-- **Full suite: 1533 tests in 154 files pass** (~17s wall clock on Linux;
-  Windows runs are slower). The former `integration.test.ts` / `verify.test.ts` cold-embedding
-  timeout flakes were fixed: the embedder is pre-warmed once per worker in `beforeAll`,
-  `vitest.config.ts` sets `hookTimeout: 30000`, and the repair re-index test gets 60s. If you see a fresh
-  timeout flake, suspect a new embedding-heavy hook without warm-up rather than the old cold-start cause.
+- **Full suite: 1533 tests in 154 files pass** in about 17 s of wall clock on Linux. Windows runs are slower.
+  The suite no longer has the former `integration.test.ts` / `verify.test.ts` cold-embedding timeout flakes.
+  `beforeAll` pre-warms the embedder once per worker. `vitest.config.ts` sets `hookTimeout: 30000`.
+  The repair re-index test gets 60s. If you see a fresh timeout flake, suspect a new embedding-heavy hook
+  without warm-up, not the old cold-start cause.
 - The learn tests are the bulk of the suite (`test/learn/`, 38 files; the other 116 test files sit directly in `test/`). The learn tests never reach a model: every agent and
   text call is injectable and tests pass fakes. `test/test-env.ts` pins the Claude backend, a closed ollama URL
   and a temporary config directory. `test/setup-env.ts` deletes every other `EPISODIC_MEMORY_*` variable of
@@ -221,7 +220,7 @@ Dynamic imports load these modules only inside a branch:
 
 CLI files use some modules that the server never loads, for example `indexer.ts`, `sync.ts` and `learn/cli-main.ts`. These modules can use `console.log`.
 
-The lazy import is load-bearing in both directions: `mcp-tools.ts` calls `learnEnabled()` from `learn-config.ts` (which imports nothing) *before* it imports `skills-tool.ts`, so a flag-off server never opens the knowledge store and a session that never asks for a skill pays nothing for the feature. The same holds for `topic-tool.ts`: a session that never calls `topics` loads no topic module except `topic-time.ts`. Keep the eager feature surface at `learn-config.ts` and `topic-time.ts` and nothing else.
+The lazy import has a load-bearing role in both directions. `mcp-tools.ts` calls `learnEnabled()` from `learn-config.ts` (which imports nothing) *before* `mcp-tools.ts` imports `skills-tool.ts`. A flag-off server never opens the knowledge store. If a session never asks for a skill, the session pays nothing for the feature. `topic-tool.ts` has the same arrangement. If a session never calls `topics`, the session loads no topic module except `topic-time.ts`. Keep the eager feature surface at `learn-config.ts` and `topic-time.ts`, and nowhere else.
 
 ### 2. Windows path separators
 
@@ -236,7 +235,7 @@ expect(path.normalize(actual)).toBe(path.normalize(expected));
 
 Hand-edits to `dist/` get clobbered by `bun run build`. Always edit `src/`, then `bun run build`, then commit both together.
 
-When committing dist/, **only stage files with real content changes** — `tsc` regenerates with native line endings on each platform, producing many "modified" files that are line-ending-only diffs. On Windows, expect 40+ dist files to show as modified after a build but only ~5 have real content. Stage explicitly by name, not by `git add dist/`.
+When you commit dist/, **only stage files with real content changes**. `tsc` regenerates with native line endings on each platform. `tsc` produces many "modified" files with line-ending-only diffs. On Windows, expect 40+ dist files to show as modified after a build. Only ~5 dist files have real content. Stage explicitly by name, not by `git add dist/`.
 
 ### 4. The summarizer recursion guard (#87)
 
@@ -246,7 +245,7 @@ The fix:
 - `getApiEnv()` always sets `EPISODIC_MEMORY_SUMMARIZER_GUARD=1` in the env it returns to the SDK
 - `sync-cli.ts` checks `shouldSkipReentrantSync()` **before importing the heavy native stack** and exits silently when the guard is set
 
-The guard lives in its own dependency-free module, `src/reentrancy.ts` (`SUMMARIZER_GUARD_ENV` + `shouldSkipReentrantSync`), re-exported from `summarizer.ts` for back-compat. It is checked *first* in `sync-cli.ts`; the heavy modules (`db.js` → better-sqlite3, `embeddings.js`/`embedding-migration.js` → transformers) are imported lazily via `await import()` only when the CLI is actually going to do work. Keep it that way — moving any heavy module back to a top-level static import makes every guarded reentrant subprocess pay a multi-second load just to bail.
+The guard lives in its own dependency-free module, `src/reentrancy.ts` (`SUMMARIZER_GUARD_ENV` + `shouldSkipReentrantSync`). `summarizer.ts` re-exports the guard for back-compat. `sync-cli.ts` checks the guard *first*. The CLI imports the heavy modules (`db.js` → better-sqlite3, `embeddings.js`/ `embedding-migration.js` → transformers) lazily via `await import()` only when the CLI actually does work. Keep the lazy import arrangement. Moving any heavy module back to a top-level static import makes every guarded reentrant subprocess pay a multi-second load just to bail.
 
 **Anything new that spawns a Claude subprocess via the SDK must inherit this guard.** Nothing should run `sync --background` without checking the guard first. Test with `test/sync-cli-reentrancy.test.ts` / `test/reentrancy.test.ts` if you change the spawn path.
 
@@ -268,17 +267,20 @@ The fork's plugin uses `cwd: '.'` and a fixed command — if a fresh install fai
 
 ### 8. Learned text is untrusted: gate it
 
-Everything the `learn` feature stores is written by a model that has just read archive content, and it is
-then injected into every future session, exported to `SKILL.md` files, and read by later learners. So it
-is treated as hostile input, not as instructions:
+A model writes everything that the `learn` feature stores, and that model has just read archive content. The
+hook injects the stored text into every future session. The export writes the stored text to `SKILL.md` files.
+Later learners read the stored text. The code therefore treats the stored text as hostile input, not as
+instructions:
 
 - Every field of every kind (title, description, scope, body, slug, reflection text) passes
-  `screenLearnedText` (`src/learn/learned-text-screen.ts`) **before storage and again on the way out** —
-  in the hook, the `skills` tool and the export. It rejects instruction-override and authority framing,
-  unlisted tool invocations, shell commands, file writes, URLs and obfuscated URLs, emails, long base64
-  runs, and credential requests, after NFKC normalisation and removal of zero-width / bidi characters.
-- Every line must cite real exchange ids and share `EPISODIC_MEMORY_LEARN_MIN_GROUNDING` content tokens
-  with one of them, or it is dropped; an entry with no surviving line is not stored.
+  `screenLearnedText` (`src/learn/learned-text-screen.ts`) **before storage and again on the way out**.
+  `screenLearnedText` runs in the hook, the `skills` tool and the export. `screenLearnedText` rejects
+  instruction-override and authority framing, unlisted tool invocations, shell commands, file writes,
+  URLs and obfuscated URLs, emails, long base64 runs, and credential requests. `screenLearnedText`
+  runs after NFKC normalisation and removal of zero-width / bidi characters.
+- Every line must cite real exchange ids. Every line must also share `EPISODIC_MEMORY_LEARN_MIN_GROUNDING`
+  content tokens with one of the cited exchanges. The gate drops a line that fails either check. The gate rejects an
+  entry that has no remaining line.
 - Redaction runs first and last: prompts, stored fields, answers and traces all pass `redactSecrets` plus
   `redactPii` (`src/learn/pii-redactor.ts`).
 - A skill activates on validation; an instruction stays a `candidate` until a human runs `learn approve`
@@ -306,13 +308,14 @@ EPISODIC_MEMORY_INCLUDE_SUMMARY     EPISODIC_MEMORY_MAX_SUMMARY_DISPLAY_CHARS
 EPISODIC_MEMORY_CLAUDE_BIN
 ```
 
-Every variable the server reads at runtime is whitelisted explicitly: without its line the plugin-launched
-server never sees it (so `skills` would answer "learning is off" forever, `auth_token` could never be
-required, and a read cap or redaction setting would be silently ignored). Any new setting that the MCP
-server reads at runtime needs its own line here and in `test/codex-plugin.test.ts`. `EPISODIC_MEMORY_DIGEST`
-is not listed on purpose: it gates *writing* the digest in `sync` and the hook, and the `digest` tool reads
-whatever has been written. `EPISODIC_MEMORY_CLAUDE_BIN` is listed for `cli/mcp-server-wrapper.js`: its
-`ensureDeps` call removes the platform packages only when it sees the variable.
+Every variable that the server reads at runtime has an explicit line in this whitelist. Without its line, the
+plugin-launched server never sees the variable. `skills` would then answer "learning is off" forever.
+`auth_token` could never be required. A read cap or a redaction setting would have no effect. Any new setting
+that the MCP server reads at runtime needs its own line here and in `test/codex-plugin.test.ts`.
+`EPISODIC_MEMORY_DIGEST` is not in the list on purpose. The variable gates *writing* the digest in `sync` and the
+hook, and the `digest` tool reads the digest that those steps wrote. `EPISODIC_MEMORY_CLAUDE_BIN` is in the list
+for `cli/mcp-server-wrapper.js`. The `ensureDeps` call of the wrapper removes the platform packages only when the
+wrapper sees the variable.
 
 ### `search`
 
@@ -345,15 +348,16 @@ Output: markdown-formatted conversation.
 
 ### `digest`
 
-The session digest: shows it, searches it (`query`), turns a `[#id]` mark into an archive path and line
-range for `read` (`expand`), and stores a one-line note for the next session (`handoff`). Off unless
-`EPISODIC_MEMORY_DIGEST=1`. Documented in `README.md` § Session Digest.
+The `digest` tool shows the session digest. The tool searches the digest (`query`). The tool turns a `[#id]` mark
+into an archive path and line range for `read` (`expand`). The tool stores a one-line note for the next session
+(`handoff`). The tool is off unless `EPISODIC_MEMORY_DIGEST=1`. `README.md` § Session Digest documents the tool.
 
 ### `skills`
 
-Read the skills the `learn` feature derived from this project's conversations. Read-only, and it never
-writes. With `EPISODIC_MEMORY_LEARN` unset it answers that learning is off **without opening a store** (it
-checks `learnEnabled()` before importing the store-backed module), so a flag-off session pays nothing.
+Read the skills the `learn` feature derived from this project's conversations. The tool is read-only.
+The tool never writes. With `EPISODIC_MEMORY_LEARN` unset, the tool answers that learning is off
+**without opening a store**. The tool checks `learnEnabled()` before the tool imports the
+store-backed module. So a flag-off session pays nothing.
 
 Inputs:
 - `get`: slug of one skill, as listed — returns its frontmatter and body
@@ -364,10 +368,11 @@ Inputs:
 Output: one `slug: description (confidence, vN)` line per active skill, or the requested skill's
 frontmatter (`name`, `description`, `scope`, `sources`, `confidence`, `version`) plus body.
 
-Every field is screened for injected instructions and redacted for secrets and PII before it is returned.
-A field that fails the screen withholds the whole entry rather than printing a skill whose text cannot be
-trusted. The store is opened **per call, read-only** and closed in `finally`, so the server never holds a
-handle on `knowledge.db` between calls and a read-only tool call can never create or migrate the file.
+The tool screens every field for injected instructions. The tool redacts secrets and PII before the tool returns
+the field. If a field fails the screen, the tool withholds the whole entry. The tool does not print a skill whose
+text cannot be trusted. The tool opens the store **per call, read-only** and closes the store in `finally`. The
+server therefore never holds a handle on `knowledge.db` between calls. A read-only tool call can never create or
+migrate the file.
 
 ### `topics`
 
@@ -471,11 +476,12 @@ node cli/episodic-memory.js sync
 
 ⚠️ Don't `rm -rf ~/.config/superpowers/conversation-archive/` — that's the source data backup. Only the index can be safely rebuilt from the archive.
 
-⚠️ `learned/` is **outside** `conversation-index/` — it is a sibling, not a child — so none of the commands
-above touch it. Do not remove it as part of an index reset: it holds learned entries (`knowledge.db`), the
-learning trace (`learning.sqlite`) and the rendered hint block, none of which can be rebuilt from the
-archive. Delete `learned/` only when you deliberately want the agent to forget everything it learned.
-(`learned-skills/`, also a sibling, *is* generated output and regenerates on the next export.)
+⚠️ `learned/` is **outside** `conversation-index/`. The directory is a sibling, not a child. So none of
+the commands above touch the directory. Do not remove the directory as part of an index reset. The
+directory holds learned entries (`knowledge.db`), the learning trace (`learning.sqlite`) and the
+rendered hint block. None of these items can be rebuilt from the archive. Delete `learned/` only when
+you deliberately want the agent to forget everything the agent learned. (`learned-skills/`, also a
+sibling, *is* generated output and regenerates on the next export.)
 
 ## Upstream sync workflow
 
@@ -545,5 +551,5 @@ If you're about to make a change that touches more than one of:
 - The embedding pipeline
 - The sync recursion contract
 
-…stop and use `brainstorming` → `writing-plans` first. These are load-bearing
-contracts; subtle drift breaks downstream caches and indexed data.
+…stop and use `brainstorming` → `writing-plans` first. The contracts are load-bearing. Subtle drift breaks
+downstream caches and indexed data.

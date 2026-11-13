@@ -138,7 +138,7 @@ Markdown-formatted conversation with:
 
 ## digest
 
-Show, search or annotate the short, cited digest of earlier sessions in this project. The tool reads whatever digest has been written; the digest is only written when `episodic-memory sync` runs with `EPISODIC_MEMORY_DIGEST=1`, so without that the tool has nothing to show.
+Show, search or annotate the short, cited digest of earlier sessions in this project. The tool reads the digest that sync wrote. Sync writes the digest only when `episodic-memory sync` runs with `EPISODIC_MEMORY_DIGEST=1`. Without that variable, the tool has nothing to show.
 
 **Tool name:** `mcp__plugin_episodic-memory_episodic-memory__digest`
 
@@ -169,9 +169,9 @@ List or load the skills episodic-memory has learned from past sessions in this p
 
 **Tool name:** `mcp__plugin_episodic-memory_episodic-memory__skills`
 
-A skill is a learned hint about where to look: a short description plus a body naming the conversations, terms, dates or search modes that answered a similar question before. When a session opens with a learned-hints block in its context, load the skill it names before searching.
+A skill is a learned hint about where to look. The skill has a short description plus a body. The body names the conversations, terms, dates or search modes that answered a similar question before. When a session opens with a learned-hints block in its context, load the skill that the block names before searching.
 
-**Read-only.** The tool opens the knowledge store read-only for the one call and never writes; with `EPISODIC_MEMORY_LEARN` unset it answers that learning is off without opening anything.
+**Read-only.** The tool opens the knowledge store read-only for the one call. The tool never writes. With `EPISODIC_MEMORY_LEARN` unset, the tool answers that learning is off without opening anything.
 
 ### Parameters
 
@@ -211,7 +211,7 @@ Each line is `slug: description (confidence, vN)`. Pass a slug back as `get`.
 
 ### Response Format
 
-`get` returns YAML frontmatter (`name`, `description`, `scope`, `sources`, `confidence`, `version`) and then the body as markdown. Every field is screened for injected instructions and redacted for secrets before it is returned, so a skill whose text fails the screen is withheld rather than printed.
+`get` returns YAML frontmatter (`name`, `description`, `scope`, `sources`, `confidence`, `version`). `get` then returns the body as markdown. The tool screens every field for injected instructions and redacts secrets before the tool returns the field. A skill whose text fails the screen is withheld, not printed.
 
 ## topics
 

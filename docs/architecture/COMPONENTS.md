@@ -132,6 +132,7 @@ Renders an archived conversation as markdown or HTML, with an optional line rang
 | `src/digest-compress.ts` | Compresses past days and weeks into one entry each. |
 | `src/digest-inject.ts` | Builds the digest text for the session-start hook and derives the project key from a working directory. |
 | `src/digest-tool.ts` | The body of the `digest` MCP tool. |
+| `src/derived-text.ts` | `removeDerivedText` removes the digest lines that cite deleted exchanges. The sync, the `index` commands, `index --repair` and `prune` call `removeDerivedText` after a delete. The function deletes an entry with no line left. The entries that the deleted entry superseded become active again. The function calls no model. |
 
 ## Topic memory
 
@@ -203,10 +204,10 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 291 | repo-tools map |
+| totalSourceFiles | 293 | repo-tools map |
 | totalClasses | 10 | repo-tools map |
-| totalInterfaces | 139 | repo-tools map |
-| totalFunctions | 348 | repo-tools map |
+| totalInterfaces | 140 | repo-tools map |
+| totalFunctions | 351 | repo-tools map |
 | totalConstants | 71 | repo-tools map |
 
 The tool names, the table names and the model name come from a direct reading of `src/mcp-server.ts`, `src/db.ts` and `src/embeddings.ts`. They are not `repo-tools map` metrics.

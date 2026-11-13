@@ -8,11 +8,11 @@
 
 | Metric | Count |
 |--------|-------|
-| Total Source Files | 109 |
-| Total Test Files | 170 |
-| Source Files with Tests | 86 |
+| Total Source Files | 110 |
+| Total Test Files | 171 |
+| Source Files with Tests | 87 |
 | Source Files without Tests | 23 |
-| Coverage (raw, direct-import) | **78.9%** |
+| Coverage (raw, direct-import) | **79.1%** |
 ---
 
 ## Source Files Not Imported By A Test
@@ -69,8 +69,9 @@ The following 23 source files are not directly imported by any test file:
 | `src/db.ts` | `codex-transcripts.test.ts`, `cross-harness-recall.test.ts`, `db-helpers.test.ts`, `db.test.ts`, `digest-db.test.ts`, `digest-gpu-reservation.test.ts`, `digest-hook.test.ts`, `digest-job.test.ts`, `digest-mcp.test.ts`, `digest-prompt-budget.test.ts`, `doctor.test.ts`, `embedding-migration-helpers.test.ts`, `index-honours-marker.test.ts`, `indexer-db-close.test.ts`, `integration.test.ts`, `learn-handlers.test.ts`, `mcp-tools.test.ts`, `oversized-message-guard.test.ts`, `prune.test.ts`, `search-embeddings-unavailable.test.ts`, `search-text-row-similarity.test.ts`, `sync-incremental-and-db.test.ts`, `sync-marker-scan.test.ts`, `text-search-multiword.test.ts`, `tool-calls-cascade.test.ts`, `topic-job.test.ts`, `topic-phase.test.ts`, `topic-tool.test.ts`, `vector-search-filters.test.ts`, `verify.test.ts` |
 | `src/deferral.ts` | `claude-auth-deferral.test.ts`, `claude-bin-deferral.test.ts` |
 | `src/deps-health.ts` | `deps-health.test.ts`, `ensure-deps-repair.test.ts` |
+| `src/derived-text.ts` | `derived-text.test.ts` |
 | `src/digest-compress.ts` | `digest-compress.test.ts`, `digest-gpu-reservation.test.ts` |
-| `src/digest-db.ts` | `digest-compress.test.ts`, `digest-db.test.ts`, `digest-gpu-reservation.test.ts`, `digest-hook.test.ts`, `digest-inject.test.ts`, `digest-job.test.ts`, `digest-mcp.test.ts`, `digest-prompts.test.ts`, `learn-handlers.test.ts` |
+| `src/digest-db.ts` | `derived-text.test.ts`, `digest-compress.test.ts`, `digest-db.test.ts`, `digest-gpu-reservation.test.ts`, `digest-hook.test.ts`, `digest-inject.test.ts`, `digest-job.test.ts`, `digest-mcp.test.ts`, `digest-prompts.test.ts`, `learn-handlers.test.ts`, `prune.test.ts` |
 | `src/digest-inject.ts` | `digest-hook.test.ts`, `digest-inject.test.ts`, `learn-handlers.test.ts`, `skills-tool.test.ts`, `topic-tool.test.ts` |
 | `src/digest-job.ts` | `digest-gpu-reservation.test.ts`, `digest-job.test.ts`, `digest-prompt-budget.test.ts` |
 | `src/digest-phase.ts` | `digest-mcp.test.ts` |
@@ -179,6 +180,7 @@ The following 23 source files are not directly imported by any test file:
 | `test/db-helpers.test.ts` | 2 files |
 | `test/db.test.ts` | 2 files |
 | `test/deps-health.test.ts` | 1 files |
+| `test/derived-text.test.ts` | 2 files |
 | `test/digest-compress.test.ts` | 2 files |
 | `test/digest-db.test.ts` | 2 files |
 | `test/digest-gpu-reservation.test.ts` | 7 files |
@@ -263,7 +265,7 @@ The following 23 source files are not directly imported by any test file:
 | `test/parser.test.ts` | 1 files |
 | `test/paths.test.ts` | 1 files |
 | `test/priority.test.ts` | 1 files |
-| `test/prune.test.ts` | 3 files |
+| `test/prune.test.ts` | 4 files |
 | `test/query-prefix.test.ts` | 1 files |
 | `test/real-sdk-guard.test.ts` | 1 files |
 | `test/rebuild-native.test.ts` | 0 files |

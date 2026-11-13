@@ -1,4 +1,5 @@
 import Database from 'better-sqlite3';
+import { removeDerivedText } from './derived-text.js';
 
 
 /** The counts from one `pruneProjects` call. With `dryRun`, the counts show what a real run would remove. */
@@ -105,6 +106,7 @@ export function pruneProjects(
     delExchanges.run(...projects);
   });
   run();
+  removeDerivedText(db, ids);
 
   return result;
 }

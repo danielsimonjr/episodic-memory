@@ -4,7 +4,7 @@
 
 # episodic-memory - Dependency Graph
 
-**Version**: 1.9.0
+**Version**: 1.10.0
 
 This document provides a comprehensive dependency graph of all files, components, imports, functions, and variables in the codebase.
 
@@ -32,7 +32,7 @@ This document provides a comprehensive dependency graph of all files, components
 The codebase is organized into the following modules:
 
 - **cli**: 8 files
-- **root**: 67 files
+- **root**: 68 files
 - **entry**: 1 file
 - **learn**: 32 files
 - **vendor/onnxruntime-web-stub**: 1 file
@@ -349,6 +349,24 @@ The codebase is organized into the following modules:
 **Exports:**
 - Functions: `nativeAddonPresent`, `onnxBindingPath`, `onnxBindingState`, `nodeModulesIsHealthy`, `repairPlan`
 - Constants: `NATIVE_ADDON`, `JS_SENTINELS`, `ONNX_BINDING`, `DEP_SENTINELS`
+
+---
+
+### `src/derived-text.ts` - Remove the stored digest lines that cite a removed exchange.
+
+**External Dependencies:**
+| Package | Import |
+|---------|--------|
+| `better-sqlite3` | `default` |
+
+**Internal Dependencies:**
+| File | Imports | Type |
+|------|---------|------|
+| `./digest-db.js` | `citedExchangeIds` | Import |
+
+**Exports:**
+- Interfaces: `DerivedTextResult`
+- Functions: `dropLinesCiting`, `removeDerivedText`
 
 ---
 
@@ -713,6 +731,7 @@ The codebase is organized into the following modules:
 | File | Imports | Type |
 |------|---------|------|
 | `./db.js` | `initDatabase, insertExchange, getMaxIndexedLine, deleteExchangesForArchive` | Import |
+| `./derived-text.js` | `removeDerivedText` | Import |
 | `./parser.js` | `parseConversation` | Import |
 | `./embeddings.js` | `initEmbeddings, generateExchangeEmbedding, generateExchangeEmbeddings` | Import |
 | `./summarizer.js` | `summarizeConversation` | Import |
@@ -942,6 +961,11 @@ The codebase is organized into the following modules:
 |---------|--------|
 | `better-sqlite3` | `default` |
 
+**Internal Dependencies:**
+| File | Imports | Type |
+|------|---------|------|
+| `./derived-text.js` | `removeDerivedText` | Import |
+
 **Exports:**
 - Interfaces: `PruneResult`, `PruneOptions`
 - Functions: `pruneProjects`
@@ -1157,6 +1181,7 @@ The codebase is organized into the following modules:
 | `./deferral.js` | `deferralDetail` | Import |
 | `./fs-retry.js` | `renameWithRetry, isSharingViolation` | Import |
 | `./db.js` | `*` | Import |
+| `./derived-text.js` | `*` | Import |
 | `./embeddings.js` | `*` | Import |
 | `./parser.js` | `*` | Import |
 | `./summarizer.js` | `*` | Import |
@@ -1354,6 +1379,7 @@ The codebase is organized into the following modules:
 | `./exclusion-marker.js` | `scanExclusionMarkers, shouldSkipConversation` | Import |
 | `./embeddings.js` | `*` | Import |
 | `./summarizer.js` | `*` | Import |
+| `./derived-text.js` | `*` | Import |
 
 **Exports:**
 - Interfaces: `VerificationResult`
@@ -2125,7 +2151,7 @@ The codebase is organized into the following modules:
 | `src/redact` | 0 files | 16 files |
 | `src/learn/leaf-learner` | 14 files | 1 file |
 | `src/learn/solver` | 9 files | 5 files |
-| `src/sync` | 11 files | 2 files |
+| `src/sync` | 12 files | 2 files |
 | `src/topic-job` | 12 files | 1 file |
 | `src/digest-job` | 10 files | 2 files |
 | `src/mcp-tools` | 10 files | 2 files |
@@ -2133,6 +2159,7 @@ The codebase is organized into the following modules:
 | `src/types` | 0 files | 12 files |
 | `src/learn/learn-config` | 0 files | 11 files |
 | `src/learn/learning-db` | 2 files | 9 files |
+| `src/indexer` | 8 files | 2 files |
 | `src/learn/agent-runner` | 5 files | 5 files |
 | `src/learn/knowledge-db` | 3 files | 7 files |
 | `src/learn/skills-tool` | 8 files | 2 files |
@@ -2140,21 +2167,20 @@ The codebase is organized into the following modules:
 | `src/ollama-backend` | 3 files | 7 files |
 | `src/search` | 6 files | 4 files |
 | `src/constants` | 0 files | 9 files |
+| `src/digest-db` | 1 file | 8 files |
 | `src/doctor` | 8 files | 1 file |
 | `src/embeddings` | 2 files | 7 files |
-| `src/indexer` | 7 files | 2 files |
 | `src/learn/knowledge-store` | 3 files | 6 files |
 | `src/learn/learned-block` | 5 files | 4 files |
 | `src/learn/tasks` | 7 files | 2 files |
-| `src/digest-db` | 1 file | 7 files |
 | `src/index` | 8 files | 0 files |
 | `src/learn/export` | 7 files | 1 file |
 | `src/learn/knowledge-gate` | 5 files | 3 files |
 | `src/learn/learn-handlers` | 7 files | 1 file |
+| `src/verify` | 7 files | 1 file |
 | `src/deferral` | 2 files | 5 files |
 | `src/digest-prompts` | 4 files | 3 files |
 | `src/digest-validate` | 1 file | 6 files |
-| `src/index-cli` | 7 files | 0 files |
 
 ---
 
@@ -2202,7 +2228,7 @@ graph TD
         N15[constants]
         N16[content-text]
         N17[db]
-        N18[...57 more]
+        N18[...58 more]
     end
 
     subgraph Entry
@@ -2260,14 +2286,14 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 291 |
+| Total Source Files | 293 |
 | Subsystems | 5 |
-| Total Lines of Code | 57872 |
-| Total Exports | 612 |
+| Total Lines of Code | 58191 |
+| Total Exports | 616 |
 | Total Re-exports | 8 |
 | Total Classes | 10 |
-| Total Interfaces | 139 |
-| Total Functions | 348 |
+| Total Interfaces | 140 |
+| Total Functions | 351 |
 | Total Type Guards | 11 |
 | Total Enums | 0 |
 | Type-only Imports | 84 |
@@ -2278,4 +2304,4 @@ graph TD
 
 ---
 
-*Version*: 1.9.0
+*Version*: 1.10.0

@@ -1,25 +1,25 @@
 {
-  "totalFiles": 291,
+  "totalFiles": 293,
   "byDisposition": {
-    "reachable": 45,
+    "reachable": 46,
     "build-entry": 4,
     "test-only": 45,
     "orphan": 15,
-    "test": 177,
+    "test": 178,
     "tool": 4,
     "config": 1,
     "bench": 0,
     "example": 0
   },
   "byArea": {
-    "src": 109,
+    "src": 110,
     "tools": 4,
-    "tests": 177,
+    "tests": 178,
     "config": 1
   },
   "byPackage": {
-    "(root)": 191,
-    "episodic-memory": 100
+    "(root)": 192,
+    "episodic-memory": 101
   },
   "files": [
     {
@@ -191,6 +191,13 @@
       "loc": 149
     },
     {
+      "file": "src/derived-text.ts",
+      "package": "episodic-memory",
+      "area": "src",
+      "disposition": "reachable",
+      "loc": 100
+    },
+    {
       "file": "src/digest-compress.ts",
       "package": "episodic-memory",
       "area": "src",
@@ -328,7 +335,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 465
+      "loc": 468
     },
     {
       "file": "src/learn-cli.ts",
@@ -650,7 +657,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 110
+      "loc": 112
     },
     {
       "file": "src/redact.ts",
@@ -734,7 +741,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 580
+      "loc": 586
     },
     {
       "file": "src/topic-db.ts",
@@ -804,7 +811,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 241
+      "loc": 244
     },
     {
       "file": "test/agent-sdk-floor.test.ts",
@@ -1010,6 +1017,13 @@
       "loc": 207
     },
     {
+      "file": "test/derived-text.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 124
+    },
+    {
       "file": "test/digest-compress.test.ts",
       "package": "(root)",
       "area": "tests",
@@ -1196,7 +1210,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 324
+      "loc": 338
     },
     {
       "file": "test/indexer-db-close.test.ts",
@@ -1616,7 +1630,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 174
+      "loc": 198
     },
     {
       "file": "test/query-prefix.test.ts",
@@ -1889,7 +1903,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 313
+      "loc": 326
     },
     {
       "file": "test/sync-pending-and-legacy-retry.test.ts",
@@ -1952,7 +1966,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 100
+      "loc": 130
     },
     {
       "file": "test/text-search-multiword.test.ts",

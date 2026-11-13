@@ -1,5 +1,8 @@
 ## [Unreleased]
 
+### Fixed
+- **A deleted conversation leaves no digest line behind.** The sync, the `index` commands, `index --repair` and `prune` delete the index rows of a conversation. A digest line that an earlier run built from the conversation stayed. The session-start hook could inject that line into every new session. These commands now remove each digest line that cites a deleted exchange, in active and in superseded entries. The commands replace the full-text row of each changed entry. The commands delete an entry with no line left. The entries that the deleted entry superseded become active again, so the next compression merges those entries again. The step calls no model. The new module `src/derived-text.ts` holds `removeDerivedText`. `deleteExchangesForArchive` now returns the ids of the deleted exchanges, not their number. Topic documents built from the conversation still stay. A todo row tracks these documents.
+
 ## [1.10.0] - 2026-11-13
 
 ### Changed

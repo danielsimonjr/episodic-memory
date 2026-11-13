@@ -3,7 +3,7 @@ import fs, { mkdtempSync, mkdirSync, writeFileSync, statSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import Database from 'better-sqlite3';
-import { safeRmSync, suppressConsole } from './test-utils.js';
+import { safeRmSync, seedDigest, suppressConsole } from './test-utils.js';
 
 // The sync tests below index with a fixed vector, so no test loads the embedding model.
 vi.mock('../src/embeddings.js', async (importOriginal) => {
@@ -250,6 +250,19 @@ describe('sync honours the marker scan', () => {
     } finally {
       db.close();
     }
+  });
+
+  it('removes the digest lines of a transcript that gains the marker, and keeps the lines of the other transcript', async () => {
+    writeFileSync(join(sourceDir, 'project-a', `${SESSION}.jsonl`), transcript('A question.'));
+    writeFileSync(join(sourceDir, 'project-a', `${OTHER}.jsonl`), transcript('A plain question.'));
+    await syncConversations(sourceDir, destDir, { skipSummaries: true });
+    const digestLines = seedDigest(dbPath);
+    expect(digestLines().filter(line => line.startsWith(`Fact of ${SESSION} [#`))).toHaveLength(1);
+    expect(digestLines()).toHaveLength(2);
+
+    addMarker(SESSION);
+    await syncConversations(sourceDir, destDir, { skipSummaries: true });
+    expect(digestLines()).toEqual([expect.stringContaining(`Fact of ${OTHER}`)]);
   });
 
   it('keeps the rows of a transcript that gains the marker only in a tool result', async () => {

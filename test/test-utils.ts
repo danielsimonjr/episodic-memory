@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import Database from 'better-sqlite3';
+import { ensureDigestSchema, insertDigestEntry } from '../src/digest-db.js';
 
 /**
  * Suppress console output during test execution.
@@ -97,4 +98,33 @@ export function readFixture(filename: string): string {
 export function countLines(filePath: string): number {
   const content = fs.readFileSync(filePath, 'utf-8');
   return content.trim().split('\n').length;
+}
+
+/**
+ * Write one session digest entry with one line for each indexed archive file, and return a reader of the lines.
+ * Each line names the file and cites the exchange ids of that file.
+ */
+export function seedDigest(dbPath: string): () => string[] {
+  const db = new Database(dbPath);
+  try {
+    ensureDigestSchema(db);
+    const rows = db.prepare('SELECT id, archive_path FROM exchanges').all() as Array<{ id: string; archive_path: string }>;
+    const byFile = new Map<string, string[]>();
+    for (const r of rows) byFile.set(r.archive_path, [...(byFile.get(r.archive_path) ?? []), r.id]);
+    const lines = [...byFile].map(([file, ids]) => `Fact of ${path.basename(file, '.jsonl')} [${ids.map(i => `#${i}`).join(',')}]`);
+    insertDigestEntry(db, {
+      tier: 'session', project: 'p', periodStart: '2025-10-01T12:00:00Z', periodEnd: '2025-10-01T12:05:00Z',
+      text: lines.join('\n'), sources: rows.map(r => r.id), model: 'haiku', handoff: false,
+    });
+  } finally {
+    db.close();
+  }
+  return () => {
+    const db = new Database(dbPath, { readonly: true });
+    try {
+      return (db.prepare('SELECT text FROM digest_entry').all() as Array<{ text: string }>).flatMap(r => r.text.split('\n'));
+    } finally {
+      db.close();
+    }
+  };
 }

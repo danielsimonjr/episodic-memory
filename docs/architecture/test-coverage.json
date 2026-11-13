@@ -1,17 +1,17 @@
 {
   "metadata": {
-    "totalSourceFiles": 109,
-    "totalTestFiles": 170,
-    "testedCount": 86,
+    "totalSourceFiles": 110,
+    "totalTestFiles": 171,
+    "testedCount": 87,
     "untestedCount": 23,
-    "coveragePercent": "78.9",
+    "coveragePercent": "79.1",
     "effectiveCoverage": {
       "policyLoaded": false,
-      "activeFiles": 109,
-      "testedActive": 86,
+      "activeFiles": 110,
+      "testedActive": 87,
       "activeUntested": 23,
       "excludedTotal": 0,
-      "percent": "78.9",
+      "percent": "79.1",
       "breakdown": {
         "active_untested": 23
       }
@@ -55,6 +55,7 @@
     "src/db.ts",
     "src/deferral.ts",
     "src/deps-health.ts",
+    "src/derived-text.ts",
     "src/digest-compress.ts",
     "src/digest-db.ts",
     "src/digest-inject.ts",
@@ -223,11 +224,15 @@
       "test/deps-health.test.ts",
       "test/ensure-deps-repair.test.ts"
     ],
+    "src/derived-text.ts": [
+      "test/derived-text.test.ts"
+    ],
     "src/digest-compress.ts": [
       "test/digest-compress.test.ts",
       "test/digest-gpu-reservation.test.ts"
     ],
     "src/digest-db.ts": [
+      "test/derived-text.test.ts",
       "test/digest-compress.test.ts",
       "test/digest-db.test.ts",
       "test/digest-gpu-reservation.test.ts",
@@ -236,7 +241,8 @@
       "test/digest-job.test.ts",
       "test/digest-mcp.test.ts",
       "test/digest-prompts.test.ts",
-      "test/learn/learn-handlers.test.ts"
+      "test/learn/learn-handlers.test.ts",
+      "test/prune.test.ts"
     ],
     "src/digest-inject.ts": [
       "test/digest-hook.test.ts",
@@ -819,6 +825,10 @@
     "test/deps-health.test.ts": [
       "src/deps-health.ts"
     ],
+    "test/derived-text.test.ts": [
+      "src/digest-db.ts",
+      "src/derived-text.ts"
+    ],
     "test/digest-compress.test.ts": [
       "src/digest-db.ts",
       "src/digest-compress.ts"
@@ -1233,6 +1243,7 @@
     "test/prune.test.ts": [
       "src/db.ts",
       "src/prune.ts",
+      "src/digest-db.ts",
       "src/types.ts"
     ],
     "test/query-prefix.test.ts": [

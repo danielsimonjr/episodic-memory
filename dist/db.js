@@ -439,7 +439,7 @@ export function deleteExchange(db, id) {
     db.prepare(`DELETE FROM exchanges WHERE id = ?`).run(id);
 }
 /**
- * Deletes every exchange of one archive file, in one transaction. Returns the number of exchanges deleted.
+ * Deletes every exchange of one archive file, in one transaction. Returns the ids of the deleted exchanges.
  *
  * The path must match the `archive_path` column exactly. Each exchange goes through `deleteExchange`, so the vector,
  * full-text and tool-call rows go too.
@@ -451,10 +451,10 @@ export function deleteExchangesForArchive(db, archivePath) {
     const ids = db.prepare('SELECT id FROM exchanges WHERE archive_path = ?').all(archivePath)
         .map(row => row.id);
     if (ids.length === 0)
-        return 0;
+        return ids;
     db.transaction(() => {
         for (const id of ids)
             deleteExchange(db, id);
     })();
-    return ids.length;
+    return ids;
 }

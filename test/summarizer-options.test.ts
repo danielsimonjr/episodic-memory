@@ -257,7 +257,9 @@ describe('runCodexCommand', () => {
       sessionId: 'session-123',
       prompt: 'Summarize this conversation.',
       skipVersionCheck: true,
-    })).rejects.toThrow(/exited before|exit code|stream closed/i);
+    })).rejects.toThrow(/exited before|exit code|stream closed|stopped reading its input/i);
+    // The child exit and the EPIPE of the next write race. Either one settles the call first, so the
+    // error is the exit message or the stdin error message of runCodexCommand.
   });
 
   it('reports malformed app-server fork responses clearly', async () => {

@@ -672,7 +672,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/index-cli.ts` - Check the arguments before any work. Without the check, an unknown command or option fell to the
+### `src/index-cli.ts` - Check the arguments before any work.
 
 **Node.js Built-in Dependencies:**
 | Module | Import |
@@ -688,6 +688,8 @@ The codebase is organized into the following modules:
 | `./db.js` | `initDatabase, getFreelistInfo, vacuumDatabase` | Import |
 | `./paths.js` | `getDbPath, getArchiveDir, getExcludedProjects, statIfExists` | Import |
 | `./prune.js` | `pruneProjects` | Import |
+| `./lockfile.js` | `acquireLock, releaseLock` | Import |
+| `./logging.js` | `getSyncLockPath` | Import |
 
 ---
 
@@ -2145,7 +2147,7 @@ The codebase is organized into the following modules:
 | `src/deferral` | 2 files | 5 files |
 | `src/digest-prompts` | 4 files | 3 files |
 | `src/digest-validate` | 1 file | 6 files |
-| `src/learn-cli` | 7 files | 0 files |
+| `src/index-cli` | 7 files | 0 files |
 
 ---
 
@@ -2251,9 +2253,9 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 285 |
+| Total Source Files | 286 |
 | Subsystems | 5 |
-| Total Lines of Code | 56524 |
+| Total Lines of Code | 56672 |
 | Total Exports | 607 |
 | Total Re-exports | 8 |
 | Total Classes | 10 |

@@ -4,6 +4,8 @@ import { indexSession, indexUnprocessed, indexConversations } from './indexer.js
 import { initDatabase, getFreelistInfo, vacuumDatabase } from './db.js';
 import { getDbPath, getArchiveDir, getExcludedProjects, statIfExists } from './paths.js';
 import { pruneProjects } from './prune.js';
+import { acquireLock, releaseLock } from './lockfile.js';
+import { getSyncLockPath } from './logging.js';
 import fs from 'fs';
 import path from 'path';
 const COMMANDS = new Set(['index-all', 'index-session', 'index-cleanup', 'verify', 'repair', 'rebuild', 'prune', 'vacuum']);
@@ -27,12 +29,15 @@ Commands: index-all (the default), index-session <session-id>, index-cleanup, ve
 Options:  --concurrency N or -c N (an integer from 1 to 16), --no-summaries (index-all, index-session, index-cleanup, rebuild)
           --yes (rebuild; the command deletes the index database and every summary file)
           --excluded or --project <name>, --dry-run (prune)
+Exit 75: a sync or another index command holds the index lock. The command does no work. Run the command again later.
 
 Run 'episodic-memory index --help' for the full help.`;
 /**
- * Check the arguments before any work. Without the check, an unknown command or option fell to the
- * default branch, and that branch indexes every source with summaries. A value option consumes the next
- * argument. Only index-session takes a second positional argument, the session id. Each option must belong
+ * Check the arguments before any work.
+ *
+ * Without the check, an unknown command or option fell to the default branch. That branch indexes every
+ * source with summaries. A value option consumes the next argument. Only index-session takes a second
+ * positional argument, the session id. Each option must belong
  * to the command, so `--dry-run` without `prune` cannot start a real index. `rebuild` needs `--yes`, because
  * an option before the command hides the command from the confirmation of the wrapper.
  */
@@ -84,6 +89,27 @@ function refuse(reason) {
     process.exit(2);
 }
 const { command, positionals } = parseArgs(process.argv.slice(2));
+/** The exit code of a run that another sync or index command blocks (EX_TEMPFAIL). The caller can try again later. */
+const LOCK_BUSY_EXIT = 75;
+// Every command opens the index, and the open can migrate the database. rebuild also deletes the database and the
+// summaries. The sync worker writes the same files, so each command takes the lock of the sync worker first.
+// Ported from upstream f1bcef6. index-cli checks the arguments before the lock, so a refusal never waits on a sync.
+const syncLockPath = getSyncLockPath();
+const syncLock = acquireLock(syncLockPath);
+if (!syncLock) {
+    let holder = 'unknown pid';
+    try {
+        const pid = fs.readFileSync(syncLockPath, 'utf-8').trim();
+        if (/^[1-9][0-9]*$/.test(pid))
+            holder = `pid ${pid}`;
+    }
+    catch {
+        // The holder can release the lock between the acquire and this read. The message then names no PID.
+    }
+    console.error(`episodic-memory index: another sync or index command is running (${holder}); try again when it ends`);
+    process.exit(LOCK_BUSY_EXIT);
+}
+process.on('exit', () => releaseLock(syncLock));
 // Parse --concurrency flag from remaining args
 function getConcurrency() {
     const concurrencyIndex = process.argv.findIndex(arg => arg === '--concurrency' || arg === '-c');

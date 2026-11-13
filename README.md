@@ -529,7 +529,7 @@ Common operations:
 - `vacuum` - Return the free pages of the index database to disk
 - `--rebuild --yes` - Rebuild with no confirmation question, for a script
 
-For an unknown command or option, or an option of another command, `index` writes one error line, exits with code 2 and does no work. The exit code of the command reaches the caller.
+For an unknown command or option, or an option of another command, `index` writes one error line, exits with code 2 and does no work. Every `index` command takes the lock of the sync. While a sync or another `index` command holds the lock, `index` writes one error line, exits with code 75 and does no work. A sync that starts during an `index` command skips its run. The exit code of the command reaches the caller.
 
 ### `episodic-memory search`
 

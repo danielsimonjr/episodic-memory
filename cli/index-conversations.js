@@ -46,6 +46,8 @@ COMMANDS:
   The index-cli names also work: index-all, index-session ID, index-cleanup, verify, repair,
   rebuild (requires confirmation). For an unknown command or option, or an option of
   another command, the command writes one error line, exits 2 and does no work.
+  While a sync or another index command runs, the command writes one error line, exits 75
+  and does no work. Run the command again when the other run ends.
 
 OPTIONS:
   --concurrency N    Parallel summarization (1-16, default: 1)

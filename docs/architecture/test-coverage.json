@@ -1,7 +1,7 @@
 {
   "metadata": {
     "totalSourceFiles": 109,
-    "totalTestFiles": 164,
+    "totalTestFiles": 165,
     "testedCount": 85,
     "untestedCount": 24,
     "coveragePercent": "78.0",
@@ -510,6 +510,7 @@
     ],
     "src/learn-cli.ts": [],
     "src/lockfile.ts": [
+      "test/index-cli-sync-lock.test.ts",
       "test/learn/learn-cli.test.ts",
       "test/lockfile.test.ts"
     ],
@@ -903,6 +904,9 @@
       "src/indexer.ts"
     ],
     "test/index-cli-args.test.ts": [],
+    "test/index-cli-sync-lock.test.ts": [
+      "src/lockfile.ts"
+    ],
     "test/index-honours-marker.test.ts": [
       "src/embeddings.ts",
       "src/summarizer.ts",

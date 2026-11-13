@@ -1,11 +1,11 @@
 {
-  "totalFiles": 285,
+  "totalFiles": 286,
   "byDisposition": {
-    "reachable": 44,
+    "reachable": 45,
     "build-entry": 4,
-    "test-only": 46,
+    "test-only": 45,
     "orphan": 15,
-    "test": 171,
+    "test": 172,
     "tool": 4,
     "config": 1,
     "bench": 0,
@@ -14,11 +14,11 @@
   "byArea": {
     "src": 109,
     "tools": 4,
-    "tests": 171,
+    "tests": 172,
     "config": 1
   },
   "byPackage": {
-    "(root)": 185,
+    "(root)": 186,
     "episodic-memory": 100
   },
   "files": [
@@ -55,7 +55,7 @@
       "package": "(root)",
       "area": "src",
       "disposition": "orphan",
-      "loc": 147
+      "loc": 149
     },
     {
       "file": "cli/mcp-server-wrapper.js",
@@ -314,7 +314,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "build-entry",
-      "loc": 280
+      "loc": 306
     },
     {
       "file": "src/index.ts",
@@ -572,8 +572,8 @@
       "file": "src/logging.ts",
       "package": "episodic-memory",
       "area": "src",
-      "disposition": "test-only",
-      "loc": 86
+      "disposition": "reachable",
+      "loc": 91
     },
     {
       "file": "src/mcp-auth.ts",
@@ -1176,6 +1176,13 @@
       "area": "tests",
       "disposition": "test",
       "loc": 221
+    },
+    {
+      "file": "test/index-cli-sync-lock.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 115
     },
     {
       "file": "test/index-honours-marker.test.ts",

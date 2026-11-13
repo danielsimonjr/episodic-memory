@@ -3,7 +3,7 @@
     "name": "episodic-memory",
     "schemaVersion": "2.0.0",
     "language": "typescript",
-    "totalFiles": 285,
+    "totalFiles": 286,
     "totalModules": 4,
     "totalExports": 607
   },
@@ -1136,6 +1136,21 @@
             "file": "src/prune.ts",
             "imports": [
               "pruneProjects"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/lockfile.ts",
+            "imports": [
+              "acquireLock",
+              "releaseLock"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/logging.ts",
+            "imports": [
+              "getSyncLockPath"
             ],
             "typeOnly": false
           }
@@ -6260,6 +6275,37 @@
         ],
         "exports": []
       },
+      "test/index-cli-sync-lock.test.ts": {
+        "externalDependencies": [
+          "vitest"
+        ],
+        "nodeDependencies": [
+          "child_process",
+          "fs",
+          "os",
+          "path",
+          "url"
+        ],
+        "internalDependencies": [
+          {
+            "file": "src/lockfile.ts",
+            "imports": [
+              "acquireLock",
+              "releaseLock",
+              "LockHandle"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "test/test-utils.ts",
+            "imports": [
+              "safeRmSync"
+            ],
+            "typeOnly": false
+          }
+        ],
+        "exports": []
+      },
       "test/index-honours-marker.test.ts": {
         "externalDependencies": [
           "better-sqlite3",
@@ -10471,16 +10517,16 @@
     }
   },
   "statistics": {
-    "totalTypeScriptFiles": 285,
-    "totalSourceFiles": 285,
+    "totalTypeScriptFiles": 286,
+    "totalSourceFiles": 286,
     "totalModules": 4,
-    "totalLinesOfCode": 56524,
+    "totalLinesOfCode": 56672,
     "totalExports": 607,
     "entryRoots": 6,
-    "reachableFiles": 48,
-    "dormantFiles": 61,
+    "reachableFiles": 49,
+    "dormantFiles": 60,
     "orphanedFiles": 15,
-    "testOnlyFiles": 46,
+    "testOnlyFiles": 45,
     "runtimeCircularDeps": 0,
     "typeOnlyCircularDeps": 1,
     "totalTypeOnlyImports": 82,
@@ -10508,8 +10554,8 @@
       "test/setup-env.ts",
       "test/global-setup.ts"
     ],
-    "reachableCount": 48,
-    "dormantCount": 61,
+    "reachableCount": 49,
+    "dormantCount": 60,
     "orphaned": [
       "cli/digest-hook.js",
       "cli/episodic-memory.js",
@@ -10564,7 +10610,6 @@
       "src/learn/tasks.ts",
       "src/learn/usage.ts",
       "src/learn/validate.ts",
-      "src/logging.ts",
       "src/orphan-reaper.ts",
       "src/priority.ts",
       "src/stats.ts",

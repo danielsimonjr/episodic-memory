@@ -40,7 +40,7 @@ describe('sync-cli concurrency lock', () => {
     });
 
     expect(result.status).toBe(0);
-    expect(result.stderr).toMatch(/another sync is already running/i);
+    expect(result.stderr).toMatch(/another sync or index command is running/i);
     expect(result.stdout).not.toMatch(/Syncing conversations/);
   });
 });

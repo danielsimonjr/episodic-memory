@@ -260,7 +260,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/lockfile.test.ts` | (root) | tests | test | 163 |
 | `test/logging-append.test.ts` | (root) | tests | test | 27 |
 | `test/logging.test.ts` | (root) | tests | test | 73 |
-| `test/markdown-html.test.ts` | (root) | tests | test | 413 |
+| `test/markdown-html.test.ts` | (root) | tests | test | 417 |
 | `test/mcp-auth.test.ts` | (root) | tests | test | 34 |
 | `test/mcp-protocol.test.ts` | (root) | tests | test | 329 |
 | `test/mcp-read-redaction.test.ts` | (root) | tests | test | 48 |

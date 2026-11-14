@@ -1,6 +1,7 @@
 ## [Unreleased]
 
 ### Changed
+- Pooling stays mean. bge-small-en-v1.5 trains with CLS pooling, so CLS was measured on 120 archive-graded `learn` tasks against a 12,730-exchange index: MRR 0.132 for mean and 0.113 for CLS, and recall@1 12 against 8.
 - The new embedding stamp makes the first sync after the upgrade embed every row again. Measured on a copy of a 12,730-row index: 355 s for all rows in batches of 500, 0 rows stale after. The default sync embeds 500 rows per run, so a large index finishes over several syncs.
 
 - The embedder no longer uses `@huggingface/transformers`. `src/embeddings.ts` tokenizes with `@huggingface/tokenizers` 0.1.3 and runs the model with `onnxruntime-node` 1.24.3 directly. Against the transformers output, the vectors differ by at most 6.5e-8 on the 7 texts of `test/fixtures/embedding-parity/vectors.json`, and by at most 1.1e-7 in a padded batch. The install no longer holds transformers, `sharp`, `@img/*`, `@huggingface/jinja` or `onnxruntime-web`, so the `sharp` and `onnxruntime-web` overrides and the `onnxruntime-web` stub are removed. The bundle keeps `onnxruntime-node` and `@huggingface/tokenizers` external.

@@ -19,6 +19,7 @@
 - **A sync that fails to index a file exits 1 and indexes the file on the next run.** Under a write lock held by another connection, the index step recorded `database is locked`, printed it on stdout under the "Sync complete!" line, and exited 0. The copy was already in the archive, so every later sync skipped the file, and the transcript stayed out of the index. The index step now queues the file again, the error lines go to stderr, the success line is not printed, and the exit code is 1. A summary failure keeps exit 0, because it writes a failure record and retries within its attempt limit.
 
 ### Changed
+- **The architecture docs describe the modules this release adds.** `COMPONENTS.md`, `API.md`, `DATAFLOW.md` and `LEARN.md` cover `cli-usage`, `win-command`, `summary-sentinel`, the learn option refusal and the rank merge of `both` search. The counts match the tree again.
 - **`bun run test` no longer collects `test/e2e/`.** The unit config excludes the folder; the end-to-end suite has its own config.
 
 ## [1.12.0] - 2026-11-13

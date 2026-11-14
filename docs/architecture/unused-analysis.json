@@ -7,9 +7,9 @@
     "`unreferencedAnywhereNotes`'s dynamic-import check (`_dynamic_import_referrers`) only sees `import(...)` calls with a LITERAL string specifier. A dynamic import built from a variable or template literal (e.g. `import(`./cmds/${name}.js`)`, a command-dispatcher pattern) is invisible to it -- 'found none' in a note means no LITERAL match was found, NOT that nothing imports the file."
   ],
   "summary": {
-    "unusedExportCount": 117,
+    "unusedExportCount": 119,
     "unreferencedAnywhereCount": 4,
-    "referencedInModuleCount": 113,
+    "referencedInModuleCount": 115,
     "unclassifiedExportCount": 0,
     "noImporterFileCount": 14
   },
@@ -65,6 +65,7 @@
       "CodexDoctorInputs",
       "DoctorInputs",
       "DoctorReport",
+      "ModelDoctorSection",
       "StructuredDoctorReport"
     ],
     "src/gpu-reservation.ts": [
@@ -195,6 +196,9 @@
       "SearchModeEnum",
       "TopicsActionEnum"
     ],
+    "src/model-cli.ts": [
+      "main"
+    ],
     "src/prune.ts": [
       "PruneOptions",
       "PruneResult"
@@ -241,10 +245,10 @@
     "src/backfill-cli.ts",
     "src/doctor-cli.ts",
     "src/learn-cli.ts",
+    "src/model-cli.ts",
     "src/search-cli.ts",
     "src/show-cli.ts",
     "src/stats-cli.ts",
-    "src/sync-cli.ts",
-    "vendor/onnxruntime-web-stub/index.js"
+    "src/sync-cli.ts"
   ]
 }

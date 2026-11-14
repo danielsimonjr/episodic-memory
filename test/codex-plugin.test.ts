@@ -49,7 +49,10 @@ describe('Codex plugin packaging', () => {
             'EPISODIC_MEMORY_DIGEST_MAX_CHARS',
             'EPISODIC_MEMORY_INCLUDE_SUMMARY',
             'EPISODIC_MEMORY_MAX_SUMMARY_DISPLAY_CHARS',
-            'EPISODIC_MEMORY_CLAUDE_BIN'
+            'EPISODIC_MEMORY_CLAUDE_BIN',
+            'EPISODIC_MEMORY_MODEL_DIR',
+            'EPISODIC_MEMORY_MODEL_OFFLINE',
+            'HF_ENDPOINT'
           ]
         }
       }

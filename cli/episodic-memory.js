@@ -40,6 +40,7 @@ COMMANDS:
   show        Display a conversation in readable format
   stats       Show index statistics
   doctor      Diagnose Claude Code or Codex integration issues
+  model       Manage the embedding model files: fetch, status (see model --help)
   learn       Self-improving memory: tasks, solve, bootstrap, improve, status, report, approve, export, render (needs EPISODIC_MEMORY_LEARN=1)
 
 Run 'episodic-memory <command> --help' for command-specific help.
@@ -95,6 +96,10 @@ async function main() {
 
       case 'learn':
         await runChild(join(distDir, 'learn-cli.js'), args);
+        break;
+
+      case 'model':
+        await runChild(join(distDir, 'model-cli.js'), args);
         break;
 
       case '--help':

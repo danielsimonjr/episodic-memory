@@ -4,12 +4,19 @@
  * A different version of the model runtime can produce different vectors for the same text.
  * The index therefore records the stack that embedded its rows. When the installed stack differs,
  * every row becomes stale, and the embedding migration embeds the rows again.
+ *
+ * The stamp also names the model revision (see embedding-model.ts), so a new model revision re-embeds the index.
  */
 import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-/** The packages whose versions decide the vectors. Each package resolves from the one before it. */
-export const EMBEDDING_STACK_PACKAGES = ['@huggingface/transformers', 'onnxruntime-node', 'onnxruntime-common'];
+import { EMBEDDING_MODEL } from './embedding-model.js';
+/**
+ * The packages whose versions decide the vectors. Each package resolves from the one before it.
+ * `onnxruntime-common` resolves from the folder of `onnxruntime-node`. `@huggingface/tokenizers` is a direct
+ * dependency and resolves from the plugin root.
+ */
+export const EMBEDDING_STACK_PACKAGES = ['onnxruntime-node', 'onnxruntime-common', '@huggingface/tokenizers'];
 /** The key of the stamp in the `index_meta` table. */
 const STACK_KEY = 'embedding_stack';
 /** The plugin root: the folder above `dist/` or `src/`. */
@@ -36,7 +43,7 @@ function resolvePackageDir(name, fromDir, root) {
 }
 /**
  * Return the installed embedding stack as one string, for example
- * `@huggingface/transformers@4.2.0 onnxruntime-node@1.24.3 onnxruntime-common@1.24.3`.
+ * `onnxruntime-node@1.24.3 onnxruntime-common@1.24.3 @huggingface/tokenizers@0.1.3`.
  *
  * Each package resolves from the folder of the package before it, so a nested copy wins over a hoisted copy.
  * A package that is not installed shows the version `missing`. The function does not throw.
@@ -61,6 +68,16 @@ export function readEmbeddingStack(root = defaultRoot()) {
         parts.push(`${name}@${version}`);
     }
     return parts.join(' ');
+}
+/**
+ * Return the stamp of this build: the installed stack plus the pinned model revision.
+ *
+ * The index stores this string. A change of the stack or of the model revision marks every row stale.
+ *
+ * @param root the plugin root that holds `node_modules`. The default is the folder above this module.
+ */
+export function embeddingStamp(root = defaultRoot()) {
+    return `${readEmbeddingStack(root)} model=${EMBEDDING_MODEL.repo}@${EMBEDDING_MODEL.revision}`;
 }
 /**
  * Compare the stack stamp of the index with `stack`, and mark every row stale when the two differ.

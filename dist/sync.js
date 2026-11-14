@@ -260,7 +260,7 @@ export async function syncConversations(sourceDir, destDir, options = {}) {
         const { removeDerivedText } = await import('./derived-text.js');
         const { initEmbeddings, generateExchangeEmbeddings } = await import('./embeddings.js');
         const { parseConversation } = await import('./parser.js');
-        // The embedding backend can fail to load, for example when a native binding of transformers cannot load.
+        // The embedding backend can fail to load, for example when a native binding of onnxruntime-node cannot load.
         // The copies are already done and the summaries must still run, so the sync records one error and skips
         // the index step. The load runs before initDatabase, so a failed load opens no database handle.
         let embeddingsReady = true;

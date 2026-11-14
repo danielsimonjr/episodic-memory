@@ -4,13 +4,19 @@
  * A different version of the model runtime can produce different vectors for the same text.
  * The index therefore records the stack that embedded its rows. When the installed stack differs,
  * every row becomes stale, and the embedding migration embeds the rows again.
+ *
+ * The stamp also names the model revision (see embedding-model.ts), so a new model revision re-embeds the index.
  */
 import type { Database } from './sqlite.js';
-/** The packages whose versions decide the vectors. Each package resolves from the one before it. */
-export declare const EMBEDDING_STACK_PACKAGES: readonly ["@huggingface/transformers", "onnxruntime-node", "onnxruntime-common"];
+/**
+ * The packages whose versions decide the vectors. Each package resolves from the one before it.
+ * `onnxruntime-common` resolves from the folder of `onnxruntime-node`. `@huggingface/tokenizers` is a direct
+ * dependency and resolves from the plugin root.
+ */
+export declare const EMBEDDING_STACK_PACKAGES: readonly ["onnxruntime-node", "onnxruntime-common", "@huggingface/tokenizers"];
 /**
  * Return the installed embedding stack as one string, for example
- * `@huggingface/transformers@4.2.0 onnxruntime-node@1.24.3 onnxruntime-common@1.24.3`.
+ * `onnxruntime-node@1.24.3 onnxruntime-common@1.24.3 @huggingface/tokenizers@0.1.3`.
  *
  * Each package resolves from the folder of the package before it, so a nested copy wins over a hoisted copy.
  * A package that is not installed shows the version `missing`. The function does not throw.
@@ -18,6 +24,14 @@ export declare const EMBEDDING_STACK_PACKAGES: readonly ["@huggingface/transform
  * @param root the plugin root that holds `node_modules`. The default is the folder above this module.
  */
 export declare function readEmbeddingStack(root?: string): string;
+/**
+ * Return the stamp of this build: the installed stack plus the pinned model revision.
+ *
+ * The index stores this string. A change of the stack or of the model revision marks every row stale.
+ *
+ * @param root the plugin root that holds `node_modules`. The default is the folder above this module.
+ */
+export declare function embeddingStamp(root?: string): string;
 /**
  * Compare the stack stamp of the index with `stack`, and mark every row stale when the two differ.
  *

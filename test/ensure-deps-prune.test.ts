@@ -38,7 +38,7 @@ function fakePluginRoot(pairs: { platform: string; arch: string }[]): string {
 /** Add the files that `nodeModulesIsHealthy` needs, so `repairPlan` answers 'none'. */
 function makeHealthy(root: string): void {
   const nm = join(root, 'node_modules');
-  touch(join(nm, '@huggingface', 'transformers', 'package.json'));
+  touch(join(nm, '@huggingface', 'tokenizers', 'package.json'));
   touch(join(nm, 'onnxruntime-common', 'package.json'));
   touch(join(nm, 'onnxruntime-node', 'package.json'));
 }

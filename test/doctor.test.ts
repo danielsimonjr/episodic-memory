@@ -86,6 +86,66 @@ describe('general doctor report', () => {
   });
 });
 
+describe('doctor embedding model section', () => {
+  const modelReady = { dir: '/tmp/models', state: 'ready' as const, bad: [], fetchFailed: false };
+
+  it('prints the model state and keeps ok when the model is ready', () => {
+    const report = buildDoctorReport({ ...healthy, model: modelReady });
+    expect(report.ok).toBe(true);
+    expect(report.text).toContain('Embedding model: ready (/tmp/models)');
+    expect(report.text).not.toContain('embedding model is not ready');
+    expect(report.json.model).toEqual(modelReady);
+  });
+
+  it('warns, without failing, when a model file is missing', () => {
+    const report = buildDoctorReport({
+      ...healthy,
+      model: { dir: '/tmp/models', state: 'missing', bad: ['tokenizer.json'], fetchFailed: false },
+    });
+    expect(report.ok).toBe(true);
+    expect(report.text).toContain('Embedding model: missing (/tmp/models)');
+    expect(report.text).toMatch(/embedding model is not ready at \/tmp\/models \(1 file\(s\) missing or changed\)/);
+    expect(report.text).toContain('episodic-memory model fetch');
+  });
+
+  it('warns when the last download failed', () => {
+    const report = buildDoctorReport({
+      ...healthy,
+      model: { dir: '/tmp/models', state: 'missing', bad: [], fetchFailed: true },
+    });
+    expect(report.ok).toBe(true);
+    expect(report.text).toMatch(/last embedding model download failed/);
+  });
+
+  it('prints no model line when the section was not collected', () => {
+    const report = buildDoctorReport(healthy);
+    expect(report.text).not.toContain('Embedding model:');
+    expect(report.json.model).toBeUndefined();
+  });
+
+  it('collectDoctorSnapshot reads the model folder and the failed-download marker', async () => {
+    const saved = process.env.EPISODIC_MEMORY_MODEL_DIR;
+    const modelFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'em-doctor-model-'));
+    process.env.EPISODIC_MEMORY_MODEL_DIR = modelFolder;
+    try {
+      const missing = await collectDoctorSnapshot();
+      expect(missing.model).toEqual({
+        dir: modelFolder,
+        state: 'missing',
+        bad: ['tokenizer.json', 'tokenizer_config.json', 'onnx/model_quantized.onnx'],
+        fetchFailed: false,
+      });
+      fs.writeFileSync(path.join(modelFolder, '.model-fetch-failed'), 'fetch failed');
+      const failed = await collectDoctorSnapshot();
+      expect(failed.model?.fetchFailed).toBe(true);
+    } finally {
+      if (saved === undefined) delete process.env.EPISODIC_MEMORY_MODEL_DIR;
+      else process.env.EPISODIC_MEMORY_MODEL_DIR = saved;
+      safeRmSync(modelFolder);
+    }
+  });
+});
+
 describe('readRecentLogErrors', () => {
   let testDir: string;
 

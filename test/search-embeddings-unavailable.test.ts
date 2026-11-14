@@ -21,7 +21,7 @@ const { initDatabase, insertExchange, closeSharedReaderDatabase } = await import
 const { searchConversations } = await import('../src/search.js');
 const { handleToolCall } = await import('../src/mcp-tools.js');
 
-const BACKEND_ERROR = 'Failed to load the embedding backend (@huggingface/transformers). ERR_DLOPEN_FAILED: libvips';
+const BACKEND_ERROR = 'Failed to load the embedding backend (onnxruntime-node). ERR_DLOPEN_FAILED: onnxruntime_binding.node';
 const DIM = 384;
 
 describe('a search when the embedding backend cannot load', () => {

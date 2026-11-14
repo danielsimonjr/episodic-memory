@@ -171,7 +171,9 @@ describe('e2e smoke: refusal guard and proc-lister seam', () => {
     const allowed = new Set(['SYSTEMROOT', 'COMSPEC', 'PATHEXT', 'PATH', 'TEMP', 'TMP', 'TMPDIR', 'EPISODIC_MEMORY_CONFIG_DIR',
       'CLAUDE_CONFIG_DIR', 'CODEX_HOME', 'HOME', 'USERPROFILE', 'XDG_CONFIG_HOME', 'FLEET_GPU_RESERVATION',
       'EPISODIC_MEMORY_SUMMARIZER_BACKEND', 'EPISODIC_MEMORY_OLLAMA_URL', 'EPISODIC_MEMORY_OLLAMA_MODEL',
-      'EPISODIC_MEMORY_CODEX_BIN', 'EPISODIC_MEMORY_PROC_LISTER']);
+      'EPISODIC_MEMORY_CODEX_BIN', 'EPISODIC_MEMORY_PROC_LISTER',
+      // The shared model folder of the test run, and the switch that keeps the child from downloading.
+      'EPISODIC_MEMORY_MODEL_DIR', 'EPISODIC_MEMORY_MODEL_OFFLINE']);
     expect(keys.filter((key) => !allowed.has(key))).toEqual([]);
     expect(env.PATH).toBe(sb.bin);
   });

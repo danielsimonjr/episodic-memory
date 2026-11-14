@@ -2,7 +2,7 @@
  * Shared types for the Recursa learned-knowledge store.
  *
  * Every import here is `import type`, which TypeScript erases: the compiled
- * module has no runtime imports, so it loads with no transformers and no
+ * module has no runtime imports, so it loads with no embedding runtime and no
  * database handle. `src/learn/knowledge-store.ts` is the only module that knows
  * how an entry is laid out on disk; every other module sees the shapes declared here.
  */

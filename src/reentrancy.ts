@@ -8,7 +8,7 @@
  * env var on the SDK subprocess and the sync entry point bails when it sees it.
  *
  * This logic lives in its own tiny module (no SDK, no native deps) so `sync-cli`
- * can check the guard BEFORE importing the heavy stack (transformers,
+ * can check the guard BEFORE importing the heavy stack (the embedding runtime,
  * node:sqlite). Loading those just to exit on a guarded subprocess wasted
  * seconds per spawn.
  */

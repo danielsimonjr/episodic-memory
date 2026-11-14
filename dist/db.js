@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { getDbPath, tryChmod } from './paths.js';
 import { EMBEDDING_VERSION } from './embedding-migration.js';
-import { readEmbeddingStack, stampEmptyIndex } from './embedding-stack.js';
+import { embeddingStamp, stampEmptyIndex } from './embedding-stack.js';
 import { truncateForIndex } from './constants.js';
 import { maybeRedactSecrets } from './redact.js';
 import { ensureDigestSchema } from './digest-db.js';
@@ -441,7 +441,7 @@ export function openDatabaseReadonly() {
 export function initDatabase() {
     const db = openDatabase({ migrate: true });
     // A new index records the stack that embeds its rows (see embedding-stack.ts).
-    stampEmptyIndex(db, readEmbeddingStack());
+    stampEmptyIndex(db, embeddingStamp());
     return db;
 }
 /**

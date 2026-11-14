@@ -6,7 +6,7 @@ describe('multi-concept search', () => {
   // Pre-warm the embedder once per worker, matching integration.test.ts and
   // verify.test.ts. Without it the FIRST test here pays the cold model load on
   // top of its query, and under full-suite contention (41 files, parallel
-  // workers each loading the heavy transformers stack) that pushed it past the
+  // workers each loading the heavy embedding stack) that pushed it past the
   // 30 s default and timed out. Measured: 1,598 ms for this file's first test
   // when run alone vs a 30,000 ms timeout in the full suite — a ~20x gap that
   // is contention and cold start, not query cost. No assertion or timeout was

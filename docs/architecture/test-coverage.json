@@ -1,17 +1,17 @@
 {
   "metadata": {
-    "totalSourceFiles": 116,
-    "totalTestFiles": 191,
-    "testedCount": 94,
+    "totalSourceFiles": 117,
+    "totalTestFiles": 193,
+    "testedCount": 95,
     "untestedCount": 22,
-    "coveragePercent": "81.0",
+    "coveragePercent": "81.2",
     "effectiveCoverage": {
       "policyLoaded": false,
-      "activeFiles": 116,
-      "testedActive": 94,
+      "activeFiles": 117,
+      "testedActive": 95,
       "activeUntested": 22,
       "excludedTotal": 0,
-      "percent": "81.0",
+      "percent": "81.2",
       "breakdown": {
         "active_untested": 22
       }
@@ -33,13 +33,13 @@
     "src/learn-cli.ts",
     "src/learn/pii-redactor.ts",
     "src/mcp-server.ts",
+    "src/model-cli.ts",
     "src/search-cli.ts",
     "src/show-cli.ts",
     "src/stats-cli.ts",
     "src/sync-cli.ts",
     "src/topic-time.ts",
-    "src/topic-tool.ts",
-    "vendor/onnxruntime-web-stub/index.js"
+    "src/topic-tool.ts"
   ],
   "testedFiles": [
     "cli/ensure-deps.js",
@@ -67,6 +67,7 @@
     "src/doctor-learn.ts",
     "src/doctor.ts",
     "src/embedding-migration.ts",
+    "src/embedding-model.ts",
     "src/embedding-stack.ts",
     "src/embeddings.ts",
     "src/exclusion-marker.ts",
@@ -295,12 +296,18 @@
       "test/embedding-migration.test.ts",
       "test/exchange-vectors.test.ts"
     ],
+    "src/embedding-model.ts": [
+      "test/embedding-model.test.ts",
+      "test/global-setup.test.ts"
+    ],
     "src/embedding-stack.ts": [
       "test/e2e/install-versions.test.ts",
       "test/embedding-stack.test.ts"
     ],
     "src/embeddings.ts": [
       "test/embedding-migration.test.ts",
+      "test/embedding-model.test.ts",
+      "test/embedding-parity.test.ts",
       "test/embeddings-format.test.ts",
       "test/embeddings-unavailable.test.ts",
       "test/index-honours-marker.test.ts",
@@ -581,6 +588,7 @@
       "test/search-embeddings-unavailable.test.ts",
       "test/topic-tool.test.ts"
     ],
+    "src/model-cli.ts": [],
     "src/node-floor.ts": [
       "test/node-floor.test.ts",
       "test/sqlite-adapter.test.ts"
@@ -823,8 +831,7 @@
     ],
     "src/win-command.ts": [
       "test/win-command.test.ts"
-    ],
-    "vendor/onnxruntime-web-stub/index.js": []
+    ]
   },
   "testToSourceMap": {
     "test/agent-sdk-floor.test.ts": [],
@@ -903,6 +910,7 @@
     "test/cosine-similarity.test.ts": [
       "src/search.ts"
     ],
+    "test/cpu-class.test.ts": [],
     "test/cross-harness-recall.test.ts": [
       "src/db.ts",
       "src/search.ts",
@@ -1041,6 +1049,13 @@
       "src/embedding-migration.ts",
       "src/embeddings.ts"
     ],
+    "test/embedding-model.test.ts": [
+      "src/embedding-model.ts",
+      "src/embeddings.ts"
+    ],
+    "test/embedding-parity.test.ts": [
+      "src/embeddings.ts"
+    ],
     "test/embedding-stack.test.ts": [
       "src/sqlite.ts",
       "src/embedding-stack.ts",
@@ -1072,7 +1087,9 @@
       "src/indexer.ts",
       "src/sync.ts"
     ],
-    "test/global-setup.test.ts": [],
+    "test/global-setup.test.ts": [
+      "src/embedding-model.ts"
+    ],
     "test/gpu-reservation.test.ts": [
       "src/gpu-reservation.ts",
       "src/ollama-backend.ts"
@@ -1396,7 +1413,6 @@
       "src/ollama-backend.ts",
       "src/summarizer.ts"
     ],
-    "test/onnxruntime-web-stub.test.ts": [],
     "test/orphan-reaper.test.ts": [
       "src/orphan-reaper.ts"
     ],
@@ -1724,6 +1740,10 @@
       "category": null
     },
     {
+      "file": "src/model-cli.ts",
+      "category": null
+    },
+    {
       "file": "src/search-cli.ts",
       "category": null
     },
@@ -1745,10 +1765,6 @@
     },
     {
       "file": "src/topic-tool.ts",
-      "category": null
-    },
-    {
-      "file": "vendor/onnxruntime-web-stub/index.js",
       "category": null
     }
   ]

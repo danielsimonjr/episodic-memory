@@ -13,7 +13,7 @@
 - **Progress reporting** — the wrapper currently emits two lines to stderr ("Installing..." / "May take 30-60 seconds"). Replace with structured progress that the Claude Code UI can render (or at least tail meaningfully): per-dep timing, native-build status, hoist verification.
 - **Pre-flight check command** — `npx episodic-memory doctor install` runs the full install dry-run + dep verification + sentinel check, returning structured output. Useful for "before you report a bug" diagnostics.
 - **Failure recovery hints** — when `npm install` fails, the wrapper's error message should suggest concrete next steps (clear cache, manual `npm install`, file an issue). Today it just says "run manually."
-- **Optional dep audit** — `@huggingface/transformers` is huge (~250 packages, ~700 MB). Investigate whether sharp/native-binding parts can be made truly optional for the search-only case.
+- **Optional dep audit** — done for the embedder: `@huggingface/transformers`, `sharp` and `onnxruntime-web` are gone; `onnxruntime-node` and `@huggingface/tokenizers` run the model (see [ort-direct-embeddings.md](ort-direct-embeddings.md)).
 
 **Definition of "done" (rough):** Fresh install on a clean Windows VM completes in ≤90s with visible progress, and `doctor install` catches all known failure modes without false positives.
 

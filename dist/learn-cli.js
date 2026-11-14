@@ -2,7 +2,7 @@
  * `episodic-memory learn` — the process entry point (`dist/learn-cli.js`).
  *
  * Everything below the five early exits is imported lazily. A learning run loads
- * the knowledge store, the Agent SDK and transformers; a guarded reentrant subprocess, a
+ * the knowledge store, the Agent SDK and the embedding runtime; a guarded reentrant subprocess, a
  * flag-off invocation, a deferred GPU reservation or `--help` must pay none of
  * that (spec §7 rules 8, 10 and 12). The order is fixed and mirrors
  * `sync-cli.ts`:
@@ -52,7 +52,7 @@ if (reserved) {
     process.exit(0);
 }
 // A learning run is a heavy local process. Mark it, then let the helper drop the
-// process below normal priority before the SDK and transformers load. The
+// process below normal priority before the SDK and the embedding runtime load. The
 // marker is inherited by every subprocess through `getApiEnv()`, which spreads
 // `process.env`.
 process.env[BACKGROUND_WORKER_ENV] = '1';

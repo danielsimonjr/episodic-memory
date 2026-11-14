@@ -355,12 +355,13 @@ describe('module graph', () => {
     expect(specifiers).toEqual(['../redact.js']);
   });
 
-  it('imports no SDK, sqlite or transformers module', () => {
+  it('imports no SDK, sqlite or embedding runtime module', () => {
     const source = fs.readFileSync(SRC, 'utf8');
     for (const forbidden of [
       '@anthropic-ai/claude-agent-sdk',
       'better-sqlite3',
-      'transformers',
+      'onnxruntime-node',
+      '@huggingface/tokenizers',
     ]) {
       expect(source, forbidden).not.toContain(forbidden);
     }

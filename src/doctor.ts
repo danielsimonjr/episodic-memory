@@ -16,6 +16,7 @@ import {
 } from './paths.js';
 import { syncErrorsLogPath as errorsLogPath, syncLogPath } from './logging.js';
 import { nodeModulesIsHealthy } from './deps-health.js';
+import { FETCH_FAILED_MARKER, modelDir, modelState } from './embedding-model.js';
 import { assertNodeFloor } from './node-floor.js';
 import { type LearnDoctorSection, collectLearnDoctorSection } from './doctor-learn.js';
 
@@ -150,10 +151,18 @@ export function buildCodexDoctorReport(inputs: CodexDoctorInputs): DoctorReport 
   };
 }
 
+/** The embedding model section of the doctor report: the folder, its state and the failed-download marker. */
+export interface ModelDoctorSection {
+  dir: string;
+  state: 'ready' | 'missing';
+  bad: string[];
+  fetchFailed: boolean;
+}
+
 /**
  * The values that `buildDoctorReport` checks.
  *
- * `collectDoctorSnapshot` collects these values. Optional values stay undefined when they cannot be read. The `learn` section stays absent when it was not collected.
+ * `collectDoctorSnapshot` collects these values. Optional values stay undefined when they cannot be read. The `learn` and `model` sections stay absent when they were not collected.
  */
 export interface DoctorInputs {
   configDir: string;
@@ -174,6 +183,8 @@ export interface DoctorInputs {
   pluginRoot?: string;
   /** The Recursa `learn` section. Absent means "not collected". */
   learn?: LearnDoctorSection;
+  /** The embedding model section. Absent means "not collected". */
+  model?: ModelDoctorSection;
 }
 
 /**
@@ -269,7 +280,30 @@ export async function collectDoctorSnapshot(): Promise<DoctorInputs> {
     nodeModulesHealthy,
     pluginRoot,
     learn: await collectLearnDoctorSection(),
+    model: collectModelSection(),
   };
+}
+
+/**
+ * Read the embedding model folder: its state and whether the last download failed.
+ *
+ * The function reads and creates nothing. The hash of each model file runs once per process.
+ */
+function collectModelSection(): ModelDoctorSection {
+  const dir = modelDir();
+  const state = modelState({ dir });
+  return {
+    dir,
+    state: state.state,
+    bad: state.bad,
+    fetchFailed: fs.existsSync(path.join(dir, FETCH_FAILED_MARKER)),
+  };
+}
+
+/** The doctor lines of the embedding model section, or none when the section is absent. */
+function modelLines(model: ModelDoctorSection | undefined): string[] {
+  if (model === undefined) return [];
+  return [`Embedding model: ${model.state} (${model.dir})`];
 }
 
 /** A byte count as `12.3 KB` / `4.1 MB`, or `n/a`. */
@@ -374,6 +408,16 @@ export function buildDoctorReport(inputs: DoctorInputs): StructuredDoctorReport 
     );
   }
 
+  const model = inputs.model;
+  if (model !== undefined && model.state === 'missing') {
+    warnings.push(
+      `The embedding model is not ready at ${model.dir} (${model.bad.length} file(s) missing or changed). Vector search stays off until you run episodic-memory model fetch.`
+    );
+  }
+  if (model !== undefined && model.fetchFailed) {
+    warnings.push('The last embedding model download failed. Run episodic-memory model fetch to retry now.');
+  }
+
   const learn = inputs.learn;
   if (learn !== undefined && learn.present) {
     if (learn.unresolvedSources.length > 0) {
@@ -412,6 +456,7 @@ export function buildDoctorReport(inputs: DoctorInputs): StructuredDoctorReport 
           ? 'unhealthy'
           : 'unknown'
     }`,
+    ...modelLines(model),
   ];
 
   const learnLines = learnTextLines(learn);
@@ -458,6 +503,7 @@ export function buildDoctorReport(inputs: DoctorInputs): StructuredDoctorReport 
     syncErrorsLogPath: inputs.syncErrorsLogPath,
     recentSyncErrors: inputs.recentSyncErrors,
     nodeModulesHealthy: inputs.nodeModulesHealthy,
+    model: inputs.model,
     pluginRoot: inputs.pluginRoot,
     warnings,
     issues,

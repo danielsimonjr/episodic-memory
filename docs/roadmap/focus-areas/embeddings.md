@@ -6,10 +6,10 @@
 
 ## Where we are
 
-- **Model:** `Xenova/all-MiniLM-L6-v2` via `@huggingface/transformers`
-- **Size on disk:** ~80 MB
+- **Model:** `Xenova/bge-small-en-v1.5` (q8), run with `onnxruntime-node` and `@huggingface/tokenizers`, pinned by revision and sha256 in `src/embedding-model.ts`
+- **Size on disk:** ~34 MB (the q8 ONNX file)
 - **Dimensions:** 384
-- **Pooling:** mean
+- **Pooling:** mean. Measured against CLS (the BAAI training pooling) on 120 archive-graded `learn` tasks: mean MRR 0.132, CLS 0.113; mean ranks the answer better on 63 tasks, CLS on 42
 - **Normalization:** L2 (writer-side), so distance can be converted to cosine similarity via the identity in `search.ts:l2DistanceToCosineSimilarity`
 - **EMBEDDING_VERSION:** 1
 - **Indexed exchanges:** 2,739 (as of 2026-05-18, on the main machine)

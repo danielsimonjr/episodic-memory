@@ -2,7 +2,7 @@
  * `episodic-memory learn` — the process entry point (`dist/learn-cli.js`).
  *
  * Everything below the five early exits is imported lazily. A learning run loads
- * the knowledge store, the Agent SDK and transformers; a guarded reentrant subprocess, a
+ * the knowledge store, the Agent SDK and the embedding runtime; a guarded reentrant subprocess, a
  * flag-off invocation, a deferred GPU reservation or `--help` must pay none of
  * that (spec §7 rules 8, 10 and 12). The order is fixed and mirrors
  * `sync-cli.ts`:

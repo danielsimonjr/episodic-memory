@@ -230,17 +230,23 @@ describe('mcp: search', () => {
   });
 
   // The positive control of D1. A cut that keeps only the vector rows also passes the case above, and makes
-  // the default mode the vector mode. On this fixture the top text row of "approval" is not among the top two
-  // vector rows, so only a merge that gives each mode a place puts both top rows in a limit of 2.
-  it('search mode both, query "approval" in project e2e-lines, limit 2 keeps the top vector row and the top text row', async () => {
-    const both = await searchJson(client, { query: 'approval', project: LINES, limit: 2 });
-    const vector = await searchJson(client, { query: 'approval', project: LINES, mode: 'vector', limit: 2 });
-    const text = await searchJson(client, { query: 'approval', project: LINES, mode: 'text', limit: 1 });
-    const ids = (r: typeof both) => r.results.map((row) => row.exchange.id);
-    expect(ids(text)).toHaveLength(1);
-    // The precondition: the text row is outside the vector top two.
-    expect(ids(vector)).not.toContain(ids(text)[0]);
-    expect(ids(both)).toEqual([ids(vector)[0], ids(text)[0]]);
+  // the default mode the vector mode. The control needs a query whose top text row is not among the top two
+  // vector rows: only a merge that gives each mode a place then puts both top rows in a limit of 2. Which
+  // query meets that condition depends on the model, so the case takes the first one of a fixed list.
+  it('search mode both in project e2e-lines, limit 2 keeps the top vector row and the top text row', async () => {
+    const ids = (r: Awaited<ReturnType<typeof searchJson>>) => r.results.map((row) => row.exchange.id);
+    const candidates = ['approval', 'reviewer', 'merge', 'tag', ...MARKS.map((m) => `approval ${m}`)];
+    let chosen: string | undefined;
+    let vectorTop: string[] = [];
+    let textTop: string[] = [];
+    for (const query of candidates) {
+      const vector = ids(await searchJson(client, { query, project: LINES, mode: 'vector', limit: 2 }));
+      const text = ids(await searchJson(client, { query, project: LINES, mode: 'text', limit: 1 }));
+      if (text.length === 1 && !vector.includes(text[0])) { chosen = query; vectorTop = vector; textTop = text; break; }
+    }
+    expect(chosen, `no query of ${JSON.stringify(candidates)} has its top text row outside the vector top two`).toBeDefined();
+    const both = await searchJson(client, { query: chosen!, project: LINES, limit: 2 });
+    expect(ids(both)).toEqual([vectorTop[0], textTop[0]]);
   });
 
   it('applies the project and session filters, and an empty filter answers zero rows', async () => {

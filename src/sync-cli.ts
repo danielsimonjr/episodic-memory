@@ -252,6 +252,12 @@ const MIGRATION_BATCH_SIZE = envPositiveInt('EPISODIC_MEMORY_MIGRATION_BATCH', 5
 async function runEmbeddingMigrationPhase(): Promise<void> {
   const db = initDatabase();
   try {
+    // A changed embedding stack (transformers or onnxruntime) makes every stored vector stale.
+    const { readEmbeddingStack, reconcileEmbeddingStack } = await import('./embedding-stack.js');
+    const stack = readEmbeddingStack();
+    if (reconcileEmbeddingStack(db, stack)) {
+      console.error(`episodic-memory: embedding stack is now ${stack}; every exchange will be embedded again`);
+    }
     const stale = countStale(db);
     if (stale === 0) return;
 

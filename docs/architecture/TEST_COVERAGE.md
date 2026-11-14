@@ -8,11 +8,11 @@
 
 | Metric | Count |
 |--------|-------|
-| Total Source Files | 115 |
-| Total Test Files | 189 |
-| Source Files with Tests | 93 |
+| Total Source Files | 116 |
+| Total Test Files | 191 |
+| Source Files with Tests | 94 |
 | Source Files without Tests | 22 |
-| Coverage (raw, direct-import) | **80.9%** |
+| Coverage (raw, direct-import) | **81.0%** |
 ---
 
 ## Source Files Not Imported By A Test
@@ -81,6 +81,7 @@ The following 22 source files are not directly imported by any test file:
 | `src/doctor-learn.ts` | `doctor.test.ts` |
 | `src/doctor.ts` | `codex-doctor.test.ts`, `doctor.test.ts` |
 | `src/embedding-migration.ts` | `embedding-migration-helpers.test.ts`, `embedding-migration.test.ts`, `exchange-vectors.test.ts` |
+| `src/embedding-stack.ts` | `install-versions.test.ts`, `embedding-stack.test.ts` |
 | `src/embeddings.ts` | `embedding-migration.test.ts`, `embeddings-format.test.ts`, `embeddings-unavailable.test.ts`, `index-honours-marker.test.ts`, `indexer-db-close.test.ts`, `integration.test.ts`, `multi-concept.test.ts`, `query-prefix.test.ts`, `search-embeddings-unavailable.test.ts`, `search-text-row-similarity.test.ts`, `sync-embeddings-unavailable.test.ts`, `sync-marker-scan.test.ts`, `vector-search-filters.test.ts`, `verify.test.ts` |
 | `src/exclusion-marker.ts` | `sync-marker-scan.test.ts` |
 | `src/fs-retry.ts` | `sync-copy-retry.test.ts` |
@@ -134,7 +135,7 @@ The following 22 source files are not directly imported by any test file:
 | `src/reentrancy.ts` | `backfill-cli-gpu-reservation.test.ts`, `digest-gpu-reservation.test.ts`, `digest-job.test.ts`, `digest-prompt-budget.test.ts`, `agent-runner.test.ts`, `reentrancy.test.ts`, `summarizer-api-env.test.ts`, `topic-job.test.ts`, `topic-phase.test.ts` |
 | `src/search.ts` | `cosine-similarity.test.ts`, `cross-harness-recall.test.ts`, `integration.test.ts`, `multi-concept.test.ts`, `search-embeddings-unavailable.test.ts`, `search-interleave.test.ts`, `search-metadata-filters.test.ts`, `search-text-row-similarity.test.ts`, `search-with-summary.test.ts`, `security-speed-helpers.test.ts`, `sync-incremental-and-db.test.ts`, `text-search-multiword.test.ts`, `vector-search-filters.test.ts` |
 | `src/show.ts` | `markdown-html.test.ts`, `mcp-read-redaction.test.ts`, `show.test.ts` |
-| `src/sqlite.ts` | `codex-transcripts.test.ts`, `dangling-project-link.test.ts`, `db.test.ts`, `derived-text.test.ts`, `digest-compress.test.ts`, `digest-db.test.ts`, `digest-gpu-reservation.test.ts`, `digest-inject.test.ts`, `digest-job.test.ts`, `digest-prompt-budget.test.ts`, `doctor.test.ts`, `embedding-migration.test.ts`, `exchange-vectors.test.ts`, `exclude-nested.test.ts`, `incremental-indexing.test.ts`, `index-honours-marker.test.ts`, `indexer-db-close.test.ts`, `integration.test.ts`, `bootstrap.test.ts`, `export.test.ts`, `knowledge-store.test.ts`, `leaf-learner.test.ts`, `learn-cli.test.ts`, `learned-block.test.ts`, `learner.test.ts`, `learning-db.test.ts`, `learning-store.test.ts`, `relay-task4-findings.test.ts`, `relay-task6-findings.test.ts`, `relay-task8-challenger.test.ts`, `relay-task9-findings.test.ts`, `report.test.ts`, `solver.test.ts`, `tasks.test.ts`, `validate.test.ts`, `oversized-message-guard.test.ts`, `prune.test.ts`, `search-metadata-filters.test.ts`, `sqlite-adapter.test.ts`, `stats.test.ts`, `sync-embeddings-unavailable.test.ts`, `sync-incremental-and-db.test.ts`, `sync-marker-scan.test.ts`, `sync.test.ts`, `text-search-multiword.test.ts`, `tool-calls-cascade.test.ts`, `topic-db.test.ts`, `topic-job.test.ts`, `topic-phase.test.ts`, `topic-tool.test.ts`, `vanished-transcript.test.ts` |
+| `src/sqlite.ts` | `codex-transcripts.test.ts`, `dangling-project-link.test.ts`, `db.test.ts`, `derived-text.test.ts`, `digest-compress.test.ts`, `digest-db.test.ts`, `digest-gpu-reservation.test.ts`, `digest-inject.test.ts`, `digest-job.test.ts`, `digest-prompt-budget.test.ts`, `doctor.test.ts`, `embedding-migration.test.ts`, `embedding-stack.test.ts`, `exchange-vectors.test.ts`, `exclude-nested.test.ts`, `incremental-indexing.test.ts`, `index-honours-marker.test.ts`, `indexer-db-close.test.ts`, `integration.test.ts`, `bootstrap.test.ts`, `export.test.ts`, `knowledge-store.test.ts`, `leaf-learner.test.ts`, `learn-cli.test.ts`, `learned-block.test.ts`, `learner.test.ts`, `learning-db.test.ts`, `learning-store.test.ts`, `relay-task4-findings.test.ts`, `relay-task6-findings.test.ts`, `relay-task8-challenger.test.ts`, `relay-task9-findings.test.ts`, `report.test.ts`, `solver.test.ts`, `tasks.test.ts`, `validate.test.ts`, `oversized-message-guard.test.ts`, `prune.test.ts`, `search-metadata-filters.test.ts`, `sqlite-adapter.test.ts`, `stats.test.ts`, `sync-embeddings-unavailable.test.ts`, `sync-incremental-and-db.test.ts`, `sync-marker-scan.test.ts`, `sync.test.ts`, `text-search-multiword.test.ts`, `tool-calls-cascade.test.ts`, `topic-db.test.ts`, `topic-job.test.ts`, `topic-phase.test.ts`, `topic-tool.test.ts`, `vanished-transcript.test.ts` |
 | `src/stats.ts` | `stats-format.test.ts`, `stats.test.ts` |
 | `src/summarizer.ts` | `app-server-stdin-error.test.ts`, `claude-auth-deferral.test.ts`, `claude-bin-deferral.test.ts`, `index-honours-marker.test.ts`, `ollama-plain-reply.test.ts`, `real-sdk-guard.test.ts`, `summarizer-api-env.test.ts`, `summarizer-claude-path.test.ts`, `summarizer-gpu-reservation.test.ts`, `summarizer-ollama-fallback.test.ts`, `summarizer-options.test.ts`, `summarizer-prompt-budget.test.ts`, `summarizer-text.test.ts`, `topic-job.test.ts`, `verify.test.ts` |
 | `src/summary-sentinel.ts` | `summary-sentinel.test.ts` |
@@ -203,12 +204,14 @@ The following 22 source files are not directly imported by any test file:
 | `e2e/env-flags.test.ts` | 0 files |
 | `e2e/env-learn-topics.test.ts` | 3 files |
 | `e2e/hooks.test.ts` | 0 files |
+| `e2e/install-versions.test.ts` | 1 files |
 | `e2e/learn.test.ts` | 2 files |
 | `e2e/lifecycle.test.ts` | 0 files |
 | `e2e/mcp.test.ts` | 2 files |
 | `e2e/smoke.test.ts` | 1 files |
 | `test/embedding-migration-helpers.test.ts` | 3 files |
 | `test/embedding-migration.test.ts` | 3 files |
+| `test/embedding-stack.test.ts` | 2 files |
 | `test/embeddings-format.test.ts` | 2 files |
 | `test/embeddings-unavailable.test.ts` | 1 files |
 | `test/ensure-deps-prune.test.ts` | 1 files |

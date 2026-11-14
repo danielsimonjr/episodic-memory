@@ -51,7 +51,7 @@ dependency, no `MEMORY_*` environment handling and no per-handle cache. Each ope
 - **TypeScript source** in `src/`, compiled to `dist/` by `tsc && esbuild`. **Both are committed.**
 - **CLI entry points** in `cli/` (Node.js wrappers — no bash).
 - **MCP server** is `dist/mcp-server.js`, launched by `cli/mcp-server-wrapper.js` from the plugin manifest.
-- **Tests** in `test/` with vitest (180 files, 1819 tests). The end-to-end suite in `test/e2e/` (`vitest.e2e.config.ts`) runs the built CLI, MCP server and hooks.
+- **Tests** in `test/` with vitest (181 files, 1825 tests). The end-to-end suite in `test/e2e/` (`vitest.e2e.config.ts`) runs the built CLI, MCP server and hooks.
 - **Generated files** in `dist/` AND `src/version.ts`. The latter is gitignored; never edit it.
 - **`bun.lock` is committed** — CI uses `bun install --frozen-lockfile` + `bun audit --audit-level=critical`. Do not commit `package-lock.json` (gitignored).
 
@@ -59,6 +59,7 @@ dependency, no `MEMORY_*` environment handling and no per-handle cache. Each ope
 src/
   embeddings.ts          # encoder pipeline; query/exchange embedders
   embedding-migration.ts # version constant + lock + batch migration
+  embedding-stack.ts     # installed transformers/onnxruntime versions; a changed stack marks every row stale
   search.ts              # vector + text search; multi-concept aggregation
   sqlite.ts              # node:sqlite adapter with the better-sqlite3 method names; the only importer of node:sqlite
   indexer.ts             # incremental index from sources to exchange_vectors
@@ -121,7 +122,7 @@ scripts/
 
 test/
   test-utils.ts          # createTestDb, safeRmSync (fork-added), suppressConsole, fixtures
-  *.test.ts              # 180 test files, 1819 tests
+  *.test.ts              # 181 test files, 1825 tests
   learn/                 # the Recursa suite; fakes for every model call
   fixtures/              # JSONL conversation fixtures
 
@@ -179,12 +180,12 @@ scheduled task. To roll back, remove the variable first. Then run `npm install -
 
 ### Current test state
 
-- **Full suite: 1819 tests in 180 files pass** in about 17 s of wall clock on Linux. Windows runs are slower.
+- **Full suite: 1825 tests in 181 files pass** in about 17 s of wall clock on Linux. Windows runs are slower.
   The suite no longer has the former `integration.test.ts` / `verify.test.ts` cold-embedding timeout flakes.
   `beforeAll` pre-warms the embedder once per worker. `vitest.config.ts` sets `hookTimeout: 30000`.
   The repair re-index test gets 60s. If you see a fresh timeout flake, suspect a new embedding-heavy hook
   without warm-up, not the old cold-start cause.
-- The learn tests are the bulk of the suite (`test/learn/`, 39 files; the other 141 test files sit directly in `test/`). The learn tests never reach a model: every agent and
+- The learn tests are the bulk of the suite (`test/learn/`, 39 files; the other 142 test files sit directly in `test/`). The learn tests never reach a model: every agent and
   text call is injectable and tests pass fakes. `test/test-env.ts` pins the Claude backend, a closed ollama URL,
   a temporary config directory and temporary Claude and Codex homes. `test/setup-env.ts` deletes every other `EPISODIC_MEMORY_*` variable of
   the machine. A local run therefore uses the CI settings and cannot reach a model or the live data.
@@ -260,6 +261,8 @@ The guard lives in its own dependency-free module, `src/reentrancy.ts` (`SUMMARI
 The `exchanges.embedding_version` column tracks which encoder produced each row's vector. New code stamps `EMBEDDING_VERSION` (in `src/embedding-migration.ts`); old rows from earlier installs default to 0. The sync flow re-embeds stale rows in batches behind a lock at `~/.config/superpowers/conversation-index/.embedding-migration.lock`.
 
 **If you change anything in the embedding pipeline** (model, dtype, prefix, pooling, normalization, truncation), **bump `EMBEDDING_VERSION`**. That triggers automatic re-embedding for everyone on upgrade. Don't change pipeline behavior silently — search results would degrade against indexed vectors from the old pipeline.
+
+The installed embedding stack is a second trigger. `src/embedding-stack.ts` stamps the versions of `@huggingface/transformers`, `onnxruntime-node` and `onnxruntime-common` in the `index_meta` table. The sync migration phase marks every row stale when the installed stack differs from the stamp. `package.json` pins the three packages exactly, with npm `overrides`, so `npm install --omit=dev` in a plugin root installs the stack that `bun.lock` records. `test/e2e/install-versions.test.ts` fails when the two differ; run it with `E2E_PLUGIN_ROOT` set to an installed copy.
 
 ### 6. Test isolation
 

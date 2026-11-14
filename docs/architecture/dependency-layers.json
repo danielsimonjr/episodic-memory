@@ -1,7 +1,7 @@
 {
   "metadata": {
     "name": "episodic-memory",
-    "version": "1.12.0",
+    "version": "1.13.0",
     "schemaVersion": "2.0.0",
     "language": "typescript"
   },
@@ -1592,6 +1592,53 @@
           "EMBEDDING_VERSION"
         ]
       },
+      "src/embedding-stack.ts": {
+        "description": "The installed versions of the embedding stack, and the stamp that records them in the index.",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "existsSync",
+              "readFileSync"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "url",
+            "imports": [
+              "fileURLToPath"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "./sqlite.js",
+            "imports": [
+              "Database"
+            ],
+            "typeOnly": true
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "EMBEDDING_STACK_PACKAGES",
+          "readEmbeddingStack",
+          "reconcileEmbeddingStack"
+        ],
+        "functions": [
+          "readEmbeddingStack",
+          "reconcileEmbeddingStack"
+        ],
+        "constants": [
+          "EMBEDDING_STACK_PACKAGES"
+        ]
+      },
       "src/embeddings.ts": {
         "description": "The embedding model: bge-small-en-v1.5, from the Xenova ONNX export, with the `q8` data type.",
         "externalDependencies": [
@@ -3148,6 +3195,12 @@
           },
           {
             "file": "./topic-phase.js",
+            "imports": [
+              "*"
+            ]
+          },
+          {
+            "file": "./embedding-stack.js",
             "imports": [
               "*"
             ]
@@ -6286,6 +6339,7 @@
         "src/doctor-learn.ts",
         "src/doctor.ts",
         "src/embedding-migration.ts",
+        "src/embedding-stack.ts",
         "src/embeddings.ts",
         "src/exclusion-marker.ts",
         "src/fs-retry.ts",

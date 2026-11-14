@@ -24,8 +24,18 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 
 /** The repository root: test/e2e/ -> repo. */
 export const REPO_ROOT = path.resolve(HERE, '..', '..');
-export const CLI_DIR = path.join(REPO_ROOT, 'cli');
-export const DIST_DIR = path.join(REPO_ROOT, 'dist');
+/**
+ * The root of the plugin under test: its `cli/`, `dist/`, `hooks/` and `node_modules`.
+ *
+ * The default is this checkout. `E2E_PLUGIN_ROOT` names an installed copy instead, for example
+ * `~/.claude/plugins/cache/<marketplace>/episodic-memory/<version>`. The tests, the fixtures and the source
+ * registry still come from this checkout, so run the suite from the tag of the installed version.
+ */
+export const PLUGIN_ROOT = process.env.E2E_PLUGIN_ROOT ? path.resolve(process.env.E2E_PLUGIN_ROOT) : REPO_ROOT;
+/** True when the suite runs against an installed copy rather than this checkout. */
+export const TESTS_INSTALLED_COPY = PLUGIN_ROOT !== REPO_ROOT;
+export const CLI_DIR = path.join(PLUGIN_ROOT, 'cli');
+export const DIST_DIR = path.join(PLUGIN_ROOT, 'dist');
 export const FIXTURE_DIR = path.join(REPO_ROOT, 'test', 'fixtures');
 /** The proc-lister seam. Absolute, because the hook imports it by file URL. */
 export const LISTER_PATH = path.join(HERE, 'fake-proc-lister.mjs');
@@ -287,16 +297,17 @@ let preconditionsChecked = false;
  */
 export function assertRepoPreconditions(): void {
   if (preconditionsChecked) return;
-  const nodeModules = path.join(REPO_ROOT, 'node_modules');
+  const nodeModules = path.join(PLUGIN_ROOT, 'node_modules');
   const plan = repairPlan(nodeModules);
-  if (plan !== 'none') throw new Error(`repo node_modules needs repair (${plan}): run bun install`);
+  if (plan !== 'none') throw new Error(`${nodeModules} needs repair (${plan}): run bun install, or npm install --omit=dev in an installed copy`);
 
   const [major, minor] = process.versions.node.split('.').map(Number);
   if (major < 22 || (major === 22 && minor < 16)) {
     throw new Error(`Node ${process.versions.node} is below the 22.16.0 floor`);
   }
 
-  if (!process.env.CI) {
+  // An installed copy has no src/, so the stale-dist check applies to a checkout only.
+  if (!process.env.CI && !TESTS_INSTALLED_COPY) {
     // Per file: each src/<rel>.ts needs dist/<rel>.js, and that file must not be older than its source.
     // A newest-vs-newest check passes when one fresh dist file hides a stale one (measured).
     const stale = staleDistPairs();
@@ -389,8 +400,8 @@ export function isLiveFile(base: string): boolean {
 
 /** The repo folders that `ensureDeps` prunes and deletes (F2 of the critique). */
 export const REPO_CANARY_ROOTS: readonly string[] = [
-  path.join(REPO_ROOT, 'node_modules', '@anthropic-ai'),
-  path.join(REPO_ROOT, 'node_modules', 'onnxruntime-node', 'bin'),
+  path.join(PLUGIN_ROOT, 'node_modules', '@anthropic-ai'),
+  path.join(PLUGIN_ROOT, 'node_modules', 'onnxruntime-node', 'bin'),
 ];
 
 /**
@@ -399,20 +410,20 @@ export const REPO_CANARY_ROOTS: readonly string[] = [
  * holds the pruned tree. `changes` returns the listing difference: an empty list means no change.
  */
 export function startRepoCanary(): { changes(): string[] } {
-  pruneOptionalWeight(path.join(REPO_ROOT, 'node_modules'));
+  pruneOptionalWeight(path.join(PLUGIN_ROOT, 'node_modules'));
   const before = repoCanaryListing();
   return { changes: () => diffListings(before, repoCanaryListing()) };
 }
 
 /** The repair marker that `ensureDeps` writes at the package root when an onnx reinstall fails. */
-const REPAIR_MARKER = path.join(REPO_ROOT, '.episodic-memory-onnx-repair-failed');
+const REPAIR_MARKER = path.join(PLUGIN_ROOT, '.episodic-memory-onnx-repair-failed');
 
 /**
  * The canary listing: the pruned folders in full, the names at the top of node_modules (an
  * install adds or removes a package there), and the repair marker at the repo root.
  */
 function repoCanaryListing(): string[] {
-  const top = readdirSync(path.join(REPO_ROOT, 'node_modules')).map((name) => `node_modules/${name}`);
+  const top = readdirSync(path.join(PLUGIN_ROOT, 'node_modules')).map((name) => `node_modules/${name}`);
   const marker = existsSync(REPAIR_MARKER) ? [`marker ${path.basename(REPAIR_MARKER)}`] : [];
   return [...listTree(REPO_CANARY_ROOTS), ...top, ...marker].sort();
 }

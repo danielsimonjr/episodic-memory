@@ -1,5 +1,14 @@
 ## [Unreleased]
 
+### Fixed
+
+- A plugin install now gets the embedding stack that CI tests. `package.json` asked for `@huggingface/transformers` `^4.2.0`, and `bun.lock` held 4.2.0. The plugin install runs `npm install --omit=dev`, which reads no `bun.lock`, so it took 4.3.2. That version brings `onnxruntime-node` 1.30.0, beside the hoisted `onnxruntime-common` 1.24.3. `package.json` now pins transformers to `4.2.0` and pins `onnxruntime-node` and `onnxruntime-common` to `1.24.3` with npm `overrides`. bun records the overrides in `bun.lock`, so `--frozen-lockfile` in CI checks that the two files agree. A fresh `npm install --omit=dev` resolves one copy of each package. An install of 1.13.0 moves to the same stack on its next install. The repo still ships no npm lockfile, as `.gitignore` requires.
+
+### Added
+
+- `src/embedding-stack.ts` stamps the installed versions of transformers, `onnxruntime-node` and `onnxruntime-common` in a new `index_meta` table. The sync migration phase marks every exchange stale when the installed stack differs from the stamp, or when the index has no stamp. The next syncs then embed every row again in batches, so a change of stack no longer leaves old vectors beside new ones. An index from an earlier version has no stamp, so its first sync after the upgrade starts a full re-embed.
+- `test/e2e/install-versions.test.ts` fails when the installed embedding stack differs from `bun.lock`. `E2E_PLUGIN_ROOT` points the e2e suite at an installed copy instead of the checkout (`test/e2e/harness.ts`). Against the 1.13.0 install, the check reported transformers 4.3.2, `onnxruntime-node` 1.30.0 and `onnxruntime-common` 1.30.0. After an install with the pins, the check and the MCP e2e file pass. The D1 approval control that failed on the old install is in that file.
+
 ## [1.13.0] - 2026-11-13
 
 ### Added

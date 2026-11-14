@@ -34,6 +34,8 @@ items move between sections as state changes.
 
 ## Active queue
 
+- [x] Pin the embedding stack to `bun.lock` for the npm plugin install, stamp the stack in the index, and add an e2e check of the installed versions (`E2E_PLUGIN_ROOT`). Five-axis 2026-11-14: reliability (install equals the tested stack; drift re-embeds), maintainability (one pin source, `bun.lock` proves it). Left: a full npm lockfile, which `.gitignore` bans; clones skipped (no change of shape).
+
 - [x] **Drop `marked`: render Markdown to HTML in-repo.** `src/show.ts` `renderMarkdownSafely` is the one call site. A new module `src/markdown-html.ts` renders the subset the show output uses, escapes all raw HTML, and refuses unsafe link schemes. Relay: Haiku worker and challenger. Remove `marked` from package.json and the lockfile.
 - [ ] **Run on node:sqlite: drop better-sqlite3 and sqlite-vec.** One branch `deps/node-sqlite`, four slices: the adapter `src/sqlite.ts`; the type swap, the `exchange_vectors` table, the distance function and the vec0 migration; the dependency and repair removal; the docs. Node floor 22.16.0, CI on 22.16.0 and 24.
   - [x] S1: the adapter `src/sqlite.ts` and its tests

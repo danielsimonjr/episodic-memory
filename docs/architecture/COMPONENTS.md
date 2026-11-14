@@ -69,6 +69,10 @@ Loads the embedding pipeline once (`Xenova/bge-small-en-v1.5`, quantized `q8`). 
 
 Holds `EMBEDDING_VERSION`. It finds rows with an older version and rows with no vector in `exchange_vectors`, and re-embeds them in batches behind a lock file.
 
+### `src/embedding-stack.ts`
+
+`readEmbeddingStack(root)` reads the installed versions of `@huggingface/transformers`, `onnxruntime-node` and `onnxruntime-common`. Each package resolves from the folder of the package before it, as Node resolution does, so a nested copy wins over a hoisted copy. A package that is not installed shows the version `missing`. `reconcileEmbeddingStack(db, stack)` compares the stack with the `embedding_stack` row of the `index_meta` table. When the two differ, or the row is missing, the function sets `embedding_version` to 0 on every exchange and stores the new stack. The embedding migration of the next sync then embeds every row again. A different runtime version can produce different vectors for the same text, so a silent change of the stack degrades the search.
+
 ### `src/indexer.ts`
 
 `indexConversations`, `indexSession` and `indexUnprocessed` write exchanges, tool calls and vectors to the database. They can call the summarizer for conversations that lack a summary. Each function scans the source transcript with `scanExclusionMarkers` after the parse. A transcript with an exclusion marker keeps its archive copy and gets no summary. The function deletes the index rows that an earlier run wrote for that transcript. The function skips a transcript that the scan cannot read. The rows of the transcript stay.
@@ -242,10 +246,10 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 320 | repo-tools map |
+| totalSourceFiles | 323 | repo-tools map |
 | totalClasses | 12 | repo-tools map |
 | totalInterfaces | 160 | repo-tools map |
-| totalFunctions | 420 | repo-tools map |
-| totalConstants | 90 | repo-tools map |
+| totalFunctions | 422 | repo-tools map |
+| totalConstants | 93 | repo-tools map |
 
 The tool names, the table names and the model name come from a direct reading of `src/mcp-server.ts`, `src/db.ts` and `src/embeddings.ts`. They are not `repo-tools map` metrics.

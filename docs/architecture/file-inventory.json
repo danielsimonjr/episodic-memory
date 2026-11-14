@@ -1,25 +1,25 @@
 {
-  "totalFiles": 320,
+  "totalFiles": 323,
   "byDisposition": {
     "reachable": 50,
     "build-entry": 4,
-    "test-only": 46,
+    "test-only": 47,
     "orphan": 15,
-    "test": 200,
+    "test": 202,
     "tool": 3,
     "config": 2,
     "bench": 0,
     "example": 0
   },
   "byArea": {
-    "src": 115,
+    "src": 116,
     "tools": 3,
-    "tests": 200,
+    "tests": 202,
     "config": 2
   },
   "byPackage": {
-    "(root)": 214,
-    "episodic-memory": 106
+    "(root)": 216,
+    "episodic-memory": 107
   },
   "files": [
     {
@@ -280,6 +280,13 @@
       "area": "src",
       "disposition": "reachable",
       "loc": 198
+    },
+    {
+      "file": "src/embedding-stack.ts",
+      "package": "episodic-memory",
+      "area": "src",
+      "disposition": "test-only",
+      "loc": 89
     },
     {
       "file": "src/embeddings.ts",
@@ -755,7 +762,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "orphan",
-      "loc": 276
+      "loc": 282
     },
     {
       "file": "src/sync.ts",
@@ -1182,7 +1189,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 1083
+      "loc": 1094
     },
     {
       "file": "test/e2e/hooks.test.ts",
@@ -1190,6 +1197,13 @@
       "area": "tests",
       "disposition": "test",
       "loc": 398
+    },
+    {
+      "file": "test/e2e/install-versions.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 23
     },
     {
       "file": "test/e2e/isolation.ts",
@@ -1239,6 +1253,13 @@
       "area": "tests",
       "disposition": "test",
       "loc": 222
+    },
+    {
+      "file": "test/embedding-stack.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 78
     },
     {
       "file": "test/embeddings-format.test.ts",

@@ -2,9 +2,9 @@ metadata:
   name: episodic-memory
   schemaVersion: 2.0.0
   language: typescript
-  totalFiles: 320
+  totalFiles: 323
   totalModules: 4
-  totalExports: 732
+  totalExports: 737
 modules:
   src:
     cli/digest-hook.js:
@@ -755,6 +755,21 @@ modules:
         - countStale
         - getMigrationLockPath
         - runMigrationBatch
+    src/embedding-stack.ts:
+      externalDependencies: []
+      nodeDependencies:
+        - fs
+        - path
+        - url
+      internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: true
+      exports:
+        - EMBEDDING_STACK_PACKAGES
+        - readEmbeddingStack
+        - reconcileEmbeddingStack
     src/embeddings.ts:
       externalDependencies:
         - '@huggingface/transformers'
@@ -2986,6 +3001,10 @@ modules:
           imports:
             - '*'
           typeOnly: false
+        - file: src/embedding-stack.ts
+          imports:
+            - '*'
+          typeOnly: false
       exports: []
     src/sync.ts:
       externalDependencies: []
@@ -4554,6 +4573,8 @@ modules:
           typeOnly: false
       exports:
         - REPO_ROOT
+        - PLUGIN_ROOT
+        - TESTS_INSTALLED_COPY
         - CLI_DIR
         - DIST_DIR
         - FIXTURE_DIR
@@ -4627,7 +4648,7 @@ modules:
         - file: test/e2e/harness.ts
           imports:
             - CLI_DIR
-            - REPO_ROOT
+            - PLUGIN_ROOT
             - cliBin
             - fakeOllama
             - makeSandbox
@@ -4648,6 +4669,24 @@ modules:
         - file: test/e2e/isolation.ts
           imports:
             - useIsolation
+          typeOnly: false
+      exports: []
+    test/e2e/install-versions.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - node:fs
+        - node:path
+      internalDependencies:
+        - file: test/e2e/harness.ts
+          imports:
+            - PLUGIN_ROOT
+            - REPO_ROOT
+          typeOnly: false
+        - file: src/embedding-stack.ts
+          imports:
+            - EMBEDDING_STACK_PACKAGES
+            - readEmbeddingStack
           typeOnly: false
       exports: []
     test/e2e/isolation.ts:
@@ -4896,6 +4935,28 @@ modules:
           imports:
             - generateExchangeEmbedding
             - initEmbeddings
+          typeOnly: false
+      exports: []
+    test/embedding-stack.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - fs
+        - os
+        - path
+      internalDependencies:
+        - file: src/sqlite.ts
+          imports:
+            - Database
+          typeOnly: false
+        - file: src/embedding-stack.ts
+          imports:
+            - readEmbeddingStack
+            - reconcileEmbeddingStack
+          typeOnly: false
+        - file: test/test-utils.ts
+          imports:
+            - safeRmSync
           typeOnly: false
       exports: []
     test/embeddings-format.test.ts:
@@ -8249,19 +8310,19 @@ modules:
           typeOnly: false
       exports: []
 statistics:
-  totalTypeScriptFiles: 320
-  totalSourceFiles: 320
+  totalTypeScriptFiles: 323
+  totalSourceFiles: 323
   totalModules: 4
-  totalLinesOfCode: 67233
-  totalExports: 732
+  totalLinesOfCode: 67440
+  totalExports: 737
   entryRoots: 6
   reachableFiles: 54
-  dormantFiles: 61
+  dormantFiles: 62
   orphanedFiles: 15
-  testOnlyFiles: 46
+  testOnlyFiles: 47
   runtimeCircularDeps: 0
   typeOnlyCircularDeps: 1
-  totalTypeOnlyImports: 114
+  totalTypeOnlyImports: 115
   noImporterFileCount: 14
   unusedExportsCount: 117
   circularDepsTruncated: false
@@ -8271,10 +8332,10 @@ statistics:
   typeOnlyFilesInCycles: 2
   totalClasses: 12
   totalInterfaces: 160
-  totalFunctions: 420
+  totalFunctions: 422
   totalTypeGuards: 14
   totalEnums: 0
-  totalConstants: 90
+  totalConstants: 93
   totalReExports: 9
 reachability:
   roots:
@@ -8285,7 +8346,7 @@ reachability:
     - test/setup-env.ts
     - test/global-setup.ts
   reachableCount: 54
-  dormantCount: 61
+  dormantCount: 62
   orphaned:
     - cli/digest-hook.js
     - cli/episodic-memory.js
@@ -8314,6 +8375,7 @@ reachability:
     - src/digest-prompts.ts
     - src/doctor-learn.ts
     - src/doctor.ts
+    - src/embedding-stack.ts
     - src/fs-retry.ts
     - src/learn/agent-runner.ts
     - src/learn/bootstrap.ts

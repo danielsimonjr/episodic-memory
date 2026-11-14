@@ -4,7 +4,7 @@
 
 # episodic-memory - Dependency Graph
 
-**Version**: 1.12.0
+**Version**: 1.13.0
 
 This document provides a comprehensive dependency graph of all files, components, imports, functions, and variables in the codebase.
 
@@ -32,7 +32,7 @@ This document provides a comprehensive dependency graph of all files, components
 The codebase is organized into the following modules:
 
 - **cli**: 8 files
-- **root**: 73 files
+- **root**: 74 files
 - **entry**: 1 file
 - **learn**: 32 files
 - **vendor/onnxruntime-web-stub**: 1 file
@@ -601,6 +601,26 @@ The codebase is organized into the following modules:
 - Types: `MigrationLockHandle`
 - Functions: `acquireMigrationLock`, `releaseMigrationLock`, `pickStaleBatch`, `recordReembedded`, `countStale`, `getMigrationLockPath`, `runMigrationBatch`
 - Constants: `EMBEDDING_VERSION`
+
+---
+
+### `src/embedding-stack.ts` - The installed versions of the embedding stack, and the stamp that records them in the index.
+
+**Node.js Built-in Dependencies:**
+| Module | Import |
+|--------|--------|
+| `fs` | `existsSync, readFileSync` |
+| `path` | `default` |
+| `url` | `fileURLToPath` |
+
+**Internal Dependencies:**
+| File | Imports | Type |
+|------|---------|------|
+| `./sqlite.js` | `Database` | Import (type-only) |
+
+**Exports:**
+- Functions: `readEmbeddingStack`, `reconcileEmbeddingStack`
+- Constants: `EMBEDDING_STACK_PACKAGES`
 
 ---
 
@@ -1176,6 +1196,7 @@ The codebase is organized into the following modules:
 | `./embedding-migration.js` | `*` | Import |
 | `./digest-phase.js` | `*` | Import |
 | `./topic-phase.js` | `*` | Import |
+| `./embedding-stack.js` | `*` | Import |
 
 ---
 
@@ -2126,7 +2147,7 @@ The codebase is organized into the following modules:
 
 | File | Imports From | Exports To |
 |------|--------------|------------|
-| `src/sqlite` | 1 file | 28 files |
+| `src/sqlite` | 1 file | 29 files |
 | `src/learn/types` | 2 files | 22 files |
 | `src/paths` | 0 files | 23 files |
 | `src/summarizer` | 10 files | 13 files |
@@ -2138,9 +2159,9 @@ The codebase is organized into the following modules:
 | `src/learn/leaf-learner` | 14 files | 1 file |
 | `src/sync` | 13 files | 2 files |
 | `src/learn/solver` | 9 files | 5 files |
+| `src/sync-cli` | 14 files | 0 files |
 | `src/topic-job` | 13 files | 1 file |
 | `src/digest-job` | 11 files | 2 files |
-| `src/sync-cli` | 13 files | 0 files |
 | `src/indexer` | 10 files | 2 files |
 | `src/learn/learning-db` | 3 files | 9 files |
 | `src/mcp-tools` | 10 files | 2 files |
@@ -2213,7 +2234,7 @@ graph TD
         N15[codex-support]
         N16[constants]
         N17[content-text]
-        N18[...63 more]
+        N18[...64 more]
     end
 
     subgraph Entry
@@ -2269,17 +2290,17 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 320 |
+| Total Source Files | 323 |
 | Subsystems | 5 |
-| Total Lines of Code | 67233 |
-| Total Exports | 732 |
+| Total Lines of Code | 67440 |
+| Total Exports | 737 |
 | Total Re-exports | 9 |
 | Total Classes | 12 |
 | Total Interfaces | 160 |
-| Total Functions | 420 |
+| Total Functions | 422 |
 | Total Type Guards | 14 |
 | Total Enums | 0 |
-| Type-only Imports | 114 |
+| Type-only Imports | 115 |
 | Runtime Cyclic Components | 0 |
 | Type-only Cyclic Components | 1 |
 | Files in Runtime Cycles | 0 |
@@ -2287,4 +2308,4 @@ graph TD
 
 ---
 
-*Version*: 1.12.0
+*Version*: 1.13.0

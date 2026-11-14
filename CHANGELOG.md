@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [1.13.0] - 2026-11-13
+
 ### Added
 - **An end-to-end test suite, `bun run test:e2e` (`vitest.e2e.config.ts`, `test/e2e/`).** It runs the shipped `dist/` and `cli/` files as child processes: every CLI command and flag, every environment setting, the five MCP tools over stdio, the two SessionStart hooks, and the save, recall, organize and learn paths. Each child starts from an empty environment in a temporary sandbox. A fake Ollama on 127.0.0.1 answers every model prompt, so no case reaches a model, the network or the data of the machine. A guard refuses a child whose environment or argv could reach a real Claude agent, the live plugin or a folder outside the sandbox. After each file, the suite fails when the repo `node_modules` changed, when a seeded transcript reached the real data folders, or when a sync worker of this checkout still runs.
 - **A coverage gate for the suite (`test/e2e/coverage.test.ts`).** It fails when the `--help` output or the source holds a flag, subcommand, environment variable or MCP tool that the registry (`test/e2e/cases.ts`) does not list, and when an active case does not exercise a registry entry. Comments and skipped cases do not count as coverage. Every skipped case must carry a `Dn pending` or `harness pending` title and a body that asserts, and every pending defect must have a registry row.

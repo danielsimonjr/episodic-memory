@@ -21,11 +21,6 @@ export const EMBEDDING_MODEL = {
         { path: 'onnx/model_quantized.onnx', size: 34014426, sha256: '6c9c6101a956d62dfb5e7190c538226c0c5bb9cb27b651234b6df063ee7dbfe4' },
     ],
 };
-/**
- * The sha256 of the model after `rewriteMatMulWeightsToUint8` (src/model-u8.ts). The embedding
- * session loads these bytes, so a change of the rewrite that changes the model fails loudly.
- */
-export const UINT8_MODEL_SHA256 = '9179c5f65b4b101f10448f63ccb34f6f2d2678982f8fccd9be9f93e3bf325bdd';
 /** The command that downloads the model when a file is missing. */
 export const FETCH_COMMAND = 'episodic-memory model fetch';
 /** The marker file that records a failed download in the model folder. */

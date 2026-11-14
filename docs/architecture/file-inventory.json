@@ -1,25 +1,25 @@
 {
-  "totalFiles": 328,
+  "totalFiles": 326,
   "byDisposition": {
-    "reachable": 54,
+    "reachable": 53,
     "build-entry": 4,
     "test-only": 45,
     "orphan": 15,
-    "test": 205,
+    "test": 204,
     "tool": 3,
     "config": 2,
     "bench": 0,
     "example": 0
   },
   "byArea": {
-    "src": 118,
+    "src": 117,
     "tools": 3,
-    "tests": 205,
+    "tests": 204,
     "config": 2
   },
   "byPackage": {
-    "(root)": 218,
-    "episodic-memory": 110
+    "(root)": 217,
+    "episodic-memory": 109
   },
   "files": [
     {
@@ -286,7 +286,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 339
+      "loc": 333
     },
     {
       "file": "src/embedding-stack.ts",
@@ -300,7 +300,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 270
+      "loc": 261
     },
     {
       "file": "src/exclusion-marker.ts",
@@ -637,13 +637,6 @@
       "area": "src",
       "disposition": "orphan",
       "loc": 75
-    },
-    {
-      "file": "src/model-u8.ts",
-      "package": "episodic-memory",
-      "area": "src",
-      "disposition": "reachable",
-      "loc": 212
     },
     {
       "file": "src/node-floor.ts",
@@ -1290,13 +1283,6 @@
       "loc": 70
     },
     {
-      "file": "test/embedding-session-model.test.ts",
-      "package": "(root)",
-      "area": "tests",
-      "disposition": "test",
-      "loc": 22
-    },
-    {
       "file": "test/embedding-stack.test.ts",
       "package": "(root)",
       "area": "tests",
@@ -1757,13 +1743,6 @@
       "area": "tests",
       "disposition": "test",
       "loc": 154
-    },
-    {
-      "file": "test/model-u8.test.ts",
-      "package": "(root)",
-      "area": "tests",
-      "disposition": "test",
-      "loc": 77
     },
     {
       "file": "test/multi-concept.test.ts",
@@ -2303,6 +2282,13 @@
       "area": "tests",
       "disposition": "test",
       "loc": 60
+    },
+    {
+      "file": "test/zz-avx2-transformers-probe.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 33
     },
     {
       "file": "vitest.config.ts",

@@ -8,11 +8,11 @@
 
 | Metric | Count |
 |--------|-------|
-| Total Source Files | 118 |
-| Total Test Files | 194 |
-| Source Files with Tests | 96 |
+| Total Source Files | 117 |
+| Total Test Files | 193 |
+| Source Files with Tests | 95 |
 | Source Files without Tests | 22 |
-| Coverage (raw, direct-import) | **81.4%** |
+| Coverage (raw, direct-import) | **81.2%** |
 ---
 
 ## Source Files Not Imported By A Test
@@ -78,9 +78,9 @@ The following 22 source files are not directly imported by any test file:
 | `src/doctor-learn.ts` | `doctor.test.ts` |
 | `src/doctor.ts` | `codex-doctor.test.ts`, `doctor.test.ts` |
 | `src/embedding-migration.ts` | `embedding-migration-helpers.test.ts`, `embedding-migration.test.ts`, `exchange-vectors.test.ts` |
-| `src/embedding-model.ts` | `embedding-model.test.ts`, `global-setup.test.ts`, `model-u8.test.ts` |
+| `src/embedding-model.ts` | `embedding-model.test.ts`, `global-setup.test.ts` |
 | `src/embedding-stack.ts` | `install-versions.test.ts`, `embedding-stack.test.ts` |
-| `src/embeddings.ts` | `embedding-migration.test.ts`, `embedding-model.test.ts`, `embedding-parity.test.ts`, `embedding-session-model.test.ts`, `embeddings-format.test.ts`, `embeddings-unavailable.test.ts`, `index-honours-marker.test.ts`, `indexer-db-close.test.ts`, `integration.test.ts`, `multi-concept.test.ts`, `query-prefix.test.ts`, `search-embeddings-unavailable.test.ts`, `search-text-row-similarity.test.ts`, `sync-embeddings-unavailable.test.ts`, `sync-marker-scan.test.ts`, `vector-search-filters.test.ts`, `verify.test.ts` |
+| `src/embeddings.ts` | `embedding-migration.test.ts`, `embedding-model.test.ts`, `embedding-parity.test.ts`, `embeddings-format.test.ts`, `embeddings-unavailable.test.ts`, `index-honours-marker.test.ts`, `indexer-db-close.test.ts`, `integration.test.ts`, `multi-concept.test.ts`, `query-prefix.test.ts`, `search-embeddings-unavailable.test.ts`, `search-text-row-similarity.test.ts`, `sync-embeddings-unavailable.test.ts`, `sync-marker-scan.test.ts`, `vector-search-filters.test.ts`, `verify.test.ts` |
 | `src/exclusion-marker.ts` | `sync-marker-scan.test.ts` |
 | `src/fs-retry.ts` | `sync-copy-retry.test.ts` |
 | `src/gpu-reservation.ts` | `gpu-reservation.test.ts` |
@@ -122,7 +122,6 @@ The following 22 source files are not directly imported by any test file:
 | `src/mcp-auth.ts` | `mcp-auth.test.ts` |
 | `src/mcp-schemas.ts` | `mcp-schemas.test.ts`, `topic-tool.test.ts` |
 | `src/mcp-tools.ts` | `digest-mcp.test.ts`, `learn-handlers.test.ts`, `mcp-tools.test.ts`, `search-embeddings-unavailable.test.ts`, `topic-tool.test.ts` |
-| `src/model-u8.ts` | `embedding-session-model.test.ts`, `model-u8.test.ts` |
 | `src/node-floor.ts` | `node-floor.test.ts`, `sqlite-adapter.test.ts` |
 | `src/ollama-backend.ts` | `backfill-gpu-reservation.test.ts`, `claude-bin-deferral.test.ts`, `digest-gpu-reservation.test.ts`, `gpu-reservation.test.ts`, `ollama-backend.test.ts`, `ollama-plain-reply.test.ts`, `summarizer-gpu-reservation.test.ts`, `summarizer-ollama-fallback.test.ts`, `summarizer-prompt-budget.test.ts`, `sync-gpu-reservation.test.ts`, `topic-job.test.ts` |
 | `src/orphan-reaper.ts` | `orphan-reaper.test.ts` |
@@ -212,7 +211,6 @@ The following 22 source files are not directly imported by any test file:
 | `test/embedding-migration.test.ts` | 3 files |
 | `test/embedding-model.test.ts` | 2 files |
 | `test/embedding-parity.test.ts` | 1 files |
-| `test/embedding-session-model.test.ts` | 2 files |
 | `test/embedding-stack.test.ts` | 3 files |
 | `test/embeddings-format.test.ts` | 2 files |
 | `test/embeddings-unavailable.test.ts` | 1 files |
@@ -277,7 +275,6 @@ The following 22 source files are not directly imported by any test file:
 | `test/mcp-read-redaction.test.ts` | 2 files |
 | `test/mcp-schemas.test.ts` | 1 files |
 | `test/mcp-tools.test.ts` | 2 files |
-| `test/model-u8.test.ts` | 2 files |
 | `test/multi-concept.test.ts` | 2 files |
 | `test/no-native-sqlite.test.ts` | 0 files |
 | `test/node-floor.test.ts` | 1 files |
@@ -350,3 +347,4 @@ The following 22 source files are not directly imported by any test file:
 | `test/verify.test.ts` | 5 files |
 | `test/version-consistency.test.ts` | 0 files |
 | `test/win-command.test.ts` | 1 files |
+| `test/zz-avx2-transformers-probe.test.ts` | 0 files |

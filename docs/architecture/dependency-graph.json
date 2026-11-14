@@ -3,9 +3,9 @@
     "name": "episodic-memory",
     "schemaVersion": "2.0.0",
     "language": "typescript",
-    "totalFiles": 328,
+    "totalFiles": 326,
     "totalModules": 4,
-    "totalExports": 758
+    "totalExports": 755
   },
   "modules": {
     "src": {
@@ -1169,7 +1169,6 @@
           "ModelFile",
           "ModelSpec",
           "EMBEDDING_MODEL",
-          "UINT8_MODEL_SHA256",
           "FETCH_COMMAND",
           "FETCH_FAILED_MARKER",
           "FETCH_RETRY_MS",
@@ -1220,7 +1219,6 @@
           "onnxruntime-node"
         ],
         "nodeDependencies": [
-          "node:crypto",
           "node:fs",
           "node:path"
         ],
@@ -1245,15 +1243,7 @@
               "EMBEDDING_MODEL",
               "EmbeddingsUnavailableError",
               "ensureModel",
-              "modelDir",
-              "UINT8_MODEL_SHA256"
-            ],
-            "typeOnly": false
-          },
-          {
-            "file": "src/model-u8.ts",
-            "imports": [
-              "rewriteMatMulWeightsToUint8"
+              "modelDir"
             ],
             "typeOnly": false
           }
@@ -3863,15 +3853,6 @@
         ],
         "exports": [
           "main"
-        ]
-      },
-      "src/model-u8.ts": {
-        "externalDependencies": [],
-        "nodeDependencies": [],
-        "internalDependencies": [],
-        "exports": [
-          "rewriteMatMulWeightsToUint8",
-          "int8MatMulWeights"
         ]
       },
       "src/node-floor.ts": {
@@ -7453,29 +7434,6 @@
         ],
         "exports": []
       },
-      "test/embedding-session-model.test.ts": {
-        "externalDependencies": [
-          "vitest"
-        ],
-        "nodeDependencies": [],
-        "internalDependencies": [
-          {
-            "file": "src/embeddings.ts",
-            "imports": [
-              "initEmbeddings"
-            ],
-            "typeOnly": false
-          },
-          {
-            "file": "src/model-u8.ts",
-            "imports": [
-              "int8MatMulWeights"
-            ],
-            "typeOnly": false
-          }
-        ],
-        "exports": []
-      },
       "test/embedding-stack.test.ts": {
         "externalDependencies": [
           "vitest"
@@ -10354,35 +10312,6 @@
         ],
         "exports": []
       },
-      "test/model-u8.test.ts": {
-        "externalDependencies": [
-          "vitest"
-        ],
-        "nodeDependencies": [
-          "node:crypto",
-          "node:fs",
-          "node:path"
-        ],
-        "internalDependencies": [
-          {
-            "file": "src/embedding-model.ts",
-            "imports": [
-              "modelDir",
-              "UINT8_MODEL_SHA256"
-            ],
-            "typeOnly": false
-          },
-          {
-            "file": "src/model-u8.ts",
-            "imports": [
-              "int8MatMulWeights",
-              "rewriteMatMulWeightsToUint8"
-            ],
-            "typeOnly": false
-          }
-        ],
-        "exports": []
-      },
       "test/multi-concept.test.ts": {
         "externalDependencies": [
           "vitest"
@@ -12710,6 +12639,19 @@
           }
         ],
         "exports": []
+      },
+      "test/zz-avx2-transformers-probe.test.ts": {
+        "externalDependencies": [
+          "vitest"
+        ],
+        "nodeDependencies": [
+          "node:child_process",
+          "node:fs",
+          "node:os",
+          "node:path"
+        ],
+        "internalDependencies": [],
+        "exports": []
       }
     },
     "config": {
@@ -12748,13 +12690,13 @@
     }
   },
   "statistics": {
-    "totalTypeScriptFiles": 328,
-    "totalSourceFiles": 328,
+    "totalTypeScriptFiles": 326,
+    "totalSourceFiles": 326,
     "totalModules": 4,
-    "totalLinesOfCode": 68699,
-    "totalExports": 758,
+    "totalLinesOfCode": 68406,
+    "totalExports": 755,
     "entryRoots": 6,
-    "reachableFiles": 58,
+    "reachableFiles": 57,
     "dormantFiles": 60,
     "orphanedFiles": 15,
     "testOnlyFiles": 45,
@@ -12770,10 +12712,10 @@
     "typeOnlyFilesInCycles": 2,
     "totalClasses": 12,
     "totalInterfaces": 165,
-    "totalFunctions": 431,
+    "totalFunctions": 429,
     "totalTypeGuards": 14,
     "totalEnums": 0,
-    "totalConstants": 98,
+    "totalConstants": 97,
     "totalReExports": 9
   },
   "reachability": {
@@ -12785,7 +12727,7 @@
       "test/setup-env.ts",
       "test/global-setup.ts"
     ],
-    "reachableCount": 58,
+    "reachableCount": 57,
     "dormantCount": 60,
     "orphaned": [
       "cli/digest-hook.js",

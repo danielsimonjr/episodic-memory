@@ -1677,7 +1677,6 @@
         "workspaceDependencies": [],
         "exports": [
           "EMBEDDING_MODEL",
-          "UINT8_MODEL_SHA256",
           "FETCH_COMMAND",
           "FETCH_FAILED_MARKER",
           "FETCH_RETRY_MS",
@@ -1704,7 +1703,6 @@
         ],
         "constants": [
           "EMBEDDING_MODEL",
-          "UINT8_MODEL_SHA256",
           "FETCH_COMMAND",
           "FETCH_FAILED_MARKER",
           "FETCH_RETRY_MS"
@@ -1785,12 +1783,6 @@
         ],
         "nodeDependencies": [
           {
-            "module": "crypto",
-            "imports": [
-              "createHash"
-            ]
-          },
-          {
             "module": "fs",
             "imports": [
               "readFileSync"
@@ -1822,14 +1814,7 @@
               "EMBEDDING_MODEL",
               "EmbeddingsUnavailableError",
               "ensureModel",
-              "modelDir",
-              "UINT8_MODEL_SHA256"
-            ]
-          },
-          {
-            "file": "./model-u8.js",
-            "imports": [
-              "rewriteMatMulWeightsToUint8"
+              "modelDir"
             ]
           }
         ],
@@ -2557,21 +2542,6 @@
         ],
         "functions": [
           "main"
-        ]
-      },
-      "src/model-u8.ts": {
-        "description": "Rewrite of the int8 MatMulInteger weights of an ONNX model to uint8.",
-        "externalDependencies": [],
-        "nodeDependencies": [],
-        "internalDependencies": [],
-        "workspaceDependencies": [],
-        "exports": [
-          "rewriteMatMulWeightsToUint8",
-          "int8MatMulWeights"
-        ],
-        "functions": [
-          "rewriteMatMulWeightsToUint8",
-          "int8MatMulWeights"
         ]
       },
       "src/node-floor.ts": {
@@ -6573,7 +6543,6 @@
         "src/mcp-server.ts",
         "src/mcp-tools.ts",
         "src/model-cli.ts",
-        "src/model-u8.ts",
         "src/node-floor.ts",
         "src/ollama-backend.ts",
         "src/orphan-reaper.ts",

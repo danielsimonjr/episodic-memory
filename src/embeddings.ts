@@ -1,12 +1,10 @@
-import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { InferenceSession } from 'onnxruntime-node';
 import type { Tokenizer } from '@huggingface/tokenizers';
 import { maybeRedactSecrets } from './redact.js';
 import { truncateForIndex } from './constants.js';
-import { EMBEDDING_MODEL, EmbeddingsUnavailableError, ensureModel, modelDir, UINT8_MODEL_SHA256 } from './embedding-model.js';
-import { rewriteMatMulWeightsToUint8 } from './model-u8.js';
+import { EMBEDDING_MODEL, EmbeddingsUnavailableError, ensureModel, modelDir } from './embedding-model.js';
 
 export { EmbeddingsUnavailableError };
 
@@ -96,14 +94,7 @@ async function loadRuntime(): Promise<EmbeddingRuntime> {
   }
 
   try {
-    // The session gets the model with uint8 MatMulInteger weights (src/model-u8.ts). On an x86-64
-    // CPU without VNNI, the int8 weights select a kernel that can saturate on long texts.
-    const { bytes } = rewriteMatMulWeightsToUint8(readFileSync(join(dir, ...MODEL_ONNX_FILE.split('/'))));
-    const digest = createHash('sha256').update(bytes).digest('hex');
-    if (digest !== UINT8_MODEL_SHA256) {
-      throw new Error(`the uint8 rewrite of the model has sha256 ${digest}, expected ${UINT8_MODEL_SHA256}`);
-    }
-    const session = await ort.InferenceSession.create(bytes);
+    const session = await ort.InferenceSession.create(join(dir, ...MODEL_ONNX_FILE.split('/')));
     const tokenizer = new tokenizers.Tokenizer(
       JSON.parse(readFileSync(join(dir, TOKENIZER_FILE), 'utf-8')),
       JSON.parse(readFileSync(join(dir, TOKENIZER_CONFIG_FILE), 'utf-8'))

@@ -61,8 +61,8 @@ function loadSqlite() {
   return sqliteModule;
 }
 function isSqliteWarning(warning) {
-  const text2 = typeof warning === "string" ? warning : warning?.message;
-  return typeof text2 === "string" && text2.startsWith(SQLITE_WARNING_PREFIX);
+  const text = typeof warning === "string" ? warning : warning?.message;
+  return typeof text === "string" && text.startsWith(SQLITE_WARNING_PREFIX);
 }
 function coerce(value) {
   if (value === void 0) return null;
@@ -176,8 +176,8 @@ var init_sqlite = __esm({
        * Run a PRAGMA and return the rows, like better-sqlite3. A write form often returns no row.
        * With the simple option, return the first column value of the first row.
        */
-      pragma(text2, options = {}) {
-        const rows = this.prepare(`PRAGMA ${text2}`).all();
+      pragma(text, options = {}) {
+        const rows = this.prepare(`PRAGMA ${text}`).all();
         if (options.simple) return rows.length > 0 ? Object.values(rows[0])[0] : void 0;
         return rows;
       }
@@ -511,7 +511,7 @@ async function ensureModel(options) {
     inFlight.delete(key);
   }
 }
-var EMBEDDING_MODEL, UINT8_MODEL_SHA256, FETCH_COMMAND, FETCH_RETRY_MS, STALE_TEMP_MS, FETCH_TIMEOUT_MS, DEFAULT_ENDPOINT, RENAME_ATTEMPTS, EmbeddingsUnavailableError, HASH_CHUNK_BYTES, verifiedCache, inFlight;
+var EMBEDDING_MODEL, FETCH_COMMAND, FETCH_RETRY_MS, STALE_TEMP_MS, FETCH_TIMEOUT_MS, DEFAULT_ENDPOINT, RENAME_ATTEMPTS, EmbeddingsUnavailableError, HASH_CHUNK_BYTES, verifiedCache, inFlight;
 var init_embedding_model = __esm({
   "src/embedding-model.ts"() {
     "use strict";
@@ -526,7 +526,6 @@ var init_embedding_model = __esm({
         { path: "onnx/model_quantized.onnx", size: 34014426, sha256: "6c9c6101a956d62dfb5e7190c538226c0c5bb9cb27b651234b6df063ee7dbfe4" }
       ]
     };
-    UINT8_MODEL_SHA256 = "9179c5f65b4b101f10448f63ccb34f6f2d2678982f8fccd9be9f93e3bf325bdd";
     FETCH_COMMAND = "episodic-memory model fetch";
     FETCH_RETRY_MS = 24 * 60 * 60 * 1e3;
     STALE_TEMP_MS = 60 * 60 * 1e3;
@@ -623,18 +622,18 @@ function isSecretRedactionEnabled() {
   if (!raw) return false;
   return TRUTHY.has(raw.trim().toLowerCase());
 }
-function redactSecrets(text2) {
-  if (!text2) return text2;
-  let out = text2;
+function redactSecrets(text) {
+  if (!text) return text;
+  let out = text;
   for (const { re } of SECRET_PATTERNS) {
     re.lastIndex = 0;
     out = out.replace(re, REDACTED);
   }
   return out;
 }
-function maybeRedactSecrets(text2) {
-  if (!isSecretRedactionEnabled()) return text2;
-  return redactSecrets(text2);
+function maybeRedactSecrets(text) {
+  if (!isSecretRedactionEnabled()) return text;
+  return redactSecrets(text);
 }
 var TRUTHY, SECRET_PATTERNS, REDACTED;
 var init_redact = __esm({
@@ -769,10 +768,10 @@ function citedExchangeIds(line) {
   }
   return ids;
 }
-function hideCitedLines(text2, hideExchangeIds) {
-  if (!hideExchangeIds || hideExchangeIds.length === 0) return text2;
+function hideCitedLines(text, hideExchangeIds) {
+  if (!hideExchangeIds || hideExchangeIds.length === 0) return text;
   const hidden = new Set(hideExchangeIds);
-  return text2.split("\n").filter((line) => !citedExchangeIds(line).some((id) => hidden.has(id))).join("\n");
+  return text.split("\n").filter((line) => !citedExchangeIds(line).some((id) => hidden.has(id))).join("\n");
 }
 function searchDigest(db, query, project, limit = 10, opts = {}) {
   const q = toFtsQuery(query);
@@ -1294,156 +1293,7 @@ var init_archive_path = __esm({
   }
 });
 
-// src/model-u8.ts
-function readVarint(buf, pos) {
-  let value = 0;
-  let scale = 1;
-  for (let i = 0; i < 10; i++) {
-    if (pos >= buf.length) throw new Error("truncated varint in the ONNX model");
-    const b = buf[pos++];
-    value += (b & 127) * scale;
-    scale *= 128;
-    if (!(b & 128)) return [value, pos];
-  }
-  throw new Error("varint longer than 10 bytes in the ONNX model");
-}
-function lowByte(buf, pos) {
-  const b0 = buf[pos];
-  return b0 & 128 ? b0 & 127 | (buf[pos + 1] & 1) << 7 : b0;
-}
-function fields(buf, from = 0, to = buf.length) {
-  const out = [];
-  let pos = from;
-  while (pos < to) {
-    const start = pos;
-    const [tag, afterTag] = readVarint(buf, pos);
-    const num = Math.floor(tag / 8);
-    const wire = tag % 8;
-    let value = 0;
-    let body = [afterTag, afterTag];
-    if (wire === WIRE_VARINT) [value, pos] = readVarint(buf, afterTag);
-    else if (wire === WIRE_I64) pos = afterTag + 8;
-    else if (wire === WIRE_I32) pos = afterTag + 4;
-    else if (wire === WIRE_LEN) {
-      const [n, afterLen] = readVarint(buf, afterTag);
-      body = [afterLen, afterLen + n];
-      pos = afterLen + n;
-    } else throw new Error(`unsupported protobuf wire type ${wire} in the ONNX model`);
-    if (pos > to) throw new Error("truncated field in the ONNX model");
-    out.push({ num, wire, start, end: pos, value, body });
-  }
-  return out;
-}
-function encodeVarint(n) {
-  const out = [];
-  do {
-    let b = n % 128;
-    n = Math.floor(n / 128);
-    if (n) b |= 128;
-    out.push(b);
-  } while (n);
-  return out;
-}
-function lenField(num, body) {
-  return Buffer.concat([Uint8Array.from([...encodeVarint(num * 8 + WIRE_LEN), ...encodeVarint(body.length)]), body]);
-}
-function graphOf(model) {
-  const graph = fields(model).filter((f) => f.num === MODEL_GRAPH && f.wire === WIRE_LEN);
-  if (graph.length !== 1) throw new Error(`expected one graph in the ONNX model, found ${graph.length}`);
-  return graph[0];
-}
-function weightNames(model, graph) {
-  const names = /* @__PURE__ */ new Set();
-  for (const n of fields(model, ...graph.body).filter((f) => f.num === GRAPH_NODE && f.wire === WIRE_LEN)) {
-    const nf = fields(model, ...n.body);
-    const op = nf.find((f) => f.num === NODE_OP_TYPE);
-    if (!op || text(model, op) !== "MatMulInteger") continue;
-    const inputs = nf.filter((f) => f.num === NODE_INPUT).map((f) => text(model, f));
-    for (const i of [1, 3]) if (inputs[i]) names.add(inputs[i]);
-  }
-  return names;
-}
-function tensorInfo(buf, tf) {
-  const nameField = tf.find((f) => f.num === TENSOR_NAME);
-  const typeField = tf.find((f) => f.num === TENSOR_DATA_TYPE);
-  const parts = [];
-  const packed = [];
-  for (const f of tf) {
-    if (f.num === TENSOR_RAW_DATA) parts.push(buf.subarray(f.body[0], f.body[1]));
-    else if (f.num === TENSOR_INT32_DATA && f.wire === WIRE_LEN) {
-      for (let p = f.body[0]; p < f.body[1]; ) {
-        packed.push(lowByte(buf, p));
-        p = readVarint(buf, p)[1];
-      }
-    } else if (f.num === TENSOR_INT32_DATA && f.wire === WIRE_VARINT) packed.push(lowByte(buf, readVarint(buf, f.start)[1]));
-  }
-  if (packed.length) parts.push(Uint8Array.from(packed));
-  return { name: nameField ? text(buf, nameField) : "", type: typeField?.value ?? 0, data: Buffer.concat(parts) };
-}
-function rewriteMatMulWeightsToUint8(model) {
-  const graph = graphOf(model);
-  const targets = weightNames(model, graph);
-  const seen = /* @__PURE__ */ new Set();
-  const graphParts = [];
-  for (const f of fields(model, ...graph.body)) {
-    if (f.num !== GRAPH_INITIALIZER || f.wire !== WIRE_LEN) {
-      graphParts.push(model.subarray(f.start, f.end));
-      continue;
-    }
-    const tf = fields(model, ...f.body);
-    const info = tensorInfo(model, tf);
-    if (!targets.has(info.name)) {
-      graphParts.push(model.subarray(f.start, f.end));
-      continue;
-    }
-    if (info.type !== TYPE_INT8) {
-      throw new Error(`MatMulInteger weight ${info.name} has data type ${info.type}, not int8 (${TYPE_INT8})`);
-    }
-    seen.add(info.name);
-    const parts = [];
-    for (const t of tf) {
-      if (t.num === TENSOR_INT32_DATA || t.num === TENSOR_RAW_DATA) continue;
-      if (t.num === TENSOR_DATA_TYPE) parts.push(Uint8Array.from([...encodeVarint(TENSOR_DATA_TYPE * 8), ...encodeVarint(TYPE_UINT8)]));
-      else parts.push(model.subarray(t.start, t.end));
-    }
-    const shifted = new Uint8Array(info.data);
-    for (let i = 0; i < shifted.length; i++) shifted[i] ^= 128;
-    parts.push(lenField(TENSOR_RAW_DATA, shifted));
-    graphParts.push(lenField(GRAPH_INITIALIZER, Buffer.concat(parts)));
-  }
-  const missing = [...targets].filter((n) => !seen.has(n));
-  if (missing.length) throw new Error(`MatMulInteger weight(s) without an initializer: ${missing.join(", ")}`);
-  const modelParts = [];
-  for (const f of fields(model)) {
-    modelParts.push(f.start === graph.start ? lenField(MODEL_GRAPH, Buffer.concat(graphParts)) : model.subarray(f.start, f.end));
-  }
-  return { bytes: new Uint8Array(Buffer.concat(modelParts)), rewritten: seen.size };
-}
-var MODEL_GRAPH, GRAPH_NODE, GRAPH_INITIALIZER, NODE_INPUT, NODE_OP_TYPE, TENSOR_DATA_TYPE, TENSOR_INT32_DATA, TENSOR_NAME, TENSOR_RAW_DATA, TYPE_UINT8, TYPE_INT8, WIRE_VARINT, WIRE_I64, WIRE_LEN, WIRE_I32, text;
-var init_model_u8 = __esm({
-  "src/model-u8.ts"() {
-    "use strict";
-    MODEL_GRAPH = 7;
-    GRAPH_NODE = 1;
-    GRAPH_INITIALIZER = 5;
-    NODE_INPUT = 1;
-    NODE_OP_TYPE = 4;
-    TENSOR_DATA_TYPE = 2;
-    TENSOR_INT32_DATA = 5;
-    TENSOR_NAME = 8;
-    TENSOR_RAW_DATA = 9;
-    TYPE_UINT8 = 2;
-    TYPE_INT8 = 3;
-    WIRE_VARINT = 0;
-    WIRE_I64 = 1;
-    WIRE_LEN = 2;
-    WIRE_I32 = 5;
-    text = (buf, f) => Buffer.from(buf.subarray(f.body[0], f.body[1])).toString("utf-8");
-  }
-});
-
 // src/embeddings.ts
-import { createHash as createHash2 } from "node:crypto";
 import { readFileSync as readFileSync2 } from "node:fs";
 import { join as join2 } from "node:path";
 async function initEmbeddings() {
@@ -1481,12 +1331,7 @@ async function loadRuntime() {
     );
   }
   try {
-    const { bytes } = rewriteMatMulWeightsToUint8(readFileSync2(join2(dir, ...MODEL_ONNX_FILE.split("/"))));
-    const digest = createHash2("sha256").update(bytes).digest("hex");
-    if (digest !== UINT8_MODEL_SHA256) {
-      throw new Error(`the uint8 rewrite of the model has sha256 ${digest}, expected ${UINT8_MODEL_SHA256}`);
-    }
-    const session = await ort.InferenceSession.create(bytes);
+    const session = await ort.InferenceSession.create(join2(dir, ...MODEL_ONNX_FILE.split("/")));
     const tokenizer = new tokenizers.Tokenizer(
       JSON.parse(readFileSync2(join2(dir, TOKENIZER_FILE), "utf-8")),
       JSON.parse(readFileSync2(join2(dir, TOKENIZER_CONFIG_FILE), "utf-8"))
@@ -1499,11 +1344,11 @@ async function loadRuntime() {
     );
   }
 }
-function truncateForEmbed(text2) {
-  return text2.substring(0, 2e3);
+function truncateForEmbed(text) {
+  return text.substring(0, 2e3);
 }
-async function embedOne(runtime, text2) {
-  const ids = runtime.tokenizer.encode(text2).ids.slice(0, MAX_TOKENS);
+async function embedOne(runtime, text) {
+  const ids = runtime.tokenizer.encode(text).ids.slice(0, MAX_TOKENS);
   const n = ids.length;
   const { ort, session } = runtime;
   const inputIds = BigInt64Array.from(ids, (v) => BigInt(v));
@@ -1539,13 +1384,13 @@ async function generateEmbeddings(texts) {
   if (texts.length === 0) return [];
   const runtime = await getRuntime();
   const vectors = [];
-  for (const text2 of texts) {
-    vectors.push(await embedOne(runtime, truncateForEmbed(text2)));
+  for (const text of texts) {
+    vectors.push(await embedOne(runtime, truncateForEmbed(text)));
   }
   return vectors;
 }
-async function generateEmbedding(text2) {
-  const [vec] = await generateEmbeddings([text2]);
+async function generateEmbedding(text) {
+  const [vec] = await generateEmbeddings([text]);
   return vec;
 }
 function withQueryPrefix(query) {
@@ -1562,7 +1407,6 @@ var init_embeddings = __esm({
     init_redact();
     init_constants();
     init_embedding_model();
-    init_model_u8();
     MODEL_ONNX_FILE = "onnx/model_quantized.onnx";
     TOKENIZER_FILE = "tokenizer.json";
     TOKENIZER_CONFIG_FILE = "tokenizer_config.json";
@@ -2018,8 +1862,8 @@ var init_content_text = __esm({
 });
 
 // src/markdown-html.ts
-function escapeHtml(text2) {
-  return text2.replace(/[&<>"']/g, (ch) => HTML_ESCAPES[ch]);
+function escapeHtml(text) {
+  return text.replace(/[&<>"']/g, (ch) => HTML_ESCAPES[ch]);
 }
 function safeUrl(raw) {
   const href = raw.replace(/&amp;/g, "&");
@@ -2256,8 +2100,8 @@ function scanTitle(scan, from) {
   spend(scan, p - from);
   return null;
 }
-function unescapeMarkdown(text2) {
-  return text2.replace(/\\([!-/:-@[-`{-~])/g, "$1");
+function unescapeMarkdown(text) {
+  return text.replace(/\\([!-/:-@[-`{-~])/g, "$1");
 }
 function parseLinkTail(scan, from) {
   const src = scan.src;
@@ -2462,12 +2306,12 @@ function renderInline(src) {
 function isBlank(line) {
   return /^[ \t]*$/.test(line);
 }
-function trimEndSpaces(text2) {
-  let end = text2.length;
-  while (end > 0 && (text2[end - 1] === " " || text2[end - 1] === "	")) {
+function trimEndSpaces(text) {
+  let end = text.length;
+  while (end > 0 && (text[end - 1] === " " || text[end - 1] === "	")) {
     end -= 1;
   }
-  return text2.slice(0, end);
+  return text.slice(0, end);
 }
 function stripLeading(line) {
   return line.replace(/^[ \t]+/, "");
@@ -2510,18 +2354,18 @@ function renderFence(lines, i, fence) {
   return { html: `<pre><code${languageClass(fence.info)}>${code}</code></pre>
 `, next };
 }
-function stripClosingHashes(text2) {
-  let end = text2.length;
-  while (end > 0 && text2[end - 1] === "#") {
+function stripClosingHashes(text) {
+  let end = text.length;
+  while (end > 0 && text[end - 1] === "#") {
     end -= 1;
   }
-  if (end === text2.length) {
-    return text2;
+  if (end === text.length) {
+    return text;
   }
-  if (end === 0 || text2[end - 1] === " " || text2[end - 1] === "	") {
-    return trimEndSpaces(text2.slice(0, end));
+  if (end === 0 || text[end - 1] === " " || text[end - 1] === "	") {
+    return trimEndSpaces(text.slice(0, end));
   }
-  return text2;
+  return text;
 }
 function headingParts(line) {
   const m = /^ {0,3}(#{1,6})(?=[ \t]|$)/.exec(line);
@@ -2641,9 +2485,9 @@ function collectItem(lines, start, marker) {
   let j = start;
   while (j < lines.length) {
     const line = lines[j];
-    let text2;
+    let text;
     if (j === start) {
-      text2 = line.slice(marker.width);
+      text = line.slice(marker.width);
     } else if (isBlank(line)) {
       pendingBlank = fence === null;
       sawBlank = true;
@@ -2652,9 +2496,9 @@ function collectItem(lines, start, marker) {
       j += 1;
       continue;
     } else if (indentOf(line) >= marker.width) {
-      text2 = stripIndent(line, marker.width);
+      text = stripIndent(line, marker.width);
     } else if (parseListMarker(line) === null && prevText && fence === null && !interruptsParagraph(line)) {
-      text2 = stripLeading(line);
+      text = stripLeading(line);
     } else {
       break;
     }
@@ -2662,9 +2506,9 @@ function collectItem(lines, start, marker) {
       innerBlank = true;
     }
     pendingBlank = false;
-    body.push(text2);
-    fence = nextFence(fence, text2);
-    prevText = text2 !== "" && !isLeafLine(text2);
+    body.push(text);
+    fence = nextFence(fence, text);
+    prevText = text !== "" && !isLeafLine(text);
     j += 1;
   }
   let end = body.length;
@@ -2680,8 +2524,8 @@ function collectParagraph(lines, i, depth, tight) {
     parts.push(stripLeading(lines[j]));
     j += 1;
   }
-  const text2 = renderInline(trimEndSpaces(parts.join("\n")));
-  return { html: tight ? text2 : `<p>${text2}</p>
+  const text = renderInline(trimEndSpaces(parts.join("\n")));
+  return { html: tight ? text : `<p>${text}</p>
 `, next: j };
 }
 function parseList(lines, i, depth, first) {
@@ -2711,24 +2555,24 @@ function parseList(lines, i, depth, first) {
 `, next: j };
 }
 function splitRow(line) {
-  let text2 = line.trim();
-  if (text2.startsWith("|")) {
-    text2 = text2.slice(1);
+  let text = line.trim();
+  if (text.startsWith("|")) {
+    text = text.slice(1);
   }
-  if (text2.endsWith("|") && !text2.endsWith("\\|")) {
-    text2 = text2.slice(0, -1);
+  if (text.endsWith("|") && !text.endsWith("\\|")) {
+    text = text.slice(0, -1);
   }
   const cells = [];
   let start = 0;
-  for (let k = 0; k < text2.length; k += 1) {
-    if (text2[k] === "\\" && text2[k + 1] === "|") {
+  for (let k = 0; k < text.length; k += 1) {
+    if (text[k] === "\\" && text[k + 1] === "|") {
       k += 1;
-    } else if (text2[k] === "|") {
-      cells.push(text2.slice(start, k).trim());
+    } else if (text[k] === "|") {
+      cells.push(text.slice(start, k).trim());
       start = k + 1;
     }
   }
-  cells.push(text2.slice(start).trim());
+  cells.push(text.slice(start).trim());
   return cells;
 }
 function alignOf(cell) {
@@ -2838,8 +2682,8 @@ function renderBlocks(lines, depth, tight) {
   }
   return out;
 }
-function markdownToHtml(text2) {
-  return renderBlocks(text2.replace(/\r\n?/g, "\n").split("\n"), 0, false);
+function markdownToHtml(text) {
+  return renderBlocks(text.replace(/\r\n?/g, "\n").split("\n"), 0, false);
 }
 var HTML_ESCAPES, ENTITY_IN_FIRST_SEGMENT, ALLOWED_SCHEMES, TRAILING_PUNCT, ASCII_PUNCT, SPECIAL_CHARS, LINK_SPACE, AUTOLINK_STOP, MAX_DEPTH, MAX_PAD_CELLS;
 var init_markdown_html = __esm({
@@ -3594,8 +3438,8 @@ function codexToolOutput(payload) {
   if (typeof payload.output === "string") {
     return payload.output;
   }
-  const text2 = extractContentText(payload.output);
-  return text2.trim() ? text2 : JSON.stringify(payload.output, null, 2);
+  const text = extractContentText(payload.output);
+  return text.trim() ? text : JSON.stringify(payload.output, null, 2);
 }
 function formatCodexToolInputMarkdown(input2) {
   if (input2 === void 0 || input2 === null) {
@@ -3677,15 +3521,15 @@ function formatCodexConversationAsMarkdown(lines) {
     const timestamp = entry.timestamp ? new Date(entry.timestamp).toLocaleString() : "";
     const anchor2 = payload.call_id || `msg-${i}`;
     if (payload.type === "message") {
-      const text2 = extractContentText(payload.content);
-      if (!text2.trim()) {
+      const text = extractContentText(payload.content);
+      if (!text.trim()) {
         continue;
       }
       const roleLabel = payload.role === "user" ? "User" : "Agent";
       output2 += `### **${roleLabel}** (${timestamp}) {#${anchor2}}
 
 `;
-      output2 += `${text2}
+      output2 += `${text}
 
 `;
     } else if (payload.type === "function_call" || payload.type === "custom_tool_call" || payload.type === "tool_search_call" || payload.type === "local_shell_call") {
@@ -3715,12 +3559,12 @@ ${result}
 `;
       }
     } else if (payload.type === "reasoning") {
-      const text2 = extractContentText(payload.summary);
-      if (text2.trim()) {
+      const text = extractContentText(payload.summary);
+      if (text.trim()) {
         output2 += `### **Reasoning Summary** (${timestamp}) {#${anchor2}}
 
 `;
-        output2 += `${text2}
+        output2 += `${text}
 
 `;
       }
@@ -3768,7 +3612,7 @@ ${renderMarkdownSafely(markdown)}
 </body>
 </html>`;
 }
-function isMarkdown(text2) {
+function isMarkdown(text) {
   const markdownPatterns = [
     /^#{1,6}\s/m,
     // Headers
@@ -3789,14 +3633,14 @@ function isMarkdown(text2) {
     /\[.+\]\(.+\)/
     // Links
   ];
-  const matchCount = markdownPatterns.filter((pattern) => pattern.test(text2)).length;
+  const matchCount = markdownPatterns.filter((pattern) => pattern.test(text)).length;
   return matchCount >= 2;
 }
-function renderMarkdownSafely(text2) {
+function renderMarkdownSafely(text) {
   try {
-    return markdownToHtml(text2);
+    return markdownToHtml(text);
   } catch (error62) {
-    return `<pre>${escapeHtml(text2)}</pre>`;
+    return `<pre>${escapeHtml(text)}</pre>`;
   }
 }
 var init_show = __esm({
@@ -3851,8 +3695,8 @@ var init_digest_inject = __esm({
 });
 
 // src/digest-validate.ts
-function redactEntryText(text2) {
-  return redactSecrets(text2);
+function redactEntryText(text) {
+  return redactSecrets(text);
 }
 var init_digest_validate = __esm({
   "src/digest-validate.ts"() {
@@ -3912,8 +3756,8 @@ Pass path, startLine and endLine to the read tool.`;
       return hits.map((h) => `## ${h.tier} ${h.periodStart.slice(0, 10)} (${h.project})
 ${h.text}`).join("\n\n");
     }
-    const text2 = buildDigestText(db, project, digestMaxChars());
-    return text2 || `No digest entries for ${project}.`;
+    const text = buildDigestText(db, project, digestMaxChars());
+    return text || `No digest entries for ${project}.`;
   } finally {
     db.close();
   }
@@ -13327,8 +13171,8 @@ function ko_default() {
 }
 
 // node_modules/zod/v4/locales/lt.js
-var capitalizeFirstCharacter = (text2) => {
-  return text2.charAt(0).toUpperCase() + text2.slice(1);
+var capitalizeFirstCharacter = (text) => {
+  return text.charAt(0).toUpperCase() + text.slice(1);
 };
 function getUnitTypeFromNumber(number4) {
   const abs = Math.abs(number4);

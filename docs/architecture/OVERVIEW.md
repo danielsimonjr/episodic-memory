@@ -78,9 +78,9 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 328 | repo-tools map |
-| totalLinesOfCode | 68699 | repo-tools map |
-| totalExports | 758 | repo-tools map |
+| totalSourceFiles | 326 | repo-tools map |
+| totalLinesOfCode | 68406 | repo-tools map |
+| totalExports | 755 | repo-tools map |
 | totalModules | 4 | repo-tools map |
 | entryRoots | 6 | repo-tools map |
 | orphanedFiles | 15 | repo-tools map |

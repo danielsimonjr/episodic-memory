@@ -12,11 +12,6 @@ export interface ModelSpec {
 }
 /** The embedding model that the index is built with. `EMBEDDING_MODEL` is the one source of the model identity. */
 export declare const EMBEDDING_MODEL: ModelSpec;
-/**
- * The sha256 of the model after `rewriteMatMulWeightsToUint8` (src/model-u8.ts). The embedding
- * session loads these bytes, so a change of the rewrite that changes the model fails loudly.
- */
-export declare const UINT8_MODEL_SHA256 = "9179c5f65b4b101f10448f63ccb34f6f2d2678982f8fccd9be9f93e3bf325bdd";
 /** The command that downloads the model when a file is missing. */
 export declare const FETCH_COMMAND = "episodic-memory model fetch";
 /** The marker file that records a failed download in the model folder. */

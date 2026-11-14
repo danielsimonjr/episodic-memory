@@ -435,7 +435,13 @@ export function scanEnvVars(files: readonly string[]): EnvScan {
 }
 
 /** The dynamic reads of the helper bodies that form 4 cannot name. Each one is a parameter read. */
-const HELPER_PARAM_READS = ['src/constants.ts: env[name]', 'src/digest-compress.ts: env[name]'];
+const HELPER_PARAM_READS = [
+  'src/constants.ts: env[name]',
+  'src/digest-compress.ts: env[name]',
+  // envValue reads PATH, PATHEXT and COMSPEC of the env it is given, without regard to case. They are OS
+  // variables of the command lookup, not settings of this plugin, so the registry does not list them.
+  'src/win-command.ts: env[key]',
+];
 
 /**
  * Uses of `process.env` that are not a read by name, each reviewed: the whole rest of the line
@@ -446,7 +452,7 @@ const NON_READ_FORMS: readonly string[] = [
   'cli/ensure-deps.js: process.env, rm = rmSync, spawn } = options;',  // default env of the npm runner
   'cli/sync-hook.js: process.env,',                                   // env of the detached sync spawn
   'src/claude-bin.ts: process.env;',                                  // default env of the probe
-  'src/codex-hook-trust.ts: process.env, CODEX_HOME: codexHome },',   // spread into the codex child env
+  'src/codex-hook-trust.ts: process.env, CODEX_HOME: codexHome };',   // spread into the codex child env
   'src/learn/learn-config.ts: process.env[PREFIX + suffix];',         // raw/count/amount read; form 5 names the suffixes
   'src/priority.ts: process.env): boolean {',                         // default parameter; callers name the key
   'src/priority.ts: process.env,',                                    // default parameter of the reaper seam
@@ -454,6 +460,7 @@ const NON_READ_FORMS: readonly string[] = [
   'src/summarizer.ts: process.env',                                   // default parameter of the env-reading helper
   'src/sync-cli.ts: process.env);',                                   // whole env to buildSyncOptionsFromEnv (named reads there)
   'src/sync-cli.ts: process.env, [BACKGROUND_WORKER_ENV]: \'1\' }',   // spread into the detached worker env
+  'src/win-command.ts: process.env,',                                 // default env of the command lookup
 ];
 
 /** Names that the scanner must find. If it misses one, the scanner itself is broken: the gate fails. */

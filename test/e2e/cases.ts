@@ -120,7 +120,6 @@ export const MCP_TOOLS: readonly string[] = ['search', 'read', 'digest', 'skills
 export const UNCOVERED: readonly UncoveredEntry[] = [
   // Defects of PLAN.md. Each moves into FLAGS, ENV_VARS or a case in its fix commit.
   { kind: 'path', name: 'index --verify fails after a rebuild: the exchange-less transcript summary is deleted', reason: 'D7 pending' },
-  { kind: 'path', name: 'doctor codex cannot find codex.cmd on win32', reason: 'D8 pending' },
   { kind: 'path', name: 'sync exits 0 and indexes nothing when another connection holds the write lock', reason: 'D13 pending' },
   // Plan exclusions: each needs a real Claude login, binary or TTY.
   { kind: 'env', name: 'EPISODIC_MEMORY_CLAUDE_BIN', reason: 'the probe of a real Claude Code binary needs a Claude login' },

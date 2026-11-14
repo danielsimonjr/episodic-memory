@@ -1,5 +1,6 @@
 import { spawn } from 'child_process';
 import readline from 'readline';
+import { commandInvocation } from './win-command.js';
 function isRecord(value) {
     return typeof value === 'object' && value !== null;
 }
@@ -58,9 +59,12 @@ export function trustStateFromHooksList(result) {
  * @param timeoutMs The longest wait for the whole exchange, in milliseconds. Defaults to 10 seconds.
  */
 export async function detectCodexHookTrustState(codexHome, cwd, timeoutMs = 10000) {
-    const child = spawn('codex', ['app-server'], {
-        env: { ...process.env, CODEX_HOME: codexHome },
+    const env = { ...process.env, CODEX_HOME: codexHome };
+    const run = commandInvocation('codex', ['app-server'], env);
+    const child = spawn(run.file, run.args, {
+        env,
         stdio: ['pipe', 'pipe', 'ignore'],
+        windowsVerbatimArguments: run.windowsVerbatimArguments,
     });
     const rl = readline.createInterface({ input: child.stdout });
     const pending = new Map();

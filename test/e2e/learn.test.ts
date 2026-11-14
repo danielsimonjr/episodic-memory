@@ -467,10 +467,8 @@ describe.skipIf(process.platform !== 'win32')('doctor codex: a codex.cmd shim in
     removeSandbox(sb);
   });
 
-  // Measured on win32 (this host): with codex.cmd in the child PATH, `doctor codex` reports
-  // "Codex version: (not found) (requires minimum 0.130.0)". spawnSync('codex') without a shell finds no .cmd file.
-  // The probe ignores the failure (doctor-cli.ts capture), so the report says "not found" for an installed shim.
-  it.skip('D8 pending: codex.cmd in PATH -> "Codex version: (not found) (requires minimum 0.130.0)" (expected "codex-cli 0.130.0 (ok; minimum 0.130.0)")', async () => {
+  // D8: before the fix, spawnSync('codex') without a shell found no codex.cmd, and the report said "not found".
+  it('doctor codex finds a codex.cmd shim in PATH and reports its version (D8)', async () => {
     const result = await runCli(sb, cliBin('episodic-memory.js'), ['doctor', 'codex'], { timeoutMs: CHILD_MS });
     expect(codexRow(result.stdout)).toBe('Codex version: codex-cli 0.130.0 (ok; minimum 0.130.0)');
   }, CHILD_MS);

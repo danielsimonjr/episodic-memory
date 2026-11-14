@@ -1,6 +1,6 @@
 # Learned knowledge (`src/learn/`)
 
-This document describes the learned-knowledge feature, also called Recursa. The feature has 30 source files in `src/learn/` and 35 test files in `test/learn/`. Every other document gives a summary and points here.
+This document describes the learned-knowledge feature, also called Recursa. The feature has 32 source files in `src/learn/` and 39 test files in `test/learn/`. Every other document gives a summary and points here.
 
 ## Purpose
 
@@ -158,7 +158,7 @@ The `skills` MCP tool (`skills-tool.ts`) lists, searches and loads active skills
 
 ## Commands
 
-`episodic-memory learn <command>` runs from `src/learn-cli.ts`. That file owns the early exits (the reentrancy guard, the flag, the GPU reservation and the process priority). `cli-main.ts` then dispatches these commands: `tasks`, `solve`, `bootstrap`, `improve`, `status`, `approve`, `export`, `render` and `report`. `improve --dry-run` solves and reports without a learner. A command that changes knowledge or spends money runs under the learn lock.
+`episodic-memory learn <command>` runs from `src/learn-cli.ts`. That file owns the early exits (the reentrancy guard, the flag, the GPU reservation and the process priority). `cli-main.ts` then dispatches these commands: `tasks`, `solve`, `bootstrap`, `improve`, `status`, `approve`, `export`, `render` and `report`. `improve --dry-run` solves and reports without a learner. A command that changes knowledge or spends money runs under the learn lock. `learnOptionRefusal` in `usage.ts` checks each option against `LEARN_OPTIONS_BY_COMMAND`. When the feature flag is on, an option that the command does not read exits 2 with one line.
 
 ## Module reference
 
@@ -193,7 +193,7 @@ The `skills` MCP tool (`skills-tool.ts`) lists, searches and loads active skills
 | `export.ts` | `exportSkills`. |
 | `report.ts` | `buildReport`, `formatReport`, `latestRunId`. |
 | `cli-main.ts` | `runLearnCli`, `baselineCallCount`, `baselineRefusal`, `unifiedDiff`. |
-| `usage.ts` | `LEARN_USAGE`. No imports, so `--help` prints at once. |
+| `usage.ts` | `LEARN_USAGE`, `LEARN_OPTIONS_BY_COMMAND` and `learnOptionRefusal`. No imports, so `--help` prints at once. |
 
 ## Verification
 
@@ -202,6 +202,6 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 297 | repo-tools map |
+| totalSourceFiles | 320 | repo-tools map |
 
 The file counts, the defaults, the table names and the step orders come from a direct reading of the source and a file listing. None of them is a `repo-tools map` metric.

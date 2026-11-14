@@ -87,12 +87,12 @@ The dispatcher takes a command as its first argument.
 |---|---|
 | `sync` | Copy new transcripts to the archive and index them. `--background` detaches the work. |
 | `index` | Subcommands `index-all`, `index-session`, `index-cleanup`, `verify`, `repair`, `rebuild`, `prune` and `vacuum`. Options include `--concurrency` and `--no-summaries`. An unknown command or option exits 2 before any work. Every command takes the sync lock first. While a sync or another index command holds the lock, the command exits 75 before any work. `cli/index-conversations.js` passes `prune`, `vacuum` and the other names to `index-cli` unchanged, and asks for confirmation before `rebuild`. `index-cli` runs `rebuild` only with `--yes`, which the wrapper adds after the answer `yes`. Each option must belong to the command. |
-| `search` | Search from the terminal. |
-| `show` | Print one conversation. `--format markdown` (default) or `--format html`. |
-| `stats` | Print index counts. |
+| `search` | Search from the terminal. `--limit` takes a positive integer. An unknown option exits 2 before any work. |
+| `show` | Print one conversation. `--format markdown` (default) or `--format html`. An unknown option, a second file name or a format other than `markdown` or `html` exits 2 before any work. |
+| `stats` | Print index counts. An argument other than `--help` or `-h` exits 2 before any work. |
 | `doctor` | Check the install, the data and the learned-knowledge store. |
-| `backfill` | Summarize archive conversations that `sync` cannot reach. |
-| `learn` | The learned-knowledge commands: `tasks`, `solve`, `bootstrap`, `improve`, `status`, `approve`, `export`, `render`, and the report command. |
+| `backfill` | Summarize archive conversations that `sync` cannot reach. `--limit` and `--batch` take a positive integer. An unknown option or argument exits 2 before any work. |
+| `learn` | The learned-knowledge commands: `tasks`, `solve`, `bootstrap`, `improve`, `status`, `approve`, `export`, `render`, and the report command. When the feature flag is on, an option that the subcommand does not read exits 2 with one line. |
 
 `learn improve --dry-run` solves and reports without running any learner. `learn approve <name> [--yes]` activates a candidate after review.
 
@@ -102,18 +102,18 @@ The dispatcher takes a command as its first argument.
 
 ## Library barrel
 
-`src/index.ts` re-exports eight modules. The exports below are the public library surface.
+`src/index.ts` re-exports nine modules. The table lists the exports of eight of them. The SQLite section lists the exports of the ninth. All of these exports are the public library surface.
 
 | Module | Exports |
 |---|---|
 | `types` | `ToolCall`, `ConversationHarness`, `ConversationExchange`, `SearchResult`, `MultiConceptResult` |
-| `db` | `OpenDatabaseOptions`, `migrateSchema`, `migrateToolCallsCascade`, `ensureFts`, `upsertExchangeFts`, `deleteExchangeFts`, `openDatabase`, `initDatabase`, `getSharedReaderDatabase`, `closeSharedReaderDatabase`, `insertExchange`, `getAllExchanges`, `getFileLastIndexed`, `getMaxIndexedLine`, `getFreelistInfo`, `vacuumDatabase`, `deleteExchange`, `deleteExchangesForArchive` |
-| `embeddings` | `BGE_QUERY_PREFIX`, `initEmbeddings`, `generateEmbeddings`, `generateEmbedding`, `withQueryPrefix`, `generateQueryEmbedding`, `formatExchangeEmbeddingText`, `generateExchangeEmbedding`, `generateExchangeEmbeddings` |
+| `db` | `OpenDatabaseOptions`, `migrateSchema`, `migrateToolCallsCascade`, `registerVectorFunctions`, `ensureVectorTable`, `migrateVec0Vectors`, `ensureFts`, `upsertExchangeFts`, `deleteExchangeFts`, `openDatabase`, `openDatabaseReadonly`, `initDatabase`, `getSharedReaderDatabase`, `closeSharedReaderDatabase`, `insertExchange`, `getAllExchanges`, `getFileLastIndexed`, `getMaxIndexedLine`, `getFreelistInfo`, `vacuumDatabase`, `deleteExchange`, `deleteExchangesForArchive` |
+| `embeddings` | `BGE_QUERY_PREFIX`, `initEmbeddings`, `EmbeddingsUnavailableError`, `generateEmbeddings`, `generateEmbedding`, `withQueryPrefix`, `generateQueryEmbedding`, `formatExchangeEmbeddingText`, `generateExchangeEmbedding`, `generateExchangeEmbeddings` |
 | `indexer` | `indexConversations`, `indexSession`, `indexUnprocessed` |
 | `parser` | `parseConversation`, `parseConversationFile` |
-| `search` | `includeSearchSummaries`, `maxSummaryDisplayChars`, `formatSummaryForDisplay`, `SearchOptions`, `l2DistanceToCosineSimilarity`, `buildFtsMatchQuery`, `searchConversations`, `formatResults`, `searchMultipleConcepts`, `formatMultiConceptResults` |
-| `summarizer` | `CodexSummarizerCommand`, `getApiEnv`, `shouldSkipReentrantSync`, `formatConversationText`, `extractSummary`, `buildSummarizerQueryOptions`, `buildCodexSummaryPrompt`, `buildCodexSummarizerCommand`, `getCodexModel`, `CallClaudeOptions`, `callDigestModel`, `resolveLearnModels`, `callLearnModel`, `runCodexCommand`, `summarizeConversation` |
-| `paths` | `tryChmod`, `getClaudeDir`, `getCodexDir`, `getConversationSourceDirs`, `findJsonlFiles`, `statIfExists`, `getSuperpowersDir`, `getArchiveDir`, `getIndexDir`, `getDbPath`, `getLearnedDir`, `getKnowledgeDbPath`, `getLearningDbPath`, `getExcludeConfigPath`, `getExcludedProjects` |
+| `search` | `includeSearchSummaries`, `maxSummaryDisplayChars`, `formatSummaryForDisplay`, `SearchOptions`, `interleaveByRank`, `l2DistanceToCosineSimilarity`, `buildFtsMatchQuery`, `searchConversations`, `formatResults`, `searchMultipleConcepts`, `formatMultiConceptResults` |
+| `summarizer` | `CodexSummarizerCommand`, `getApiEnv`, `shouldSkipReentrantSync`, `formatConversationText`, `extractSummary`, `buildSummarizerQueryOptions`, `buildCodexSummaryPrompt`, `buildCodexSummarizerCommand`, `getCodexModel`, `promptBudgetChars`, `CallClaudeOptions`, `callDigestModel`, `resolveLearnModels`, `callLearnModel`, `runCodexCommand`, `summarizeConversation` |
+| `paths` | `tryChmod`, `getClaudeDir`, `getCodexDir`, `getConversationSourceDirs`, `findJsonlFiles`, `statIfExists`, `getSuperpowersDir`, `superpowersDirPath`, `getArchiveDir`, `archiveDirPath`, `getIndexDir`, `indexDirPath`, `getDbPath`, `getLearnedDir`, `getKnowledgeDbPath`, `getLearningDbPath`, `getExcludeConfigPath`, `getExcludedProjects` |
 
 A `src` export that the barrel does not re-export is internal to the package, even when `repo-tools map` shows no importer for it. Removing an export from the barrel is a breaking change for library callers.
 
@@ -167,7 +167,7 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalExports | 631 | repo-tools map |
-| totalSourceFiles | 297 | repo-tools map |
+| totalExports | 732 | repo-tools map |
+| totalSourceFiles | 320 | repo-tools map |
 
 `totalExports` counts every export in the repository, including test and tool files. The library barrel lists only the exports that `src/index.ts` re-exports. The tool schemas come from `src/mcp-schemas.ts`. The command names come from `cli/episodic-memory.js`. The variable names come from a search for `EPISODIC_MEMORY_` in `src/` and `cli/`. None of these facts is a `repo-tools map` metric.

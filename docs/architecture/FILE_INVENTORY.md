@@ -8,38 +8,38 @@ This report lists each source file that the map census finds, with a disposition
 
 **Language**: typescript
 
-**Total files**: 297
+**Total files**: 320
 
 ## Disposition counts
 
 | Disposition | Count | Meaning |
 | --- | --: | --- |
-| `reachable` | 48 | A `src`-area file that an entry root reaches. |
+| `reachable` | 50 | A `src`-area file that an entry root reaches. |
 | `build-entry` | 4 | A `src`-area file that is an entry root. |
-| `test-only` | 45 | A `src`-area file that only a test reaches. |
+| `test-only` | 46 | A `src`-area file that only a test reaches. |
 | `orphan` | 15 | A `src`-area file that nothing reaches. Delete it, or wire it to a root. |
-| `test` | 181 | A file in a `test/` or `tests/` folder, or a `*.test.ts` or `*.spec.ts` file. |
+| `test` | 200 | A file in a `test/` or `tests/` folder, or a `*.test.ts` or `*.spec.ts` file. |
 | `tool` | 3 | A file in a `tools/` or `scripts/` folder outside `src/`. |
-| `config` | 1 | A `*.config.*` file of TypeScript or JavaScript. |
+| `config` | 2 | A `*.config.*` file of TypeScript or JavaScript. |
 | `example` | 0 | A file in `examples/` or `docs/`. |
 | `bench` | 0 | A file in `bench/` or `benchmarks/`, or a `*.bench.*` file. |
-| **Total** | **297** | |
+| **Total** | **320** | |
 
 ## Per-area counts
 
 | Area | Files |
 | --- | --: |
-| `config` | 1 |
-| `src` | 112 |
-| `tests` | 181 |
+| `config` | 2 |
+| `src` | 115 |
+| `tests` | 200 |
 | `tools` | 3 |
 
 ## Per-package counts
 
 | Package | Files |
 | --- | --: |
-| `(root)` | 194 |
-| `episodic-memory` | 103 |
+| `(root)` | 214 |
+| `episodic-memory` | 106 |
 
 ## All files
 
@@ -47,9 +47,9 @@ This report lists each source file that the map census finds, with a disposition
 | --- | --- | --- | --- | --: |
 | `cli/digest-hook.js` | (root) | src | orphan | 96 |
 | `cli/ensure-deps.js` | (root) | src | test-only | 380 |
-| `cli/episodic-memory.js` | (root) | src | orphan | 120 |
-| `cli/forward-child.js` | (root) | src | orphan | 57 |
-| `cli/index-conversations.js` | (root) | src | orphan | 149 |
+| `cli/episodic-memory.js` | (root) | src | orphan | 122 |
+| `cli/forward-child.js` | (root) | src | orphan | 60 |
+| `cli/index-conversations.js` | (root) | src | orphan | 165 |
 | `cli/mcp-server-wrapper.js` | (root) | src | orphan | 106 |
 | `cli/search-conversations.js` | (root) | src | orphan | 8 |
 | `cli/sync-hook.js` | (root) | src | orphan | 196 |
@@ -58,10 +58,11 @@ This report lists each source file that the map census finds, with a disposition
 | `scripts/generate-version.js` | (root) | tools | tool | 16 |
 | `src/api-endpoint.ts` | episodic-memory | src | reachable | 60 |
 | `src/archive-path.ts` | episodic-memory | src | reachable | 212 |
-| `src/backfill-cli.ts` | episodic-memory | src | orphan | 107 |
+| `src/backfill-cli.ts` | episodic-memory | src | orphan | 105 |
 | `src/backfill.ts` | episodic-memory | src | test-only | 164 |
 | `src/claude-bin.ts` | episodic-memory | src | reachable | 233 |
-| `src/codex-hook-trust.ts` | episodic-memory | src | test-only | 163 |
+| `src/cli-usage.ts` | episodic-memory | src | test-only | 28 |
+| `src/codex-hook-trust.ts` | episodic-memory | src | test-only | 167 |
 | `src/codex-support.ts` | episodic-memory | src | reachable | 66 |
 | `src/constants.ts` | episodic-memory | src | reachable | 93 |
 | `src/content-text.ts` | episodic-memory | src | reachable | 33 |
@@ -75,11 +76,11 @@ This report lists each source file that the map census finds, with a disposition
 | `src/digest-job.ts` | episodic-memory | src | test-only | 209 |
 | `src/digest-phase.ts` | episodic-memory | src | test-only | 28 |
 | `src/digest-prompts.ts` | episodic-memory | src | test-only | 122 |
-| `src/digest-tool.ts` | episodic-memory | src | reachable | 59 |
+| `src/digest-tool.ts` | episodic-memory | src | reachable | 68 |
 | `src/digest-validate.ts` | episodic-memory | src | reachable | 107 |
-| `src/doctor-cli.ts` | episodic-memory | src | orphan | 84 |
+| `src/doctor-cli.ts` | episodic-memory | src | orphan | 88 |
 | `src/doctor-learn.ts` | episodic-memory | src | test-only | 306 |
-| `src/doctor.ts` | episodic-memory | src | test-only | 470 |
+| `src/doctor.ts` | episodic-memory | src | test-only | 472 |
 | `src/embedding-migration.ts` | episodic-memory | src | reachable | 198 |
 | `src/embeddings.ts` | episodic-memory | src | reachable | 205 |
 | `src/exclusion-marker.ts` | episodic-memory | src | reachable | 120 |
@@ -88,12 +89,12 @@ This report lists each source file that the map census finds, with a disposition
 | `src/gpu-reservation.ts` | episodic-memory | src | reachable | 98 |
 | `src/index-cli.ts` | episodic-memory | src | build-entry | 306 |
 | `src/index.ts` | episodic-memory | src | build-entry | 10 |
-| `src/indexer.ts` | episodic-memory | src | reachable | 468 |
-| `src/learn-cli.ts` | episodic-memory | src | orphan | 94 |
+| `src/indexer.ts` | episodic-memory | src | reachable | 471 |
+| `src/learn-cli.ts` | episodic-memory | src | orphan | 102 |
 | `src/learn/agent-runner.ts` | episodic-memory | src | test-only | 568 |
 | `src/learn/bootstrap.ts` | episodic-memory | src | test-only | 850 |
 | `src/learn/cited-ids.ts` | episodic-memory | src | test-only | 267 |
-| `src/learn/cli-main.ts` | episodic-memory | src | test-only | 884 |
+| `src/learn/cli-main.ts` | episodic-memory | src | test-only | 889 |
 | `src/learn/entry-order.ts` | episodic-memory | src | test-only | 57 |
 | `src/learn/export.ts` | episodic-memory | src | test-only | 406 |
 | `src/learn/grade.ts` | episodic-memory | src | test-only | 318 |
@@ -120,10 +121,10 @@ This report lists each source file that the map census finds, with a disposition
 | `src/learn/solver.ts` | episodic-memory | src | test-only | 300 |
 | `src/learn/tasks.ts` | episodic-memory | src | test-only | 522 |
 | `src/learn/types.ts` | episodic-memory | src | reachable | 227 |
-| `src/learn/usage.ts` | episodic-memory | src | test-only | 60 |
+| `src/learn/usage.ts` | episodic-memory | src | test-only | 99 |
 | `src/learn/validate.ts` | episodic-memory | src | test-only | 348 |
 | `src/lockfile.ts` | episodic-memory | src | reachable | 197 |
-| `src/logging.ts` | episodic-memory | src | reachable | 91 |
+| `src/logging.ts` | episodic-memory | src | reachable | 106 |
 | `src/markdown-html.ts` | episodic-memory | src | reachable | 1059 |
 | `src/mcp-auth.ts` | episodic-memory | src | reachable | 68 |
 | `src/mcp-schemas.ts` | episodic-memory | src | reachable | 274 |
@@ -133,22 +134,23 @@ This report lists each source file that the map census finds, with a disposition
 | `src/ollama-backend.ts` | episodic-memory | src | reachable | 145 |
 | `src/orphan-reaper.ts` | episodic-memory | src | test-only | 56 |
 | `src/parser.ts` | episodic-memory | src | reachable | 553 |
-| `src/paths.ts` | episodic-memory | src | reachable | 214 |
+| `src/paths.ts` | episodic-memory | src | reachable | 232 |
 | `src/priority.ts` | episodic-memory | src | test-only | 46 |
 | `src/prune.ts` | episodic-memory | src | reachable | 116 |
 | `src/redact.ts` | episodic-memory | src | reachable | 84 |
 | `src/reentrancy.ts` | episodic-memory | src | reachable | 25 |
-| `src/search-cli.ts` | episodic-memory | src | orphan | 122 |
-| `src/search.ts` | episodic-memory | src | reachable | 623 |
-| `src/show-cli.ts` | episodic-memory | src | orphan | 59 |
+| `src/search-cli.ts` | episodic-memory | src | orphan | 137 |
+| `src/search.ts` | episodic-memory | src | reachable | 640 |
+| `src/show-cli.ts` | episodic-memory | src | orphan | 67 |
 | `src/show.ts` | episodic-memory | src | reachable | 1014 |
 | `src/sqlite.ts` | episodic-memory | src | reachable | 357 |
-| `src/stats-cli.ts` | episodic-memory | src | orphan | 32 |
+| `src/stats-cli.ts` | episodic-memory | src | orphan | 36 |
 | `src/stats.ts` | episodic-memory | src | test-only | 190 |
-| `src/summarizer.ts` | episodic-memory | src | reachable | 870 |
-| `src/sync-banner.ts` | episodic-memory | src | test-only | 33 |
-| `src/sync-cli.ts` | episodic-memory | src | orphan | 268 |
-| `src/sync.ts` | episodic-memory | src | test-only | 586 |
+| `src/summarizer.ts` | episodic-memory | src | reachable | 877 |
+| `src/summary-sentinel.ts` | episodic-memory | src | reachable | 32 |
+| `src/sync-banner.ts` | episodic-memory | src | test-only | 38 |
+| `src/sync-cli.ts` | episodic-memory | src | orphan | 276 |
+| `src/sync.ts` | episodic-memory | src | test-only | 590 |
 | `src/topic-db.ts` | episodic-memory | src | reachable | 521 |
 | `src/topic-format.ts` | episodic-memory | src | reachable | 462 |
 | `src/topic-job.ts` | episodic-memory | src | test-only | 309 |
@@ -158,7 +160,8 @@ This report lists each source file that the map census finds, with a disposition
 | `src/topic-tool.ts` | episodic-memory | src | reachable | 149 |
 | `src/topic-validate.ts` | episodic-memory | src | test-only | 218 |
 | `src/types.ts` | episodic-memory | src | reachable | 82 |
-| `src/verify.ts` | episodic-memory | src | reachable | 244 |
+| `src/verify.ts` | episodic-memory | src | reachable | 247 |
+| `src/win-command.ts` | episodic-memory | src | reachable | 99 |
 | `test/agent-sdk-floor.test.ts` | (root) | tests | test | 39 |
 | `test/allow-scripts-pin.test.ts` | (root) | tests | test | 15 |
 | `test/app-server-stdin-error.test.ts` | (root) | tests | test | 107 |
@@ -172,6 +175,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/claude-bin.test.ts` | (root) | tests | test | 230 |
 | `test/claude-e2e-script.test.ts` | (root) | tests | test | 25 |
 | `test/cli-forward.test.ts` | (root) | tests | test | 174 |
+| `test/cli-usage.test.ts` | (root) | tests | test | 34 |
 | `test/codex-doctor.test.ts` | (root) | tests | test | 154 |
 | `test/codex-e2e-script.test.ts` | (root) | tests | test | 24 |
 | `test/codex-hook-trust.test.ts` | (root) | tests | test | 34 |
@@ -200,6 +204,19 @@ This report lists each source file that the map census finds, with a disposition
 | `test/digest-prompts.test.ts` | (root) | tests | test | 77 |
 | `test/digest-validate.test.ts` | (root) | tests | test | 93 |
 | `test/doctor.test.ts` | (root) | tests | test | 368 |
+| `test/e2e/cases.ts` | (root) | tests | test | 142 |
+| `test/e2e/cli-flags.test.ts` | (root) | tests | test | 296 |
+| `test/e2e/coverage.test.ts` | (root) | tests | test | 525 |
+| `test/e2e/env-flags.test.ts` | (root) | tests | test | 750 |
+| `test/e2e/env-learn-topics.test.ts` | (root) | tests | test | 426 |
+| `test/e2e/fake-proc-lister.mjs` | (root) | tests | test | 62 |
+| `test/e2e/harness.ts` | (root) | tests | test | 1083 |
+| `test/e2e/hooks.test.ts` | (root) | tests | test | 398 |
+| `test/e2e/isolation.ts` | (root) | tests | test | 86 |
+| `test/e2e/learn.test.ts` | (root) | tests | test | 496 |
+| `test/e2e/lifecycle.test.ts` | (root) | tests | test | 607 |
+| `test/e2e/mcp.test.ts` | (root) | tests | test | 761 |
+| `test/e2e/smoke.test.ts` | (root) | tests | test | 412 |
 | `test/embedding-migration-helpers.test.ts` | (root) | tests | test | 57 |
 | `test/embedding-migration.test.ts` | (root) | tests | test | 222 |
 | `test/embeddings-format.test.ts` | (root) | tests | test | 35 |
@@ -235,6 +252,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/learn/learn-handlers.test.ts` | (root) | tests | test | 258 |
 | `test/learn/learn-inject.test.ts` | (root) | tests | test | 310 |
 | `test/learn/learn-lock.test.ts` | (root) | tests | test | 165 |
+| `test/learn/learn-option-refusal.test.ts` | (root) | tests | test | 26 |
 | `test/learn/learned-block.test.ts` | (root) | tests | test | 146 |
 | `test/learn/learned-text-screen.test.ts` | (root) | tests | test | 368 |
 | `test/learn/learner.test.ts` | (root) | tests | test | 718 |
@@ -276,6 +294,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/oversized-message-guard.test.ts` | (root) | tests | test | 136 |
 | `test/parser-tool-result.test.ts` | (root) | tests | test | 43 |
 | `test/parser.test.ts` | (root) | tests | test | 141 |
+| `test/paths-no-create.test.ts` | (root) | tests | test | 42 |
 | `test/paths.test.ts` | (root) | tests | test | 120 |
 | `test/priority.test.ts` | (root) | tests | test | 48 |
 | `test/prune.test.ts` | (root) | tests | test | 197 |
@@ -287,8 +306,9 @@ This report lists each source file that the map census finds, with a disposition
 | `test/runtime-imports.test.ts` | (root) | tests | test | 90 |
 | `test/search-agent-template.test.ts` | (root) | tests | test | 162 |
 | `test/search-embeddings-unavailable.test.ts` | (root) | tests | test | 124 |
+| `test/search-interleave.test.ts` | (root) | tests | test | 29 |
 | `test/search-metadata-filters.test.ts` | (root) | tests | test | 299 |
-| `test/search-text-row-similarity.test.ts` | (root) | tests | test | 111 |
+| `test/search-text-row-similarity.test.ts` | (root) | tests | test | 114 |
 | `test/search-with-summary.test.ts` | (root) | tests | test | 107 |
 | `test/security-speed-helpers.test.ts` | (root) | tests | test | 69 |
 | `test/setup-env.ts` | (root) | tests | test | 27 |
@@ -303,7 +323,8 @@ This report lists each source file that the map census finds, with a disposition
 | `test/summarizer-options.test.ts` | (root) | tests | test | 351 |
 | `test/summarizer-prompt-budget.test.ts` | (root) | tests | test | 72 |
 | `test/summarizer-text.test.ts` | (root) | tests | test | 44 |
-| `test/sync-banner.test.ts` | (root) | tests | test | 34 |
+| `test/summary-sentinel.test.ts` | (root) | tests | test | 21 |
+| `test/sync-banner.test.ts` | (root) | tests | test | 39 |
 | `test/sync-cli-args.test.ts` | (root) | tests | test | 49 |
 | `test/sync-cli-disable-auto-sync.test.ts` | (root) | tests | test | 84 |
 | `test/sync-cli-lock.test.ts` | (root) | tests | test | 46 |
@@ -340,8 +361,10 @@ This report lists each source file that the map census finds, with a disposition
 | `test/vector-search-filters.test.ts` | (root) | tests | test | 138 |
 | `test/verify.test.ts` | (root) | tests | test | 328 |
 | `test/version-consistency.test.ts` | (root) | tests | test | 30 |
+| `test/win-command.test.ts` | (root) | tests | test | 60 |
 | `vendor/onnxruntime-web-stub/index.js` | (root) | src | orphan | 3 |
-| `vitest.config.ts` | (root) | config | config | 26 |
+| `vitest.config.ts` | (root) | config | config | 28 |
+| `vitest.e2e.config.ts` | (root) | config | config | 22 |
 
 ## Skipped links
 

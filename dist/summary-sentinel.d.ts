@@ -8,8 +8,7 @@ export declare function summaryFailPathFor(archivePath: string): string;
  *
  * Sync, the indexer and the verify repair all call this function. The empty file stops the summary loop
  * from queueing the transcript again, and `verify` finds a summary for it. The failure record says why
- * the file is empty. Before the three paths shared the function, only sync wrote the file, so a rebuild
- * left `verify` reporting the summary as missing. A failed write of the failure record is ignored.
+ * the file is empty. A failed write of the failure record is ignored.
  *
  * @param archivePath The archived `.jsonl` file.
  */

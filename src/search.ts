@@ -129,12 +129,6 @@ function buildSearchFilters(options: SearchOptions): { sql: string; params: unkn
 }
 
 /**
- * Find the nearest exchanges with an exact scan of the rows that pass the filters.
- *
- * The scan computes `vec_distance_l2` for each row that passes the filters, then sorts the rows by distance.
- * The scan reads `exchange_vectors`. Every vector search uses this scan.
- */
-/**
  * Merges the vector rows and the text rows of a `both` search into at most `limit` rows.
  *
  * Each step returns up to `limit` rows, and the vector step always fills its limit on a large index.
@@ -157,6 +151,12 @@ export function interleaveByRank(vectorRows: any[], textRows: any[], limit: numb
   return merged;
 }
 
+/**
+ * Find the nearest exchanges with an exact scan of the rows that pass the filters.
+ *
+ * The scan computes `vec_distance_l2` for each row that passes the filters, then sorts the rows by distance.
+ * The scan reads `exchange_vectors`. Every vector search uses this scan.
+ */
 function exactVectorSearch(
   db: Database,
   embedding: Buffer,

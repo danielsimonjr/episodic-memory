@@ -1,7 +1,7 @@
 {
   "metadata": {
     "name": "episodic-memory",
-    "version": "1.11.0",
+    "version": "1.12.0",
     "schemaVersion": "2.0.0",
     "language": "typescript"
   },
@@ -139,7 +139,7 @@
         ]
       },
       "cli/index-conversations.js": {
-        "description": "index-conversations.js module",
+        "description": "Ask a yes/no question on stdin. Resolves true for \"yes\", false for any other answer,",
         "externalDependencies": [],
         "nodeDependencies": [
           {
@@ -393,6 +393,13 @@
             ]
           },
           {
+            "file": "./cli-usage.js",
+            "imports": [
+              "positiveIntegerOption",
+              "refuseUsage"
+            ]
+          },
+          {
             "file": "./backfill.js",
             "imports": [
               "*"
@@ -534,6 +541,21 @@
           "PROBE_TIMEOUT_MS"
         ]
       },
+      "src/cli-usage.ts": {
+        "description": "Prints one usage error line for a CLI command and exits with code 2.",
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "refuseUsage",
+          "positiveIntegerOption"
+        ],
+        "functions": [
+          "refuseUsage",
+          "positiveIntegerOption"
+        ]
+      },
       "src/codex-hook-trust.ts": {
         "description": "The trust state that Codex reports for the episodic-memory hooks.",
         "externalDependencies": [],
@@ -551,7 +573,14 @@
             ]
           }
         ],
-        "internalDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "./win-command.js",
+            "imports": [
+              "commandInvocation"
+            ]
+          }
+        ],
         "workspaceDependencies": [],
         "exports": [
           "trustStateFromHooksList",
@@ -1178,12 +1207,25 @@
       "src/digest-tool.ts": {
         "description": "digest-tool module",
         "externalDependencies": [],
-        "nodeDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
         "internalDependencies": [
           {
             "file": "./db.js",
             "imports": [
               "initDatabase"
+            ]
+          },
+          {
+            "file": "./paths.js",
+            "imports": [
+              "getDbPath"
             ]
           },
           {
@@ -1292,7 +1334,13 @@
           {
             "file": "./logging.js",
             "imports": [
-              "getSyncLogPath"
+              "syncLogPath"
+            ]
+          },
+          {
+            "file": "./win-command.js",
+            "imports": [
+              "commandInvocation"
             ]
           },
           {
@@ -1333,7 +1381,7 @@
           {
             "file": "./paths.js",
             "imports": [
-              "getSuperpowersDir",
+              "superpowersDirPath",
               "*"
             ]
           },
@@ -1429,17 +1477,17 @@
           {
             "file": "./paths.js",
             "imports": [
-              "getArchiveDir",
+              "archiveDirPath",
               "getDbPath",
-              "getIndexDir",
-              "getSuperpowersDir"
+              "indexDirPath",
+              "superpowersDirPath"
             ]
           },
           {
             "file": "./logging.js",
             "imports": [
-              "getSyncErrorsLogPath",
-              "getSyncLogPath"
+              "syncErrorsLogPath",
+              "syncLogPath"
             ]
           },
           {
@@ -1870,6 +1918,12 @@
             "imports": [
               "scanExclusionMarkers"
             ]
+          },
+          {
+            "file": "./summary-sentinel.js",
+            "imports": [
+              "writeNoExchangeSummary"
+            ]
           }
         ],
         "workspaceDependencies": [],
@@ -1912,7 +1966,8 @@
           {
             "file": "./learn/usage.js",
             "imports": [
-              "LEARN_USAGE"
+              "LEARN_USAGE",
+              "learnOptionRefusal"
             ]
           },
           {
@@ -2006,13 +2061,16 @@
             "file": "./paths.js",
             "imports": [
               "getSuperpowersDir",
-              "getIndexDir"
+              "getIndexDir",
+              "superpowersDirPath"
             ]
           }
         ],
         "workspaceDependencies": [],
         "exports": [
           "getLogDir",
+          "syncLogPath",
+          "syncErrorsLogPath",
           "getSyncLogPath",
           "getSyncErrorsLogPath",
           "getLearnLogPath",
@@ -2023,6 +2081,8 @@
         ],
         "functions": [
           "getLogDir",
+          "syncLogPath",
+          "syncErrorsLogPath",
           "getSyncLogPath",
           "getSyncErrorsLogPath",
           "getLearnLogPath",
@@ -2415,8 +2475,11 @@
           "findJsonlFiles",
           "statIfExists",
           "getSuperpowersDir",
+          "superpowersDirPath",
           "getArchiveDir",
+          "archiveDirPath",
           "getIndexDir",
+          "indexDirPath",
           "getDbPath",
           "getLearnedDir",
           "getKnowledgeDbPath",
@@ -2432,8 +2495,11 @@
           "findJsonlFiles",
           "statIfExists",
           "getSuperpowersDir",
+          "superpowersDirPath",
           "getArchiveDir",
+          "archiveDirPath",
           "getIndexDir",
+          "indexDirPath",
           "getDbPath",
           "getLearnedDir",
           "getKnowledgeDbPath",
@@ -2546,6 +2612,13 @@
               "formatMultiConceptResults",
               "SearchOptions"
             ]
+          },
+          {
+            "file": "./cli-usage.js",
+            "imports": [
+              "positiveIntegerOption",
+              "refuseUsage"
+            ]
           }
         ],
         "workspaceDependencies": [],
@@ -2616,6 +2689,7 @@
           "includeSearchSummaries",
           "maxSummaryDisplayChars",
           "formatSummaryForDisplay",
+          "interleaveByRank",
           "l2DistanceToCosineSimilarity",
           "buildFtsMatchQuery",
           "searchConversations",
@@ -2630,6 +2704,7 @@
           "includeSearchSummaries",
           "maxSummaryDisplayChars",
           "formatSummaryForDisplay",
+          "interleaveByRank",
           "l2DistanceToCosineSimilarity",
           "buildFtsMatchQuery",
           "searchConversations",
@@ -2655,6 +2730,12 @@
             "imports": [
               "formatConversationAsMarkdown",
               "formatConversationAsHTML"
+            ]
+          },
+          {
+            "file": "./cli-usage.js",
+            "imports": [
+              "refuseUsage"
             ]
           }
         ],
@@ -2742,7 +2823,7 @@
         ]
       },
       "src/stats-cli.ts": {
-        "description": "stats-cli module",
+        "description": "stats takes no argument. Without the check, a misspelled flag prints the full statistics and says nothing.",
         "externalDependencies": [],
         "nodeDependencies": [],
         "internalDependencies": [
@@ -2751,6 +2832,12 @@
             "imports": [
               "getIndexStats",
               "formatStats"
+            ]
+          },
+          {
+            "file": "./cli-usage.js",
+            "imports": [
+              "refuseUsage"
             ]
           }
         ],
@@ -2831,6 +2918,12 @@
             "imports": [
               "SUMMARIZER_GUARD_ENV",
               "shouldSkipReentrantSync"
+            ]
+          },
+          {
+            "file": "./win-command.js",
+            "imports": [
+              "commandInvocation"
             ]
           },
           {
@@ -2916,6 +3009,30 @@
           "summarizeConversation"
         ]
       },
+      "src/summary-sentinel.ts": {
+        "description": "Writes the record of a transcript that has no exchange: an empty summary file and a failure record",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "summaryPathFor",
+          "summaryFailPathFor",
+          "writeNoExchangeSummary"
+        ],
+        "functions": [
+          "summaryPathFor",
+          "summaryFailPathFor",
+          "writeNoExchangeSummary"
+        ]
+      },
       "src/sync-banner.ts": {
         "description": "The counts that `syncHeadline` reads from one finished sync run.",
         "externalDependencies": [],
@@ -2962,6 +3079,12 @@
             "file": "./reentrancy.js",
             "imports": [
               "shouldSkipReentrantSync"
+            ]
+          },
+          {
+            "file": "./constants.js",
+            "imports": [
+              "envPositiveInt"
             ]
           },
           {
@@ -3051,6 +3174,12 @@
           }
         ],
         "internalDependencies": [
+          {
+            "file": "./summary-sentinel.js",
+            "imports": [
+              "writeNoExchangeSummary"
+            ]
+          },
           {
             "file": "./types.js",
             "imports": [
@@ -3688,6 +3817,12 @@
             ]
           },
           {
+            "file": "./summary-sentinel.js",
+            "imports": [
+              "writeNoExchangeSummary"
+            ]
+          },
+          {
             "file": "./embeddings.js",
             "imports": [
               "*"
@@ -3717,6 +3852,37 @@
         "functions": [
           "verifyIndex",
           "repairIndex"
+        ]
+      },
+      "src/win-command.ts": {
+        "description": "Finds the file that Windows runs for `command`, or undefined.",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "default"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "default"
+            ]
+          }
+        ],
+        "internalDependencies": [],
+        "workspaceDependencies": [],
+        "exports": [
+          "findWindowsCommand",
+          "commandInvocation"
+        ],
+        "interfaces": [
+          "CommandInvocation"
+        ],
+        "functions": [
+          "findWindowsCommand",
+          "commandInvocation"
         ]
       }
     },
@@ -4208,7 +4374,8 @@
           {
             "file": "./usage.js",
             "imports": [
-              "LEARN_USAGE"
+              "LEARN_USAGE",
+              "learnOptionRefusal"
             ]
           },
           {
@@ -5957,10 +6124,16 @@
         "internalDependencies": [],
         "workspaceDependencies": [],
         "exports": [
-          "LEARN_USAGE"
+          "LEARN_USAGE",
+          "LEARN_OPTIONS_BY_COMMAND",
+          "learnOptionRefusal"
+        ],
+        "functions": [
+          "learnOptionRefusal"
         ],
         "constants": [
-          "LEARN_USAGE"
+          "LEARN_USAGE",
+          "LEARN_OPTIONS_BY_COMMAND"
         ]
       },
       "src/learn/validate.ts": {
@@ -6092,6 +6265,7 @@
         "src/backfill-cli.ts",
         "src/backfill.ts",
         "src/claude-bin.ts",
+        "src/cli-usage.ts",
         "src/codex-hook-trust.ts",
         "src/codex-support.ts",
         "src/constants.ts",
@@ -6144,6 +6318,7 @@
         "src/stats-cli.ts",
         "src/stats.ts",
         "src/summarizer.ts",
+        "src/summary-sentinel.ts",
         "src/sync-banner.ts",
         "src/sync-cli.ts",
         "src/sync.ts",
@@ -6156,7 +6331,8 @@
         "src/topic-tool.ts",
         "src/topic-validate.ts",
         "src/types.ts",
-        "src/verify.ts"
+        "src/verify.ts",
+        "src/win-command.ts"
       ]
     },
     {

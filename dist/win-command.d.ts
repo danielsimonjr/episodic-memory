@@ -20,6 +20,6 @@ export declare function findWindowsCommand(command: string, env: NodeJS.ProcessE
  * directly. The function therefore resolves the file and runs a batch file through cmd.exe. A command that
  * cannot be found is returned unchanged, so the spawn fails with ENOENT as before.
  *
- * @throws Error when a batch file would get an argument that holds a space or a cmd.exe syntax character.
+ * @throws Error when a batch file would get an empty argument, or one that holds a space or a cmd.exe syntax character.
  */
 export declare function commandInvocation(command: string, args: readonly string[], env?: NodeJS.ProcessEnv, platform?: NodeJS.Platform): CommandInvocation;

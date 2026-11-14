@@ -8,16 +8,16 @@
 
 | Metric | Count |
 |--------|-------|
-| Total Source Files | 112 |
-| Total Test Files | 174 |
-| Source Files with Tests | 89 |
-| Source Files without Tests | 23 |
-| Coverage (raw, direct-import) | **79.5%** |
+| Total Source Files | 115 |
+| Total Test Files | 189 |
+| Source Files with Tests | 93 |
+| Source Files without Tests | 22 |
+| Coverage (raw, direct-import) | **80.9%** |
 ---
 
-## Source Files Without Test Coverage
+## Source Files Not Imported By A Test
 
-The following 23 source files are not directly imported by any test file:
+The following 22 source files are not directly imported by any test file:
 
 ### root/
 
@@ -45,7 +45,6 @@ The following 23 source files are not directly imported by any test file:
 ### learn/
 
 - `src/learn/pii-redactor.ts`
-- `src/learn/usage.ts`
 
 ### onnxruntime-web-stub/
 
@@ -53,7 +52,7 @@ The following 23 source files are not directly imported by any test file:
 
 ---
 
-## Source Files With Test Coverage
+## Source Files Imported By A Test
 
 | Source File | Test Files |
 |-------------|------------|
@@ -62,6 +61,7 @@ The following 23 source files are not directly imported by any test file:
 | `src/archive-path.ts` | `archive-path-edges.test.ts`, `archive-path.test.ts` |
 | `src/backfill.ts` | `backfill-gpu-reservation.test.ts`, `backfill.test.ts` |
 | `src/claude-bin.ts` | `claude-bin-deferral.test.ts`, `claude-bin.test.ts`, `digest-gpu-reservation.test.ts`, `agent-runner.test.ts`, `learn-cli.test.ts`, `topic-job.test.ts` |
+| `src/cli-usage.ts` | `cli-usage.test.ts` |
 | `src/codex-hook-trust.ts` | `app-server-stdin-error.test.ts`, `codex-doctor.test.ts`, `codex-hook-trust.test.ts` |
 | `src/codex-support.ts` | `codex-support-extra.test.ts`, `codex-support.test.ts` |
 | `src/constants.ts` | `constants.test.ts`, `digest-prompts.test.ts`, `embeddings-format.test.ts`, `oversized-message-guard.test.ts`, `sync-helpers.test.ts`, `topic-prompts.test.ts` |
@@ -75,7 +75,7 @@ The following 23 source files are not directly imported by any test file:
 | `src/digest-inject.ts` | `digest-hook.test.ts`, `digest-inject.test.ts`, `learn-handlers.test.ts`, `skills-tool.test.ts`, `topic-tool.test.ts` |
 | `src/digest-job.ts` | `digest-gpu-reservation.test.ts`, `digest-job.test.ts`, `digest-prompt-budget.test.ts` |
 | `src/digest-phase.ts` | `digest-mcp.test.ts` |
-| `src/digest-prompts.ts` | `digest-prompt-budget.test.ts`, `digest-prompts.test.ts`, `topic-prompts.test.ts` |
+| `src/digest-prompts.ts` | `digest-prompt-budget.test.ts`, `digest-prompts.test.ts`, `smoke.test.ts`, `topic-prompts.test.ts` |
 | `src/digest-tool.ts` | `digest-mcp.test.ts` |
 | `src/digest-validate.ts` | `digest-validate.test.ts` |
 | `src/doctor-learn.ts` | `doctor.test.ts` |
@@ -93,11 +93,11 @@ The following 23 source files are not directly imported by any test file:
 | `learn/entry-order.ts` | `entry-order.test.ts` |
 | `learn/export.ts` | `export.test.ts` |
 | `learn/grade.ts` | `grade.test.ts`, `relay-task4-findings.test.ts` |
-| `learn/knowledge-db.ts` | `doctor.test.ts`, `export.test.ts`, `knowledge-db.test.ts`, `knowledge-store.test.ts`, `leaf-learner.test.ts`, `learn-cli.test.ts`, `learned-block.test.ts`, `learner.test.ts`, `relay-task8-challenger.test.ts`, `relay-task9-findings.test.ts`, `report.test.ts`, `skills-tool.test.ts`, `solver.test.ts`, `validate.test.ts` |
+| `learn/knowledge-db.ts` | `doctor.test.ts`, `env-learn-topics.test.ts`, `learn.test.ts`, `mcp.test.ts`, `export.test.ts`, `knowledge-db.test.ts`, `knowledge-store.test.ts`, `leaf-learner.test.ts`, `learn-cli.test.ts`, `learned-block.test.ts`, `learner.test.ts`, `relay-task8-challenger.test.ts`, `relay-task9-findings.test.ts`, `report.test.ts`, `skills-tool.test.ts`, `solver.test.ts`, `validate.test.ts` |
 | `learn/knowledge-gate.ts` | `knowledge-gate.test.ts`, `relay-challenger.test.ts` |
-| `learn/knowledge-store.ts` | `doctor.test.ts`, `bootstrap.test.ts`, `export.test.ts`, `knowledge-db.test.ts`, `knowledge-store-write-lock.test.ts`, `knowledge-store.test.ts`, `leaf-learner.test.ts`, `learn-cli.test.ts`, `learned-block.test.ts`, `learner.test.ts`, `learning-store.test.ts`, `relay-task6-findings.test.ts`, `relay-task8-challenger.test.ts`, `relay-task9-findings.test.ts`, `report.test.ts`, `skills-tool.test.ts`, `solver.test.ts`, `validate.test.ts` |
+| `learn/knowledge-store.ts` | `doctor.test.ts`, `env-learn-topics.test.ts`, `learn.test.ts`, `mcp.test.ts`, `bootstrap.test.ts`, `export.test.ts`, `knowledge-db.test.ts`, `knowledge-store-write-lock.test.ts`, `knowledge-store.test.ts`, `leaf-learner.test.ts`, `learn-cli.test.ts`, `learned-block.test.ts`, `learner.test.ts`, `learning-store.test.ts`, `relay-task6-findings.test.ts`, `relay-task8-challenger.test.ts`, `relay-task9-findings.test.ts`, `report.test.ts`, `skills-tool.test.ts`, `solver.test.ts`, `validate.test.ts` |
 | `learn/leaf-learner.ts` | `leaf-learner.test.ts`, `relay-task8-challenger.test.ts` |
-| `learn/learn-config.ts` | `knowledge-gate.test.ts`, `learn-config.test.ts`, `learn-handlers.test.ts` |
+| `learn/learn-config.ts` | `env-learn-topics.test.ts`, `knowledge-gate.test.ts`, `learn-config.test.ts`, `learn-handlers.test.ts` |
 | `learn/learn-handlers.ts` | `learn-handlers.test.ts` |
 | `learn/learn-inject.ts` | `digest-hook.test.ts`, `learn-inject.test.ts`, `relay-findings.test.ts` |
 | `learn/learn-lock.ts` | `learn-cli.test.ts`, `learn-lock.test.ts` |
@@ -115,9 +115,10 @@ The following 23 source files are not directly imported by any test file:
 | `learn/solver.ts` | `bootstrap.test.ts`, `leaf-learner.test.ts`, `learner.test.ts`, `relay-task8-challenger.test.ts`, `relay-task9-findings.test.ts`, `solver.test.ts`, `validate.test.ts` |
 | `learn/tasks.ts` | `relay-task4-findings.test.ts`, `tasks.test.ts` |
 | `learn/types.ts` | `doctor.test.ts`, `bootstrap.test.ts`, `cited-ids.test.ts`, `export.test.ts`, `grade.test.ts`, `knowledge-db.test.ts`, `knowledge-gate.test.ts`, `knowledge-store.test.ts`, `leaf-learner.test.ts`, `learn-cli.test.ts`, `learn-inject.test.ts`, `learned-block.test.ts`, `learner.test.ts`, `learning-db.test.ts`, `prompts.test.ts`, `relay-findings.test.ts`, `relay-task6-findings.test.ts`, `relay-task8-challenger.test.ts`, `relay-task9-findings.test.ts`, `report.test.ts`, `sdk-tools.test.ts`, `skills-tool.test.ts`, `solver.test.ts`, `validate.test.ts` |
+| `learn/usage.ts` | `learn-option-refusal.test.ts` |
 | `learn/validate.ts` | `validate.test.ts` |
 | `src/lockfile.ts` | `index-cli-sync-lock.test.ts`, `learn-cli.test.ts`, `lockfile.test.ts` |
-| `src/logging.ts` | `doctor.test.ts`, `logging-append.test.ts`, `logging.test.ts`, `sync-cli-disable-auto-sync.test.ts`, `sync-cli-lock.test.ts`, `sync-hook-logging.test.ts` |
+| `src/logging.ts` | `doctor.test.ts`, `logging-append.test.ts`, `logging.test.ts`, `paths-no-create.test.ts`, `sync-cli-disable-auto-sync.test.ts`, `sync-cli-lock.test.ts`, `sync-hook-logging.test.ts` |
 | `src/markdown-html.ts` | `markdown-html.test.ts` |
 | `src/mcp-auth.ts` | `mcp-auth.test.ts` |
 | `src/mcp-schemas.ts` | `mcp-schemas.test.ts`, `topic-tool.test.ts` |
@@ -126,16 +127,17 @@ The following 23 source files are not directly imported by any test file:
 | `src/ollama-backend.ts` | `backfill-gpu-reservation.test.ts`, `claude-bin-deferral.test.ts`, `digest-gpu-reservation.test.ts`, `gpu-reservation.test.ts`, `ollama-backend.test.ts`, `ollama-plain-reply.test.ts`, `summarizer-gpu-reservation.test.ts`, `summarizer-ollama-fallback.test.ts`, `summarizer-prompt-budget.test.ts`, `sync-gpu-reservation.test.ts`, `topic-job.test.ts` |
 | `src/orphan-reaper.ts` | `orphan-reaper.test.ts` |
 | `src/parser.ts` | `codex-transcripts.test.ts`, `index-honours-marker.test.ts`, `integration.test.ts`, `parser-tool-result.test.ts`, `parser.test.ts` |
-| `src/paths.ts` | `codex-transcripts.test.ts`, `dangling-project-link.test.ts`, `knowledge-db.test.ts`, `knowledge-store.test.ts`, `learn-cli.test.ts`, `learn-lock.test.ts`, `learning-store.test.ts`, `skills-tool.test.ts`, `paths.test.ts`, `vanished-transcript.test.ts` |
+| `src/paths.ts` | `codex-transcripts.test.ts`, `dangling-project-link.test.ts`, `knowledge-db.test.ts`, `knowledge-store.test.ts`, `learn-cli.test.ts`, `learn-lock.test.ts`, `learning-store.test.ts`, `skills-tool.test.ts`, `paths-no-create.test.ts`, `paths.test.ts`, `vanished-transcript.test.ts` |
 | `src/priority.ts` | `priority.test.ts` |
 | `src/prune.ts` | `exchange-vectors.test.ts`, `prune.test.ts` |
 | `src/redact.ts` | `mcp-read-redaction.test.ts`, `redact-patterns.test.ts`, `security-speed-helpers.test.ts` |
 | `src/reentrancy.ts` | `backfill-cli-gpu-reservation.test.ts`, `digest-gpu-reservation.test.ts`, `digest-job.test.ts`, `digest-prompt-budget.test.ts`, `agent-runner.test.ts`, `reentrancy.test.ts`, `summarizer-api-env.test.ts`, `topic-job.test.ts`, `topic-phase.test.ts` |
-| `src/search.ts` | `cosine-similarity.test.ts`, `cross-harness-recall.test.ts`, `integration.test.ts`, `multi-concept.test.ts`, `search-embeddings-unavailable.test.ts`, `search-metadata-filters.test.ts`, `search-text-row-similarity.test.ts`, `search-with-summary.test.ts`, `security-speed-helpers.test.ts`, `sync-incremental-and-db.test.ts`, `text-search-multiword.test.ts`, `vector-search-filters.test.ts` |
+| `src/search.ts` | `cosine-similarity.test.ts`, `cross-harness-recall.test.ts`, `integration.test.ts`, `multi-concept.test.ts`, `search-embeddings-unavailable.test.ts`, `search-interleave.test.ts`, `search-metadata-filters.test.ts`, `search-text-row-similarity.test.ts`, `search-with-summary.test.ts`, `security-speed-helpers.test.ts`, `sync-incremental-and-db.test.ts`, `text-search-multiword.test.ts`, `vector-search-filters.test.ts` |
 | `src/show.ts` | `markdown-html.test.ts`, `mcp-read-redaction.test.ts`, `show.test.ts` |
 | `src/sqlite.ts` | `codex-transcripts.test.ts`, `dangling-project-link.test.ts`, `db.test.ts`, `derived-text.test.ts`, `digest-compress.test.ts`, `digest-db.test.ts`, `digest-gpu-reservation.test.ts`, `digest-inject.test.ts`, `digest-job.test.ts`, `digest-prompt-budget.test.ts`, `doctor.test.ts`, `embedding-migration.test.ts`, `exchange-vectors.test.ts`, `exclude-nested.test.ts`, `incremental-indexing.test.ts`, `index-honours-marker.test.ts`, `indexer-db-close.test.ts`, `integration.test.ts`, `bootstrap.test.ts`, `export.test.ts`, `knowledge-store.test.ts`, `leaf-learner.test.ts`, `learn-cli.test.ts`, `learned-block.test.ts`, `learner.test.ts`, `learning-db.test.ts`, `learning-store.test.ts`, `relay-task4-findings.test.ts`, `relay-task6-findings.test.ts`, `relay-task8-challenger.test.ts`, `relay-task9-findings.test.ts`, `report.test.ts`, `solver.test.ts`, `tasks.test.ts`, `validate.test.ts`, `oversized-message-guard.test.ts`, `prune.test.ts`, `search-metadata-filters.test.ts`, `sqlite-adapter.test.ts`, `stats.test.ts`, `sync-embeddings-unavailable.test.ts`, `sync-incremental-and-db.test.ts`, `sync-marker-scan.test.ts`, `sync.test.ts`, `text-search-multiword.test.ts`, `tool-calls-cascade.test.ts`, `topic-db.test.ts`, `topic-job.test.ts`, `topic-phase.test.ts`, `topic-tool.test.ts`, `vanished-transcript.test.ts` |
 | `src/stats.ts` | `stats-format.test.ts`, `stats.test.ts` |
 | `src/summarizer.ts` | `app-server-stdin-error.test.ts`, `claude-auth-deferral.test.ts`, `claude-bin-deferral.test.ts`, `index-honours-marker.test.ts`, `ollama-plain-reply.test.ts`, `real-sdk-guard.test.ts`, `summarizer-api-env.test.ts`, `summarizer-claude-path.test.ts`, `summarizer-gpu-reservation.test.ts`, `summarizer-ollama-fallback.test.ts`, `summarizer-options.test.ts`, `summarizer-prompt-budget.test.ts`, `summarizer-text.test.ts`, `topic-job.test.ts`, `verify.test.ts` |
+| `src/summary-sentinel.ts` | `summary-sentinel.test.ts` |
 | `src/sync-banner.ts` | `sync-banner.test.ts` |
 | `src/sync.ts` | `claude-auth-deferral.test.ts`, `claude-bin-deferral.test.ts`, `dangling-project-link.test.ts`, `exclude-nested.test.ts`, `sync-copy-retry.test.ts`, `sync-embeddings-unavailable.test.ts`, `sync-empty-summary-audit.test.ts`, `sync-gpu-reservation.test.ts`, `sync-helpers.test.ts`, `sync-incremental-and-db.test.ts`, `sync-marker-scan.test.ts`, `sync-pending-and-legacy-retry.test.ts`, `sync-session-id.test.ts`, `sync-skip-summaries.test.ts`, `sync-summary-retry.test.ts`, `sync.test.ts` |
 | `src/topic-db.ts` | `topic-db.test.ts`, `topic-job.test.ts`, `topic-tool.test.ts` |
@@ -146,6 +148,7 @@ The following 23 source files are not directly imported by any test file:
 | `src/topic-validate.ts` | `topic-prompts.test.ts`, `topic-validate.test.ts` |
 | `src/types.ts` | `claude-auth-deferral.test.ts`, `claude-bin-deferral.test.ts`, `codex-transcripts.test.ts`, `cross-harness-recall.test.ts`, `db-helpers.test.ts`, `db.test.ts`, `digest-prompt-budget.test.ts`, `digest-prompts.test.ts`, `embedding-migration-helpers.test.ts`, `exchange-vectors.test.ts`, `oversized-message-guard.test.ts`, `prune.test.ts`, `search-embeddings-unavailable.test.ts`, `search-text-row-similarity.test.ts`, `search-with-summary.test.ts`, `summarizer-claude-path.test.ts`, `summarizer-gpu-reservation.test.ts`, `summarizer-text.test.ts`, `sync-incremental-and-db.test.ts`, `text-search-multiword.test.ts`, `topic-prompts.test.ts`, `vector-search-filters.test.ts`, `verify.test.ts` |
 | `src/verify.ts` | `dangling-project-link.test.ts`, `index-honours-marker.test.ts`, `verify.test.ts` |
+| `src/win-command.ts` | `win-command.test.ts` |
 
 ---
 
@@ -166,6 +169,7 @@ The following 23 source files are not directly imported by any test file:
 | `test/claude-bin.test.ts` | 1 files |
 | `test/claude-e2e-script.test.ts` | 0 files |
 | `test/cli-forward.test.ts` | 0 files |
+| `test/cli-usage.test.ts` | 1 files |
 | `test/codex-doctor.test.ts` | 2 files |
 | `test/codex-e2e-script.test.ts` | 0 files |
 | `test/codex-hook-trust.test.ts` | 1 files |
@@ -194,6 +198,15 @@ The following 23 source files are not directly imported by any test file:
 | `test/digest-prompts.test.ts` | 4 files |
 | `test/digest-validate.test.ts` | 1 files |
 | `test/doctor.test.ts` | 10 files |
+| `e2e/cli-flags.test.ts` | 0 files |
+| `e2e/coverage.test.ts` | 0 files |
+| `e2e/env-flags.test.ts` | 0 files |
+| `e2e/env-learn-topics.test.ts` | 3 files |
+| `e2e/hooks.test.ts` | 0 files |
+| `e2e/learn.test.ts` | 2 files |
+| `e2e/lifecycle.test.ts` | 0 files |
+| `e2e/mcp.test.ts` | 2 files |
+| `e2e/smoke.test.ts` | 1 files |
 | `test/embedding-migration-helpers.test.ts` | 3 files |
 | `test/embedding-migration.test.ts` | 3 files |
 | `test/embeddings-format.test.ts` | 2 files |
@@ -227,6 +240,7 @@ The following 23 source files are not directly imported by any test file:
 | `learn/learn-handlers.test.ts` | 7 files |
 | `learn/learn-inject.test.ts` | 4 files |
 | `learn/learn-lock.test.ts` | 2 files |
+| `learn/learn-option-refusal.test.ts` | 1 files |
 | `learn/learned-block.test.ts` | 6 files |
 | `learn/learned-text-screen.test.ts` | 1 files |
 | `learn/learner.test.ts` | 8 files |
@@ -268,6 +282,7 @@ The following 23 source files are not directly imported by any test file:
 | `test/oversized-message-guard.test.ts` | 4 files |
 | `test/parser-tool-result.test.ts` | 1 files |
 | `test/parser.test.ts` | 1 files |
+| `test/paths-no-create.test.ts` | 2 files |
 | `test/paths.test.ts` | 1 files |
 | `test/priority.test.ts` | 1 files |
 | `test/prune.test.ts` | 5 files |
@@ -278,6 +293,7 @@ The following 23 source files are not directly imported by any test file:
 | `test/runtime-imports.test.ts` | 1 files |
 | `test/search-agent-template.test.ts` | 0 files |
 | `test/search-embeddings-unavailable.test.ts` | 5 files |
+| `test/search-interleave.test.ts` | 1 files |
 | `test/search-metadata-filters.test.ts` | 3 files |
 | `test/search-text-row-similarity.test.ts` | 4 files |
 | `test/search-with-summary.test.ts` | 2 files |
@@ -293,6 +309,7 @@ The following 23 source files are not directly imported by any test file:
 | `test/summarizer-options.test.ts` | 1 files |
 | `test/summarizer-prompt-budget.test.ts` | 2 files |
 | `test/summarizer-text.test.ts` | 2 files |
+| `test/summary-sentinel.test.ts` | 1 files |
 | `test/sync-banner.test.ts` | 1 files |
 | `test/sync-cli-args.test.ts` | 0 files |
 | `test/sync-cli-disable-auto-sync.test.ts` | 1 files |
@@ -327,3 +344,4 @@ The following 23 source files are not directly imported by any test file:
 | `test/vector-search-filters.test.ts` | 4 files |
 | `test/verify.test.ts` | 5 files |
 | `test/version-consistency.test.ts` | 0 files |
+| `test/win-command.test.ts` | 1 files |

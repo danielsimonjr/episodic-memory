@@ -44,6 +44,7 @@ Key points:
 - **Idempotence.** A file that has not changed is skipped. A summary file that exists blocks a new summary unless it is empty and has no recorded reason.
 - **Summary ordering.** Fresh work runs first. Retries run next. Legacy empty summaries run last, so a large backlog cannot flood the summarizer.
 - **Failure records.** A failed summary writes a record next to the file with the attempt count and the last error. A terminal record stops further retries.
+- **No-exchange records.** A transcript with no exchange gets an empty summary file and a failure record with the reason `no-exchanges`. `sync`, the indexer and `verify` write this record. The summarizer does not run for such a transcript.
 - **Backlog.** `backfill` runs the same summarizer on archive files that `sync` never queues.
 
 ## 3. Search
@@ -60,7 +61,7 @@ input (query, mode, limit, dates, project, session, branch)
   ├─ mode text or both:
   │    FTS5 MATCH over exchanges_fts, each word quoted (falls back to LIKE, one condition per word, on an error)
   │    newest first, limit
-  ├─ mode both: append text hits whose id the vector step did not return
+  ├─ mode both: merge the vector hits and the text hits by rank (`interleaveByRank`), one entry for each id, at most `limit`
   └─ for each row: build snippet, load the summary if it lies inside the archive,
      convert L2 distance to a similarity score
 ```
@@ -137,7 +138,7 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 297 | repo-tools map |
+| totalSourceFiles | 320 | repo-tools map |
 | runtimeCircularDeps | 0 | repo-tools map |
 
 The step orders above come from a direct reading of `src/sync.ts`, `src/search.ts`, `src/digest-job.ts`, `src/learn/learner.ts` and `cli/sync-hook.js`. They are not `repo-tools map` metrics.

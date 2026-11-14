@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { getSuperpowersDir, getIndexDir } from './paths.js';
+import { getSuperpowersDir, getIndexDir, superpowersDirPath } from './paths.js';
 
 /**
  * The severity label that a log line records.
@@ -21,17 +21,32 @@ export function getLogDir(): string {
 }
 
 /**
+ * Returns the path of the sync log, and creates nothing. A reader (doctor) uses this function.
+ * A writer uses `getSyncLogPath`, which creates the log directory.
+ */
+export function syncLogPath(): string {
+  return path.join(superpowersDirPath(), 'logs', 'episodic-memory.log');
+}
+
+/** Returns the path of the hook error log, and creates nothing. A writer uses `getSyncErrorsLogPath`. */
+export function syncErrorsLogPath(): string {
+  return path.join(superpowersDirPath(), 'sync-errors.log');
+}
+
+/**
  * Returns the path of the sync log, `episodic-memory.log`.
  *
  * Creates the log directory when the directory is missing.
  */
 export function getSyncLogPath(): string {
-  return path.join(getLogDir(), 'episodic-memory.log');
+  getLogDir();
+  return syncLogPath();
 }
 
-/** Dedicated log for SessionStart hook failures (upstream #94). */
+/** Dedicated log for SessionStart hook failures (upstream #94). Creates the config directory. */
 export function getSyncErrorsLogPath(): string {
-  return path.join(getSuperpowersDir(), 'sync-errors.log');
+  getSuperpowersDir();
+  return syncErrorsLogPath();
 }
 
 /**

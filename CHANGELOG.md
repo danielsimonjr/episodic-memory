@@ -11,6 +11,7 @@
 - **`search --both` selects the default mode.** The help text documents the flag, but no branch read it, so it became a second search concept.
 - **A failed command prints its error once.** The umbrella `episodic-memory` and `cli/index-conversations.js` printed `Error: Command failed with exit code N` after the error line of the child. They now print a line only when the child could not start or a signal stopped it.
 - **`index rebuild` with no `--yes` and no answer on stdin exits 2.** The question read end-of-input as a cancel and exited 0, so a script could not tell a rebuild that never ran from one that finished. A piped `yes` or `no` still answers the question.
+- **A read leaves a fresh config folder unchanged.** `getDbPath` created the `conversation-index` folder, so `doctor`, the digest hook, the sync hook with auto-sync off and the `topics` tool left new folders behind. `getDbPath` now creates nothing (`openDatabase` creates the folder for a writer). New functions return a path and create nothing: `superpowersDirPath`, `archiveDirPath`, `indexDirPath`, `syncLogPath` and `syncErrorsLogPath`. The readers use them. `doctor` therefore reports a missing archive folder; it created the folder before the check, so the check was always true.
 
 ### Changed
 - **`bun run test` no longer collects `test/e2e/`.** The unit config excludes the folder; the end-to-end suite has its own config.

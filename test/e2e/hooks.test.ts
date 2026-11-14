@@ -169,7 +169,7 @@ describe('hooks: auto-sync off', () => {
     }
   }, CASE_MS);
 
-  it.skip('D11 pending: sync-hook with EPISODIC_MEMORY_DISABLE_AUTO_SYNC=1 on an empty config folder -> creates conversation-index/ (empty, measured); expected no folder', async () => {
+  it('sync-hook with EPISODIC_MEMORY_DISABLE_AUTO_SYNC=1 on an empty config folder creates no folder (D11)', async () => {
     const sb = makeSandbox();
     try {
       const hook = await runHook(sb, 'sync-hook', payloadFor(path.join(sb.root, 'work')), {
@@ -383,7 +383,7 @@ describe('hooks: empty config folder', () => {
     }
   }, CASE_MS);
 
-  it.skip('D4 pending: digest-hook with EPISODIC_MEMORY_DIGEST=1 on an empty config folder -> creates conversation-index/ (measured); expected no folder', async () => {
+  it('digest-hook with EPISODIC_MEMORY_DIGEST=1 on an empty config folder creates no folder (D4)', async () => {
     const sb = makeSandbox();
     try {
       const hook = await runHook(sb, 'digest-hook', payloadFor(path.join(sb.root, 'work')), {

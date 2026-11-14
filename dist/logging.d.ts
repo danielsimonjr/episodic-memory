@@ -9,12 +9,19 @@ export type LogLevel = 'info' | 'warn' | 'error';
  */
 export declare function getLogDir(): string;
 /**
+ * Returns the path of the sync log, and creates nothing. A reader (doctor) uses this function.
+ * A writer uses `getSyncLogPath`, which creates the log directory.
+ */
+export declare function syncLogPath(): string;
+/** Returns the path of the hook error log, and creates nothing. A writer uses `getSyncErrorsLogPath`. */
+export declare function syncErrorsLogPath(): string;
+/**
  * Returns the path of the sync log, `episodic-memory.log`.
  *
  * Creates the log directory when the directory is missing.
  */
 export declare function getSyncLogPath(): string;
-/** Dedicated log for SessionStart hook failures (upstream #94). */
+/** Dedicated log for SessionStart hook failures (upstream #94). Creates the config directory. */
 export declare function getSyncErrorsLogPath(): string;
 /**
  * Dedicated log for `learn` runs.

@@ -9,7 +9,7 @@
  */
 import fs from 'fs';
 import path from 'path';
-import { getSuperpowersDir } from './paths.js';
+import { superpowersDirPath } from './paths.js';
 const LEARNED_SKILLS_DIR = 'learned-skills';
 const LEARNED_DIR_NAME = 'learned';
 function emptyCounts() {
@@ -135,14 +135,14 @@ export async function collectLearnDoctorSection() {
     // A plain join, not `getLearnedDir()`: that helper creates the directory, and
     // doctor is a read-only probe — running it must not bring `learned/` into
     // being (spec §7 rule 1: the databases appear on a flag-on write only).
-    const learnedDir = path.join(getSuperpowersDir(), LEARNED_DIR_NAME);
+    const learnedDir = path.join(superpowersDirPath(), LEARNED_DIR_NAME);
     const section = emptyLearnSection(learnedDir);
     const knowledgeDb = path.join(learnedDir, 'knowledge.db');
     const learningDb = path.join(learnedDir, 'learning.sqlite');
     section.knowledgeDbSizeBytes = sizeOf(knowledgeDb);
     section.learningDbSizeBytes = sizeOf(learningDb);
     section.present = section.knowledgeDbSizeBytes !== null || section.learningDbSizeBytes !== null;
-    section.exportTree = treeSize(path.join(getSuperpowersDir(), LEARNED_SKILLS_DIR));
+    section.exportTree = treeSize(path.join(superpowersDirPath(), LEARNED_SKILLS_DIR));
     section.sqliteVersion = await readSqliteVersion();
     if (!section.present)
         return section;

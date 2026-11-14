@@ -489,7 +489,7 @@ describe('doctor codex: a pristine config folder (D4)', () => {
 
   // Measured: `doctor codex` on an empty config folder creates conversation-index and logs
   // (getDbPath and getSyncLogPath call ensureDir). Doctor must read paths, not create them.
-  it.skip('D4 pending: doctor codex on an empty config folder -> creates [conversation-index, logs] (expected no directory)', async () => {
+  it('doctor codex on an empty config folder creates no directory (D4)', async () => {
     expect(readdirSync(sb.cfg)).toEqual([]);
     const result = await runCli(sb, cliBin('episodic-memory.js'), ['doctor', 'codex'], { timeoutMs: CHILD_MS });
     expect(result.code).toBe(EXIT_FAIL);

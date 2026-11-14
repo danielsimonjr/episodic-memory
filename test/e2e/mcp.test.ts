@@ -549,9 +549,8 @@ describe('mcp: digest, topics and skills on an empty index', () => {
     }
   });
 
-  // Measured 2026-11-13: `topics` on an empty config folder answered the no-documents text and created the
-  // conversation-index folder (no file). The read path calls getDbPath, and that helper creates the folder.
-  it.skip('D10 pending: topics list on an empty config folder -> creates the conversation-index folder; expected no folder', async () => {
+  // D10: before the fix, getDbPath created the conversation-index folder, so a read left a new folder behind.
+  it('topics list on an empty config folder creates no folder (D10)', async () => {
     const pristine = makeSandbox();
     const probe = await McpClient.start(pristine);
     try {

@@ -112,6 +112,15 @@ export function statIfExists(target) {
  * 4. ~/.config/superpowers (default)
  */
 export function getSuperpowersDir() {
+    return ensureDir(superpowersDirPath());
+}
+/**
+ * Returns the path that `getSuperpowersDir` uses, and creates nothing.
+ *
+ * A caller that only reads (doctor, the hooks, the read-only MCP tools) uses the `...Path` functions.
+ * A read must leave a fresh config folder unchanged.
+ */
+export function superpowersDirPath() {
     let dir;
     if (process.env.EPISODIC_MEMORY_CONFIG_DIR) {
         dir = process.env.EPISODIC_MEMORY_CONFIG_DIR;
@@ -128,33 +137,41 @@ export function getSuperpowersDir() {
             dir = path.join(os.homedir(), '.config', 'superpowers');
         }
     }
-    return ensureDir(dir);
+    return dir;
 }
 /**
- * Get conversation archive directory.
+ * Get conversation archive directory. Creates the directory when it is missing.
  */
 export function getArchiveDir() {
+    return ensureDir(archiveDirPath());
+}
+/** Returns the path that `getArchiveDir` uses, and creates nothing. */
+export function archiveDirPath() {
     // Allow test override
-    if (process.env.TEST_ARCHIVE_DIR) {
-        return ensureDir(process.env.TEST_ARCHIVE_DIR);
-    }
-    return ensureDir(path.join(getSuperpowersDir(), 'conversation-archive'));
+    if (process.env.TEST_ARCHIVE_DIR)
+        return process.env.TEST_ARCHIVE_DIR;
+    return path.join(superpowersDirPath(), 'conversation-archive');
 }
 /**
- * Get conversation index directory.
+ * Get conversation index directory. Creates the directory when it is missing.
  */
 export function getIndexDir() {
-    return ensureDir(path.join(getSuperpowersDir(), 'conversation-index'));
+    return ensureDir(indexDirPath());
+}
+/** Returns the path that `getIndexDir` uses, and creates nothing. */
+export function indexDirPath() {
+    return path.join(superpowersDirPath(), 'conversation-index');
 }
 /**
- * Get database path.
+ * Get database path. Creates nothing: `openDatabase` creates the folder of the file when it opens a writer.
+ * A reader checks that the file exists first, so a read leaves a fresh config folder unchanged.
  */
 export function getDbPath() {
     // Allow test override with direct DB path
     if (process.env.EPISODIC_MEMORY_DB_PATH || process.env.TEST_DB_PATH) {
         return process.env.EPISODIC_MEMORY_DB_PATH || process.env.TEST_DB_PATH;
     }
-    return path.join(getIndexDir(), 'db.sqlite');
+    return path.join(indexDirPath(), 'db.sqlite');
 }
 /**
  * Get the learned-knowledge directory.

@@ -119,13 +119,9 @@ export const MCP_TOOLS: readonly string[] = ['search', 'read', 'digest', 'skills
 /** Items the suite does not cover, each with its reason. Defects carry `Dn pending`. */
 export const UNCOVERED: readonly UncoveredEntry[] = [
   // Defects of PLAN.md. Each moves into FLAGS, ENV_VARS or a case in its fix commit.
-  { kind: 'path', name: 'doctor creates the archive, index and logs directories', reason: 'D4 pending' },
-  { kind: 'path', name: 'digest-hook creates conversation-index when EPISODIC_MEMORY_DIGEST=1', reason: 'D4 pending' },
   { kind: 'path', name: 'index --verify fails after a rebuild: the exchange-less transcript summary is deleted', reason: 'D7 pending' },
   { kind: 'path', name: 'doctor codex cannot find codex.cmd on win32', reason: 'D8 pending' },
   { kind: 'path', name: 'the digest MCP tool creates the index database with the digest flag unset', reason: 'D9 pending' },
-  { kind: 'path', name: 'the topics MCP tool creates conversation-index on an empty config folder', reason: 'D10 pending' },
-  { kind: 'path', name: 'the sync hook creates conversation-index with auto sync off', reason: 'D11 pending' },
   { kind: 'path', name: 'EPISODIC_MEMORY_MIGRATION_BATCH accepts a negative or non-numeric value', reason: 'D12 pending' },
   { kind: 'path', name: 'sync exits 0 and indexes nothing when another connection holds the write lock', reason: 'D13 pending' },
   // Plan exclusions: each needs a real Claude login, binary or TTY.

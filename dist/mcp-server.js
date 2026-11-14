@@ -269,7 +269,7 @@ function tryChmod(targetPath, mode) {
   } catch {
   }
 }
-function getSuperpowersDir() {
+function superpowersDirPath() {
   let dir;
   if (process.env.EPISODIC_MEMORY_CONFIG_DIR) {
     dir = process.env.EPISODIC_MEMORY_CONFIG_DIR;
@@ -283,22 +283,23 @@ function getSuperpowersDir() {
       dir = path.join(os.homedir(), ".config", "superpowers");
     }
   }
-  return ensureDir(dir);
+  return dir;
 }
 function getArchiveDir() {
-  if (process.env.TEST_ARCHIVE_DIR) {
-    return ensureDir(process.env.TEST_ARCHIVE_DIR);
-  }
-  return ensureDir(path.join(getSuperpowersDir(), "conversation-archive"));
+  return ensureDir(archiveDirPath());
 }
-function getIndexDir() {
-  return ensureDir(path.join(getSuperpowersDir(), "conversation-index"));
+function archiveDirPath() {
+  if (process.env.TEST_ARCHIVE_DIR) return process.env.TEST_ARCHIVE_DIR;
+  return path.join(superpowersDirPath(), "conversation-archive");
+}
+function indexDirPath() {
+  return path.join(superpowersDirPath(), "conversation-index");
 }
 function getDbPath() {
   if (process.env.EPISODIC_MEMORY_DB_PATH || process.env.TEST_DB_PATH) {
     return process.env.EPISODIC_MEMORY_DB_PATH || process.env.TEST_DB_PATH;
   }
-  return path.join(getIndexDir(), "db.sqlite");
+  return path.join(indexDirPath(), "db.sqlite");
 }
 var init_paths = __esm({
   "src/paths.ts"() {

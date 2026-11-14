@@ -7,7 +7,7 @@
 import { spawn, execFileSync } from 'child_process';
 import { selectOrphans } from '../dist/orphan-reaper.js';
 import { readLearnPids } from '../dist/learn/learn-lock.js';
-import { getIndexDir } from '../dist/paths.js';
+import { indexDirPath } from '../dist/paths.js';
 import { depsRepairLogEntry, ensureDeps } from './ensure-deps.js';
 import fs from 'fs';
 import path from 'path';
@@ -75,7 +75,7 @@ async function reapOrphans(baselinePids, logPath, formatLogLine) {
   // this guard exists for.
   let protectedPids = new Set();
   try {
-    protectedPids = readLearnPids(getIndexDir());
+    protectedPids = readLearnPids(indexDirPath());
   } catch {
     // No index dir yet, or an unreadable file: protect nothing rather than skip the sweep.
   }

@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { buildCodexDoctorReport, buildDoctorReport, collectDoctorSnapshot } from './doctor.js';
 import { getCodexDir, getDbPath } from './paths.js';
-import { getSyncLogPath } from './logging.js';
+import { syncLogPath } from './logging.js';
 import { detectCodexHookTrustState } from './codex-hook-trust.js';
 
 function capture(command: string, args: string[]): string {
@@ -42,7 +42,7 @@ async function main(): Promise<void> {
       mcpListOutput: capture('codex', ['mcp', 'list']),
       codexHome,
       sessionsDirExists: fs.existsSync(path.join(codexHome, 'sessions')),
-      logPath: getSyncLogPath(),
+      logPath: syncLogPath(),
       dbPath: getDbPath(),
       hookTrustState,
     });

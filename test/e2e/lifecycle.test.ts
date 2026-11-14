@@ -243,15 +243,14 @@ describe('lifecycle: the default mode of search', () => {
     expect(text.stdout).toMatch(/^Found 2 relevant conversations:/m);
   });
 
-  // Measured on this fixture set: `search --limit 2 "docker build"` prints `Found 3`.
-  // search.ts:380-388 appends the text rows to the vector rows without a cut to `limit`.
-  it.skip('D1 pending: default mode --limit 2 "docker build" -> Found 3 relevant conversations (expected at most 2)', async () => {
+  // Before the D1 fix, `search --limit 2 "docker build"` printed `Found 3`: the merge appended the text rows
+  // to the vector rows and made no cut to `limit`.
+  it('default mode --limit 2 "docker build" returns at most 2 conversations (D1)', async () => {
     const { stdout } = await search(['--limit', '2', 'docker build']);
     const found = /^Found (\d+) relevant conversations?:/m.exec(stdout);
     expect(found, stdout).not.toBeNull();
     expect(Number(found![1])).toBeLessThanOrEqual(2);
-  });
-});
+  });});
 
 describe('lifecycle: search --both', () => {
   // Measured: `search --both "docker build"` exits 0 and prints

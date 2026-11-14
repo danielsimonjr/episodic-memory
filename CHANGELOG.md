@@ -5,6 +5,9 @@
 - **A coverage gate for the suite (`test/e2e/coverage.test.ts`).** It fails when the `--help` output or the source holds a flag, subcommand, environment variable or MCP tool that the registry (`test/e2e/cases.ts`) does not list, and when an active case does not exercise a registry entry. Comments and skipped cases do not count as coverage. Every skipped case must carry a `Dn pending` or `harness pending` title and a body that asserts, and every pending defect must have a registry row.
 - **CI runs the end-to-end suite** in the `build` job (Node 24) and the `node-floor` job (Node 22.16.0), before the build step, so it tests the committed `dist/`.
 
+### Fixed
+- **A `both` search returns at most `limit` rows.** The vector step and the text step each returned up to `limit` rows, and the merge kept all of them, so `search --limit 2` printed `Found 3`. The merge now alternates the vector rows and the text rows by rank, skips a row it already holds, and stops at `limit`. A text-only match therefore keeps a place, and the order of the `both` results changes. A row that both steps find keeps its vector similarity.
+
 ### Changed
 - **`bun run test` no longer collects `test/e2e/`.** The unit config excludes the folder; the end-to-end suite has its own config.
 

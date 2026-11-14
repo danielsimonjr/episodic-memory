@@ -1102,6 +1102,7 @@ __export(search_exports, {
   formatResults: () => formatResults,
   formatSummaryForDisplay: () => formatSummaryForDisplay,
   includeSearchSummaries: () => includeSearchSummaries,
+  interleaveByRank: () => interleaveByRank,
   l2DistanceToCosineSimilarity: () => l2DistanceToCosineSimilarity,
   maxSummaryDisplayChars: () => maxSummaryDisplayChars,
   searchConversations: () => searchConversations,
@@ -1161,6 +1162,19 @@ function buildSearchFilters(options) {
     sql: parts.length ? `AND ${parts.join(" AND ")}` : "",
     params
   };
+}
+function interleaveByRank(vectorRows, textRows, limit) {
+  const merged = [];
+  const seen = /* @__PURE__ */ new Set();
+  const vectorById = new Map(vectorRows.map((row) => [row.id, row]));
+  for (let i = 0; merged.length < limit && (i < vectorRows.length || i < textRows.length); i++) {
+    for (const row of [vectorRows[i], textRows[i]]) {
+      if (row === void 0 || seen.has(row.id) || merged.length >= limit) continue;
+      seen.add(row.id);
+      merged.push(vectorById.get(row.id) ?? row);
+    }
+  }
+  return merged;
 }
 function exactVectorSearch(db, embedding, filterClause, filterParams, limit) {
   return db.prepare(
@@ -1306,12 +1320,7 @@ async function searchConversations(query, options = {}) {
         textResults = textStmt.all(...like.params, ...filterParams, limit);
       }
       if (mode === "both") {
-        const seenIds = new Set(results.map((r) => r.id));
-        for (const textResult of textResults) {
-          if (!seenIds.has(textResult.id)) {
-            results.push(textResult);
-          }
-        }
+        results = interleaveByRank(results, textResults, limit);
       } else {
         results = textResults;
       }

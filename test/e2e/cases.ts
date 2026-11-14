@@ -120,7 +120,6 @@ export const MCP_TOOLS: readonly string[] = ['search', 'read', 'digest', 'skills
 export const UNCOVERED: readonly UncoveredEntry[] = [
   // Defects of PLAN.md. Each moves into FLAGS, ENV_VARS or a case in its fix commit.
   { kind: 'flag', name: 'search --both', reason: 'D2 pending' },
-  { kind: 'path', name: 'search mode both returns more than --limit rows', reason: 'D1 pending' },
   { kind: 'path', name: 'search unknown flag becomes a query term; --limit abc gives NaN', reason: 'D3 pending' },
   { kind: 'path', name: 'doctor creates the archive, index and logs directories', reason: 'D4 pending' },
   { kind: 'path', name: 'digest-hook creates conversation-index when EPISODIC_MEMORY_DIGEST=1', reason: 'D4 pending' },

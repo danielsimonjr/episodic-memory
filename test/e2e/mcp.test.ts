@@ -224,9 +224,23 @@ describe('mcp: search', () => {
     expect(both.results.map((r) => r.exchange.project)).toContain(ALPHA);
   });
 
-  it.skip('D1 pending: search mode both, query "approval" in project e2e-lines, limit 1 -> 2 rows (expected at most 1)', async () => {
+  it('search mode both, query "approval" in project e2e-lines, limit 1 returns at most 1 row (D1)', async () => {
     const one = await searchJson(client, { query: 'approval', project: LINES, limit: 1 });
     expect(one.results.length, `rows ${one.results.length}, count ${one.count}`).toBeLessThanOrEqual(1);
+  });
+
+  // The positive control of D1. A cut that keeps only the vector rows also passes the case above, and makes
+  // the default mode the vector mode. On this fixture the top text row of "approval" is not among the top two
+  // vector rows, so only a merge that gives each mode a place puts both top rows in a limit of 2.
+  it('search mode both, query "approval" in project e2e-lines, limit 2 keeps the top vector row and the top text row', async () => {
+    const both = await searchJson(client, { query: 'approval', project: LINES, limit: 2 });
+    const vector = await searchJson(client, { query: 'approval', project: LINES, mode: 'vector', limit: 2 });
+    const text = await searchJson(client, { query: 'approval', project: LINES, mode: 'text', limit: 1 });
+    const ids = (r: typeof both) => r.results.map((row) => row.exchange.id);
+    expect(ids(text)).toHaveLength(1);
+    // The precondition: the text row is outside the vector top two.
+    expect(ids(vector)).not.toContain(ids(text)[0]);
+    expect(ids(both)).toEqual([ids(vector)[0], ids(text)[0]]);
   });
 
   it('applies the project and session filters, and an empty filter answers zero rows', async () => {

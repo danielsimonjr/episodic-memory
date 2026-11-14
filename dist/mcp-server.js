@@ -3389,14 +3389,20 @@ __export(digest_tool_exports, {
   digestToolText: () => digestToolText,
   normalizeHandoff: () => normalizeHandoff
 });
+import fs5 from "fs";
 function normalizeHandoff(note) {
   const oneLine = redactEntryText(note).replace(/\s+/g, " ").trim();
   return oneLine.length > HANDOFF_MAX_CHARS ? `${oneLine.slice(0, HANDOFF_MAX_CHARS - 3)}...` : oneLine;
 }
 function digestToolText(params) {
+  const project = params.project ?? projectKeyFromCwd(process.cwd());
+  if (!params.handoff && !fs5.existsSync(getDbPath())) {
+    if (params.expand) throw new Error(`No exchange with id ${params.expand}`);
+    if (params.query) return `No digest entries match "${params.query}".`;
+    return `No digest entries for ${project}.`;
+  }
   const db = initDatabase();
   try {
-    const project = params.project ?? projectKeyFromCwd(process.cwd());
     if (params.expand) {
       const row = db.prepare("SELECT archive_path, line_start, line_end, project, timestamp FROM exchanges WHERE id = ?").get(params.expand);
       if (!row) throw new Error(`No exchange with id ${params.expand}`);
@@ -3439,6 +3445,7 @@ var init_digest_tool = __esm({
   "src/digest-tool.ts"() {
     "use strict";
     init_db();
+    init_paths();
     init_digest_db();
     init_digest_inject();
     init_digest_validate();

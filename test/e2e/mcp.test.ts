@@ -536,7 +536,7 @@ describe('mcp: digest, topics and skills on an empty index', () => {
 
   // Measured 2026-11-13 on an empty config folder, one fresh server per call: `digest` with the flag
   // unset answered the empty text and created conversation-index/db.sqlite (131072 bytes).
-  it.skip('D9 pending: digest with EPISODIC_MEMORY_DIGEST unset on an empty config folder -> creates conversation-index/db.sqlite (131072 bytes); expected no file', async () => {
+  it('a digest read on an empty config folder creates no file (D9)', async () => {
     const pristine = makeSandbox();
     const probe = await McpClient.start(pristine);
     try {

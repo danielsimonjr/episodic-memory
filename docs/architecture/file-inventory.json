@@ -1,9 +1,9 @@
 {
   "totalFiles": 323,
   "byDisposition": {
-    "reachable": 50,
+    "reachable": 51,
     "build-entry": 4,
-    "test-only": 47,
+    "test-only": 46,
     "orphan": 15,
     "test": 202,
     "tool": 3,
@@ -174,7 +174,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 731
+      "loc": 735
     },
     {
       "file": "src/deferral.ts",
@@ -285,8 +285,8 @@
       "file": "src/embedding-stack.ts",
       "package": "episodic-memory",
       "area": "src",
-      "disposition": "test-only",
-      "loc": 89
+      "disposition": "reachable",
+      "loc": 109
     },
     {
       "file": "src/embeddings.ts",
@@ -1259,7 +1259,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 78
+      "loc": 110
     },
     {
       "file": "test/embeddings-format.test.ts",

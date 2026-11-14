@@ -5,7 +5,7 @@
     "language": "typescript",
     "totalFiles": 323,
     "totalModules": 4,
-    "totalExports": 737
+    "totalExports": 738
   },
   "modules": {
     "src": {
@@ -399,6 +399,14 @@
             "file": "src/embedding-migration.ts",
             "imports": [
               "EMBEDDING_VERSION"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/embedding-stack.ts",
+            "imports": [
+              "readEmbeddingStack",
+              "stampEmptyIndex"
             ],
             "typeOnly": false
           },
@@ -1140,7 +1148,8 @@
         "exports": [
           "EMBEDDING_STACK_PACKAGES",
           "readEmbeddingStack",
-          "reconcileEmbeddingStack"
+          "reconcileEmbeddingStack",
+          "stampEmptyIndex"
         ]
       },
       "src/embeddings.ts": {
@@ -7273,7 +7282,15 @@
             "file": "src/embedding-stack.ts",
             "imports": [
               "readEmbeddingStack",
-              "reconcileEmbeddingStack"
+              "reconcileEmbeddingStack",
+              "stampEmptyIndex"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/db.ts",
+            "imports": [
+              "initDatabase"
             ],
             "typeOnly": false
           },
@@ -12490,13 +12507,13 @@
     "totalTypeScriptFiles": 323,
     "totalSourceFiles": 323,
     "totalModules": 4,
-    "totalLinesOfCode": 67440,
-    "totalExports": 737,
+    "totalLinesOfCode": 67496,
+    "totalExports": 738,
     "entryRoots": 6,
-    "reachableFiles": 54,
-    "dormantFiles": 62,
+    "reachableFiles": 55,
+    "dormantFiles": 61,
     "orphanedFiles": 15,
-    "testOnlyFiles": 47,
+    "testOnlyFiles": 46,
     "runtimeCircularDeps": 0,
     "typeOnlyCircularDeps": 1,
     "totalTypeOnlyImports": 115,
@@ -12509,7 +12526,7 @@
     "typeOnlyFilesInCycles": 2,
     "totalClasses": 12,
     "totalInterfaces": 160,
-    "totalFunctions": 422,
+    "totalFunctions": 423,
     "totalTypeGuards": 14,
     "totalEnums": 0,
     "totalConstants": 93,
@@ -12524,8 +12541,8 @@
       "test/setup-env.ts",
       "test/global-setup.ts"
     ],
-    "reachableCount": 54,
-    "dormantCount": 62,
+    "reachableCount": 55,
+    "dormantCount": 61,
     "orphaned": [
       "cli/digest-hook.js",
       "cli/episodic-memory.js",
@@ -12555,7 +12572,6 @@
       "src/digest-prompts.ts",
       "src/doctor-learn.ts",
       "src/doctor.ts",
-      "src/embedding-stack.ts",
       "src/fs-retry.ts",
       "src/learn/agent-runner.ts",
       "src/learn/bootstrap.ts",

@@ -67,7 +67,11 @@ Loads the tokenizer and the ONNX session once (`Xenova/bge-small-en-v1.5`, quant
 
 ### `src/embedding-model.ts`
 
-Holds the model pin `EMBEDDING_MODEL`: the repository, the revision, and the size and sha256 of each of the three files. `modelDir()` gives the model folder: `EPISODIC_MEMORY_MODEL_DIR`, or a folder outside `node_modules` keyed by the revision. `modelState()` checks each file against its size and hash. `ensureModel()` downloads a missing or bad file to a temporary file, checks the hash, and renames the file into place. With `download: false`, or with `EPISODIC_MEMORY_MODEL_OFFLINE=1`, `ensureModel()` makes no request and throws `EmbeddingsUnavailableError` with the path, the expected hash and the fetch command. `fetchModelForSync()` is the download of the sync. A failed download writes a marker, and the next attempt waits 24 hours. `HF_ENDPOINT` selects a mirror.
+Holds the model pin `EMBEDDING_MODEL` and `UINT8_MODEL_SHA256`, the sha256 of the model after the uint8 rewrite. `EMBEDDING_MODEL` holds the repository, the revision, and the size and sha256 of each of the three files. `modelDir()` gives the model folder: `EPISODIC_MEMORY_MODEL_DIR`, or a folder outside `node_modules` keyed by the revision. `modelState()` checks each file against its size and hash. `ensureModel()` downloads a missing or bad file to a temporary file, checks the hash, and renames the file into place. With `download: false`, or with `EPISODIC_MEMORY_MODEL_OFFLINE=1`, `ensureModel()` makes no request and throws `EmbeddingsUnavailableError` with the path, the expected hash and the fetch command. `fetchModelForSync()` is the download of the sync. A failed download writes a marker, and the next attempt waits 24 hours. `HF_ENDPOINT` selects a mirror.
+
+### `src/model-u8.ts`
+
+Rewrites the model bytes before the session loads them. `rewriteMatMulWeightsToUint8` finds the weight and the weight zero point of each `MatMulInteger` node. The function adds 128 to each element and sets the data type to uint8. The difference (weight - zero point) stays the same, so each integer product stays the same. With uint8 weights, onnxruntime uses its u8u8 kernel on every x86-64 CPU. The u8s8 kernel of a CPU without VNNI can saturate on a long text. The function edits the protobuf bytes and copies every other field unchanged. The function throws when a weight is not an int8 initializer. `int8MatMulWeights` lists the weight tensors by data type, for the tests. `initEmbeddings` compares the sha256 of the output with `UINT8_MODEL_SHA256`.
 
 ### `src/model-cli.ts`
 
@@ -254,10 +258,10 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 325 | repo-tools map |
+| totalSourceFiles | 328 | repo-tools map |
 | totalClasses | 12 | repo-tools map |
 | totalInterfaces | 165 | repo-tools map |
-| totalFunctions | 429 | repo-tools map |
-| totalConstants | 97 | repo-tools map |
+| totalFunctions | 431 | repo-tools map |
+| totalConstants | 98 | repo-tools map |
 
 The tool names, the table names and the model name come from a direct reading of `src/mcp-server.ts`, `src/db.ts` and `src/embeddings.ts`. They are not `repo-tools map` metrics.

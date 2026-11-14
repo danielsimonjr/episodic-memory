@@ -1,17 +1,17 @@
 {
   "metadata": {
-    "totalSourceFiles": 117,
-    "totalTestFiles": 192,
-    "testedCount": 95,
+    "totalSourceFiles": 118,
+    "totalTestFiles": 194,
+    "testedCount": 96,
     "untestedCount": 22,
-    "coveragePercent": "81.2",
+    "coveragePercent": "81.4",
     "effectiveCoverage": {
       "policyLoaded": false,
-      "activeFiles": 117,
-      "testedActive": 95,
+      "activeFiles": 118,
+      "testedActive": 96,
       "activeUntested": 22,
       "excludedTotal": 0,
-      "percent": "81.2",
+      "percent": "81.4",
       "breakdown": {
         "active_untested": 22
       }
@@ -111,6 +111,7 @@
     "src/mcp-auth.ts",
     "src/mcp-schemas.ts",
     "src/mcp-tools.ts",
+    "src/model-u8.ts",
     "src/node-floor.ts",
     "src/ollama-backend.ts",
     "src/orphan-reaper.ts",
@@ -298,7 +299,8 @@
     ],
     "src/embedding-model.ts": [
       "test/embedding-model.test.ts",
-      "test/global-setup.test.ts"
+      "test/global-setup.test.ts",
+      "test/model-u8.test.ts"
     ],
     "src/embedding-stack.ts": [
       "test/e2e/install-versions.test.ts",
@@ -308,6 +310,7 @@
       "test/embedding-migration.test.ts",
       "test/embedding-model.test.ts",
       "test/embedding-parity.test.ts",
+      "test/embedding-session-model.test.ts",
       "test/embeddings-format.test.ts",
       "test/embeddings-unavailable.test.ts",
       "test/index-honours-marker.test.ts",
@@ -589,6 +592,10 @@
       "test/topic-tool.test.ts"
     ],
     "src/model-cli.ts": [],
+    "src/model-u8.ts": [
+      "test/embedding-session-model.test.ts",
+      "test/model-u8.test.ts"
+    ],
     "src/node-floor.ts": [
       "test/node-floor.test.ts",
       "test/sqlite-adapter.test.ts"
@@ -1055,6 +1062,10 @@
     "test/embedding-parity.test.ts": [
       "src/embeddings.ts"
     ],
+    "test/embedding-session-model.test.ts": [
+      "src/embeddings.ts",
+      "src/model-u8.ts"
+    ],
     "test/embedding-stack.test.ts": [
       "src/sqlite.ts",
       "src/embedding-stack.ts",
@@ -1396,6 +1407,10 @@
     "test/mcp-tools.test.ts": [
       "src/mcp-tools.ts",
       "src/db.ts"
+    ],
+    "test/model-u8.test.ts": [
+      "src/embedding-model.ts",
+      "src/model-u8.ts"
     ],
     "test/multi-concept.test.ts": [
       "src/search.ts",

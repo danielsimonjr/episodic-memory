@@ -3,9 +3,9 @@
     "name": "episodic-memory",
     "schemaVersion": "2.0.0",
     "language": "typescript",
-    "totalFiles": 325,
+    "totalFiles": 328,
     "totalModules": 4,
-    "totalExports": 755
+    "totalExports": 758
   },
   "modules": {
     "src": {
@@ -1169,6 +1169,7 @@
           "ModelFile",
           "ModelSpec",
           "EMBEDDING_MODEL",
+          "UINT8_MODEL_SHA256",
           "FETCH_COMMAND",
           "FETCH_FAILED_MARKER",
           "FETCH_RETRY_MS",
@@ -1219,6 +1220,7 @@
           "onnxruntime-node"
         ],
         "nodeDependencies": [
+          "node:crypto",
           "node:fs",
           "node:path"
         ],
@@ -1243,7 +1245,15 @@
               "EMBEDDING_MODEL",
               "EmbeddingsUnavailableError",
               "ensureModel",
-              "modelDir"
+              "modelDir",
+              "UINT8_MODEL_SHA256"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/model-u8.ts",
+            "imports": [
+              "rewriteMatMulWeightsToUint8"
             ],
             "typeOnly": false
           }
@@ -3853,6 +3863,15 @@
         ],
         "exports": [
           "main"
+        ]
+      },
+      "src/model-u8.ts": {
+        "externalDependencies": [],
+        "nodeDependencies": [],
+        "internalDependencies": [],
+        "exports": [
+          "rewriteMatMulWeightsToUint8",
+          "int8MatMulWeights"
         ]
       },
       "src/node-floor.ts": {
@@ -7434,6 +7453,29 @@
         ],
         "exports": []
       },
+      "test/embedding-session-model.test.ts": {
+        "externalDependencies": [
+          "vitest"
+        ],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "src/embeddings.ts",
+            "imports": [
+              "initEmbeddings"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/model-u8.ts",
+            "imports": [
+              "int8MatMulWeights"
+            ],
+            "typeOnly": false
+          }
+        ],
+        "exports": []
+      },
       "test/embedding-stack.test.ts": {
         "externalDependencies": [
           "vitest"
@@ -10312,6 +10354,35 @@
         ],
         "exports": []
       },
+      "test/model-u8.test.ts": {
+        "externalDependencies": [
+          "vitest"
+        ],
+        "nodeDependencies": [
+          "node:crypto",
+          "node:fs",
+          "node:path"
+        ],
+        "internalDependencies": [
+          {
+            "file": "src/embedding-model.ts",
+            "imports": [
+              "modelDir",
+              "UINT8_MODEL_SHA256"
+            ],
+            "typeOnly": false
+          },
+          {
+            "file": "src/model-u8.ts",
+            "imports": [
+              "int8MatMulWeights",
+              "rewriteMatMulWeightsToUint8"
+            ],
+            "typeOnly": false
+          }
+        ],
+        "exports": []
+      },
       "test/multi-concept.test.ts": {
         "externalDependencies": [
           "vitest"
@@ -12677,13 +12748,13 @@
     }
   },
   "statistics": {
-    "totalTypeScriptFiles": 325,
-    "totalSourceFiles": 325,
+    "totalTypeScriptFiles": 328,
+    "totalSourceFiles": 328,
     "totalModules": 4,
-    "totalLinesOfCode": 68378,
-    "totalExports": 755,
+    "totalLinesOfCode": 68699,
+    "totalExports": 758,
     "entryRoots": 6,
-    "reachableFiles": 57,
+    "reachableFiles": 58,
     "dormantFiles": 60,
     "orphanedFiles": 15,
     "testOnlyFiles": 45,
@@ -12699,10 +12770,10 @@
     "typeOnlyFilesInCycles": 2,
     "totalClasses": 12,
     "totalInterfaces": 165,
-    "totalFunctions": 429,
+    "totalFunctions": 431,
     "totalTypeGuards": 14,
     "totalEnums": 0,
-    "totalConstants": 97,
+    "totalConstants": 98,
     "totalReExports": 9
   },
   "reachability": {
@@ -12714,7 +12785,7 @@
       "test/setup-env.ts",
       "test/global-setup.ts"
     ],
-    "reachableCount": 57,
+    "reachableCount": 58,
     "dormantCount": 60,
     "orphaned": [
       "cli/digest-hook.js",

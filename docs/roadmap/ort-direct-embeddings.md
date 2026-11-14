@@ -61,6 +61,14 @@ Two places download. Neither one is on the MCP start path or the SessionStart ho
 - The exported functions and their signatures do not change.
 - The error message no longer names `sharp` or `libvips`. It names `onnxruntime-node` and the binding path (`src/deps-health.ts` `ONNX_BINDING`).
 
+### `src/model-u8.ts` (new)
+
+- The q8 model multiplies uint8 activations by int8 weights in 72 `MatMulInteger` nodes. On an x86-64 CPU without VNNI, the u8s8 kernel of onnxruntime adds pairs of products in 16-bit lanes. A long text can saturate a lane, and its vector then differs from the vector of a VNNI CPU by up to 0.012.
+- `rewriteMatMulWeightsToUint8` adds 128 to each weight and to each weight zero point, and sets the data type to uint8. The difference (weight - zero point) stays the same, so each integer product stays the same. The runtime then uses its u8u8 kernel, which does not saturate.
+- The function edits the protobuf bytes and needs no protobuf library. The zero points are packed `int32_data`, so the function writes `raw_data` for each rewritten tensor. Every other field keeps its bytes.
+- `initEmbeddings` gives the rewritten bytes to `InferenceSession.create`. The downloaded file and its pin do not change. `UINT8_MODEL_SHA256` pins the rewritten bytes, and a different digest fails the load.
+- The session option `session.x64quantprecision` does not help this model: its graph transformers change no node.
+
 ### Stamp and version
 
 - `EMBEDDING_STACK_PACKAGES` becomes `['onnxruntime-node', 'onnxruntime-common', '@huggingface/tokenizers']`. `onnxruntime-common` resolves from the folder of `onnxruntime-node`, as in the current code. `@huggingface/tokenizers` is a direct dependency and resolves from the root; the walk reaches the root after `onnxruntime-common`. The doc comment of `embedding-stack.ts` states this.

@@ -31,7 +31,7 @@ This document provides a comprehensive dependency graph of all files, components
 The codebase is organized into the following modules:
 
 - **cli**: 8 files
-- **root**: 76 files
+- **root**: 77 files
 - **entry**: 1 file
 - **learn**: 32 files
 
@@ -627,7 +627,7 @@ The codebase is organized into the following modules:
 - Interfaces: `ModelFile`, `ModelSpec`, `ModelStateResult`, `EnsureModelOptions`
 - Types: `RenameFn`
 - Functions: `modelDir`, `modelState`, `ensureModel`, `fetchModelForSync`
-- Constants: `EMBEDDING_MODEL`, `FETCH_COMMAND`, `FETCH_FAILED_MARKER`, `FETCH_RETRY_MS`
+- Constants: `EMBEDDING_MODEL`, `UINT8_MODEL_SHA256`, `FETCH_COMMAND`, `FETCH_FAILED_MARKER`, `FETCH_RETRY_MS`
 
 ---
 
@@ -663,6 +663,7 @@ The codebase is organized into the following modules:
 **Node.js Built-in Dependencies:**
 | Module | Import |
 |--------|--------|
+| `crypto` | `createHash` |
 | `fs` | `readFileSync` |
 | `path` | `join` |
 
@@ -671,7 +672,8 @@ The codebase is organized into the following modules:
 |------|---------|------|
 | `./redact.js` | `maybeRedactSecrets` | Import |
 | `./constants.js` | `truncateForIndex` | Import |
-| `./embedding-model.js` | `EMBEDDING_MODEL, EmbeddingsUnavailableError, ensureModel, modelDir` | Import |
+| `./embedding-model.js` | `EMBEDDING_MODEL, EmbeddingsUnavailableError, ensureModel, modelDir, UINT8_MODEL_SHA256` | Import |
+| `./model-u8.js` | `rewriteMatMulWeightsToUint8` | Import |
 
 **Exports:**
 - Functions: `initEmbeddings`, `generateEmbeddings`, `generateEmbedding`, `withQueryPrefix`, `generateQueryEmbedding`, `formatExchangeEmbeddingText`, `generateExchangeEmbedding`, `generateExchangeEmbeddings`
@@ -931,6 +933,13 @@ The codebase is organized into the following modules:
 
 **Exports:**
 - Functions: `main`
+
+---
+
+### `src/model-u8.ts` - Rewrite of the int8 MatMulInteger weights of an ONNX model to uint8.
+
+**Exports:**
+- Functions: `rewriteMatMulWeightsToUint8`, `int8MatMulWeights`
 
 ---
 
@@ -2213,12 +2222,12 @@ The codebase is organized into the following modules:
 | `src/mcp-tools` | 10 files | 2 files |
 | `src/types` | 0 files | 12 files |
 | `src/doctor` | 10 files | 1 file |
+| `src/embeddings` | 4 files | 7 files |
 | `src/learn/knowledge-db` | 4 files | 7 files |
 | `src/learn/learn-config` | 0 files | 11 files |
 | `src/search` | 7 files | 4 files |
 | `src/constants` | 0 files | 10 files |
 | `src/digest-db` | 2 files | 8 files |
-| `src/embeddings` | 3 files | 7 files |
 | `src/learn/agent-runner` | 5 files | 5 files |
 | `src/learn/knowledge-store` | 4 files | 6 files |
 | `src/learn/learned-block` | 6 files | 4 files |
@@ -2280,7 +2289,7 @@ graph TD
         N15[codex-support]
         N16[constants]
         N17[content-text]
-        N18[...66 more]
+        N18[...67 more]
     end
 
     subgraph Entry
@@ -2332,14 +2341,14 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 325 |
+| Total Source Files | 328 |
 | Subsystems | 4 |
-| Total Lines of Code | 68378 |
-| Total Exports | 755 |
+| Total Lines of Code | 68699 |
+| Total Exports | 758 |
 | Total Re-exports | 9 |
 | Total Classes | 12 |
 | Total Interfaces | 165 |
-| Total Functions | 429 |
+| Total Functions | 431 |
 | Total Type Guards | 14 |
 | Total Enums | 0 |
 | Type-only Imports | 115 |

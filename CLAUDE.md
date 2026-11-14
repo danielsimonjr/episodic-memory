@@ -51,13 +51,14 @@ dependency, no `MEMORY_*` environment handling and no per-handle cache. Each ope
 - **TypeScript source** in `src/`, compiled to `dist/` by `tsc && esbuild`. **Both are committed.**
 - **CLI entry points** in `cli/` (Node.js wrappers — no bash).
 - **MCP server** is `dist/mcp-server.js`, launched by `cli/mcp-server-wrapper.js` from the plugin manifest.
-- **Tests** in `test/` with vitest (181 files, 1828 tests). The end-to-end suite in `test/e2e/` (`vitest.e2e.config.ts`) runs the built CLI, MCP server and hooks.
+- **Tests** in `test/` with vitest (184 files, 1855 tests). The end-to-end suite in `test/e2e/` (`vitest.e2e.config.ts`) runs the built CLI, MCP server and hooks.
 - **Generated files** in `dist/` AND `src/version.ts`. The latter is gitignored; never edit it.
 - **`bun.lock` is committed** — CI uses `bun install --frozen-lockfile` + `bun audit --audit-level=critical`. Do not commit `package-lock.json` (gitignored).
 
 ```
 src/
   embeddings.ts          # encoder pipeline; query/exchange embedders
+  model-u8.ts            # in-memory rewrite of the int8 MatMulInteger weights to uint8; the session loads the result
   embedding-migration.ts # version constant + lock + batch migration
   embedding-stack.ts     # installed onnxruntime/tokenizers versions + the model pin; a changed stamp marks every row stale
   search.ts              # vector + text search; multi-concept aggregation
@@ -120,7 +121,7 @@ scripts/
 
 test/
   test-utils.ts          # createTestDb, safeRmSync (fork-added), suppressConsole, fixtures
-  *.test.ts              # 181 test files, 1828 tests
+  *.test.ts              # 184 test files, 1855 tests
   learn/                 # the Recursa suite; fakes for every model call
   fixtures/              # JSONL conversation fixtures
 
@@ -178,12 +179,12 @@ scheduled task. To roll back, remove the variable first. Then run `npm install -
 
 ### Current test state
 
-- **Full suite: 1828 tests in 181 files pass** in about 17 s of wall clock on Linux. Windows runs are slower.
+- **Full suite: 1855 tests in 184 files pass** in about 17 s of wall clock on Linux. Windows runs are slower.
   The suite no longer has the former `integration.test.ts` / `verify.test.ts` cold-embedding timeout flakes.
   `beforeAll` pre-warms the embedder once per worker. `vitest.config.ts` sets `hookTimeout: 30000`.
   The repair re-index test gets 60s. If you see a fresh timeout flake, suspect a new embedding-heavy hook
   without warm-up, not the old cold-start cause.
-- The learn tests are the bulk of the suite (`test/learn/`, 39 files; the other 142 test files sit directly in `test/`). The learn tests never reach a model: every agent and
+- The learn tests are the bulk of the suite (`test/learn/`, 39 files; the other 145 test files sit directly in `test/`). The learn tests never reach a model: every agent and
   text call is injectable and tests pass fakes. `test/test-env.ts` pins the Claude backend, a closed ollama URL,
   a temporary config directory and temporary Claude and Codex homes. `test/setup-env.ts` deletes every other `EPISODIC_MEMORY_*` variable of
   the machine. A local run therefore uses the CI settings and cannot reach a model or the live data.
@@ -213,7 +214,7 @@ Static imports load these modules at server start:
 
 Dynamic imports load these modules only inside a branch:
 
-- `search`: `search.ts`, `embeddings.ts`
+- `search`: `search.ts`, `embeddings.ts`, `model-u8.ts`
 - `read`: `show.ts`, `content-text.ts`
 - `digest`: `digest-tool.ts`, `digest-inject.ts`, `digest-validate.ts`
 - `skills`: `learn/skills-tool.ts`, `digest-inject.ts`, `learn/knowledge-store.ts`, `learn/learn-inject.ts`, `learn/learned-text-screen.ts`, `learn/pii-redactor.ts`

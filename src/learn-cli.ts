@@ -1,7 +1,7 @@
 /**
  * `episodic-memory learn` — the process entry point (`dist/learn-cli.js`).
  *
- * Everything below the four early exits is imported lazily. A learning run loads
+ * Everything below the five early exits is imported lazily. A learning run loads
  * the knowledge store, the Agent SDK and transformers; a guarded reentrant subprocess, a
  * flag-off invocation, a deferred GPU reservation or `--help` must pay none of
  * that (spec §7 rules 8, 10 and 12). The order is fixed and mirrors
@@ -12,7 +12,8 @@
  * 2. `--help` — needs nothing.
  * 3. `learnEnabled()` — flag off exits 0 with the same message every `learn`
  *    subcommand gives.
- * 4. `gpuReservationBlock()` — the fleet rule: do not compete. Exit 0, deferred.
+ * 4. `learnOptionRefusal()` — an option the subcommand does not read. Exit 2, one line.
+ * 5. `gpuReservationBlock()` — the fleet rule: do not compete. Exit 0, deferred.
  *
  * Only then is the process marked a background worker and dropped in priority,
  * so the heavy import that follows never runs at normal priority.
@@ -20,7 +21,7 @@
 
 import { shouldSkipReentrantSync } from './reentrancy.js';
 import { learnEnabled, LEARN_OFF_MESSAGE } from './learn/learn-config.js';
-import { LEARN_USAGE } from './learn/usage.js';
+import { LEARN_USAGE, learnOptionRefusal } from './learn/usage.js';
 import { gpuReservationBlock } from './gpu-reservation.js';
 import { BACKGROUND_WORKER_ENV, lowerPriorityIfBackgroundWorker } from './priority.js';
 import { formatLogLine, getLearnLogPath } from './logging.js';
@@ -43,6 +44,13 @@ if (argv.includes('--help') || argv.includes('-h')) {
 if (!learnEnabled()) {
   console.error(LEARN_OFF_MESSAGE);
   process.exit(0);
+}
+
+// Refuse a bad option before the priority drop and its notice, so a usage error prints one line.
+const refusal = learnOptionRefusal(argv[0] ?? '', argv.slice(1));
+if (refusal !== undefined) {
+  console.error(refusal);
+  process.exit(2);
 }
 
 const reserved = gpuReservationBlock();

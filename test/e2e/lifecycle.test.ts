@@ -253,10 +253,8 @@ describe('lifecycle: the default mode of search', () => {
   });});
 
 describe('lifecycle: search --both', () => {
-  // Measured: `search --both "docker build"` exits 0 and prints
-  // `Found 2 conversations matching all concepts [--both + docker build]:` (the flag became a concept).
-  // search-cli.ts:51 and :55 document `--both`, and no branch of search-cli.ts reads it.
-  it.skip('D2 pending: search --both "docker build" -> "Found 2 conversations matching all concepts [--both + docker build]" (expected the default mode)', async () => {
+  // D2: the help text documents `--both`. Before the fix, no branch read it, and it became a second concept.
+  it('search --both "docker build" runs the default mode, not a two-concept search (D2)', async () => {
     const both = await search(['--both', 'docker build']);
     expect(both.stdout).not.toContain('matching all concepts');
     const plain = await search(['docker build']);
@@ -456,18 +454,17 @@ describe('lifecycle: rebuild', () => {
   });
 
   it('deletes nothing when the umbrella rebuild has no --yes and its stdin is closed', async () => {
-    // The umbrella asks the question and reads stdin. A closed stdin gives no answer, so the database stays.
+    // The umbrella asks the question. A closed stdin gives no answer, so the command refuses and the database stays.
     const before = totalRows();
     const result = await cli(['index', 'rebuild'], { timeoutMs: CHILD_MS });
+    expect(result.code).toBe(EXIT_USAGE);
     expect(result.stdout).toContain('Are you sure?');
     expect(existsSync(path.join(sb.index, 'db.sqlite'))).toBe(true);
     expect(totalRows()).toBe(before);
   });
 
-  // Measured: `index --rebuild` (and `index rebuild`) with no --yes and a closed stdin prints
-  // "Are you sure? [yes/NO]: " and exits 0. No "Cancelled" line, no refusal. The index-cli entry refuses with exit 2.
-  // cli/index-conversations.js askConfirmation (rl.question with no answer) never resolves.
-  it.skip('D6 pending: index --rebuild with no --yes and a closed stdin -> exit 0 after the question (expected exit 2, one refusal line)', async () => {
+  // Before the D6 fix, `index --rebuild` with no --yes and a closed stdin printed the question and exited 0.
+  it('index --rebuild with no --yes and a closed stdin exits 2 with one refusal line (D6)', async () => {
     const result = await cli(['index', '--rebuild'], { timeoutMs: CHILD_MS });
     expect(result.code).toBe(EXIT_USAGE);
     expect(oneLine(result.stderr)).toContain('--yes');
@@ -491,10 +488,9 @@ describe('lifecycle: the index lock', () => {
     }
   });
 
-  // Measured: the umbrella `index` under a live lock exits 75 and prints THREE stderr lines:
-  // the index-cli line, then "Error: Command failed with exit code 75" from cli/index-conversations.js and again
-  // from cli/episodic-memory.js. The refusal names one cause, so one line is the contract.
-  it.skip('D5 pending: index under a held lock via the umbrella -> exit 75 with 3 stderr lines (expected 1)', async () => {
+  // D5: before the fix, both wrappers (cli/index-conversations.js and cli/episodic-memory.js) added
+  // "Error: Command failed with exit code 75" after the index-cli line. The refusal names one cause, so one line.
+  it('index under a held lock via the umbrella exits 75 with one stderr line (D5)', async () => {
     const lock = syncLockPath(sb);
     writeFileSync(lock, String(process.pid), 'utf-8');
     const now = new Date();

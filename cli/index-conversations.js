@@ -13,16 +13,25 @@ function runIndexCli(command, args) {
   return runChild(join(__dirname, '../dist/index-cli.js'), [command, ...args]);
 }
 
+/**
+ * Ask a yes/no question on stdin. Resolves true for "yes", false for any other answer,
+ * and null when stdin ends before an answer (no terminal and nothing piped).
+ */
 function askConfirmation(question) {
   return new Promise((resolve) => {
     const rl = createInterface({
       input: process.stdin,
       output: process.stdout
     });
+    let answered = false;
 
     rl.question(question, (answer) => {
+      answered = true;
       rl.close();
       resolve(answer.toLowerCase() === 'yes');
+    });
+    rl.on('close', () => {
+      if (!answered) resolve(null);
     });
   });
 }
@@ -120,10 +129,16 @@ async function main() {
 
       case '--rebuild':
       case 'rebuild':
-        console.log('⚠️  This will DELETE the entire database and re-index everything.');
         // --yes skips the question for a caller with no terminal. index-cli refuses rebuild without
         // --yes, so only the answer yes or an explicit --yes can start the delete.
+        console.log('⚠️  This will DELETE the entire database and re-index everything.');
         const confirmed = args.includes('--yes') || await askConfirmation('Are you sure? [yes/NO]: ');
+        if (confirmed === null) {
+          // stdin ended with no answer. Before this check the command exited 0, so a script could not
+          // tell a rebuild that never ran from one that finished.
+          console.error("episodic-memory index: rebuild got no answer and needs --yes. Run 'episodic-memory index --help'.");
+          process.exit(2);
+        }
         if (confirmed) {
           await runIndexCli('rebuild', args.includes('--yes') ? args : ['--yes', ...args]);
         } else {
@@ -138,7 +153,8 @@ async function main() {
         break;
     }
   } catch (error) {
-    console.error(`Error: ${error.message}`);
+    // The child printed its own error when it exited with a code. A second line doubled the message.
+    if (!error.childReported) console.error(`Error: ${error.message}`);
     process.exit(error.exitCode ?? 1);
   }
 }

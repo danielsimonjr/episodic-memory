@@ -1,5 +1,6 @@
 import { readFileSync } from 'fs';
 import { formatConversationAsMarkdown, formatConversationAsHTML } from './show.js';
+import { refuseUsage } from './cli-usage.js';
 const args = process.argv.slice(2);
 // Parse arguments
 let format = 'markdown';
@@ -7,7 +8,10 @@ let filePath = null;
 for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (arg === '--format' || arg === '-f') {
-        format = args[++i];
+        const value = args[++i];
+        if (value !== 'markdown' && value !== 'html')
+            refuseUsage('show', `option ${arg} needs markdown or html`);
+        format = value;
     }
     else if (arg === '--help' || arg === '-h') {
         console.log(`
@@ -31,8 +35,15 @@ EXAMPLES:
 `);
         process.exit(0);
     }
+    else if (arg.startsWith('-')) {
+        // A flag that show does not know was read as the file name, and the command failed with ENOENT.
+        refuseUsage('show', `unknown option ${arg}`);
+    }
     else if (!filePath) {
         filePath = arg;
+    }
+    else {
+        refuseUsage('show', `unknown argument ${arg}`);
     }
 }
 if (!filePath) {

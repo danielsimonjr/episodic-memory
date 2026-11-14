@@ -109,7 +109,9 @@ async function main() {
         process.exit(1);
     }
   } catch (error) {
-    console.error(`Error: ${error.message}`);
+    // Print a line only when the child did not report: it could not start, or a signal stopped it.
+    // A second line after the child's own error doubled every failure message.
+    if (!error.childReported) console.error(`Error: ${error.message}`);
     process.exit(error.exitCode ?? 1);
   }
 }

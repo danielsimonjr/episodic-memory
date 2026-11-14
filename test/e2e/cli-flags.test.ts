@@ -97,18 +97,23 @@ describe('search flags', () => {
     expect(b.stdout).toContain(NO_MATCH);
   });
 
-  // D3: `search` takes an unknown flag as a query term and exits 0. Measured 2026-11-13:
-  // `search baseline --zzz-e2e` -> exit 0, stdout "No conversations found matching all concepts:
-  // --zzz-e2e, baseline". Source: src/search-cli.ts:78-80.
-  it.skip('D3 pending: search unknown flag exits 2 with one stderr line (src/search-cli.ts:78-80)', async () => {
+  // D3: before the fix, `search baseline --zzz-e2e` read the flag as a second concept and exited 0.
+  it('search unknown flag exits 2 with one stderr line (D3)', async () => {
     await expectUsage(['search', WORD, '--zzz-e2e'], '--zzz-e2e');
   });
 
   // D3: `search baseline --limit` (missing value) and `--limit abc` exit 1 with
   // "Error searching: Error: datatype mismatch" (measured; src/search-cli.ts:75-76 gives NaN).
-  it.skip('D3 pending: search --limit with no value or a non-number exits 2 (src/search-cli.ts:75-76)', async () => {
+  it('search --limit with no value or a non-number exits 2 (D3)', async () => {
     await expectUsage(['search', WORD, '--limit'], '--limit');
     await expectUsage(['search', WORD, '--limit', 'abc'], '--limit');
+    await expectUsage(['search', WORD, '--project'], '--project needs a value');
+  });
+
+  it('-- ends the options: a later argument that starts with - is a query, not a refused flag', async () => {
+    const r = await runCli(sb, UMBRELLA, ['search', '--text', '--', '--zzz-e2e']);
+    expect(r.code, r.stderr).toBe(0);
+    expect(r.stderr).not.toContain('unknown option');
   });
 });
 
@@ -132,14 +137,13 @@ describe('show flags', () => {
     expect(r.stdout.toLowerCase()).toContain(WORD);
   });
 
-  it('--format with no value and no file exits 1 (the file is missing)', async () => {
-    const r = await runCli(sb, UMBRELLA, ['show', '--format']);
-    expect(r.code).toBe(EXIT_FAIL);
+  it('--format with no value or a value other than markdown and html is a usage error', async () => {
+    await expectUsage(['show', '--format'], '--format');
+    await expectUsage(['show', '--format', 'pdf', archiveFile()], '--format');
   });
 
-  // D3: `show --zzz-e2e` reads the flag as a file name: "ENOENT ... open '...\--zzz-e2e'", exit 1.
-  // Source: show-cli argument parsing (not read here; the measured output is the evidence).
-  it.skip('D3 pending: show unknown flag exits 2 with one stderr line (measured: ENOENT on "--zzz-e2e", exit 1)', async () => {
+  // D3: before the fix, `show --zzz-e2e` read the flag as a file name and failed with ENOENT, exit 1.
+  it('show unknown flag exits 2 with one stderr line (D3)', async () => {
     await expectUsage(['show', '--zzz-e2e', archiveFile()], '--zzz-e2e');
   });
 });
@@ -151,8 +155,8 @@ describe('stats flags', () => {
     expect(r.stdout.trim().length).toBeGreaterThan(0);
   });
 
-  // D3: `stats --zzz-e2e` exits 0 with the normal statistics and no error (measured 2026-11-13).
-  it.skip('D3 pending: stats unknown flag exits 2 with one stderr line (measured: exit 0, silent)', async () => {
+  // D3: before the fix, `stats --zzz-e2e` printed the normal statistics and exited 0.
+  it('stats unknown flag exits 2 with one stderr line (D3)', async () => {
     await expectUsage(['stats', '--zzz-e2e'], '--zzz-e2e');
   });
 });
@@ -193,10 +197,8 @@ describe('index flags', () => {
     expect(r.stderr).toContain('unknown option --zzz-e2e');
   });
 
-  // D5: the umbrella prints the child's error line again. Measured 2026-11-13 for `index --zzz-e2e`:
-  // stderr is "episodic-memory index: unknown option --zzz-e2e..." then "Error: Command failed with exit
-  // code 2". The second line is written by cli/episodic-memory.js:100 (catch) after the child exited.
-  it.skip('D5 pending: index unknown flag prints ONE stderr line (cli/episodic-memory.js:100 double print)', async () => {
+  // D5: before the fix, the umbrella printed "Error: Command failed with exit code 2" after the child's own line.
+  it('index unknown flag prints one stderr line through the umbrella (D5)', async () => {
     await expectUsage(['index', '--zzz-e2e'], '--zzz-e2e');
   });
 });
@@ -244,16 +246,14 @@ describe('backfill flags', () => {
     expect(listTree([sb.archive])).toEqual(before);
   });
 
-  it('a bad or missing --limit value exits 1 with the positive-integer message', async () => {
-    const a = await runCli(sb, UMBRELLA, ['backfill', '--limit', 'abc']);
-    const b = await runCli(sb, UMBRELLA, ['backfill', '--limit']);
-    expect(a.code).toBe(EXIT_FAIL);
-    expect(b.code).toBe(EXIT_FAIL);
-    expect(a.stderr).toContain('--limit needs a positive integer');
+  it('a bad or missing --limit or --batch value is a usage error', async () => {
+    await expectUsage(['backfill', '--limit', 'abc'], '--limit needs a positive integer');
+    await expectUsage(['backfill', '--limit'], '--limit needs a value');
+    await expectUsage(['backfill', '--batch', '0'], '--batch needs a positive integer');
   });
 
-  // D3: `backfill --zzz-e2e` exits 0 and does its normal work; the flag is not refused (measured).
-  it.skip('D3 pending: backfill unknown flag exits 2 with one stderr line (measured: exit 0, silent)', async () => {
+  // D3: before the fix, `backfill --zzz-e2e` exited 0 and did its normal work.
+  it('backfill unknown flag exits 2 with one stderr line (D3)', async () => {
     await expectUsage(['backfill', '--zzz-e2e'], '--zzz-e2e');
   });
 });
@@ -272,8 +272,8 @@ describe('doctor and learn flags', () => {
     expect(typeof JSON.parse(r.stdout)).toBe('object');
   });
 
-  // D3: `learn tasks --zzz-e2e` runs the task step and exits 0; the unknown flag is ignored (measured).
-  it.skip('D3 pending: learn unknown flag exits 2 with one stderr line (measured: learn tasks exit 0)', async () => {
+  // D3: before the fix, `learn tasks --zzz-e2e` ignored the flag, ran the task step and exited 0.
+  it('learn unknown flag exits 2 with one stderr line (D3)', async () => {
     await expectUsage(['learn', 'tasks', '--zzz-e2e'], '--zzz-e2e', { EPISODIC_MEMORY_LEARN: '1' });
   });
 

@@ -57,3 +57,42 @@ COMMANDS:
       or to inspect what a session will see.
 
 Progress goes to stderr; the report goes to stdout.`;
+/**
+ * The options that each subcommand reads. A name here must match the `optionValue`, `optionNumber` or
+ * `hasFlag` call of that command in `cli-main.ts`. The keys must match `IMPLEMENTED` there.
+ */
+export const LEARN_OPTIONS_BY_COMMAND = {
+    tasks: ['seed', 'per-project', 'check'],
+    solve: ['split', 'snapshot', 'limit'],
+    bootstrap: ['seed', 'per-project'],
+    improve: ['project', 'rounds', 'dry-run'],
+    status: [],
+    approve: ['yes'],
+    export: ['to'],
+    render: ['project'],
+    report: ['run', 'json'],
+};
+/**
+ * Returns the usage error line for the first option that `command` does not read, or undefined.
+ *
+ * Without the check, a misspelled option runs the command with the default value and says nothing.
+ * The check skips an argument that does not start with `-`: `approve` reads its name from one, and an
+ * option value is one. An unknown command returns undefined, because the caller refuses it first.
+ *
+ * @param command The learn subcommand, for example `tasks`.
+ * @param argv The arguments after the subcommand.
+ */
+export function learnOptionRefusal(command, argv) {
+    const known = LEARN_OPTIONS_BY_COMMAND[command];
+    if (known === undefined)
+        return undefined;
+    for (const arg of argv) {
+        if (!arg.startsWith('-'))
+            continue;
+        const name = arg.replace(/^--?/, '').split('=')[0];
+        if (!arg.startsWith('--') || !known.includes(name)) {
+            return `episodic-memory learn: unknown option ${arg} for learn ${command}. Run 'episodic-memory learn --help'.`;
+        }
+    }
+    return undefined;
+}

@@ -32,7 +32,7 @@ function flagsOf(command: string, flags: readonly string[]): FlagEntry[] {
 
 /** Every flag and subcommand that the --help output of each command lists. */
 export const FLAGS: readonly FlagEntry[] = [
-  ...flagsOf('search', ['--help', '-h', '--vector', '--text', '--after', '--before', '--project', '--session-id', '--git-branch', '--limit']),
+  ...flagsOf('search', ['--help', '-h', '--vector', '--text', '--after', '--before', '--project', '--session-id', '--git-branch', '--limit', '--both']),
   ...flagsOf('show', ['--help', '-h', '--format', '-f']),
   ...flagsOf('stats', ['--help', '-h']),
   ...flagsOf('index', [
@@ -119,12 +119,8 @@ export const MCP_TOOLS: readonly string[] = ['search', 'read', 'digest', 'skills
 /** Items the suite does not cover, each with its reason. Defects carry `Dn pending`. */
 export const UNCOVERED: readonly UncoveredEntry[] = [
   // Defects of PLAN.md. Each moves into FLAGS, ENV_VARS or a case in its fix commit.
-  { kind: 'flag', name: 'search --both', reason: 'D2 pending' },
-  { kind: 'path', name: 'search unknown flag becomes a query term; --limit abc gives NaN', reason: 'D3 pending' },
   { kind: 'path', name: 'doctor creates the archive, index and logs directories', reason: 'D4 pending' },
   { kind: 'path', name: 'digest-hook creates conversation-index when EPISODIC_MEMORY_DIGEST=1', reason: 'D4 pending' },
-  { kind: 'path', name: 'umbrella prints the child error line twice', reason: 'D5 pending' },
-  { kind: 'path', name: 'index --rebuild with no --yes and a closed stdin exits 0 after the question', reason: 'D6 pending' },
   { kind: 'path', name: 'index --verify fails after a rebuild: the exchange-less transcript summary is deleted', reason: 'D7 pending' },
   { kind: 'path', name: 'doctor codex cannot find codex.cmd on win32', reason: 'D8 pending' },
   { kind: 'path', name: 'the digest MCP tool creates the index database with the digest flag unset', reason: 'D9 pending' },

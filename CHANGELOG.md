@@ -7,6 +7,10 @@
 
 ### Fixed
 - **A `both` search returns at most `limit` rows.** The vector step and the text step each returned up to `limit` rows, and the merge kept all of them, so `search --limit 2` printed `Found 3`. The merge now alternates the vector rows and the text rows by rank, skips a row it already holds, and stops at `limit`. A text-only match therefore keeps a place, and the order of the `both` results changes. A row that both steps find keeps its vector similarity.
+- **The CLI commands refuse an unknown option and a bad option value with exit 2 and one stderr line.** `search`, `show`, `stats`, `backfill` and every `learn` subcommand ran with the defaults and said nothing (or, for `show`, read the flag as a file name). `search --limit abc` gave NaN. The usage line names the command, the cause and the help command. `backfill --limit` and `--batch` with a bad value exit 2, not 1. `search --` ends the options, so a query can start with `-`.
+- **`search --both` selects the default mode.** The help text documents the flag, but no branch read it, so it became a second search concept.
+- **A failed command prints its error once.** The umbrella `episodic-memory` and `cli/index-conversations.js` printed `Error: Command failed with exit code N` after the error line of the child. They now print a line only when the child could not start or a signal stopped it.
+- **`index rebuild` with no `--yes` and no answer on stdin exits 2.** The question read end-of-input as a cancel and exited 0, so a script could not tell a rebuild that never ran from one that finished. A piped `yes` or `no` still answers the question.
 
 ### Changed
 - **`bun run test` no longer collects `test/e2e/`.** The unit config excludes the folder; the end-to-end suite has its own config.

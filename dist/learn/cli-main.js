@@ -29,7 +29,7 @@ import { latestRunId, buildReport, formatReport } from './report.js';
 import { isValidSlug } from './types.js';
 import { BudgetExhausted, CallBudget, solveMany } from './solver.js';
 import { runLearn } from './learner.js';
-import { LEARN_USAGE } from './usage.js';
+import { LEARN_USAGE, learnOptionRefusal } from './usage.js';
 import { compareByProject } from './entry-order.js';
 export { LEARN_USAGE };
 const IMPLEMENTED = new Set([
@@ -719,6 +719,11 @@ export async function runLearnCli(argv, deps) {
     }
     if (!IMPLEMENTED.has(command)) {
         deps.stderr(`episodic-memory learn: unknown command '${command}'\n\n${LEARN_USAGE}\n`);
+        return 2;
+    }
+    const refusal = learnOptionRefusal(command, argv.slice(1));
+    if (refusal !== undefined) {
+        deps.stderr(`${refusal}\n`);
         return 2;
     }
     let owned = null;

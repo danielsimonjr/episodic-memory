@@ -224,7 +224,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/embedding-migration-helpers.test.ts` | (root) | tests | test | 57 |
 | `test/embedding-migration.test.ts` | (root) | tests | test | 222 |
 | `test/embedding-model.test.ts` | (root) | tests | test | 208 |
-| `test/embedding-parity.test.ts` | (root) | tests | test | 52 |
+| `test/embedding-parity.test.ts` | (root) | tests | test | 70 |
 | `test/embedding-stack.test.ts` | (root) | tests | test | 117 |
 | `test/embeddings-format.test.ts` | (root) | tests | test | 35 |
 | `test/embeddings-unavailable.test.ts` | (root) | tests | test | 41 |

@@ -1280,7 +1280,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 52
+      "loc": 70
     },
     {
       "file": "test/embedding-stack.test.ts",

@@ -5054,6 +5054,7 @@ modules:
         - vitest
       nodeDependencies:
         - node:fs
+        - node:os
         - node:path
       internalDependencies:
         - file: src/embeddings.ts
@@ -8442,7 +8443,7 @@ statistics:
   totalTypeScriptFiles: 325
   totalSourceFiles: 325
   totalModules: 4
-  totalLinesOfCode: 68355
+  totalLinesOfCode: 68373
   totalExports: 755
   entryRoots: 6
   reachableFiles: 57

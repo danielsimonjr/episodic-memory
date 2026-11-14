@@ -1,25 +1,25 @@
 {
-  "totalFiles": 323,
+  "totalFiles": 325,
   "byDisposition": {
-    "reachable": 51,
+    "reachable": 53,
     "build-entry": 4,
-    "test-only": 46,
+    "test-only": 45,
     "orphan": 15,
-    "test": 202,
+    "test": 203,
     "tool": 3,
     "config": 2,
     "bench": 0,
     "example": 0
   },
   "byArea": {
-    "src": 116,
+    "src": 117,
     "tools": 3,
-    "tests": 202,
+    "tests": 203,
     "config": 2
   },
   "byPackage": {
     "(root)": 216,
-    "episodic-memory": 107
+    "episodic-memory": 109
   },
   "files": [
     {
@@ -41,7 +41,7 @@
       "package": "(root)",
       "area": "src",
       "disposition": "orphan",
-      "loc": 122
+      "loc": 127
     },
     {
       "file": "cli/forward-child.js",
@@ -272,7 +272,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 472
+      "loc": 518
     },
     {
       "file": "src/embedding-migration.ts",
@@ -282,18 +282,25 @@
       "loc": 198
     },
     {
+      "file": "src/embedding-model.ts",
+      "package": "episodic-memory",
+      "area": "src",
+      "disposition": "reachable",
+      "loc": 333
+    },
+    {
       "file": "src/embedding-stack.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 109
+      "loc": 127
     },
     {
       "file": "src/embeddings.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 205
+      "loc": 261
     },
     {
       "file": "src/exclusion-marker.ts",
@@ -306,7 +313,7 @@
       "file": "src/fs-retry.ts",
       "package": "episodic-memory",
       "area": "src",
-      "disposition": "test-only",
+      "disposition": "reachable",
       "loc": 46
     },
     {
@@ -625,6 +632,13 @@
       "loc": 178
     },
     {
+      "file": "src/model-cli.ts",
+      "package": "episodic-memory",
+      "area": "src",
+      "disposition": "orphan",
+      "loc": 75
+    },
+    {
       "file": "src/node-floor.ts",
       "package": "episodic-memory",
       "area": "src",
@@ -762,7 +776,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "orphan",
-      "loc": 282
+      "loc": 286
     },
     {
       "file": "src/sync.ts",
@@ -972,7 +986,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 85
+      "loc": 88
     },
     {
       "file": "test/codex-skills.test.ts",
@@ -1091,7 +1105,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 416
+      "loc": 417
     },
     {
       "file": "test/digest-inject.test.ts",
@@ -1140,21 +1154,21 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 368
+      "loc": 428
     },
     {
       "file": "test/e2e/cases.ts",
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 142
+      "loc": 145
     },
     {
       "file": "test/e2e/cli-flags.test.ts",
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 296
+      "loc": 342
     },
     {
       "file": "test/e2e/coverage.test.ts",
@@ -1189,7 +1203,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 1094
+      "loc": 1104
     },
     {
       "file": "test/e2e/hooks.test.ts",
@@ -1231,14 +1245,14 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 761
+      "loc": 767
     },
     {
       "file": "test/e2e/smoke.test.ts",
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 412
+      "loc": 414
     },
     {
       "file": "test/embedding-migration-helpers.test.ts",
@@ -1255,11 +1269,25 @@
       "loc": 222
     },
     {
+      "file": "test/embedding-model.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 208
+    },
+    {
+      "file": "test/embedding-parity.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 52
+    },
+    {
       "file": "test/embedding-stack.test.ts",
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 110
+      "loc": 117
     },
     {
       "file": "test/embeddings-format.test.ts",
@@ -1273,7 +1301,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 40
+      "loc": 41
     },
     {
       "file": "test/ensure-deps-prune.test.ts",
@@ -1308,14 +1336,14 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 22
+      "loc": 18
     },
     {
       "file": "test/global-setup.ts",
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 14
+      "loc": 15
     },
     {
       "file": "test/gpu-reservation.test.ts",
@@ -1434,7 +1462,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 370
+      "loc": 371
     },
     {
       "file": "test/learn/knowledge-store-write-lock.test.ts",
@@ -1511,7 +1539,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 368
+      "loc": 369
     },
     {
       "file": "test/learn/learner.test.ts",
@@ -1750,13 +1778,6 @@
       "area": "tests",
       "disposition": "test",
       "loc": 55
-    },
-    {
-      "file": "test/onnxruntime-web-stub.test.ts",
-      "package": "(root)",
-      "area": "tests",
-      "disposition": "test",
-      "loc": 76
     },
     {
       "file": "test/orphan-reaper.test.ts",
@@ -2148,7 +2169,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 27
+      "loc": 30
     },
     {
       "file": "test/test-indexer.ts",
@@ -2261,13 +2282,6 @@
       "area": "tests",
       "disposition": "test",
       "loc": 60
-    },
-    {
-      "file": "vendor/onnxruntime-web-stub/index.js",
-      "package": "(root)",
-      "area": "src",
-      "disposition": "orphan",
-      "loc": 3
     },
     {
       "file": "vitest.config.ts",

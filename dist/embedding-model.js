@@ -11,7 +11,7 @@ import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { superpowersDirPath } from './paths.js';
 import { renameWithRetry } from './fs-retry.js';
-/** The embedding model that the index is built with. This is the one source of the model identity. */
+/** The embedding model that the index is built with. `EMBEDDING_MODEL` is the one source of the model identity. */
 export const EMBEDDING_MODEL = {
     repo: 'Xenova/bge-small-en-v1.5',
     revision: 'ea104dacec62c0de699686887e3f920caeb4f3e3',
@@ -27,11 +27,11 @@ export const FETCH_COMMAND = 'episodic-memory model fetch';
 export const FETCH_FAILED_MARKER = '.model-fetch-failed';
 /** The wait before the sync retries a failed download. */
 export const FETCH_RETRY_MS = 24 * 60 * 60 * 1000;
-/** The age after which a temporary file of a killed process is removed. */
+/** The age after which the fetch removes a temporary file of a killed process. */
 const STALE_TEMP_MS = 60 * 60 * 1000;
 /** The time limit of one file download. */
 const FETCH_TIMEOUT_MS = 10 * 60 * 1000;
-/** The default host of the model files. The HF_ENDPOINT variable overrides it. */
+/** The default host of the model files. The HF_ENDPOINT variable overrides this host. */
 const DEFAULT_ENDPOINT = 'https://huggingface.co';
 /** Attempts for the rename of a downloaded file, because a virus scan can hold a new file. */
 const RENAME_ATTEMPTS = 10;
@@ -50,7 +50,7 @@ export class EmbeddingsUnavailableError extends Error {
 /**
  * Return the folder that holds the model files.
  *
- * The folder is `EPISODIC_MEMORY_MODEL_DIR` when that variable is set. Otherwise it is
+ * The folder is `EPISODIC_MEMORY_MODEL_DIR` when that variable is set. Otherwise the folder is
  * `<superpowers dir>/models/<repo>/<revision>`, which lives outside `node_modules`.
  */
 export function modelDir() {
@@ -61,9 +61,9 @@ export function modelDir() {
 }
 /** The read size of the streamed hash. The hash never holds a whole model file in memory. */
 const HASH_CHUNK_BYTES = 1024 * 1024;
-/** The verified results of this process, keyed by path, size, mtime and pinned sha256. Each file is hashed once. */
+/** The verified results of this process, keyed by path, size, mtime and pinned sha256. The cache hashes each file once. */
 const verifiedCache = new Map();
-/** Return the sha256 of a file, as a hex string. The file is read in chunks of `HASH_CHUNK_BYTES`. */
+/** Return the sha256 of a file, as a hex string. The function reads the file in chunks of `HASH_CHUNK_BYTES`. */
 function sha256Of(path) {
     const hash = createHash('sha256');
     const buffer = Buffer.alloc(HASH_CHUNK_BYTES);
@@ -83,18 +83,25 @@ function sha256Of(path) {
 }
 /** True when the file exists with the pinned size and sha256. The hash runs once per path, size, mtime and sha256. */
 function fileMatches(path, file) {
-    if (!existsSync(path))
+    // Another process can remove, replace or lock the file between the stat and the read.
+    // A file that cannot be read is a bad file, so the caller downloads the file again.
+    try {
+        if (!existsSync(path))
+            return false;
+        const stat = statSync(path);
+        if (!stat.isFile() || stat.size !== file.size)
+            return false;
+        const key = `${path}|${stat.size}|${stat.mtimeMs}|${file.sha256}`;
+        const cached = verifiedCache.get(key);
+        if (cached !== undefined)
+            return cached;
+        const matches = sha256Of(path) === file.sha256;
+        verifiedCache.set(key, matches);
+        return matches;
+    }
+    catch {
         return false;
-    const stat = statSync(path);
-    if (stat.size !== file.size)
-        return false;
-    const key = `${path}|${stat.size}|${stat.mtimeMs}|${file.sha256}`;
-    const cached = verifiedCache.get(key);
-    if (cached !== undefined)
-        return cached;
-    const matches = sha256Of(path) === file.sha256;
-    verifiedCache.set(key, matches);
-    return matches;
+    }
 }
 /**
  * Check every model file against its pinned size and sha256.
@@ -163,7 +170,7 @@ async function fetchFile(spec, file, dir, endpoint, rename) {
     let size = 0;
     const body = Readable.fromWeb(response.body);
     try {
-        // The hash runs on each chunk as the pipeline writes it, so the file is read once.
+        // The hash runs on each chunk as the pipeline writes the chunk, so the code reads each byte once.
         await pipeline(body, async function* (source) {
             for await (const chunk of source) {
                 hash.update(chunk);
@@ -186,7 +193,7 @@ async function fetchFile(spec, file, dir, endpoint, rename) {
         rename(temp, target);
     }
     catch (error) {
-        // Another process may have written the same correct file first. Accept that file.
+        // Another process can write the same correct file first. Accept that file.
         let accepted = false;
         try {
             accepted = fileMatches(target, file);
@@ -249,16 +256,20 @@ export async function ensureModel(options) {
 /**
  * Fetch the model during a sync, with the retry rule of the sync.
  *
- * The function does nothing when the files are ready. It does nothing when a failed download
+ * The function does nothing when the files are ready. The function also does nothing when a failed download
  * left its marker less than `FETCH_RETRY_MS` ago. A failed download writes one stderr line and the
  * marker, and the sync continues without embeddings. The function catches only
- * `EmbeddingsUnavailableError`. Any other error is a defect, and the function rethrows it.
+ * `EmbeddingsUnavailableError`. Any other error is a defect, and the function rethrows the error.
  *
  * @throws Error when the error is not an EmbeddingsUnavailableError
  */
 export async function fetchModelForSync() {
     const dir = modelDir();
     if (modelState({ dir }).state === 'ready')
+        return;
+    // An offline sync is not a failed fetch. A marker would delay the first fetch after the
+    // variable is cleared by 24 hours.
+    if (process.env.EPISODIC_MEMORY_MODEL_OFFLINE === '1')
         return;
     const marker = join(dir, FETCH_FAILED_MARKER);
     if (existsSync(marker) && Date.now() - statSync(marker).mtimeMs < FETCH_RETRY_MS)
@@ -275,7 +286,7 @@ export async function fetchModelForSync() {
             writeFileSync(marker, String(error));
         }
         catch {
-            // The marker is a retry hint. Without it the next sync tries again.
+            // The marker is a retry hint. Without the marker, the next sync tries again.
         }
         console.error(`episodic-memory: embedding model not fetched; the sync continues without embeddings. ${error.message}`);
     }

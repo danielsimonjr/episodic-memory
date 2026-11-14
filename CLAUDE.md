@@ -30,8 +30,8 @@ Carry these against upstream `1.4.1`. Each is a real bug; PRs filed at
 
 | Patch | Commit | What it fixes |
 |---|---|---|
-| **Wrapper sentinel check** | `443db0e` | Partial `node_modules` extracts (better-sqlite3 missing native binding) slip past `existsSync(node_modules)`. Wrapper now verifies sentinel files before declaring deps healthy. The check now covers `@huggingface/transformers`, `onnxruntime-common` and the `onnxruntime-node` binding. |
-| **`onnxruntime-common` hoist** | `443db0e` | `@huggingface/transformers@4.2.0` directly imports `onnxruntime-common` but doesn't declare it as a direct dep. npm doesn't hoist it because conflicting versions nested under `onnxruntime-node` + `onnxruntime-web`. Adding it as a top-level dep restores ESM resolution. The `onnxruntime-web` override now installs a stub with no dependencies, so at most `onnxruntime-node` nests a copy; the top-level dep stays. |
+| **Wrapper sentinel check** | `443db0e` | Partial `node_modules` extracts (better-sqlite3 missing native binding) slip past `existsSync(node_modules)`. Wrapper now verifies sentinel files before declaring deps healthy. The check now covers `@huggingface/tokenizers`, `onnxruntime-common` and the `onnxruntime-node` binding. |
+| **`onnxruntime-common` top-level dep** | `443db0e` | The fork runs the model with `onnxruntime-node` directly and has no `@huggingface/transformers`. `onnxruntime-common` stays a top-level dependency at the version of `onnxruntime-node`, so one copy resolves and the embedding stamp reads one version. |
 | **Windows path-split** | `6cadc20` | `parseConversationFile` used `filePath.split('/')` — broken on Windows backslash paths. Every conversation ended up `project='unknown'`. Now uses `path.basename(path.dirname(filePath))`. |
 | **stdio log corruption** | `6cadc20` | 5 `console.log` calls in `migrateSchema`/`migrateToolCallsCascade` fire to **stdout** during MCP startup, corrupting JSON-RPC. Switched to `console.error`. |
 | **`read` tool path hardening** | `6cadc20` | The MCP `read` tool accepted arbitrary absolute paths with only `existsSync` — prompt-injection arbitrary file read. Now confined to inside `getArchiveDir()` and `.jsonl` extension. |
@@ -59,7 +59,7 @@ dependency, no `MEMORY_*` environment handling and no per-handle cache. Each ope
 src/
   embeddings.ts          # encoder pipeline; query/exchange embedders
   embedding-migration.ts # version constant + lock + batch migration
-  embedding-stack.ts     # installed transformers/onnxruntime versions; a changed stack marks every row stale
+  embedding-stack.ts     # installed onnxruntime/tokenizers versions + the model pin; a changed stamp marks every row stale
   search.ts              # vector + text search; multi-concept aggregation
   sqlite.ts              # node:sqlite adapter with the better-sqlite3 method names; the only importer of node:sqlite
   indexer.ts             # incremental index from sources to exchange_vectors
@@ -112,8 +112,6 @@ cli/
   forward-child.js       # runs one script as a child; a signal stop exits 1; runChild waits for the child; shared by the entry points
   *.js                   # subcommand entry points
 
-vendor/
-  onnxruntime-web-stub/  # the package that the onnxruntime-web override points at; never published, its main file throws
 
 scripts/
   bump-version.sh        # version bumper with drift audit
@@ -223,7 +221,7 @@ Dynamic imports load these modules only inside a branch:
 
 `topic-tool.ts` is imported lazily, like `skills-tool.ts`. `fts-query.ts` and `topic-time.ts` are already eager. The topic branch adds nothing to them. `mcp-schemas.ts` imports only `topic-time.ts` eagerly.
 
-`embeddings.ts` imports `@huggingface/transformers` with `await import()` inside `initEmbeddings`. The bundle keeps the package external, so a static import there becomes a top-level import of `dist/mcp-server.js`. Every server start would then load transformers and its native bindings. `test/mcp-protocol.test.ts` fails when the server resolves the package at start or for a text search.
+`embeddings.ts` imports `onnxruntime-node` and `@huggingface/tokenizers` with `await import()` inside `initEmbeddings`. The bundle keeps both packages external, so a static import there becomes a top-level import of `dist/mcp-server.js`. Every server start would then load the native binding of the runtime. `test/mcp-protocol.test.ts` fails when the server resolves the package at start or for a text search.
 
 CLI files use some modules that the server never loads, for example `indexer.ts`, `sync.ts` and `learn/cli-main.ts`. These modules can use `console.log`.
 
@@ -436,8 +434,9 @@ Most common cause on a fresh install: the wrapper's `npm install` didn't fully p
 ```bash
 cd ~/.claude/plugins/cache/<marketplace>/episodic-memory/<version>
 npm install --omit=dev --no-audit --no-fund
-# If transformers errors on onnxruntime-common:
-npm install --no-save onnxruntime-common@1.24.3
+# If the model is missing or a file has the wrong hash (vector search then fails loudly):
+node cli/episodic-memory.js model status
+node cli/episodic-memory.js model fetch
 # If the first search fails because onnxruntime_binding.node is missing (npm does not restore one file):
 rm -rf node_modules/onnxruntime-node && npm install --omit=dev --no-audit --no-fund
 ```

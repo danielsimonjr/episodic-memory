@@ -8,7 +8,7 @@ export { EmbeddingsUnavailableError };
  * The embedding model: bge-small-en-v1.5, from the Xenova ONNX export, with the `q8` data type.
  *
  * The model produces 384-dimensional vectors, which the exchange_vectors table expects.
- * The code runs the model once per text with onnxruntime-node. It tokenizes with @huggingface/tokenizers.
+ * The code runs the model once per text with onnxruntime-node. The code tokenizes with @huggingface/tokenizers.
  * The query embedder adds BGE_QUERY_PREFIX before the embedder embeds a query. The passage embedders do not.
  * See `withQueryPrefix` and `generateQueryEmbedding`.
  */
@@ -33,7 +33,7 @@ let runtimeLoad = null;
 export async function initEmbeddings() {
     await getRuntime();
 }
-/** Return the one runtime of this process. The first call starts the load, and overlapping calls share it. */
+/** Return the one runtime of this process. The first call starts the load, and overlapping calls share that load. */
 function getRuntime() {
     if (!runtimeLoad) {
         runtimeLoad = loadRuntime().then(runtime => {
@@ -49,7 +49,7 @@ function getRuntime() {
 /**
  * Check the model files, then create the ONNX session and the tokenizer.
  *
- * The model files are never downloaded here. A search or an index run on a host without the files fails at once.
+ * This module never downloads the model files. A search or an index run on a host without the files fails at once.
  *
  * @throws EmbeddingsUnavailableError when a file is missing or the runtime does not load. `cause` holds the load error.
  */
@@ -89,13 +89,13 @@ function truncateForEmbed(text) {
 /**
  * Embed one text with the runtime. The function runs the model on this text only, with no padding.
  *
- * The function keeps the first 512 token ids. It takes the mean over the tokens and normalizes the result to length 1.
+ * The function keeps the first 512 token ids. The function takes the mean over the tokens and normalizes the result to length 1.
  */
 async function embedOne(runtime, text) {
     const ids = runtime.tokenizer.encode(text).ids.slice(0, MAX_TOKENS);
     const n = ids.length;
     const { ort, session } = runtime;
-    // The three input arrays are built once for this text. Every array has n entries.
+    // The function builds the three input arrays once for this text. Every array has n entries.
     const inputIds = BigInt64Array.from(ids, (v) => BigInt(v));
     const attentionMask = new BigInt64Array(n).fill(1n);
     const tokenTypeIds = new BigInt64Array(n);

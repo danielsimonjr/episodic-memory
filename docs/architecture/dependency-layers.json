@@ -1,7 +1,7 @@
 {
   "metadata": {
     "name": "episodic-memory",
-    "version": "1.13.0",
+    "version": "1.14.0",
     "schemaVersion": "2.0.0",
     "language": "typescript"
   },
@@ -706,7 +706,7 @@
           {
             "file": "./embedding-stack.js",
             "imports": [
-              "readEmbeddingStack",
+              "embeddingStamp",
               "stampEmptyIndex"
             ]
           },
@@ -1504,6 +1504,14 @@
             ]
           },
           {
+            "file": "./embedding-model.js",
+            "imports": [
+              "FETCH_FAILED_MARKER",
+              "modelDir",
+              "modelState"
+            ]
+          },
+          {
             "file": "./node-floor.js",
             "imports": [
               "assertNodeFloor"
@@ -1528,6 +1536,7 @@
         "interfaces": [
           "CodexDoctorInputs",
           "DoctorReport",
+          "ModelDoctorSection",
           "DoctorInputs",
           "StructuredDoctorReport"
         ],
@@ -1599,6 +1608,106 @@
           "EMBEDDING_VERSION"
         ]
       },
+      "src/embedding-model.ts": {
+        "description": "The embedding model files: their pinned identity, their location, their check and their download.",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "crypto",
+            "imports": [
+              "createHash",
+              "randomBytes"
+            ]
+          },
+          {
+            "module": "fs",
+            "imports": [
+              "closeSync",
+              "createWriteStream",
+              "existsSync",
+              "mkdirSync",
+              "openSync",
+              "readdirSync",
+              "readSync",
+              "rmSync",
+              "statSync",
+              "writeFileSync"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "dirname",
+              "join"
+            ]
+          },
+          {
+            "module": "stream",
+            "imports": [
+              "Readable"
+            ]
+          },
+          {
+            "module": "stream/promises",
+            "imports": [
+              "pipeline"
+            ]
+          },
+          {
+            "module": "stream/web",
+            "imports": [
+              "ReadableStream"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "./paths.js",
+            "imports": [
+              "superpowersDirPath"
+            ]
+          },
+          {
+            "file": "./fs-retry.js",
+            "imports": [
+              "renameWithRetry"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "EMBEDDING_MODEL",
+          "FETCH_COMMAND",
+          "FETCH_FAILED_MARKER",
+          "FETCH_RETRY_MS",
+          "EmbeddingsUnavailableError",
+          "modelDir",
+          "modelState",
+          "ensureModel",
+          "fetchModelForSync"
+        ],
+        "classes": [
+          "EmbeddingsUnavailableError"
+        ],
+        "interfaces": [
+          "ModelFile",
+          "ModelSpec",
+          "ModelStateResult",
+          "EnsureModelOptions"
+        ],
+        "functions": [
+          "modelDir",
+          "modelState",
+          "ensureModel",
+          "fetchModelForSync"
+        ],
+        "constants": [
+          "EMBEDDING_MODEL",
+          "FETCH_COMMAND",
+          "FETCH_FAILED_MARKER",
+          "FETCH_RETRY_MS"
+        ]
+      },
       "src/embedding-stack.ts": {
         "description": "The installed versions of the embedding stack, and the stamp that records them in the index.",
         "externalDependencies": [],
@@ -1630,17 +1739,25 @@
               "Database"
             ],
             "typeOnly": true
+          },
+          {
+            "file": "./embedding-model.js",
+            "imports": [
+              "EMBEDDING_MODEL"
+            ]
           }
         ],
         "workspaceDependencies": [],
         "exports": [
           "EMBEDDING_STACK_PACKAGES",
           "readEmbeddingStack",
+          "embeddingStamp",
           "reconcileEmbeddingStack",
           "stampEmptyIndex"
         ],
         "functions": [
           "readEmbeddingStack",
+          "embeddingStamp",
           "reconcileEmbeddingStack",
           "stampEmptyIndex"
         ],
@@ -1652,13 +1769,32 @@
         "description": "The embedding model: bge-small-en-v1.5, from the Xenova ONNX export, with the `q8` data type.",
         "externalDependencies": [
           {
-            "package": "@huggingface/transformers",
+            "package": "onnxruntime-node",
             "imports": [
-              "FeatureExtractionPipeline"
+              "InferenceSession"
+            ]
+          },
+          {
+            "package": "@huggingface/tokenizers",
+            "imports": [
+              "Tokenizer"
             ]
           }
         ],
-        "nodeDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "readFileSync"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "join"
+            ]
+          }
+        ],
         "internalDependencies": [
           {
             "file": "./redact.js",
@@ -1671,13 +1807,22 @@
             "imports": [
               "truncateForIndex"
             ]
+          },
+          {
+            "file": "./embedding-model.js",
+            "imports": [
+              "EMBEDDING_MODEL",
+              "EmbeddingsUnavailableError",
+              "ensureModel",
+              "modelDir"
+            ]
           }
         ],
         "workspaceDependencies": [],
         "exports": [
+          "EmbeddingsUnavailableError",
           "BGE_QUERY_PREFIX",
           "initEmbeddings",
-          "EmbeddingsUnavailableError",
           "generateEmbeddings",
           "generateEmbedding",
           "withQueryPrefix",
@@ -1685,9 +1830,6 @@
           "formatExchangeEmbeddingText",
           "generateExchangeEmbedding",
           "generateExchangeEmbeddings"
-        ],
-        "classes": [
-          "EmbeddingsUnavailableError"
         ],
         "functions": [
           "initEmbeddings",
@@ -2361,6 +2503,45 @@
         ],
         "functions": [
           "handleToolCall"
+        ]
+      },
+      "src/model-cli.ts": {
+        "description": "The `episodic-memory model` subcommand: `fetch` downloads the embedding model, `status` reports its files.",
+        "externalDependencies": [],
+        "nodeDependencies": [
+          {
+            "module": "fs",
+            "imports": [
+              "existsSync",
+              "rmSync"
+            ]
+          },
+          {
+            "module": "path",
+            "imports": [
+              "join"
+            ]
+          }
+        ],
+        "internalDependencies": [
+          {
+            "file": "./embedding-model.js",
+            "imports": [
+              "EMBEDDING_MODEL",
+              "FETCH_COMMAND",
+              "FETCH_FAILED_MARKER",
+              "ensureModel",
+              "modelDir",
+              "modelState"
+            ]
+          }
+        ],
+        "workspaceDependencies": [],
+        "exports": [
+          "main"
+        ],
+        "functions": [
+          "main"
         ]
       },
       "src/node-floor.ts": {
@@ -3204,6 +3385,12 @@
           },
           {
             "file": "./topic-phase.js",
+            "imports": [
+              "*"
+            ]
+          },
+          {
+            "file": "./embedding-model.js",
             "imports": [
               "*"
             ]
@@ -6277,16 +6464,6 @@
           "validateCandidate"
         ]
       }
-    },
-    "vendor/onnxruntime-web-stub": {
-      "vendor/onnxruntime-web-stub/index.js": {
-        "description": "The node build of @huggingface/transformers does not import onnxruntime-web, so this onnxruntime-web",
-        "externalDependencies": [],
-        "nodeDependencies": [],
-        "internalDependencies": [],
-        "workspaceDependencies": [],
-        "exports": []
-      }
     }
   },
   "cyclicComponents": {
@@ -6348,6 +6525,7 @@
         "src/doctor-learn.ts",
         "src/doctor.ts",
         "src/embedding-migration.ts",
+        "src/embedding-model.ts",
         "src/embedding-stack.ts",
         "src/embeddings.ts",
         "src/exclusion-marker.ts",
@@ -6364,6 +6542,7 @@
         "src/mcp-schemas.ts",
         "src/mcp-server.ts",
         "src/mcp-tools.ts",
+        "src/model-cli.ts",
         "src/node-floor.ts",
         "src/ollama-backend.ts",
         "src/orphan-reaper.ts",
@@ -6439,12 +6618,6 @@
         "src/learn/types.ts",
         "src/learn/usage.ts",
         "src/learn/validate.ts"
-      ]
-    },
-    {
-      "name": "Vendor/onnxruntime-web-stub",
-      "files": [
-        "vendor/onnxruntime-web-stub/index.js"
       ]
     }
   ]

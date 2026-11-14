@@ -258,9 +258,28 @@ Backfill selects conversations with no summary, or with an empty summary that no
 | Component | Uses custom config? |
 |-----------|---------------------|
 | Summarization | Yes (up to 10 calls/sync) |
-| Embeddings | No (local Transformers.js) |
+| Embeddings | No (local ONNX Runtime) |
 | Search | No (local SQLite) |
 | MCP tools | No |
+
+## Embedding model
+
+Vector search uses `Xenova/bge-small-en-v1.5` (q8, 384 dimensions). `onnxruntime-node` runs the model and `@huggingface/tokenizers` splits the text. The code pins the model by revision and by the sha256 of each of its three files (`src/embedding-model.ts`).
+
+- The sync downloads the model once (about 35 MB). A search or an MCP server start never downloads the model.
+- When the model is missing or a file has the wrong hash, a vector search fails with the path, the expected hash and the command to run. A `both` search then returns the text results only.
+- After a failed download, the sync waits 24 hours before the next attempt. `model fetch` tries at once.
+
+```bash
+episodic-memory model status   # the folder, and each file that is missing or bad
+episodic-memory model fetch    # download and check the missing files
+```
+
+| Variable | Default | Effect |
+|---|---|---|
+| `EPISODIC_MEMORY_MODEL_DIR` | `models/<repo>/<revision>` in the config folder (`EPISODIC_MEMORY_CONFIG_DIR`) | Where the model files are kept |
+| `EPISODIC_MEMORY_MODEL_OFFLINE` | unset | `1` turns off every download |
+| `HF_ENDPOINT` | `https://huggingface.co` | A mirror of the Hugging Face hub |
 
 ## Session Digest
 
@@ -591,7 +610,7 @@ Regenerate the generated files with `repo-tools map . --out=docs/architecture`. 
 
 1. **Sync** - Copies conversation files from Claude Code and Codex transcript directories to archive
 2. **Parse** - Extracts user-agent exchanges from Claude Code JSONL or Codex rollout JSONL
-3. **Embed** - Generates vector embeddings using Transformers.js (local, offline)
+3. **Embed** - Generates vector embeddings with ONNX Runtime (local, offline; see [Embedding model](#embedding-model))
 4. **Index** - Stores in SQLite, with an exact vector scan for similarity search
 5. **Search** - Semantic search using vector similarity or exact text matching
 6. **Learn** (optional) - generates practice tasks, grades its answers against archive addresses, and keeps only validated, cited hints

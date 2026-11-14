@@ -1,7 +1,7 @@
 /**
  * The `episodic-memory model` subcommand: `fetch` downloads the embedding model, `status` reports its files.
  *
- * This is a CLI entry point. It may write to stdout. The MCP server never loads this module.
+ * This module is a CLI entry point. The module can write to stdout. The MCP server never loads this module.
  */
 import { existsSync, rmSync } from 'node:fs';
 import { join } from 'node:path';

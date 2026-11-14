@@ -54,7 +54,7 @@ From recent commit history, open issues, and label set:
 | **Cross-harness support** | v1.3.0 added Codex; cross-harness recall is a strong upstream theme | **Follow + contribute** |
 | **Sync correctness** | v1.4.1 fixed zero-exchange drain; #92 open on cross-project summarization | **Follow upstream + watch on Windows** |
 | **Search quality** | #74 wants summaries-always-in-search; #46 explores LEANN | **Fork experiment candidate** (see [focus-areas/search-quality.md](focus-areas/search-quality.md)) |
-| **Embedding model** | No bumps signaled; pinned to Xenova MiniLM-L6 currently | **Fork experiment candidate** (alternate models, see [focus-areas/embeddings.md](focus-areas/embeddings.md)) |
+| **Embedding model** | Xenova bge-small-en-v1.5 q8, run with `onnxruntime-node` directly and pinned by revision and sha256 | **Fork experiment candidate** (alternate models, see [focus-areas/embeddings.md](focus-areas/embeddings.md)) |
 | **Sync alternatives** | #44 explores AWS Bedrock | **Watch upstream; contribute if direction matches** |
 | **Observability** | #45 wants debug logs | **Fork-specific** — Windows debug story matters here |
 | **Build/packaging** | v1.4.1 wrapper improvements; #86 fixed npm install flags | **Fork drove this** — sentinel check is the next iteration |

@@ -6,8 +6,8 @@
 
 ## Where we are
 
-- **Model:** `Xenova/all-MiniLM-L6-v2` via `@huggingface/transformers`
-- **Size on disk:** ~80 MB
+- **Model:** `Xenova/bge-small-en-v1.5` (q8), run with `onnxruntime-node` and `@huggingface/tokenizers`, pinned by revision and sha256 in `src/embedding-model.ts`
+- **Size on disk:** ~34 MB (the q8 ONNX file)
 - **Dimensions:** 384
 - **Pooling:** mean
 - **Normalization:** L2 (writer-side), so distance can be converted to cosine similarity via the identity in `search.ts:l2DistanceToCosineSimilarity`

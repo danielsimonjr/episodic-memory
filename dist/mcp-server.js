@@ -383,15 +383,19 @@ function sha256Of(path5) {
   return hash2.digest("hex");
 }
 function fileMatches(path5, file2) {
-  if (!existsSync(path5)) return false;
-  const stat = statSync(path5);
-  if (stat.size !== file2.size) return false;
-  const key = `${path5}|${stat.size}|${stat.mtimeMs}|${file2.sha256}`;
-  const cached2 = verifiedCache.get(key);
-  if (cached2 !== void 0) return cached2;
-  const matches = sha256Of(path5) === file2.sha256;
-  verifiedCache.set(key, matches);
-  return matches;
+  try {
+    if (!existsSync(path5)) return false;
+    const stat = statSync(path5);
+    if (!stat.isFile() || stat.size !== file2.size) return false;
+    const key = `${path5}|${stat.size}|${stat.mtimeMs}|${file2.sha256}`;
+    const cached2 = verifiedCache.get(key);
+    if (cached2 !== void 0) return cached2;
+    const matches = sha256Of(path5) === file2.sha256;
+    verifiedCache.set(key, matches);
+    return matches;
+  } catch {
+    return false;
+  }
 }
 function modelState(options = {}) {
   const spec = options.spec ?? EMBEDDING_MODEL;

@@ -8,11 +8,11 @@
 
 | Metric | Count |
 |--------|-------|
-| Total Source Files | 116 |
-| Total Test Files | 191 |
-| Source Files with Tests | 94 |
+| Total Source Files | 117 |
+| Total Test Files | 192 |
+| Source Files with Tests | 95 |
 | Source Files without Tests | 22 |
-| Coverage (raw, direct-import) | **81.0%** |
+| Coverage (raw, direct-import) | **81.2%** |
 ---
 
 ## Source Files Not Imported By A Test
@@ -35,6 +35,7 @@ The following 22 source files are not directly imported by any test file:
 - `src/index.ts`
 - `src/learn-cli.ts`
 - `src/mcp-server.ts`
+- `src/model-cli.ts`
 - `src/search-cli.ts`
 - `src/show-cli.ts`
 - `src/stats-cli.ts`
@@ -45,10 +46,6 @@ The following 22 source files are not directly imported by any test file:
 ### learn/
 
 - `src/learn/pii-redactor.ts`
-
-### onnxruntime-web-stub/
-
-- `vendor/onnxruntime-web-stub/index.js`
 
 ---
 
@@ -81,8 +78,9 @@ The following 22 source files are not directly imported by any test file:
 | `src/doctor-learn.ts` | `doctor.test.ts` |
 | `src/doctor.ts` | `codex-doctor.test.ts`, `doctor.test.ts` |
 | `src/embedding-migration.ts` | `embedding-migration-helpers.test.ts`, `embedding-migration.test.ts`, `exchange-vectors.test.ts` |
+| `src/embedding-model.ts` | `embedding-model.test.ts`, `global-setup.test.ts` |
 | `src/embedding-stack.ts` | `install-versions.test.ts`, `embedding-stack.test.ts` |
-| `src/embeddings.ts` | `embedding-migration.test.ts`, `embeddings-format.test.ts`, `embeddings-unavailable.test.ts`, `index-honours-marker.test.ts`, `indexer-db-close.test.ts`, `integration.test.ts`, `multi-concept.test.ts`, `query-prefix.test.ts`, `search-embeddings-unavailable.test.ts`, `search-text-row-similarity.test.ts`, `sync-embeddings-unavailable.test.ts`, `sync-marker-scan.test.ts`, `vector-search-filters.test.ts`, `verify.test.ts` |
+| `src/embeddings.ts` | `embedding-migration.test.ts`, `embedding-model.test.ts`, `embedding-parity.test.ts`, `embeddings-format.test.ts`, `embeddings-unavailable.test.ts`, `index-honours-marker.test.ts`, `indexer-db-close.test.ts`, `integration.test.ts`, `multi-concept.test.ts`, `query-prefix.test.ts`, `search-embeddings-unavailable.test.ts`, `search-text-row-similarity.test.ts`, `sync-embeddings-unavailable.test.ts`, `sync-marker-scan.test.ts`, `vector-search-filters.test.ts`, `verify.test.ts` |
 | `src/exclusion-marker.ts` | `sync-marker-scan.test.ts` |
 | `src/fs-retry.ts` | `sync-copy-retry.test.ts` |
 | `src/gpu-reservation.ts` | `gpu-reservation.test.ts` |
@@ -211,6 +209,8 @@ The following 22 source files are not directly imported by any test file:
 | `e2e/smoke.test.ts` | 1 files |
 | `test/embedding-migration-helpers.test.ts` | 3 files |
 | `test/embedding-migration.test.ts` | 3 files |
+| `test/embedding-model.test.ts` | 2 files |
+| `test/embedding-parity.test.ts` | 1 files |
 | `test/embedding-stack.test.ts` | 3 files |
 | `test/embeddings-format.test.ts` | 2 files |
 | `test/embeddings-unavailable.test.ts` | 1 files |
@@ -218,7 +218,7 @@ The following 22 source files are not directly imported by any test file:
 | `test/ensure-deps-repair.test.ts` | 2 files |
 | `test/exchange-vectors.test.ts` | 5 files |
 | `test/exclude-nested.test.ts` | 3 files |
-| `test/global-setup.test.ts` | 0 files |
+| `test/global-setup.test.ts` | 1 files |
 | `test/gpu-reservation.test.ts` | 2 files |
 | `test/hooks.test.ts` | 0 files |
 | `test/incremental-indexing.test.ts` | 2 files |
@@ -280,7 +280,6 @@ The following 22 source files are not directly imported by any test file:
 | `test/node-floor.test.ts` | 1 files |
 | `test/ollama-backend.test.ts` | 1 files |
 | `test/ollama-plain-reply.test.ts` | 2 files |
-| `test/onnxruntime-web-stub.test.ts` | 0 files |
 | `test/orphan-reaper.test.ts` | 1 files |
 | `test/oversized-message-guard.test.ts` | 4 files |
 | `test/parser-tool-result.test.ts` | 1 files |

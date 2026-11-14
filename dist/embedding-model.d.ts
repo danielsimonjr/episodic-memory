@@ -10,7 +10,7 @@ export interface ModelSpec {
     revision: string;
     files: ModelFile[];
 }
-/** The embedding model that the index is built with. This is the one source of the model identity. */
+/** The embedding model that the index is built with. `EMBEDDING_MODEL` is the one source of the model identity. */
 export declare const EMBEDDING_MODEL: ModelSpec;
 /** The command that downloads the model when a file is missing. */
 export declare const FETCH_COMMAND = "episodic-memory model fetch";
@@ -34,7 +34,7 @@ export interface ModelStateResult {
     state: 'ready' | 'missing';
     bad: string[];
 }
-/** The function that renames a downloaded file into place. Tests replace it. */
+/** The function that renames a downloaded file into place. Tests replace this function. */
 export type RenameFn = (from: string, to: string) => void;
 /** The options of `ensureModel`. */
 export interface EnsureModelOptions {
@@ -47,7 +47,7 @@ export interface EnsureModelOptions {
 /**
  * Return the folder that holds the model files.
  *
- * The folder is `EPISODIC_MEMORY_MODEL_DIR` when that variable is set. Otherwise it is
+ * The folder is `EPISODIC_MEMORY_MODEL_DIR` when that variable is set. Otherwise the folder is
  * `<superpowers dir>/models/<repo>/<revision>`, which lives outside `node_modules`.
  */
 export declare function modelDir(): string;
@@ -75,10 +75,10 @@ export declare function ensureModel(options: EnsureModelOptions): Promise<void>;
 /**
  * Fetch the model during a sync, with the retry rule of the sync.
  *
- * The function does nothing when the files are ready. It does nothing when a failed download
+ * The function does nothing when the files are ready. The function also does nothing when a failed download
  * left its marker less than `FETCH_RETRY_MS` ago. A failed download writes one stderr line and the
  * marker, and the sync continues without embeddings. The function catches only
- * `EmbeddingsUnavailableError`. Any other error is a defect, and the function rethrows it.
+ * `EmbeddingsUnavailableError`. Any other error is a defect, and the function rethrows the error.
  *
  * @throws Error when the error is not an EmbeddingsUnavailableError
  */

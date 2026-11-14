@@ -14,6 +14,7 @@
 - The dependency check of the plugin wrapper (`src/deps-health.ts`) looks for `@huggingface/tokenizers` in place of transformers. With the old sentinel, a tree without transformers counted as incomplete, and the wrapper ran `npm install --omit=dev` in the plugin root.
 
 ### Added
+- README section "Embedding model": the model pin, who downloads it, `model status` and `model fetch`, and the three variables. `API.md`, `COMPONENTS.md` and `CLAUDE.md` describe the direct ONNX Runtime pipeline; the CI audit comment names the packages that hold the open high advisories.
 
 - `episodic-memory model fetch` and `episodic-memory model status`. `doctor` reports the model state and the fetch marker.
 

@@ -7,12 +7,12 @@
 ## Summary
 
 - **Files with no in-repo importer**: 14
-- **Dormant files**: 61
+- **Dormant files**: 60
   - **Orphaned (reachable from nothing)**: 15
-  - **Test-only (only a test reaches them)**: 46
-- **Potentially unused exports**: 117
+  - **Test-only (only a test reaches them)**: 45
+- **Potentially unused exports**: 119
   - **Unreferenced anywhere**: 4
-  - **Referenced in their own module**: 113
+  - **Referenced in their own module**: 115
   - **Not classified**: 0
 
 ## Caveats
@@ -37,11 +37,11 @@ Source files that no root and no test reaches. Verify each one before you delete
 - `src/backfill-cli.ts`
 - `src/doctor-cli.ts`
 - `src/learn-cli.ts`
+- `src/model-cli.ts`
 - `src/search-cli.ts`
 - `src/show-cli.ts`
 - `src/stats-cli.ts`
 - `src/sync-cli.ts`
-- `vendor/onnxruntime-web-stub/index.js`
 
 ## Dormant files: test-only
 
@@ -58,7 +58,6 @@ Source files that only a test reaches. They ship nothing, but a test uses them.
 - `src/digest-prompts.ts`
 - `src/doctor-learn.ts`
 - `src/doctor.ts`
-- `src/fs-retry.ts`
 - `src/learn/agent-runner.ts`
 - `src/learn/bootstrap.ts`
 - `src/learn/cited-ids.ts`
@@ -107,11 +106,11 @@ No file of this repository imports these files. Do not use the list as a deletio
 - `src/backfill-cli.ts`
 - `src/doctor-cli.ts`
 - `src/learn-cli.ts`
+- `src/model-cli.ts`
 - `src/search-cli.ts`
 - `src/show-cli.ts`
 - `src/stats-cli.ts`
 - `src/sync-cli.ts`
-- `vendor/onnxruntime-web-stub/index.js`
 
 ## Exports unreferenced anywhere
 
@@ -139,7 +138,7 @@ No other file imports these names, but their own module uses them.
 - `src/digest-prompts.ts`: `BuiltPrompt`
 - `src/digest-validate.ts`: `CitedLines`
 - `src/doctor-learn.ts`: `LearnEntryCounts`, `LearnLatestRunSummary`
-- `src/doctor.ts`: `CodexDoctorInputs`, `DoctorInputs`, `DoctorReport`, `StructuredDoctorReport`
+- `src/doctor.ts`: `CodexDoctorInputs`, `DoctorInputs`, `DoctorReport`, `ModelDoctorSection`, `StructuredDoctorReport`
 - `src/gpu-reservation.ts`: `GpuReservation`
 - `src/learn/agent-runner.ts`: `AgentRunOptions`, `AgentRunResult`, `BuildAgentQueryOptionsArgs`, `DISALLOWED_TOOLS`, `ProcessLister`, `addressFromResultText`, `isAgentSpawnTree`, `looksKilled`
 - `src/learn/cited-ids.ts`: `DropReason`, `IdCitedLines`
@@ -164,6 +163,7 @@ No other file imports these names, but their own module uses them.
 - `src/learn/validate.ts`: `ValidateOptions`, `ValidationResult`
 - `src/logging.ts`: `LogLevel`
 - `src/mcp-schemas.ts`: `ResponseFormatEnum`, `SearchModeEnum`, `TopicsActionEnum`
+- `src/model-cli.ts`: `main`
 - `src/prune.ts`: `PruneOptions`, `PruneResult`
 - `src/stats.ts`: `IndexStats`
 - `src/summary-sentinel.ts`: `summaryFailPathFor`, `summaryPathFor`

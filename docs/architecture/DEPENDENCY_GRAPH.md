@@ -4,7 +4,7 @@
 
 # episodic-memory - Dependency Graph
 
-**Version**: 1.13.0
+**Version**: 1.14.0
 
 This document provides a comprehensive dependency graph of all files, components, imports, functions, and variables in the codebase.
 
@@ -18,11 +18,10 @@ This document provides a comprehensive dependency graph of all files, components
 4. [Root Dependencies](#root-dependencies)
 5. [Entry Dependencies](#entry-dependencies)
 6. [Learn Dependencies](#learn-dependencies)
-7. [Vendor/onnxruntime web stub Dependencies](#vendor-onnxruntime-web-stub-dependencies)
-8. [Dependency Matrix](#dependency-matrix)
-9. [Circular Dependency Analysis](#circular-dependency-analysis)
-10. [Visual Dependency Graph](#visual-dependency-graph)
-11. [Summary Statistics](#summary-statistics)
+7. [Dependency Matrix](#dependency-matrix)
+8. [Circular Dependency Analysis](#circular-dependency-analysis)
+9. [Visual Dependency Graph](#visual-dependency-graph)
+10. [Summary Statistics](#summary-statistics)
 
 ---
 
@@ -32,10 +31,9 @@ This document provides a comprehensive dependency graph of all files, components
 The codebase is organized into the following modules:
 
 - **cli**: 8 files
-- **root**: 74 files
+- **root**: 76 files
 - **entry**: 1 file
 - **learn**: 32 files
-- **vendor/onnxruntime-web-stub**: 1 file
 
 ---
 
@@ -314,7 +312,7 @@ The codebase is organized into the following modules:
 | `./types.js` | `ConversationExchange` | Import |
 | `./paths.js` | `getDbPath, tryChmod` | Import |
 | `./embedding-migration.js` | `EMBEDDING_VERSION` | Import |
-| `./embedding-stack.js` | `readEmbeddingStack, stampEmptyIndex` | Import |
+| `./embedding-stack.js` | `embeddingStamp, stampEmptyIndex` | Import |
 | `./constants.js` | `truncateForIndex` | Import |
 | `./redact.js` | `maybeRedactSecrets` | Import |
 | `./digest-db.js` | `ensureDigestSchema` | Import |
@@ -574,11 +572,12 @@ The codebase is organized into the following modules:
 | `./paths.js` | `archiveDirPath, getDbPath, indexDirPath, superpowersDirPath` | Import |
 | `./logging.js` | `syncErrorsLogPath, syncLogPath` | Import |
 | `./deps-health.js` | `nodeModulesIsHealthy` | Import |
+| `./embedding-model.js` | `FETCH_FAILED_MARKER, modelDir, modelState` | Import |
 | `./node-floor.js` | `assertNodeFloor` | Import |
 | `./doctor-learn.js` | `LearnDoctorSection, collectLearnDoctorSection` | Import |
 
 **Exports:**
-- Interfaces: `CodexDoctorInputs`, `DoctorReport`, `DoctorInputs`, `StructuredDoctorReport`
+- Interfaces: `CodexDoctorInputs`, `DoctorReport`, `ModelDoctorSection`, `DoctorInputs`, `StructuredDoctorReport`
 - Functions: `buildCodexDoctorReport`, `readRecentLogErrors`, `collectDoctorSnapshot`, `formatSqliteLine`, `buildDoctorReport`
 
 ---
@@ -605,6 +604,33 @@ The codebase is organized into the following modules:
 
 ---
 
+### `src/embedding-model.ts` - The embedding model files: their pinned identity, their location, their check and their download.
+
+**Node.js Built-in Dependencies:**
+| Module | Import |
+|--------|--------|
+| `crypto` | `createHash, randomBytes` |
+| `fs` | `closeSync, createWriteStream, existsSync, mkdirSync, openSync, readdirSync, readSync, rmSync, statSync, writeFileSync` |
+| `path` | `dirname, join` |
+| `stream` | `Readable` |
+| `stream/promises` | `pipeline` |
+| `stream/web` | `ReadableStream` |
+
+**Internal Dependencies:**
+| File | Imports | Type |
+|------|---------|------|
+| `./paths.js` | `superpowersDirPath` | Import |
+| `./fs-retry.js` | `renameWithRetry` | Import |
+
+**Exports:**
+- Classes: `EmbeddingsUnavailableError`
+- Interfaces: `ModelFile`, `ModelSpec`, `ModelStateResult`, `EnsureModelOptions`
+- Types: `RenameFn`
+- Functions: `modelDir`, `modelState`, `ensureModel`, `fetchModelForSync`
+- Constants: `EMBEDDING_MODEL`, `FETCH_COMMAND`, `FETCH_FAILED_MARKER`, `FETCH_RETRY_MS`
+
+---
+
 ### `src/embedding-stack.ts` - The installed versions of the embedding stack, and the stamp that records them in the index.
 
 **Node.js Built-in Dependencies:**
@@ -618,9 +644,10 @@ The codebase is organized into the following modules:
 | File | Imports | Type |
 |------|---------|------|
 | `./sqlite.js` | `Database` | Import (type-only) |
+| `./embedding-model.js` | `EMBEDDING_MODEL` | Import |
 
 **Exports:**
-- Functions: `readEmbeddingStack`, `reconcileEmbeddingStack`, `stampEmptyIndex`
+- Functions: `readEmbeddingStack`, `embeddingStamp`, `reconcileEmbeddingStack`, `stampEmptyIndex`
 - Constants: `EMBEDDING_STACK_PACKAGES`
 
 ---
@@ -630,16 +657,23 @@ The codebase is organized into the following modules:
 **External Dependencies:**
 | Package | Import |
 |---------|--------|
-| `@huggingface/transformers` | `FeatureExtractionPipeline` |
+| `onnxruntime-node` | `InferenceSession` |
+| `@huggingface/tokenizers` | `Tokenizer` |
+
+**Node.js Built-in Dependencies:**
+| Module | Import |
+|--------|--------|
+| `fs` | `readFileSync` |
+| `path` | `join` |
 
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
 | `./redact.js` | `maybeRedactSecrets` | Import |
 | `./constants.js` | `truncateForIndex` | Import |
+| `./embedding-model.js` | `EMBEDDING_MODEL, EmbeddingsUnavailableError, ensureModel, modelDir` | Import |
 
 **Exports:**
-- Classes: `EmbeddingsUnavailableError`
 - Functions: `initEmbeddings`, `generateEmbeddings`, `generateEmbedding`, `withQueryPrefix`, `generateQueryEmbedding`, `formatExchangeEmbeddingText`, `generateExchangeEmbedding`, `generateExchangeEmbeddings`
 - Constants: `BGE_QUERY_PREFIX`
 
@@ -879,6 +913,24 @@ The codebase is organized into the following modules:
 **Exports:**
 - Interfaces: `McpToolResult`
 - Functions: `handleToolCall`
+
+---
+
+### `src/model-cli.ts` - The `episodic-memory model` subcommand: `fetch` downloads the embedding model, `status` reports its files.
+
+**Node.js Built-in Dependencies:**
+| Module | Import |
+|--------|--------|
+| `fs` | `existsSync, rmSync` |
+| `path` | `join` |
+
+**Internal Dependencies:**
+| File | Imports | Type |
+|------|---------|------|
+| `./embedding-model.js` | `EMBEDDING_MODEL, FETCH_COMMAND, FETCH_FAILED_MARKER, ensureModel, modelDir, modelState` | Import |
+
+**Exports:**
+- Functions: `main`
 
 ---
 
@@ -1197,6 +1249,7 @@ The codebase is organized into the following modules:
 | `./embedding-migration.js` | `*` | Import |
 | `./digest-phase.js` | `*` | Import |
 | `./topic-phase.js` | `*` | Import |
+| `./embedding-model.js` | `*` | Import |
 | `./embedding-stack.js` | `*` | Import |
 
 ---
@@ -2133,14 +2186,6 @@ The codebase is organized into the following modules:
 
 ---
 
-<a id="vendor-onnxruntime-web-stub-dependencies"></a>
-
-## Vendor/onnxruntime web stub Dependencies
-
-### `vendor/onnxruntime-web-stub/index.js` - The node build of @huggingface/transformers does not import onnxruntime-web, so this onnxruntime-web
-
----
-
 <a id="dependency-matrix"></a>
 ## Dependency Matrix
 
@@ -2150,29 +2195,30 @@ The codebase is organized into the following modules:
 |------|--------------|------------|
 | `src/sqlite` | 1 file | 29 files |
 | `src/learn/types` | 2 files | 22 files |
+| `src/paths` | 0 files | 24 files |
 | `src/db` | 8 files | 15 files |
-| `src/paths` | 0 files | 23 files |
 | `src/summarizer` | 10 files | 13 files |
 | `src/learn/cli-main` | 21 files | 1 file |
 | `src/learn/bootstrap` | 15 files | 3 files |
 | `src/learn/learner` | 15 files | 1 file |
 | `src/redact` | 0 files | 16 files |
 | `src/learn/leaf-learner` | 14 files | 1 file |
+| `src/sync-cli` | 15 files | 0 files |
 | `src/sync` | 13 files | 2 files |
 | `src/learn/solver` | 9 files | 5 files |
-| `src/sync-cli` | 14 files | 0 files |
 | `src/topic-job` | 13 files | 1 file |
 | `src/digest-job` | 11 files | 2 files |
 | `src/indexer` | 10 files | 2 files |
 | `src/learn/learning-db` | 3 files | 9 files |
 | `src/mcp-tools` | 10 files | 2 files |
 | `src/types` | 0 files | 12 files |
+| `src/doctor` | 10 files | 1 file |
 | `src/learn/knowledge-db` | 4 files | 7 files |
 | `src/learn/learn-config` | 0 files | 11 files |
 | `src/search` | 7 files | 4 files |
 | `src/constants` | 0 files | 10 files |
 | `src/digest-db` | 2 files | 8 files |
-| `src/doctor` | 9 files | 1 file |
+| `src/embeddings` | 3 files | 7 files |
 | `src/learn/agent-runner` | 5 files | 5 files |
 | `src/learn/knowledge-store` | 4 files | 6 files |
 | `src/learn/learned-block` | 6 files | 4 files |
@@ -2180,7 +2226,6 @@ The codebase is organized into the following modules:
 | `src/learn/tasks` | 8 files | 2 files |
 | `src/learn/validate` | 8 files | 2 files |
 | `src/ollama-backend` | 3 files | 7 files |
-| `src/embeddings` | 2 files | 7 files |
 | `src/index` | 9 files | 0 files |
 | `src/verify` | 8 files | 1 file |
 | `src/learn/export` | 7 files | 1 file |
@@ -2235,7 +2280,7 @@ graph TD
         N15[codex-support]
         N16[constants]
         N17[content-text]
-        N18[...64 more]
+        N18[...66 more]
     end
 
     subgraph Entry
@@ -2254,10 +2299,6 @@ graph TD
         N28[knowledge-gate]
         N29[knowledge-store]
         N30[...22 more]
-    end
-
-    subgraph Vendor/onnxruntime-web-stub
-        N31[index.js]
     end
 
     N2 --> N3
@@ -2291,14 +2332,14 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 323 |
-| Subsystems | 5 |
-| Total Lines of Code | 67496 |
-| Total Exports | 738 |
+| Total Source Files | 325 |
+| Subsystems | 4 |
+| Total Lines of Code | 68355 |
+| Total Exports | 755 |
 | Total Re-exports | 9 |
 | Total Classes | 12 |
-| Total Interfaces | 160 |
-| Total Functions | 423 |
+| Total Interfaces | 165 |
+| Total Functions | 429 |
 | Total Type Guards | 14 |
 | Total Enums | 0 |
 | Type-only Imports | 115 |
@@ -2309,4 +2350,4 @@ graph TD
 
 ---
 
-*Version*: 1.13.0
+*Version*: 1.14.0

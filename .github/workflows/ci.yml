@@ -26,7 +26,7 @@ jobs:
         with:
           bun-version: '1.4.2'
       - run: bun install --frozen-lockfile
-      # Transitive highs in onnxruntime-node/sharp currently have no upstream fix;
+      # Transitive highs (the MCP SDK, body-parser, vite) have no fix in range;
       # fail the job on criticals so new critical CVEs still gate merges.
       - run: bun audit --audit-level=critical
       - run: bun run --if-present typecheck

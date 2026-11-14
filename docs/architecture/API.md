@@ -90,7 +90,8 @@ The dispatcher takes a command as its first argument.
 | `search` | Search from the terminal. `--limit` takes a positive integer. An unknown option exits 2 before any work. |
 | `show` | Print one conversation. `--format markdown` (default) or `--format html`. An unknown option, a second file name or a format other than `markdown` or `html` exits 2 before any work. |
 | `stats` | Print index counts. An argument other than `--help` or `-h` exits 2 before any work. |
-| `doctor` | Check the install, the data and the learned-knowledge store. |
+| `doctor` | Check the install, the data, the embedding model and the learned-knowledge store. |
+| `model` | Subcommands `fetch` and `status`. `fetch` downloads each missing or bad model file and checks its sha256. `status` prints the model folder and each file that is missing or bad. |
 | `backfill` | Summarize archive conversations that `sync` cannot reach. `--limit` and `--batch` take a positive integer. An unknown option or argument exits 2 before any work. |
 | `learn` | The learned-knowledge commands: `tasks`, `solve`, `bootstrap`, `improve`, `status`, `approve`, `export`, `render`, and the report command. When the feature flag is on, an option that the subcommand does not read exits 2 with one line. |
 
@@ -154,6 +155,9 @@ A `src` export that the barrel does not re-export is internal to the package, ev
 | `EPISODIC_MEMORY_CODEX_BIN`, `_CODEX_MODEL`, `_CODEX_SUMMARY_TIMEOUT_MS` | Codex summarizer settings. `_CODEX_MODEL` selects the model of the Codex fork. Without `_CODEX_MODEL`, the fork sends no model. |
 | `EPISODIC_MEMORY_MAX_SUMMARY_ATTEMPTS` | Retry cap for failed summaries. |
 | `EPISODIC_MEMORY_MIGRATION_BATCH` | Batch size of the embedding migration. |
+| `EPISODIC_MEMORY_MODEL_DIR` | Moves the folder of the embedding model files. |
+| `EPISODIC_MEMORY_MODEL_OFFLINE` | Set to `1` to turn off every download of the embedding model. |
+| `HF_ENDPOINT` | Selects a mirror of the Hugging Face hub for the model download. |
 | `EPISODIC_MEMORY_SUMMARIZER_GUARD` | Set by the plugin on child agent processes. Do not set it by hand. |
 | `EPISODIC_MEMORY_BACKGROUND_WORKER` | Marks the detached background worker. |
 | `EPISODIC_MEMORY_DIGEST` | Turns on the digest. `_DIGEST_MAX_SESSIONS`, `_DIGEST_MAX_CHARS`, `_DIGEST_DAY_CAP` and `_DIGEST_WEEK_CAP` tune it. |
@@ -167,7 +171,7 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalExports | 738 | repo-tools map |
-| totalSourceFiles | 323 | repo-tools map |
+| totalExports | 759 | repo-tools map |
+| totalSourceFiles | 328 | repo-tools map |
 
 `totalExports` counts every export in the repository, including test and tool files. The library barrel lists only the exports that `src/index.ts` re-exports. The tool schemas come from `src/mcp-schemas.ts`. The command names come from `cli/episodic-memory.js`. The variable names come from a search for `EPISODIC_MEMORY_` in `src/` and `cli/`. None of these facts is a `repo-tools map` metric.

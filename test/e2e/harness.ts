@@ -18,6 +18,7 @@ import { fileURLToPath } from 'node:url';
 import { repairPlan } from '../../src/deps-health.js';
 import { pruneOptionalWeight } from '../../cli/ensure-deps.js';
 import { safeRmSync } from '../test-utils.js';
+import { TEST_ENV } from '../test-env.js';
 import { ENV_VARS } from './cases.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -103,6 +104,12 @@ const PATH_VARS = [
   'EPISODIC_MEMORY_CONFIG_DIR', 'CLAUDE_CONFIG_DIR', 'CODEX_HOME', 'HOME', 'USERPROFILE',
   'XDG_CONFIG_HOME', 'FLEET_GPU_RESERVATION', 'EPISODIC_MEMORY_CODEX_BIN', 'TEMP', 'TMP', 'TMPDIR',
 ] as const;
+
+/**
+ * Path variables that name a shared folder outside the sandbox, the embedding model folder. The test
+ * process pins them in `TEST_ENV`. `buildEnv` copies each one from there, and the sandbox check does not apply.
+ */
+const SHARED_PATH_VARS = ['EPISODIC_MEMORY_MODEL_DIR'] as const;
 
 /** Path variables that a case may set. When present, each must resolve under the root. */
 const OPTIONAL_PATH_VARS = [
@@ -265,6 +272,9 @@ export function buildEnv(sb: Sandbox, opts: EnvOptions = {}): Record<string, str
   env.EPISODIC_MEMORY_OLLAMA_MODEL = 'e2e-fake';
   env.EPISODIC_MEMORY_CODEX_BIN = path.join(sb.root, 'no-codex');
   env.EPISODIC_MEMORY_PROC_LISTER = LISTER_PATH;
+  // The sandbox reads the model that the global setup fetched, and it never makes a request.
+  for (const name of SHARED_PATH_VARS) env[name] = TEST_ENV[name];
+  env.EPISODIC_MEMORY_MODEL_OFFLINE = '1';
   for (const [key, value] of Object.entries(opts.env ?? {})) {
     if (value === undefined) delete env[key];
     else env[key] = value;

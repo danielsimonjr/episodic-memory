@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { Database } from '../src/sqlite.js';
-import { readEmbeddingStack, reconcileEmbeddingStack, stampEmptyIndex } from '../src/embedding-stack.js';
+import { embeddingStamp, readEmbeddingStack, reconcileEmbeddingStack, stampEmptyIndex } from '../src/embedding-stack.js';
 import { initDatabase } from '../src/db.js';
 import { safeRmSync } from './test-utils.js';
 
@@ -19,27 +19,34 @@ describe('readEmbeddingStack', () => {
 
   it('reads the hoisted versions of the three packages', () => {
     const nm = join(root, 'node_modules');
-    writePkg(join(nm, '@huggingface', 'transformers'), '@huggingface/transformers', '4.2.0');
     writePkg(join(nm, 'onnxruntime-node'), 'onnxruntime-node', '1.24.3');
     writePkg(join(nm, 'onnxruntime-common'), 'onnxruntime-common', '1.24.3');
+    writePkg(join(nm, '@huggingface', 'tokenizers'), '@huggingface/tokenizers', '0.1.3');
     expect(readEmbeddingStack(root)).toBe(
-      '@huggingface/transformers@4.2.0 onnxruntime-node@1.24.3 onnxruntime-common@1.24.3');
+      'onnxruntime-node@1.24.3 onnxruntime-common@1.24.3 @huggingface/tokenizers@0.1.3');
   });
 
   it('prefers the copy nested under its dependent, as Node resolution does', () => {
     const nm = join(root, 'node_modules');
-    const tf = join(nm, '@huggingface', 'transformers');
-    writePkg(tf, '@huggingface/transformers', '4.3.2');
-    writePkg(join(tf, 'node_modules', 'onnxruntime-node'), 'onnxruntime-node', '1.30.0');
-    writePkg(join(nm, 'onnxruntime-node'), 'onnxruntime-node', '1.24.3');
+    const ort = join(nm, 'onnxruntime-node');
+    writePkg(ort, 'onnxruntime-node', '1.30.0');
+    writePkg(join(ort, 'node_modules', 'onnxruntime-common'), 'onnxruntime-common', '1.30.0');
     writePkg(join(nm, 'onnxruntime-common'), 'onnxruntime-common', '1.24.3');
+    writePkg(join(nm, '@huggingface', 'tokenizers'), '@huggingface/tokenizers', '0.1.3');
     expect(readEmbeddingStack(root)).toBe(
-      '@huggingface/transformers@4.3.2 onnxruntime-node@1.30.0 onnxruntime-common@1.24.3');
+      'onnxruntime-node@1.30.0 onnxruntime-common@1.30.0 @huggingface/tokenizers@0.1.3');
   });
 
   it('names a missing package as missing', () => {
     expect(readEmbeddingStack(root)).toBe(
-      '@huggingface/transformers@missing onnxruntime-node@missing onnxruntime-common@missing');
+      'onnxruntime-node@missing onnxruntime-common@missing @huggingface/tokenizers@missing');
+  });
+});
+
+describe('embeddingStamp', () => {
+  it('adds the pinned model revision to the installed packages', () => {
+    expect(embeddingStamp()).toBe(
+      readEmbeddingStack() + ' model=Xenova/bge-small-en-v1.5@ea104dacec62c0de699686887e3f920caeb4f3e3');
   });
 });
 
@@ -104,7 +111,7 @@ describe('stampEmptyIndex', () => {
   it('runs when initDatabase creates a new index', () => {
     process.env.TEST_DB_PATH = join(dir, 'fresh.db');
     const db = initDatabase();
-    expect(reconcileEmbeddingStack(db, readEmbeddingStack())).toBe(false);
+    expect(reconcileEmbeddingStack(db, embeddingStamp())).toBe(false);
     db.close();
   });
 });

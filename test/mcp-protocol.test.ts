@@ -217,13 +217,13 @@ describe('MCP protocol compliance', () => {
   });
 
   /**
-   * The bundle keeps `@huggingface/transformers` external.
-   * A static import of the package in `embeddings.ts` became a top-level import of the bundle.
-   * Every server start therefore loaded transformers and its native bindings (onnxruntime-node, sharp).
+   * The bundle keeps `onnxruntime-node` and `@huggingface/tokenizers` external.
+   * A static import of either package in `embeddings.ts` became a top-level import of the bundle.
+   * Every server start therefore loaded the embedding runtime and its native binding (onnxruntime-node).
    * A host where a binding cannot load lost every tool.
-   * The probe makes the package fail to resolve. The handshake, ListTools and a text search must still work.
+   * The probe makes the packages fail to resolve. The handshake, ListTools and a text search must still work.
    */
-  it('does not load transformers at start or for a text search', async () => {
+  it('does not load the embedding runtime at start or for a text search', async () => {
     const probe = 'file://' + join(REPO_ROOT, 'test/helpers/forbid-modules.mjs');
     const { stdout } = await sendLines(
       [
@@ -247,7 +247,7 @@ describe('MCP protocol compliance', () => {
         }),
       ],
       {
-        FORBID_MODULES: '@huggingface/transformers',
+        FORBID_MODULES: 'onnxruntime-node,@huggingface/tokenizers',
         NODE_OPTIONS: `--import=${probe}`,
       }
     );

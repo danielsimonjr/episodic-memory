@@ -1,5 +1,5 @@
 // Only light, dependency-free imports at the top. The heavy native stack
-// (node:sqlite via ./db.js, transformers via ./embeddings.js and
+// (node:sqlite via ./db.js, onnxruntime-node via ./embeddings.js and
 // ./embedding-migration.js) is imported lazily AFTER the early-exit checks
 // below, so a guarded reentrant subprocess — or a `--help`/`--background`
 // invocation — exits without paying the multi-second module load. (#87)
@@ -88,7 +88,7 @@ if (isBackground) {
         // closes its own copy below rather than leaking it (F3).
         //
         // Tag the child as the background worker so it drops itself to below-normal
-        // priority before booting transformers. Without this the detached worker
+        // priority before booting the embedding runtime. Without this the detached worker
         // embeds at NORMAL priority and starves the interactive session that spawned
         // it — including MCP servers, which then blow their 30s handshake budget.
         // The worker gets no arguments. The check above leaves --background as the only option.
@@ -124,7 +124,7 @@ if (lowerPriorityIfBackgroundWorker()) {
 }
 // Past the early-exit checks: now load the heavy native-dep modules. Doing this
 // lazily (rather than as top-level static imports) keeps the guard/help/background
-// paths above fast — they never load transformers or node:sqlite.
+// paths above fast — they never load the embedding runtime or node:sqlite.
 const { buildSyncOptionsFromEnv, syncConversations } = await import('./sync.js');
 const { initDatabase } = await import('./db.js');
 const { generateExchangeEmbedding, initEmbeddings } = await import('./embeddings.js');
@@ -145,6 +145,9 @@ console.log('Syncing conversations...');
 console.log(`Sources: ${sourceDirs.join(', ')}`);
 console.log(`Destination: ${destDir}\n`);
 async function syncAll() {
+    // The model fetch runs before the index phase. A failed fetch leaves the sync without embeddings.
+    const { fetchModelForSync } = await import('./embedding-model.js');
+    await fetchModelForSync();
     const totals = { copied: 0, skipped: 0, indexed: 0, summarized: 0, errors: [], indexFailures: 0, pendingSummaries: 0, emptySummaries: 0, unexplainedEmptySummaries: 0, summariesDeferred: '' };
     // Global per-sync summary budget shared across ALL source dirs (F2). Previously
     // the 10-summary cap applied per source dir, so the real cap was 10 × dirs and
@@ -230,9 +233,9 @@ const MIGRATION_BATCH_SIZE = envPositiveInt('EPISODIC_MEMORY_MIGRATION_BATCH', 5
 async function runEmbeddingMigrationPhase() {
     const db = initDatabase();
     try {
-        // A changed embedding stack (transformers or onnxruntime) makes every stored vector stale.
-        const { readEmbeddingStack, reconcileEmbeddingStack } = await import('./embedding-stack.js');
-        const stack = readEmbeddingStack();
+        // A changed embedding stack or model revision makes every stored vector stale.
+        const { embeddingStamp, reconcileEmbeddingStack } = await import('./embedding-stack.js');
+        const stack = embeddingStamp();
         if (reconcileEmbeddingStack(db, stack)) {
             console.error(`episodic-memory: embedding stack is now ${stack}; every exchange will be embedded again`);
         }

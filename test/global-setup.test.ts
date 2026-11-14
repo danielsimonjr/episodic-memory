@@ -1,7 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { existsSync } from 'node:fs';
-import { join } from 'node:path';
-import { env } from '@huggingface/transformers';
+import { modelDir, modelState } from '../src/embedding-model.js';
 import config from '../vitest.config.js';
 
 describe('vitest global setup', () => {
@@ -13,10 +11,8 @@ describe('vitest global setup', () => {
     expect(files).toContain('test/global-setup.ts');
   });
 
-  it('leaves the model file in the cache that the workers read', () => {
-    const cacheDir = env.cacheDir;
-    expect(cacheDir, 'transformers cacheDir').toBeTruthy();
-    const model = join(String(cacheDir), 'Xenova', 'bge-small-en-v1.5', 'onnx', 'model_quantized.onnx');
-    expect(existsSync(model), model).toBe(true);
+  it('leaves a ready model in the folder that the workers read', () => {
+    expect(modelDir()).toBe(process.env.EPISODIC_MEMORY_MODEL_DIR);
+    expect(modelState()).toEqual({ state: 'ready', bad: [] });
   });
 });

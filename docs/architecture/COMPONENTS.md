@@ -63,7 +63,15 @@ Creates the digest tables (`digest_entry`, `digest_fts`). Entries are never dele
 
 ### `src/embeddings.ts`
 
-Loads the embedding pipeline once (`Xenova/bge-small-en-v1.5`, quantized `q8`). `generateEmbedding` and `generateEmbeddings` embed passages. `generateQueryEmbedding` adds the query prefix first. `formatExchangeEmbeddingText` builds the text of one exchange, and `generateExchangeEmbedding(s)` embeds it. `initEmbeddings` imports `@huggingface/transformers` at the first load, not when the module loads. A native binding that cannot load therefore makes only `initEmbeddings` fail. `initEmbeddings` then throws `EmbeddingsUnavailableError`, and `cause` holds the load error.
+Loads the tokenizer and the ONNX session once (`Xenova/bge-small-en-v1.5`, quantized `q8`). `generateEmbedding` and `generateEmbeddings` embed passages. `generateQueryEmbedding` adds the query prefix first. `formatExchangeEmbeddingText` builds the text of one exchange, and `generateExchangeEmbedding(s)` embeds that text. Each text runs alone, with no padding, so a text in a batch gets the vector of the same text alone. The pipeline cuts a text to 2000 characters and 512 tokens, then applies mean pooling and L2 normalization. `initEmbeddings` imports `onnxruntime-node` and `@huggingface/tokenizers` at the first load, not when the module loads. A native binding that cannot load, or a model folder that is not ready, therefore makes only `initEmbeddings` fail. `initEmbeddings` then throws `EmbeddingsUnavailableError`, and `cause` holds the load error. `initEmbeddings` never downloads the model.
+
+### `src/embedding-model.ts`
+
+Holds the model pin `EMBEDDING_MODEL`: the repository, the revision, and the size and sha256 of each of the three files. `modelDir()` gives the model folder: `EPISODIC_MEMORY_MODEL_DIR`, or a folder outside `node_modules` keyed by the revision. `modelState()` checks each file against its size and hash. `ensureModel()` downloads a missing or bad file to a temporary file, checks the hash, and renames the file into place. With `download: false`, or with `EPISODIC_MEMORY_MODEL_OFFLINE=1`, `ensureModel()` makes no request and throws `EmbeddingsUnavailableError` with the path, the expected hash and the fetch command. `fetchModelForSync()` is the download of the sync. A failed download writes a marker, and the next attempt waits 24 hours. `HF_ENDPOINT` selects a mirror.
+
+### `src/model-cli.ts`
+
+The `model fetch` and `model status` commands.
 
 ### `src/embedding-migration.ts`
 
@@ -71,7 +79,7 @@ Holds `EMBEDDING_VERSION`. It finds rows with an older version and rows with no 
 
 ### `src/embedding-stack.ts`
 
-`readEmbeddingStack(root)` reads the installed versions of `@huggingface/transformers`, `onnxruntime-node` and `onnxruntime-common`. Each package resolves from the folder of the package before it, as Node resolution does, so a nested copy wins over a hoisted copy. A package that is not installed shows the version `missing`. `reconcileEmbeddingStack(db, stack)` compares the stack with the `embedding_stack` row of the `index_meta` table. When the two differ, or the row is missing, the function sets `embedding_version` to 0 on every exchange and stores the new stack. The embedding migration of the next sync then embeds every row again. `stampEmptyIndex(db, stack)` stores the stamp of an index that has no rows and no stamp. `initDatabase` calls the function. A new or rebuilt index therefore records the stack that embeds its rows. The migration then does not embed those rows a second time. A different runtime version can produce different vectors for the same text, so a silent change of the stack degrades the search.
+`readEmbeddingStack(root)` reads the installed versions of `onnxruntime-node`, `onnxruntime-common` and `@huggingface/tokenizers`. `embeddingStamp()` adds the model repository and revision to that list. Each package resolves from the folder of the package before it, as Node resolution does, so a nested copy wins over a hoisted copy. A package that is not installed shows the version `missing`. `reconcileEmbeddingStack(db, stack)` compares the stack with the `embedding_stack` row of the `index_meta` table. When the two differ, or the row is missing, the function sets `embedding_version` to 0 on every exchange and stores the new stack. The embedding migration of the next sync then embeds every row again. `stampEmptyIndex(db, stack)` stores the stamp of an index that has no rows and no stamp. `initDatabase` calls the function. A new or rebuilt index therefore records the stack that embeds its rows. The migration then does not embed those rows a second time. A different runtime version can produce different vectors for the same text, so a silent change of the stack degrades the search.
 
 ### `src/indexer.ts`
 
@@ -246,10 +254,10 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 323 | repo-tools map |
+| totalSourceFiles | 328 | repo-tools map |
 | totalClasses | 12 | repo-tools map |
-| totalInterfaces | 160 | repo-tools map |
-| totalFunctions | 423 | repo-tools map |
-| totalConstants | 93 | repo-tools map |
+| totalInterfaces | 165 | repo-tools map |
+| totalFunctions | 431 | repo-tools map |
+| totalConstants | 99 | repo-tools map |
 
 The tool names, the table names and the model name come from a direct reading of `src/mcp-server.ts`, `src/db.ts` and `src/embeddings.ts`. They are not `repo-tools map` metrics.

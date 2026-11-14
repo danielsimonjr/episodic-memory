@@ -117,7 +117,7 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 
 | Claim | Value | Source |
 |---|---|---|
-| totalSourceFiles | 323 | repo-tools map |
+| totalSourceFiles | 328 | repo-tools map |
 | totalModules | 4 | repo-tools map |
 | runtimeCircularDeps | 0 | repo-tools map |
 

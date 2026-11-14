@@ -3,7 +3,7 @@
  *
  * This module imports nothing on purpose: the SessionStart hook loads it on its
  * fast path, next to the node:sqlite adapter and the small `dist/` modules, and must not
- * pull in transformers, the SDK or the knowledge store to read one environment variable.
+ * pull in the embedding runtime, the SDK or the knowledge store to read one environment variable.
  */
 /**
  * Which new instructions wait for a person before they activate.

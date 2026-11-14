@@ -1,5 +1,27 @@
 ## [Unreleased]
 
+### Changed
+- `test/embedding-parity.test.ts` prints the CPU model and its AVX-512/VNNI flags, and the batch check compares a batch with the single path in the same process. The q8 integer kernels differ by CPU class, so the fixture check of the two long cases differs by 0.0119 on some CI runners.
+- Pooling stays mean. bge-small-en-v1.5 trains with CLS pooling, so CLS was measured on 120 archive-graded `learn` tasks against a 12,730-exchange index: MRR 0.132 for mean and 0.113 for CLS, and recall@1 12 against 8.
+- The new embedding stamp makes the first sync after the upgrade embed every row again. Measured on a copy of a 12,730-row index: 355 s for all rows in batches of 500, 0 rows stale after. The default sync embeds 500 rows per run, so a large index finishes over several syncs.
+
+- The embedder no longer uses `@huggingface/transformers`. `src/embeddings.ts` tokenizes with `@huggingface/tokenizers` 0.1.3 and runs the model with `onnxruntime-node` 1.24.3 directly. Against the transformers output, the vectors differ by at most 6.5e-8 on the 7 texts of `test/fixtures/embedding-parity/cases.json`, and by at most 1.1e-7 in a padded batch. The install no longer holds transformers, `sharp`, `@img/*`, `@huggingface/jinja` or `onnxruntime-web`, so the `sharp` and `onnxruntime-web` overrides and the `onnxruntime-web` stub are removed. The bundle keeps `onnxruntime-node` and `@huggingface/tokenizers` external.
+- The stack stamp names `onnxruntime-node`, `onnxruntime-common`, `@huggingface/tokenizers` and the model revision (`embeddingStamp`). The stamp changes, so the first sync after the upgrade embeds every row again once.
+
+### Fixed
+- The embedding parity test has reference vectors for each CPU class. On an x86-64 CPU with AVX2 and no VNNI (AMD EPYC 7763 in CI), two long fixture texts get vectors up to 0.012 away from the vectors of a VNNI CPU. `@huggingface/transformers` 4.2.0, the embedder before this change, gives the same drift on that CPU: 0.011855565942823887 and 0.011374252615496516, against 0.011855566573992301 and 0.011374252041421415 for the new embedder. The drift is a property of the q8 model on that CPU class and is older than the new embedder. `scripts/cpu-class.mjs` reads the CPU flags at test time (`/proc/cpuinfo` on Linux, CPUID through pwsh on Windows), and the test reads `vectors.<class>.json`. The classes are `avx512-vnni` and `avx2` (AVX2 without any VNNI). An unknown class, or a class without a file, fails the test. `scripts/parity-vectors.mjs` writes the file of a class with transformers 4.2.0 and records the CPU, the flags, the versions and the command. On a VNNI CPU, its output equals the earlier fixture exactly. The tolerance stays 1e-4. The `session.x64quantprecision` option is removed, because its graph transformers changed 0 nodes of this model. A uint8 rewrite of the MatMulInteger weights also gave bit-identical vectors on the EPYC 7763.
+- A sync with `EPISODIC_MEMORY_MODEL_OFFLINE=1` no longer writes the 24-hour retry marker, so the first sync after the variable is cleared fetches the model at once. A model file that another process removes or locks during the hash check now counts as a bad file and does not throw.
+
+- A text that the sync embeds in a batch now gets the vector that it gets alone. The q8 model gives a padded text a different vector (max difference 0.0168 on the fixture, cosine 0.965 to 0.997), and the search embeds each query alone. The embedder now runs the model once per text. One text per run is also faster: 64 texts take 786 ms, against 1216 ms in one batch.
+- The model no longer lives in `node_modules/@huggingface/transformers/.cache`, where each plugin version downloaded it again. `src/embedding-model.ts` pins `Xenova/bge-small-en-v1.5` at revision `ea104dacec62c0de699686887e3f920caeb4f3e3` with the size and sha256 of its three files. The files live in `<config dir>/models/<repo>/<revision>`, or in `EPISODIC_MEMORY_MODEL_DIR`.
+- A download is checked and never silent. The search, index and migration paths only check the model: a missing or changed file fails at once with the path, the expected sha256 and the command `episodic-memory model fetch`. The background sync and `model fetch` download. Each file goes to a temporary file, passes a size and sha256 check, and is renamed into place, so the final path never holds a bad file. Each download writes stderr lines. A failed sync fetch writes a marker and retries after 24 hours. `EPISODIC_MEMORY_MODEL_OFFLINE=1` turns off every download. `HF_ENDPOINT` selects a mirror.
+- The dependency check of the plugin wrapper (`src/deps-health.ts`) looks for `@huggingface/tokenizers` in place of transformers. With the old sentinel, a tree without transformers counted as incomplete, and the wrapper ran `npm install --omit=dev` in the plugin root.
+
+### Added
+- README section "Embedding model": the model pin, who downloads it, `model status` and `model fetch`, and the three variables. `API.md`, `COMPONENTS.md` and `CLAUDE.md` describe the direct ONNX Runtime pipeline; the CI audit comment names the packages that hold the open high advisories.
+
+- `episodic-memory model fetch` and `episodic-memory model status`. `doctor` reports the model state and the fetch marker.
+
 ## [1.14.0] - 2026-11-14
 
 ### Fixed

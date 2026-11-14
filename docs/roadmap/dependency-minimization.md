@@ -557,6 +557,10 @@ Special cases:
 - Option B with a passed parity gate: the old vectors stay valid. No index rollback runs.
 - Option B with a bump, and option C: the old vectors stay under the old `EMBEDDING_VERSION`. A rollback restores the old version.
 
+## 8a. Outcome of option B
+
+[ort-direct-embeddings.md](ort-direct-embeddings.md) carries out option B. `onnxruntime-node` and `@huggingface/tokenizers` replace `@huggingface/transformers`. That change removes the `sharp` and `onnxruntime-web` overrides, the stub under `vendor/` and the transformers sentinel. The parity fixture of `test/embedding-parity.test.ts` holds the transformers vectors of single texts, so the old vectors stay valid and `EMBEDDING_VERSION` does not change. The embedding stamp changes, so the next sync embeds every row again once.
+
 ## 9. Ownership
 
 - The preparing agent prepares each PR of section 6. The preparing agent runs the gates, records the evidence in the PR body and writes the CHANGELOG entry.

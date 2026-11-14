@@ -85,7 +85,6 @@
       "upsertExchangeFts",
       "vacuumDatabase",
       "withQueryPrefix"
-    ],
-    "vendor": []
+    ]
   }
 }

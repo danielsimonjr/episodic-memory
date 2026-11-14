@@ -1,14 +1,15 @@
 /**
- * Vitest global setup: load the embedding model once, before any test worker starts.
+ * Vitest global setup: fetch the embedding model once, before any test worker starts.
  *
- * A fresh checkout has an empty model cache. Without this file, every worker downloads the model
- * at the same time. On Windows, the rename of the temporary model file then fails with EPERM, and
- * every test that embeds text fails. One load in the global setup fills the cache, so each worker reads
- * the cached file.
+ * The workers check the model and never download it. This file fetches the pinned files into the
+ * model folder of `TEST_ENV` once, so the workers read the same files. The setup runs in the main
+ * vitest process, where `test.env` does not apply, so the file copies `TEST_ENV` into `process.env` first.
  */
-import { initEmbeddings } from '../src/embeddings.js';
+import { TEST_ENV } from './test-env.js';
 
-/** Load the model into the shared cache. A failed download fails the run before any test starts. */
+/** Fetch the model into the shared test folder. A failed fetch fails the run before any test starts. */
 export default async function setup(): Promise<void> {
-  await initEmbeddings();
+  Object.assign(process.env, TEST_ENV);
+  const { ensureModel } = await import('../src/embedding-model.js');
+  await ensureModel({ download: true });
 }

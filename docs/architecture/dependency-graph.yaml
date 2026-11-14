@@ -2,9 +2,9 @@ metadata:
   name: episodic-memory
   schemaVersion: 2.0.0
   language: typescript
-  totalFiles: 323
+  totalFiles: 328
   totalModules: 4
-  totalExports: 738
+  totalExports: 759
 modules:
   src:
     cli/digest-hook.js:
@@ -285,7 +285,7 @@ modules:
           typeOnly: false
         - file: src/embedding-stack.ts
           imports:
-            - readEmbeddingStack
+            - embeddingStamp
             - stampEmptyIndex
           typeOnly: false
         - file: src/constants.ts
@@ -711,6 +711,12 @@ modules:
           imports:
             - nodeModulesIsHealthy
           typeOnly: false
+        - file: src/embedding-model.ts
+          imports:
+            - FETCH_FAILED_MARKER
+            - modelDir
+            - modelState
+          typeOnly: false
         - file: src/node-floor.ts
           imports:
             - assertNodeFloor
@@ -724,6 +730,7 @@ modules:
         - CodexDoctorInputs
         - DoctorReport
         - buildCodexDoctorReport
+        - ModelDoctorSection
         - DoctorInputs
         - StructuredDoctorReport
         - readRecentLogErrors
@@ -760,6 +767,39 @@ modules:
         - countStale
         - getMigrationLockPath
         - runMigrationBatch
+    src/embedding-model.ts:
+      externalDependencies: []
+      nodeDependencies:
+        - node:crypto
+        - node:fs
+        - node:path
+        - node:stream
+        - node:stream/promises
+        - node:stream/web
+      internalDependencies:
+        - file: src/paths.ts
+          imports:
+            - superpowersDirPath
+          typeOnly: false
+        - file: src/fs-retry.ts
+          imports:
+            - renameWithRetry
+          typeOnly: false
+      exports:
+        - ModelFile
+        - ModelSpec
+        - EMBEDDING_MODEL
+        - FETCH_COMMAND
+        - FETCH_FAILED_MARKER
+        - FETCH_RETRY_MS
+        - EmbeddingsUnavailableError
+        - ModelStateResult
+        - RenameFn
+        - EnsureModelOptions
+        - modelDir
+        - modelState
+        - ensureModel
+        - fetchModelForSync
     src/embedding-stack.ts:
       externalDependencies: []
       nodeDependencies:
@@ -771,15 +811,23 @@ modules:
           imports:
             - Database
           typeOnly: true
+        - file: src/embedding-model.ts
+          imports:
+            - EMBEDDING_MODEL
+          typeOnly: false
       exports:
         - EMBEDDING_STACK_PACKAGES
         - readEmbeddingStack
+        - embeddingStamp
         - reconcileEmbeddingStack
         - stampEmptyIndex
     src/embeddings.ts:
       externalDependencies:
-        - '@huggingface/transformers'
-      nodeDependencies: []
+        - '@huggingface/tokenizers'
+        - onnxruntime-node
+      nodeDependencies:
+        - node:fs
+        - node:path
       internalDependencies:
         - file: src/redact.ts
           imports:
@@ -789,10 +837,17 @@ modules:
           imports:
             - truncateForIndex
           typeOnly: false
+        - file: src/embedding-model.ts
+          imports:
+            - EMBEDDING_MODEL
+            - EmbeddingsUnavailableError
+            - ensureModel
+            - modelDir
+          typeOnly: false
       exports:
+        - EmbeddingsUnavailableError
         - BGE_QUERY_PREFIX
         - initEmbeddings
-        - EmbeddingsUnavailableError
         - generateEmbeddings
         - generateEmbedding
         - withQueryPrefix
@@ -2572,6 +2627,23 @@ modules:
       exports:
         - McpToolResult
         - handleToolCall
+    src/model-cli.ts:
+      externalDependencies: []
+      nodeDependencies:
+        - node:fs
+        - node:path
+      internalDependencies:
+        - file: src/embedding-model.ts
+          imports:
+            - EMBEDDING_MODEL
+            - FETCH_COMMAND
+            - FETCH_FAILED_MARKER
+            - ensureModel
+            - modelDir
+            - modelState
+          typeOnly: false
+      exports:
+        - main
     src/node-floor.ts:
       externalDependencies: []
       nodeDependencies: []
@@ -3007,6 +3079,10 @@ modules:
           imports:
             - '*'
           typeOnly: false
+        - file: src/embedding-model.ts
+          imports:
+            - '*'
+          typeOnly: false
         - file: src/embedding-stack.ts
           imports:
             - '*'
@@ -3430,11 +3506,6 @@ modules:
         - CommandInvocation
         - findWindowsCommand
         - commandInvocation
-    vendor/onnxruntime-web-stub/index.js:
-      externalDependencies: []
-      nodeDependencies: []
-      internalDependencies: []
-      exports: []
   tools:
     scripts/claude-e2e.js:
       externalDependencies: []
@@ -3457,6 +3528,17 @@ modules:
         - url
       internalDependencies: []
       exports: []
+    scripts/cpu-class.mjs:
+      externalDependencies: []
+      nodeDependencies:
+        - node:child_process
+        - node:fs
+      internalDependencies: []
+      exports:
+        - CLASS_FLAGS
+        - cpuFlags
+        - parityClass
+        - GENERATOR_COMMAND
     scripts/generate-version.js:
       externalDependencies: []
       nodeDependencies:
@@ -3464,6 +3546,23 @@ modules:
         - path
         - url
       internalDependencies: []
+      exports: []
+    scripts/parity-vectors.mjs:
+      externalDependencies: []
+      nodeDependencies:
+        - node:child_process
+        - node:fs
+        - node:module
+        - node:os
+        - node:path
+        - node:url
+      internalDependencies:
+        - file: scripts/cpu-class.mjs
+          imports:
+            - cpuFlags
+            - GENERATOR_COMMAND
+            - parityClass
+          typeOnly: false
       exports: []
   tests:
     test/agent-sdk-floor.test.ts:
@@ -3850,6 +3949,17 @@ modules:
         - file: src/search.ts
           imports:
             - l2DistanceToCosineSimilarity
+          typeOnly: false
+      exports: []
+    test/cpu-class.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies: []
+      internalDependencies:
+        - file: scripts/cpu-class.mjs
+          imports:
+            - cpuFlags
+            - parityClass
           typeOnly: false
       exports: []
     test/cross-harness-recall.test.ts:
@@ -4573,6 +4683,10 @@ modules:
           imports:
             - safeRmSync
           typeOnly: false
+        - file: test/test-env.ts
+          imports:
+            - TEST_ENV
+          typeOnly: false
         - file: test/e2e/cases.ts
           imports:
             - ENV_VARS
@@ -4943,6 +5057,58 @@ modules:
             - initEmbeddings
           typeOnly: false
       exports: []
+    test/embedding-model.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - node:child_process
+        - node:crypto
+        - node:fs
+        - node:http
+        - node:net
+        - node:os
+        - node:path
+      internalDependencies:
+        - file: src/embedding-model.ts
+          imports:
+            - EMBEDDING_MODEL
+            - ensureModel
+            - fetchModelForSync
+            - FETCH_FAILED_MARKER
+            - modelDir
+            - modelState
+            - ModelSpec
+          typeOnly: false
+        - file: src/embeddings.ts
+          imports:
+            - EmbeddingsUnavailableError
+          typeOnly: false
+        - file: test/test-utils.ts
+          imports:
+            - safeRmSync
+          typeOnly: false
+      exports: []
+    test/embedding-parity.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - node:fs
+        - node:os
+        - node:path
+      internalDependencies:
+        - file: scripts/cpu-class.mjs
+          imports:
+            - cpuFlags
+            - GENERATOR_COMMAND
+            - parityClass
+          typeOnly: false
+        - file: src/embeddings.ts
+          imports:
+            - generateEmbedding
+            - generateEmbeddings
+            - initEmbeddings
+          typeOnly: false
+      exports: []
     test/embedding-stack.test.ts:
       externalDependencies:
         - vitest
@@ -4957,6 +5123,7 @@ modules:
           typeOnly: false
         - file: src/embedding-stack.ts
           imports:
+            - embeddingStamp
             - readEmbeddingStack
             - reconcileEmbeddingStack
             - stampEmptyIndex
@@ -5102,12 +5269,14 @@ modules:
       exports: []
     test/global-setup.test.ts:
       externalDependencies:
-        - '@huggingface/transformers'
         - vitest
-      nodeDependencies:
-        - node:fs
-        - node:path
+      nodeDependencies: []
       internalDependencies:
+        - file: src/embedding-model.ts
+          imports:
+            - modelDir
+            - modelState
+          typeOnly: false
         - file: vitest.config.ts
           imports:
             - default
@@ -5117,9 +5286,13 @@ modules:
       externalDependencies: []
       nodeDependencies: []
       internalDependencies:
-        - file: src/embeddings.ts
+        - file: test/test-env.ts
           imports:
-            - initEmbeddings
+            - TEST_ENV
+          typeOnly: false
+        - file: src/embedding-model.ts
+          imports:
+            - '*'
           typeOnly: false
       exports: []
     test/gpu-reservation.test.ts:
@@ -6857,15 +7030,6 @@ modules:
             - callLearnModel
           typeOnly: false
       exports: []
-    test/onnxruntime-web-stub.test.ts:
-      externalDependencies:
-        - vitest
-      nodeDependencies:
-        - fs
-        - module
-        - path
-      internalDependencies: []
-      exports: []
     test/orphan-reaper.test.ts:
       externalDependencies:
         - vitest
@@ -8321,32 +8485,32 @@ modules:
           typeOnly: false
       exports: []
 statistics:
-  totalTypeScriptFiles: 323
-  totalSourceFiles: 323
+  totalTypeScriptFiles: 328
+  totalSourceFiles: 328
   totalModules: 4
-  totalLinesOfCode: 67496
-  totalExports: 738
+  totalLinesOfCode: 68536
+  totalExports: 759
   entryRoots: 6
-  reachableFiles: 55
-  dormantFiles: 61
+  reachableFiles: 57
+  dormantFiles: 60
   orphanedFiles: 15
-  testOnlyFiles: 46
+  testOnlyFiles: 45
   runtimeCircularDeps: 0
   typeOnlyCircularDeps: 1
   totalTypeOnlyImports: 115
   noImporterFileCount: 14
-  unusedExportsCount: 117
+  unusedExportsCount: 119
   circularDepsTruncated: false
   runtimeCyclicComponents: 0
   typeOnlyCyclicComponents: 1
   runtimeFilesInCycles: 0
   typeOnlyFilesInCycles: 2
   totalClasses: 12
-  totalInterfaces: 160
-  totalFunctions: 423
+  totalInterfaces: 165
+  totalFunctions: 431
   totalTypeGuards: 14
   totalEnums: 0
-  totalConstants: 93
+  totalConstants: 99
   totalReExports: 9
 reachability:
   roots:
@@ -8356,8 +8520,8 @@ reachability:
     - src/mcp-server.ts
     - test/setup-env.ts
     - test/global-setup.ts
-  reachableCount: 55
-  dormantCount: 61
+  reachableCount: 57
+  dormantCount: 60
   orphaned:
     - cli/digest-hook.js
     - cli/episodic-memory.js
@@ -8369,11 +8533,11 @@ reachability:
     - src/backfill-cli.ts
     - src/doctor-cli.ts
     - src/learn-cli.ts
+    - src/model-cli.ts
     - src/search-cli.ts
     - src/show-cli.ts
     - src/stats-cli.ts
     - src/sync-cli.ts
-    - vendor/onnxruntime-web-stub/index.js
   testOnly:
     - cli/ensure-deps.js
     - src/backfill.ts
@@ -8386,7 +8550,6 @@ reachability:
     - src/digest-prompts.ts
     - src/doctor-learn.ts
     - src/doctor.ts
-    - src/fs-retry.ts
     - src/learn/agent-runner.ts
     - src/learn/bootstrap.ts
     - src/learn/cited-ids.ts

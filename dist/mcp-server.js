@@ -325,8 +325,223 @@ var init_embedding_migration = __esm({
   }
 });
 
+// src/fs-retry.ts
+import fs2 from "fs";
+function retryDelayMs(attempt) {
+  return 20 * 2 ** attempt;
+}
+function sleepSync(ms) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+function isSharingViolation(error62) {
+  const code = error62?.code;
+  return code === "EPERM" || code === "EBUSY";
+}
+function renameWithRetry(from, to, attempts = RETRY_ATTEMPTS) {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      fs2.renameSync(from, to);
+      return;
+    } catch (error62) {
+      if (!isSharingViolation(error62) || attempt + 1 >= attempts) throw error62;
+      sleepSync(retryDelayMs(attempt));
+    }
+  }
+}
+var RETRY_ATTEMPTS;
+var init_fs_retry = __esm({
+  "src/fs-retry.ts"() {
+    "use strict";
+    RETRY_ATTEMPTS = 5;
+  }
+});
+
+// src/embedding-model.ts
+import { createHash, randomBytes } from "node:crypto";
+import { closeSync, createWriteStream, existsSync, mkdirSync, openSync, readdirSync, readSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
+function modelDir() {
+  const override = process.env.EPISODIC_MEMORY_MODEL_DIR;
+  if (override) return override;
+  return join(superpowersDirPath(), "models", EMBEDDING_MODEL.repo, EMBEDDING_MODEL.revision);
+}
+function sha256Of(path5) {
+  const hash2 = createHash("sha256");
+  const buffer = Buffer.alloc(HASH_CHUNK_BYTES);
+  const fd = openSync(path5, "r");
+  try {
+    for (; ; ) {
+      const read = readSync(fd, buffer, 0, buffer.length, null);
+      if (read === 0) break;
+      hash2.update(buffer.subarray(0, read));
+    }
+  } finally {
+    closeSync(fd);
+  }
+  return hash2.digest("hex");
+}
+function fileMatches(path5, file2) {
+  if (!existsSync(path5)) return false;
+  const stat = statSync(path5);
+  if (stat.size !== file2.size) return false;
+  const key = `${path5}|${stat.size}|${stat.mtimeMs}|${file2.sha256}`;
+  const cached2 = verifiedCache.get(key);
+  if (cached2 !== void 0) return cached2;
+  const matches = sha256Of(path5) === file2.sha256;
+  verifiedCache.set(key, matches);
+  return matches;
+}
+function modelState(options = {}) {
+  const spec = options.spec ?? EMBEDDING_MODEL;
+  const dir = options.dir ?? modelDir();
+  const bad = spec.files.filter((f) => !fileMatches(join(dir, f.path), f)).map((f) => f.path);
+  return bad.length === 0 ? { state: "ready", bad: [] } : { state: "missing", bad };
+}
+function notReadyError(spec, dir, bad) {
+  const lines = bad.map((p) => {
+    const file2 = spec.files.find((f) => f.path === p);
+    return `  ${join(dir, p)} (expected sha256 ${file2.sha256})`;
+  });
+  return new EmbeddingsUnavailableError(
+    `The embedding model is not ready. Missing or changed file(s):
+${lines.join("\n")}
+Run "${FETCH_COMMAND}" to download the model, or set EPISODIC_MEMORY_MODEL_DIR to a folder that holds the files.`
+  );
+}
+function removeStaleTemp(dir) {
+  if (!existsSync(dir)) return;
+  for (const name of readdirSync(dir, { recursive: true }).map(String)) {
+    if (!name.includes(".tmp-")) continue;
+    const full = join(dir, name);
+    try {
+      if (Date.now() - statSync(full).mtimeMs > STALE_TEMP_MS) rmSync(full, { force: true });
+    } catch {
+    }
+  }
+}
+async function fetchFile(spec, file2, dir, endpoint, rename) {
+  const target = join(dir, file2.path);
+  const url2 = `${endpoint}/${spec.repo}/resolve/${spec.revision}/${file2.path}`;
+  mkdirSync(dirname(target), { recursive: true });
+  console.error(`episodic-memory: downloading ${file2.path} (${file2.size} bytes) from ${url2}`);
+  const temp = `${target}.tmp-${process.pid}-${randomBytes(4).toString("hex")}`;
+  let response;
+  try {
+    response = await fetch(url2, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+  } catch (error62) {
+    throw new EmbeddingsUnavailableError(`Could not download ${file2.path} from ${url2}: ${error62.message}`, { cause: error62 });
+  }
+  if (!response.ok || !response.body) {
+    await response.body?.cancel().catch(() => {
+    });
+    throw new EmbeddingsUnavailableError(`Could not download ${file2.path} from ${url2}: HTTP ${response.status}`);
+  }
+  const hash2 = createHash("sha256");
+  let size = 0;
+  const body = Readable.fromWeb(response.body);
+  try {
+    await pipeline(
+      body,
+      async function* (source) {
+        for await (const chunk of source) {
+          hash2.update(chunk);
+          size += chunk.length;
+          yield chunk;
+        }
+      },
+      createWriteStream(temp)
+    );
+  } catch (error62) {
+    rmSync(temp, { force: true });
+    throw new EmbeddingsUnavailableError(`Could not write ${file2.path} from ${url2}: ${error62.message}`, { cause: error62 });
+  }
+  const digest = hash2.digest("hex");
+  if (size !== file2.size || digest !== file2.sha256) {
+    rmSync(temp, { force: true });
+    throw new EmbeddingsUnavailableError(
+      `Downloaded ${file2.path} has ${size} bytes and sha256 ${digest}. Expected ${file2.size} bytes and sha256 ${file2.sha256}. The file was not kept.`
+    );
+  }
+  try {
+    rename(temp, target);
+  } catch (error62) {
+    let accepted = false;
+    try {
+      accepted = fileMatches(target, file2);
+    } catch {
+      accepted = false;
+    }
+    rmSync(temp, { force: true });
+    if (accepted) return;
+    throw new EmbeddingsUnavailableError(`Could not move ${file2.path} into place at ${target}`, { cause: error62 });
+  }
+  console.error(`episodic-memory: ${file2.path} ready (${size} bytes, sha256 verified)`);
+}
+async function ensureModel(options) {
+  const spec = options.spec ?? EMBEDDING_MODEL;
+  const dir = options.dir ?? modelDir();
+  const offline = process.env.EPISODIC_MEMORY_MODEL_OFFLINE === "1";
+  const download = options.download && !offline;
+  const endpoint = (options.endpoint ?? process.env.HF_ENDPOINT ?? DEFAULT_ENDPOINT).replace(/\/+$/, "");
+  const rename = options.rename ?? ((from, to) => renameWithRetry(from, to, RENAME_ATTEMPTS));
+  const key = dir;
+  const running = inFlight.get(key);
+  if (running) return running;
+  const run = (async () => {
+    const before = modelState({ spec, dir });
+    if (before.state === "ready") return;
+    if (!download) throw notReadyError(spec, dir, before.bad);
+    removeStaleTemp(dir);
+    for (const file2 of spec.files) {
+      if (before.bad.includes(file2.path)) await fetchFile(spec, file2, dir, endpoint, rename);
+    }
+    const after = modelState({ spec, dir });
+    if (after.state !== "ready") throw notReadyError(spec, dir, after.bad);
+  })();
+  inFlight.set(key, run);
+  try {
+    await run;
+  } finally {
+    inFlight.delete(key);
+  }
+}
+var EMBEDDING_MODEL, FETCH_COMMAND, FETCH_RETRY_MS, STALE_TEMP_MS, FETCH_TIMEOUT_MS, DEFAULT_ENDPOINT, RENAME_ATTEMPTS, EmbeddingsUnavailableError, HASH_CHUNK_BYTES, verifiedCache, inFlight;
+var init_embedding_model = __esm({
+  "src/embedding-model.ts"() {
+    "use strict";
+    init_paths();
+    init_fs_retry();
+    EMBEDDING_MODEL = {
+      repo: "Xenova/bge-small-en-v1.5",
+      revision: "ea104dacec62c0de699686887e3f920caeb4f3e3",
+      files: [
+        { path: "tokenizer.json", size: 711396, sha256: "d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66" },
+        { path: "tokenizer_config.json", size: 366, sha256: "9261e7d79b44c8195c1cada2b453e55b00aeb81e907a6664974b4d7776172ab3" },
+        { path: "onnx/model_quantized.onnx", size: 34014426, sha256: "6c9c6101a956d62dfb5e7190c538226c0c5bb9cb27b651234b6df063ee7dbfe4" }
+      ]
+    };
+    FETCH_COMMAND = "episodic-memory model fetch";
+    FETCH_RETRY_MS = 24 * 60 * 60 * 1e3;
+    STALE_TEMP_MS = 60 * 60 * 1e3;
+    FETCH_TIMEOUT_MS = 10 * 60 * 1e3;
+    DEFAULT_ENDPOINT = "https://huggingface.co";
+    RENAME_ATTEMPTS = 10;
+    EmbeddingsUnavailableError = class extends Error {
+      constructor(message, options) {
+        super(message, options);
+        this.name = "EmbeddingsUnavailableError";
+      }
+    };
+    HASH_CHUNK_BYTES = 1024 * 1024;
+    verifiedCache = /* @__PURE__ */ new Map();
+    inFlight = /* @__PURE__ */ new Map();
+  }
+});
+
 // src/embedding-stack.ts
-import { existsSync, readFileSync } from "fs";
+import { existsSync as existsSync2, readFileSync } from "fs";
 import path2 from "path";
 import { fileURLToPath } from "url";
 function defaultRoot() {
@@ -336,7 +551,7 @@ function resolvePackageDir(name, fromDir, root) {
   let dir = fromDir;
   for (; ; ) {
     const candidate = path2.join(dir, "node_modules", name);
-    if (existsSync(path2.join(candidate, "package.json"))) return candidate;
+    if (existsSync2(path2.join(candidate, "package.json"))) return candidate;
     if (path2.resolve(dir) === path2.resolve(root)) return null;
     const parent = path2.dirname(dir);
     if (parent === dir) return null;
@@ -361,6 +576,9 @@ function readEmbeddingStack(root = defaultRoot()) {
   }
   return parts.join(" ");
 }
+function embeddingStamp(root = defaultRoot()) {
+  return `${readEmbeddingStack(root)} model=${EMBEDDING_MODEL.repo}@${EMBEDDING_MODEL.revision}`;
+}
 function stampEmptyIndex(db, stack) {
   try {
     db.exec("CREATE TABLE IF NOT EXISTS index_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)");
@@ -374,7 +592,8 @@ var EMBEDDING_STACK_PACKAGES, STACK_KEY;
 var init_embedding_stack = __esm({
   "src/embedding-stack.ts"() {
     "use strict";
-    EMBEDDING_STACK_PACKAGES = ["@huggingface/transformers", "onnxruntime-node", "onnxruntime-common"];
+    init_embedding_model();
+    EMBEDDING_STACK_PACKAGES = ["onnxruntime-node", "onnxruntime-common", "@huggingface/tokenizers"];
     STACK_KEY = "embedding_stack";
   }
 });
@@ -582,7 +801,7 @@ var init_digest_db = __esm({
 
 // src/db.ts
 import path3 from "path";
-import fs2 from "fs";
+import fs3 from "fs";
 function migrateSchema(db) {
   const columns = db.prepare(`SELECT name FROM pragma_table_info('exchanges')`).all();
   const columnNames = new Set(columns.map((c) => c.name));
@@ -788,12 +1007,12 @@ function openDatabase(options = {}) {
   const migrate = options.migrate !== false;
   const dbPath = getDbPath();
   const dbDir = path3.dirname(dbPath);
-  if (!fs2.existsSync(dbDir)) {
-    fs2.mkdirSync(dbDir, { recursive: true, mode: 448 });
+  if (!fs3.existsSync(dbDir)) {
+    fs3.mkdirSync(dbDir, { recursive: true, mode: 448 });
   } else {
     tryChmod(dbDir, 448);
   }
-  const existed = fs2.existsSync(dbPath);
+  const existed = fs3.existsSync(dbPath);
   const db = new Database(dbPath);
   if (!existed) {
     applySecureDbFileMode(dbPath);
@@ -884,7 +1103,7 @@ function openDatabase(options = {}) {
 }
 function initDatabase() {
   const db = openDatabase({ migrate: true });
-  stampEmptyIndex(db, readEmbeddingStack());
+  stampEmptyIndex(db, embeddingStamp());
   return db;
 }
 function getSharedReaderDatabase() {
@@ -926,7 +1145,7 @@ var init_db = __esm({
 });
 
 // src/archive-path.ts
-import fs3 from "fs";
+import fs4 from "fs";
 import path4 from "path";
 import readline from "readline";
 function maxReadBytes() {
@@ -946,7 +1165,7 @@ function resolveArchiveJsonlPath(candidatePath) {
   const archiveRoot = getArchiveDir();
   let archiveReal;
   try {
-    archiveReal = fs3.realpathSync(archiveRoot);
+    archiveReal = fs4.realpathSync(archiveRoot);
   } catch {
     throw new Error(`Archive directory is not accessible: ${archiveRoot}`);
   }
@@ -962,12 +1181,12 @@ function resolveArchiveJsonlPath(candidatePath) {
       `Path must point to a .jsonl conversation file: ${candidatePath}`
     );
   }
-  if (!fs3.existsSync(lexical)) {
+  if (!fs4.existsSync(lexical)) {
     throw new Error(`File not found: ${candidatePath}`);
   }
   let realPath;
   try {
-    realPath = fs3.realpathSync(lexical);
+    realPath = fs4.realpathSync(lexical);
   } catch (err) {
     throw new Error(
       `Unable to resolve path: ${candidatePath} (${err instanceof Error ? err.message : String(err)})`
@@ -985,7 +1204,7 @@ function resolveArchiveJsonlPath(candidatePath) {
       `Path must point to a .jsonl conversation file: ${candidatePath}`
     );
   }
-  const stat = fs3.lstatSync(lexical);
+  const stat = fs4.lstatSync(lexical);
   if (!stat.isFile() && !stat.isSymbolicLink()) {
     throw new Error(`Path is not a file: ${candidatePath}`);
   }
@@ -997,7 +1216,7 @@ function safeArchiveSummaryPath(candidateJsonlPath) {
   }
   let archiveReal;
   try {
-    archiveReal = fs3.realpathSync(getArchiveDir());
+    archiveReal = fs4.realpathSync(getArchiveDir());
   } catch {
     return null;
   }
@@ -1011,9 +1230,9 @@ function safeArchiveSummaryPath(candidateJsonlPath) {
   const summaryNorm = normalizeForCompare(summaryLexical);
   const summaryInside = summaryNorm === archiveNorm || summaryNorm.startsWith(archiveNorm + path4.sep);
   if (!summaryInside) return null;
-  if (!fs3.existsSync(summaryLexical)) return null;
+  if (!fs4.existsSync(summaryLexical)) return null;
   try {
-    const realSummary = fs3.realpathSync(summaryLexical);
+    const realSummary = fs4.realpathSync(summaryLexical);
     const realNorm = normalizeForCompare(realSummary);
     if (!(realNorm === archiveNorm || realNorm.startsWith(archiveNorm + path4.sep))) {
       return null;
@@ -1024,7 +1243,7 @@ function safeArchiveSummaryPath(candidateJsonlPath) {
   }
 }
 async function readJsonlLines(filePath, startLine, endLine) {
-  const stat = fs3.statSync(filePath);
+  const stat = fs4.statSync(filePath);
   const hasRange = startLine !== void 0 || endLine !== void 0;
   const cap = maxReadBytes();
   if (!hasRange && stat.size > cap) {
@@ -1037,7 +1256,7 @@ async function readJsonlLines(filePath, startLine, endLine) {
   if (to < from) {
     throw new Error(`endLine (${endLine}) must be >= startLine (${startLine ?? 1})`);
   }
-  const stream = fs3.createReadStream(filePath, { encoding: "utf-8" });
+  const stream = fs4.createReadStream(filePath, { encoding: "utf-8" });
   const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
   const selected = [];
   let lineNo = 0;
@@ -1071,28 +1290,52 @@ var init_archive_path = __esm({
 });
 
 // src/embeddings.ts
+import { readFileSync as readFileSync2 } from "node:fs";
+import { join as join2 } from "node:path";
 async function initEmbeddings() {
-  if (!embeddingPipeline) {
-    const pipeline = await loadPipelineFactory();
-    console.error("Loading embedding model (first run may take time)...");
-    embeddingPipeline = await pipeline(
-      "feature-extraction",
-      MODEL_ID,
-      { dtype: MODEL_DTYPE, progress_callback: () => {
-      } }
-    );
-    console.error("Embedding model loaded");
-  }
+  await getRuntime();
 }
-async function loadPipelineFactory() {
+function getRuntime() {
+  if (!runtimeLoad) {
+    runtimeLoad = loadRuntime().then(
+      (runtime) => {
+        console.error("Embedding model loaded");
+        return runtime;
+      },
+      (error62) => {
+        runtimeLoad = null;
+        throw error62;
+      }
+    );
+  }
+  return runtimeLoad;
+}
+async function loadRuntime() {
+  console.error("Loading embedding model (first run may take time)...");
+  const dir = modelDir();
+  await ensureModel({ download: false, dir });
+  let ort;
+  let tokenizers;
   try {
-    const transformers = await import("@huggingface/transformers");
-    transformers.env.allowLocalModels = true;
-    transformers.env.useBrowserCache = false;
-    return transformers.pipeline;
+    const onnxModule = await import("onnxruntime-node");
+    ort = onnxModule.default ?? onnxModule;
+    tokenizers = await import("@huggingface/tokenizers");
   } catch (error62) {
     throw new EmbeddingsUnavailableError(
-      `Failed to load the embedding backend (@huggingface/transformers). A native binding, for example the binding of sharp (libvips) or onnxruntime-node, usually causes this failure. Vector search and indexing stay off until the binding loads. Underlying error: ${error62 instanceof Error ? error62.message : String(error62)}`,
+      `Failed to load the embedding backend (onnxruntime-node). A native binding of onnxruntime-node, the binding path is ONNX_BINDING in src/deps-health.ts, usually causes this failure. Vector search and indexing stay off until the binding loads. Underlying error: ${error62 instanceof Error ? error62.message : String(error62)}`,
+      { cause: error62 }
+    );
+  }
+  try {
+    const session = await ort.InferenceSession.create(join2(dir, ...MODEL_ONNX_FILE.split("/")));
+    const tokenizer = new tokenizers.Tokenizer(
+      JSON.parse(readFileSync2(join2(dir, TOKENIZER_FILE), "utf-8")),
+      JSON.parse(readFileSync2(join2(dir, TOKENIZER_CONFIG_FILE), "utf-8"))
+    );
+    return { session, tokenizer, ort };
+  } catch (error62) {
+    throw new EmbeddingsUnavailableError(
+      `Failed to create the embedding session from ${dir} (${EMBEDDING_MODEL.repo}). Underlying error: ${error62 instanceof Error ? error62.message : String(error62)}`,
       { cause: error62 }
     );
   }
@@ -1100,24 +1343,45 @@ async function loadPipelineFactory() {
 function truncateForEmbed(text) {
   return text.substring(0, 2e3);
 }
+async function embedOne(runtime, text) {
+  const ids = runtime.tokenizer.encode(text).ids.slice(0, MAX_TOKENS);
+  const n = ids.length;
+  const { ort, session } = runtime;
+  const inputIds = BigInt64Array.from(ids, (v) => BigInt(v));
+  const attentionMask = new BigInt64Array(n).fill(1n);
+  const tokenTypeIds = new BigInt64Array(n);
+  const result = await session.run({
+    input_ids: new ort.Tensor("int64", inputIds, [1, n]),
+    attention_mask: new ort.Tensor("int64", attentionMask, [1, n]),
+    token_type_ids: new ort.Tensor("int64", tokenTypeIds, [1, n])
+  });
+  const out = result[session.outputNames[0]];
+  try {
+    const dims = out.dims;
+    if (dims.length !== 3 || dims[0] !== 1 || dims[1] !== n || dims[2] !== EMBED_DIM) {
+      throw new EmbeddingsUnavailableError(
+        `The embedding model returned shape [${dims.join(", ")}]; expected [1, ${n}, ${EMBED_DIM}].`
+      );
+    }
+    const data = out.data;
+    const mean = new Array(EMBED_DIM).fill(0);
+    for (let t = 0; t < n; t++) {
+      for (let k = 0; k < EMBED_DIM; k++) mean[k] += data[t * EMBED_DIM + k] / n;
+    }
+    let norm = 0;
+    for (const v of mean) norm += v * v;
+    norm = Math.sqrt(norm);
+    return mean.map((v) => v / norm);
+  } finally {
+    out.dispose?.();
+  }
+}
 async function generateEmbeddings(texts) {
   if (texts.length === 0) return [];
-  if (!embeddingPipeline) {
-    await initEmbeddings();
-  }
-  const truncated = texts.map(truncateForEmbed);
-  const output2 = await embeddingPipeline(truncated, {
-    pooling: "mean",
-    normalize: true
-  });
-  const data = output2.data;
-  if (truncated.length === 1) {
-    return [Array.from(data)];
-  }
+  const runtime = await getRuntime();
   const vectors = [];
-  for (let i = 0; i < truncated.length; i++) {
-    const offset = i * EMBED_DIM;
-    vectors.push(Array.from(data.subarray(offset, offset + EMBED_DIM)));
+  for (const text of texts) {
+    vectors.push(await embedOne(runtime, truncateForEmbed(text)));
   }
   return vectors;
 }
@@ -1132,23 +1396,20 @@ function withQueryPrefix(query) {
 async function generateQueryEmbedding(query) {
   return generateEmbedding(withQueryPrefix(query));
 }
-var MODEL_ID, MODEL_DTYPE, BGE_QUERY_PREFIX, embeddingPipeline, EmbeddingsUnavailableError, EMBED_DIM;
+var MODEL_ONNX_FILE, TOKENIZER_FILE, TOKENIZER_CONFIG_FILE, MAX_TOKENS, EMBED_DIM, BGE_QUERY_PREFIX, runtimeLoad;
 var init_embeddings = __esm({
   "src/embeddings.ts"() {
     "use strict";
     init_redact();
     init_constants();
-    MODEL_ID = "Xenova/bge-small-en-v1.5";
-    MODEL_DTYPE = "q8";
-    BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages: ";
-    embeddingPipeline = null;
-    EmbeddingsUnavailableError = class extends Error {
-      constructor(message, options) {
-        super(message, options);
-        this.name = "EmbeddingsUnavailableError";
-      }
-    };
+    init_embedding_model();
+    MODEL_ONNX_FILE = "onnx/model_quantized.onnx";
+    TOKENIZER_FILE = "tokenizer.json";
+    TOKENIZER_CONFIG_FILE = "tokenizer_config.json";
+    MAX_TOKENS = 512;
     EMBED_DIM = 384;
+    BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages: ";
+    runtimeLoad = null;
   }
 });
 
@@ -1166,7 +1427,7 @@ __export(search_exports, {
   searchConversations: () => searchConversations,
   searchMultipleConcepts: () => searchMultipleConcepts
 });
-import fs4 from "fs";
+import fs5 from "fs";
 function includeSearchSummaries() {
   const raw = process.env.EPISODIC_MEMORY_INCLUDE_SUMMARY;
   if (raw === void 0) return true;
@@ -1394,7 +1655,7 @@ async function searchConversations(query, options = {}) {
     if (summariesVisible(options)) {
       const summaryPath = safeArchiveSummaryPath(row.archive_path);
       if (summaryPath) {
-        summary = maybeRedactSecrets(fs4.readFileSync(summaryPath, "utf-8").trim());
+        summary = maybeRedactSecrets(fs5.readFileSync(summaryPath, "utf-8").trim());
       }
     }
     const snippetText = exchange.userMessage.substring(0, 200).replace(/\s+/g, " ").trim();
@@ -1410,7 +1671,7 @@ async function searchConversations(query, options = {}) {
 }
 function getFileSizeInKB(filePath) {
   try {
-    const stats = fs4.statSync(filePath);
+    const stats = fs5.statSync(filePath);
     return Math.round(stats.size / 1024 * 10) / 10;
   } catch (error62) {
     return 0;
@@ -3446,14 +3707,14 @@ __export(digest_tool_exports, {
   digestToolText: () => digestToolText,
   normalizeHandoff: () => normalizeHandoff
 });
-import fs5 from "fs";
+import fs6 from "fs";
 function normalizeHandoff(note) {
   const oneLine = redactEntryText(note).replace(/\s+/g, " ").trim();
   return oneLine.length > HANDOFF_MAX_CHARS ? `${oneLine.slice(0, HANDOFF_MAX_CHARS - 3)}...` : oneLine;
 }
 function digestToolText(params) {
   const project = params.project ?? projectKeyFromCwd(process.cwd());
-  if (!params.handoff && !fs5.existsSync(getDbPath())) {
+  if (!params.handoff && !fs6.existsSync(getDbPath())) {
     if (params.expand) throw new Error(`No exchange with id ${params.expand}`);
     if (params.query) return `No digest entries match "${params.query}".`;
     return `No digest entries for ${project}.`;

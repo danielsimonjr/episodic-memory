@@ -316,7 +316,7 @@ describe('digest-hook', () => {
       expect(Date.now() - started - nodeStartMs).toBeLessThan(1000);
     });
 
-    it('never loads the knowledge store, the SDK, or transformers', () => {
+    it('never loads the knowledge store, the SDK, or the embedding runtime', () => {
       seedLearned(block());
       const probe = 'file://' + path.join(REPO_ROOT, 'test/helpers/forbid-modules.mjs');
       const r = runHook({
@@ -324,7 +324,7 @@ describe('digest-hook', () => {
         TEST_DB_PATH: dbPath,
         EPISODIC_MEMORY_LEARN: '1',
         EPISODIC_MEMORY_CONFIG_DIR: configDir,
-        FORBID_MODULES: '@anthropic-ai/claude-agent-sdk,@huggingface/transformers',
+        FORBID_MODULES: '@anthropic-ai/claude-agent-sdk,onnxruntime-node,@huggingface/tokenizers',
         NODE_OPTIONS: `--import=${probe}`,
       });
       expect(r.status).toBe(0);
@@ -380,7 +380,8 @@ describe('hook module graph', () => {
       expect(fs.existsSync(entry), `${entry} exists (bun run build)`).toBe(true);
       const { bare } = graphOf(entry);
       expect(bare, name).not.toContain('@anthropic-ai/claude-agent-sdk');
-      expect(bare, name).not.toContain('@huggingface/transformers');
+      expect(bare, name).not.toContain('onnxruntime-node');
+      expect(bare, name).not.toContain('@huggingface/tokenizers');
     }
   });
 

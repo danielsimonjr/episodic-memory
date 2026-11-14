@@ -47,6 +47,7 @@ export const FLAGS: readonly FlagEntry[] = [
     'tasks', 'status', 'report', 'approve', 'export', 'render',
   ]),
   ...flagsOf('doctor', ['--help', '-h', '--json', 'codex']),
+  ...flagsOf('model', ['--help', '-h', 'fetch', 'status']),
 ];
 
 /** The variables the source reads, plus the pinned ones of the harness (see `HARNESS_ONLY_ENV`). */
@@ -74,6 +75,8 @@ export const ENV_VARS: readonly string[] = [
   'EPISODIC_MEMORY_API_TIMEOUT_MS', 'EPISODIC_MEMORY_API_MODEL', 'EPISODIC_MEMORY_API_MODEL_FALLBACK',
   'EPISODIC_MEMORY_CODEX_BIN', 'EPISODIC_MEMORY_CODEX_MODEL', 'EPISODIC_MEMORY_CODEX_SUMMARY_TIMEOUT_MS',
   'EPISODIC_MEMORY_LEARN', 'EPISODIC_MEMORY_LEARN_MODEL',
+  // The embedding model folder and the offline switch of the model fetch.
+  'EPISODIC_MEMORY_MODEL_DIR', 'EPISODIC_MEMORY_MODEL_OFFLINE', 'HF_ENDPOINT',
   // EPISODIC_MEMORY_LEARN_* (read by learn-config.ts through raw/count/amount).
   'EPISODIC_MEMORY_LEARN_APPROVE', 'EPISODIC_MEMORY_LEARN_MAX_CALLS', 'EPISODIC_MEMORY_LEARN_MAX_USD',
   'EPISODIC_MEMORY_LEARN_MAX_MINUTES', 'EPISODIC_MEMORY_LEARN_MAX_TASKS', 'EPISODIC_MEMORY_LEARN_CONCURRENCY',

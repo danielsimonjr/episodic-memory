@@ -343,7 +343,8 @@ describe('knowledge-gate module graph', () => {
     for (const forbidden of [
       '@anthropic-ai/claude-agent-sdk',
       'better-sqlite3',
-      'transformers',
+      'onnxruntime-node',
+      '@huggingface/tokenizers',
       './knowledge-store.js',
       './learning-store.js',
       './knowledge-db.js',

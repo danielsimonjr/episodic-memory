@@ -1,19 +1,19 @@
 import { describe, it, expect, vi } from 'vitest';
 
-// Simulate the real-world failure: @huggingface/transformers eagerly requires
-// `sharp`, and on hosts where sharp's native binding can't dlopen libvips the
-// module blows up (#135). Throwing getters reproduce that — importing the
-// module succeeds, but the first property access inside initEmbeddings raises
-// the native error, which initEmbeddings must convert into a typed error while
-// preserving the underlying cause. (A factory that throws at module eval is
-// intercepted and re-messaged by vitest, so a getter models it more faithfully.)
-vi.mock('@huggingface/transformers', () => {
+// Simulate the real-world failure: the onnxruntime-node native binding cannot
+// dlopen on a host without its runtime library (#135). Throwing getters
+// reproduce that — importing the module succeeds, but the first property access
+// inside initEmbeddings raises the native error, which initEmbeddings must
+// convert into a typed error while preserving the underlying cause. (A factory
+// that throws at module eval is intercepted and re-messaged by vitest, so a
+// getter models it more faithfully.)
+vi.mock('onnxruntime-node', () => {
   const boom = () => {
-    throw new Error('ERR_DLOPEN_FAILED: libvips-cpp.so.8.17.3: cannot open shared object file');
+    throw new Error('ERR_DLOPEN_FAILED: onnxruntime_binding.node: cannot open shared object file');
   };
   return {
-    get env() { return boom(); },
-    get pipeline() { return boom(); },
+    get default() { return boom(); },
+    get InferenceSession() { return boom(); },
   };
 });
 
@@ -33,8 +33,9 @@ describe('embeddings — backend load failure (#135)', () => {
     }
     expect(caught).toBeInstanceOf(EmbeddingsUnavailableError);
     const err = caught as EmbeddingsUnavailableError;
-    expect(err.message).toMatch(/sharp|libvips|transformers/i);
-    expect(err.message).toMatch(/libvips-cpp\.so/);
+    expect(err.message).toMatch(/onnxruntime/i);
+    expect(err.message).not.toMatch(/sharp|libvips/i);
+    expect(err.message).toMatch(/onnxruntime_binding\.node/);
     expect((err as any).cause).toBeInstanceOf(Error);
   });
 });

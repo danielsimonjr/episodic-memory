@@ -1,5 +1,21 @@
 ## [Unreleased]
 
+### Changed
+
+- The embedder no longer uses `@huggingface/transformers`. `src/embeddings.ts` tokenizes with `@huggingface/tokenizers` 0.1.3 and runs the model with `onnxruntime-node` 1.24.3 directly. Against the transformers output, the vectors differ by at most 6.5e-8 on the 7 texts of `test/fixtures/embedding-parity/vectors.json`, and by at most 1.1e-7 in a padded batch. The install no longer holds transformers, `sharp`, `@img/*`, `@huggingface/jinja` or `onnxruntime-web`, so the `sharp` and `onnxruntime-web` overrides and the `onnxruntime-web` stub are removed. The bundle keeps `onnxruntime-node` and `@huggingface/tokenizers` external.
+- The stack stamp names `onnxruntime-node`, `onnxruntime-common`, `@huggingface/tokenizers` and the model revision (`embeddingStamp`). The stamp changes, so the first sync after the upgrade embeds every row again once.
+
+### Fixed
+
+- A text that the sync embeds in a batch now gets the vector that it gets alone. The q8 model gives a padded text a different vector (max difference 0.0168 on the fixture, cosine 0.965 to 0.997), and the search embeds each query alone. The embedder now runs the model once per text. One text per run is also faster: 64 texts take 786 ms, against 1216 ms in one batch.
+- The model no longer lives in `node_modules/@huggingface/transformers/.cache`, where each plugin version downloaded it again. `src/embedding-model.ts` pins `Xenova/bge-small-en-v1.5` at revision `ea104dacec62c0de699686887e3f920caeb4f3e3` with the size and sha256 of its three files. The files live in `<config dir>/models/<repo>/<revision>`, or in `EPISODIC_MEMORY_MODEL_DIR`.
+- A download is checked and never silent. The search, index and migration paths only check the model: a missing or changed file fails at once with the path, the expected sha256 and the command `episodic-memory model fetch`. The background sync and `model fetch` download. Each file goes to a temporary file, passes a size and sha256 check, and is renamed into place, so the final path never holds a bad file. Each download writes stderr lines. A failed sync fetch writes a marker and retries after 24 hours. `EPISODIC_MEMORY_MODEL_OFFLINE=1` turns off every download. `HF_ENDPOINT` selects a mirror.
+- The dependency check of the plugin wrapper (`src/deps-health.ts`) looks for `@huggingface/tokenizers` in place of transformers. With the old sentinel, a tree without transformers counted as incomplete, and the wrapper ran `npm install --omit=dev` in the plugin root.
+
+### Added
+
+- `episodic-memory model fetch` and `episodic-memory model status`. `doctor` reports the model state and the fetch marker.
+
 ## [1.14.0] - 2026-11-14
 
 ### Fixed

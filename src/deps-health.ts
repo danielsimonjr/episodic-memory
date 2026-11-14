@@ -8,7 +8,7 @@ import { dirname, join } from 'path';
 
 /** JS-only sentinels: present whenever the packages are installed at all, binding or not. */
 export const JS_SENTINELS = [
-  '@huggingface/transformers/package.json',
+  '@huggingface/tokenizers/package.json',
   'onnxruntime-common/package.json',
   'onnxruntime-node/package.json',
 ];

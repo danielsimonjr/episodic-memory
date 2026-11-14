@@ -24,4 +24,7 @@ export const TEST_ENV: Readonly<Record<string, string>> = {
   // A test without its own folder reads no real ~/.claude or ~/.codex transcript of the machine.
   CLAUDE_CONFIG_DIR: join(tmpdir(), 'episodic-memory-test-claude'),
   CODEX_HOME: join(tmpdir(), 'episodic-memory-test-codex'),
+  // One model folder for the whole run. Each test sets its own config folder, so the default model
+  // folder would differ in each test. The global setup fetches the model into this folder once.
+  EPISODIC_MEMORY_MODEL_DIR: join(tmpdir(), 'episodic-memory-test-models'),
 };

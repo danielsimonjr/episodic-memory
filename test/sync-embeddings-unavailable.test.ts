@@ -6,7 +6,7 @@ import { Database } from '../src/sqlite.js';
 import { safeRmSync, suppressConsole } from './test-utils.js';
 
 // Ported from upstream 7e0a415. On some hosts the embedding backend cannot load, for example when the native
-// binding of sharp cannot open libvips. initEmbeddings then threw out of syncConversations. The throw stopped
+// binding of onnxruntime-node cannot load. initEmbeddings then threw out of syncConversations. The throw stopped
 // the summaries, and the SessionStart hook that runs the sync crashed. The sync must copy the files, record the
 // error and run the summaries. The fork also tests the next run: a file that the failed run copied must still get
 // its index entry, although the transcript does not change again.
@@ -25,8 +25,8 @@ vi.mock('../src/summarizer.js', () => ({ summarizeConversation: summarizeMock })
 const { syncConversations } = await import('../src/sync.js');
 
 const BACKEND_ERROR =
-  'Failed to load the embedding backend (@huggingface/transformers). ' +
-  'ERR_DLOPEN_FAILED: libvips-cpp.so.8.17.3: cannot open shared object file';
+  'Failed to load the embedding backend (onnxruntime-node). ' +
+  'ERR_DLOPEN_FAILED: onnxruntime_binding.node: cannot open shared object file';
 const SESSION = '019aff97-5651-71e0-80ec-b4f2c51095c3';
 
 function transcript(): string {
@@ -100,7 +100,7 @@ describe('sync when the embedding backend cannot load', () => {
     expect(embedMock).not.toHaveBeenCalled();
     const error = result.errors.find(e => e.file === '(embeddings)');
     expect(error?.error).toMatch(/embedding backend unavailable/i);
-    expect(error?.error).toMatch(/libvips-cpp\.so/);
+    expect(error?.error).toMatch(/onnxruntime_binding\.node/);
     expect(summarizeMock).toHaveBeenCalledTimes(1);
     expect(result.summarized).toBe(1);
   });

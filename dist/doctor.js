@@ -6,6 +6,7 @@ import { initDatabase } from './db.js';
 import { archiveDirPath, getDbPath, indexDirPath, superpowersDirPath, } from './paths.js';
 import { syncErrorsLogPath as errorsLogPath, syncLogPath } from './logging.js';
 import { nodeModulesIsHealthy } from './deps-health.js';
+import { FETCH_FAILED_MARKER, modelDir, modelState } from './embedding-model.js';
 import { assertNodeFloor } from './node-floor.js';
 import { collectLearnDoctorSection } from './doctor-learn.js';
 function parseFeatureState(featuresOutput, feature) {
@@ -189,7 +190,29 @@ export async function collectDoctorSnapshot() {
         nodeModulesHealthy,
         pluginRoot,
         learn: await collectLearnDoctorSection(),
+        model: collectModelSection(),
     };
+}
+/**
+ * Read the embedding model folder: its state and whether the last download failed.
+ *
+ * The function reads and creates nothing. The hash of each model file runs once per process.
+ */
+function collectModelSection() {
+    const dir = modelDir();
+    const state = modelState({ dir });
+    return {
+        dir,
+        state: state.state,
+        bad: state.bad,
+        fetchFailed: fs.existsSync(path.join(dir, FETCH_FAILED_MARKER)),
+    };
+}
+/** The doctor lines of the embedding model section, or none when the section is absent. */
+function modelLines(model) {
+    if (model === undefined)
+        return [];
+    return [`Embedding model: ${model.state} (${model.dir})`];
 }
 /** A byte count as `12.3 KB` / `4.1 MB`, or `n/a`. */
 function formatBytes(bytes) {
@@ -271,6 +294,13 @@ export function buildDoctorReport(inputs) {
     if (inputs.nodeModulesHealthy === false) {
         issues.push(`Plugin node_modules is incomplete at ${inputs.pluginRoot}. Run npm install --omit=dev --no-audit --no-fund in the plugin root. When the onnxruntime-node binding is missing, delete node_modules/onnxruntime-node first.`);
     }
+    const model = inputs.model;
+    if (model !== undefined && model.state === 'missing') {
+        warnings.push(`The embedding model is not ready at ${model.dir} (${model.bad.length} file(s) missing or changed). Vector search stays off until you run episodic-memory model fetch.`);
+    }
+    if (model !== undefined && model.fetchFailed) {
+        warnings.push('The last embedding model download failed. Run episodic-memory model fetch to retry now.');
+    }
     const learn = inputs.learn;
     if (learn !== undefined && learn.present) {
         if (learn.unresolvedSources.length > 0) {
@@ -302,6 +332,7 @@ export function buildDoctorReport(inputs) {
             : inputs.nodeModulesHealthy === false
                 ? 'unhealthy'
                 : 'unknown'}`,
+        ...modelLines(model),
     ];
     const learnLines = learnTextLines(learn);
     if (inputs.recentSyncErrors.length > 0) {
@@ -342,6 +373,7 @@ export function buildDoctorReport(inputs) {
         syncErrorsLogPath: inputs.syncErrorsLogPath,
         recentSyncErrors: inputs.recentSyncErrors,
         nodeModulesHealthy: inputs.nodeModulesHealthy,
+        model: inputs.model,
         pluginRoot: inputs.pluginRoot,
         warnings,
         issues,

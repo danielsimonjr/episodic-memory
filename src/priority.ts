@@ -1,7 +1,7 @@
 // Process priority for the detached background sync worker.
 //
 // The `--background` path spawns a DETACHED child and exits, so the worker
-// outlives its parent by design. That worker then boots transformers.js and
+// outlives its parent by design. That worker then boots the embedding runtime and
 // embeds exchanges on the CPU — onnxruntime saturates every core it is given.
 // Inheriting NORMAL priority, it competes on equal terms with the interactive
 // session that spawned it, including the MCP servers that must complete a
@@ -23,7 +23,7 @@ export function isBackgroundWorker(env: NodeJS.ProcessEnv = process.env): boolea
 
 /**
  * Drop this process to below-normal priority if it is the background sync worker.
- * Call BEFORE the heavy imports (transformers / node:sqlite), so the expensive work
+ * Call BEFORE the heavy imports (embedding runtime / node:sqlite), so the expensive work
  * never runs at normal priority.
  *
  * Returns whether the priority was actually lowered. Never throws: priority is

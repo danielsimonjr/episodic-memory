@@ -30,10 +30,17 @@ export interface DoctorReport {
  * The function parses the Codex version, the feature flags and the MCP server list. The function reads no file and runs no command. `ok` is true when no issue was found.
  */
 export declare function buildCodexDoctorReport(inputs: CodexDoctorInputs): DoctorReport;
+/** The embedding model section of the doctor report: the folder, its state and the failed-download marker. */
+export interface ModelDoctorSection {
+    dir: string;
+    state: 'ready' | 'missing';
+    bad: string[];
+    fetchFailed: boolean;
+}
 /**
  * The values that `buildDoctorReport` checks.
  *
- * `collectDoctorSnapshot` collects these values. Optional values stay undefined when they cannot be read. The `learn` section stays absent when it was not collected.
+ * `collectDoctorSnapshot` collects these values. Optional values stay undefined when they cannot be read. The `learn` and `model` sections stay absent when they were not collected.
  */
 export interface DoctorInputs {
     configDir: string;
@@ -54,6 +61,8 @@ export interface DoctorInputs {
     pluginRoot?: string;
     /** The Recursa `learn` section. Absent means "not collected". */
     learn?: LearnDoctorSection;
+    /** The embedding model section. Absent means "not collected". */
+    model?: ModelDoctorSection;
 }
 /**
  * A doctor report with its findings as text and as structured data.

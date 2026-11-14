@@ -284,6 +284,52 @@ describe('doctor and learn flags', () => {
   });
 });
 
+describe('model flags', () => {
+  it('model --help exits 0 and names fetch and status', async () => {
+    const r = await runCli(sb, UMBRELLA, ['model', '--help']);
+    expect(r.code).toBe(0);
+    expect(r.stdout).toContain('fetch');
+    expect(r.stdout).toContain('status');
+  });
+
+  it('model status reports the shared model folder as ready and exits 0', async () => {
+    const r = await runCli(sb, UMBRELLA, ['model', 'status']);
+    expect(r.code).toBe(0);
+    expect(r.stdout).toContain('State: ready');
+  });
+
+  it('model status exits 1 and names the missing files of an empty model folder', async () => {
+    const empty = path.join(sb.root, 'empty-model');
+    const r = await runCli(sb, UMBRELLA, ['model', 'status'], { env: { EPISODIC_MEMORY_MODEL_DIR: empty } });
+    expect(r.code).toBe(EXIT_FAIL);
+    expect(r.stdout).toContain('State: missing');
+    expect(r.stdout).toContain('tokenizer.json');
+  });
+
+  it('model fetch with EPISODIC_MEMORY_MODEL_OFFLINE=1 does not download and exits 1 for an empty folder', async () => {
+    const empty = path.join(sb.root, 'offline-model');
+    const r = await runCli(sb, UMBRELLA, ['model', 'fetch'], {
+      env: { EPISODIC_MEMORY_MODEL_DIR: empty, EPISODIC_MEMORY_MODEL_OFFLINE: '1' },
+    });
+    expect(r.code).toBe(EXIT_FAIL);
+    expect(r.stderr).not.toContain('downloading');
+    expect(r.stderr).toContain('not ready');
+  });
+
+  it('model fetch reads HF_ENDPOINT, fails on a closed loopback port and exits 1', async () => {
+    const empty = path.join(sb.root, 'endpoint-model');
+    const r = await runCli(sb, UMBRELLA, ['model', 'fetch'], {
+      env: {
+        EPISODIC_MEMORY_MODEL_DIR: empty,
+        EPISODIC_MEMORY_MODEL_OFFLINE: '0',
+        HF_ENDPOINT: 'http://127.0.0.1:9',
+      },
+    });
+    expect(r.code).toBe(EXIT_FAIL);
+    expect(r.stderr).toContain('127.0.0.1:9');
+  });
+});
+
 describe('short help flag -h', () => {
   it('-h prints the help text and exits 0 for each command that registers it', async () => {
     const problems: string[] = [];

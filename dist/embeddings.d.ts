@@ -1,30 +1,22 @@
+import { EmbeddingsUnavailableError } from './embedding-model.js';
+export { EmbeddingsUnavailableError };
 /** The prefix that the query embedder adds to a search query. Passage embeddings do not use it. */
 export declare const BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages: ";
 /**
  * Load the embedding model. The function does nothing when the model is already loaded.
  *
  * When no model is in memory, the function writes two messages to stderr. The first load can take some time.
- * Calls that overlap a load can start more than one load. If a load fails, the function throws,
+ * Calls that overlap a load share one load. If a load fails, the function throws,
  * and the next call tries the load again.
+ *
+ * @throws EmbeddingsUnavailableError when the model files are not ready or the runtime does not load.
  */
 export declare function initEmbeddings(): Promise<void>;
 /**
- * The embedding backend did not load.
+ * Embed one or more texts. The function returns an empty list for an empty input.
  *
- * `@huggingface/transformers` loads native bindings, for example the binding of `sharp`. On some hosts a binding
- * cannot load, although the text embedding does not use it. A caller that can work without embeddings catches this
- * error. The sync, for example, still copies the transcripts and runs the summaries. `cause` holds the load error.
- */
-export declare class EmbeddingsUnavailableError extends Error {
-    constructor(message: string, options?: {
-        cause?: unknown;
-    });
-}
-/**
- * Embed one or more texts in one pipeline call. The function returns an empty list for an empty input.
- *
- * Each text gets the same truncation, mean pooling and normalization as a single-text call.
- * For that reason, batching does not require a change to EMBEDDING_VERSION.
+ * The model runs once per text, so every text gets the same vector alone or in a batch. A padded batch
+ * changes the vectors of the q8 model. For that reason, batching does not require a change to EMBEDDING_VERSION.
  */
 export declare function generateEmbeddings(texts: string[]): Promise<number[][]>;
 /**
@@ -58,7 +50,7 @@ export declare function formatExchangeEmbeddingText(userMessage: string, assista
  * @param toolNames the tool names to list after the assistant message. Optional.
  */
 export declare function generateExchangeEmbedding(userMessage: string, assistantMessage: string, toolNames?: string[]): Promise<number[]>;
-/** Embed a batch of exchanges in one pipeline call, as the batch form of `generateExchangeEmbedding`. */
+/** Embed a batch of exchanges, as the batch form of `generateExchangeEmbedding`. */
 export declare function generateExchangeEmbeddings(items: Array<{
     userMessage: string;
     assistantMessage: string;

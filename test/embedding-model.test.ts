@@ -9,6 +9,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   EMBEDDING_MODEL,
   ensureModel,
+  fetchModelForSync,
+  FETCH_FAILED_MARKER,
   modelDir,
   modelState,
   type ModelSpec,
@@ -98,6 +100,14 @@ describe('modelState', () => {
     expect(modelState({ spec: SPEC, dir })).toEqual({ state: 'ready', bad: [] });
   });
 
+  it('reports a file that cannot be read as bad and does not throw', () => {
+    // A folder at the path of a file stands in for a file that another process removes or locks
+    // between the stat and the read.
+    const spec: ModelSpec = { repo: SPEC.repo, revision: SPEC.revision, files: [{ path: 'empty.bin', size: 0, sha256: sha('') }] };
+    mkdirSync(join(dir, 'empty.bin'));
+    expect(modelState({ spec, dir })).toEqual({ state: 'missing', bad: ['empty.bin'] });
+  });
+
   it('names each missing or changed file', () => {
     writeGood();
     writeFileSync(join(dir, 'tokenizer.json'), 'changed');
@@ -182,4 +192,17 @@ describe('ensureModel', () => {
     expect(modelState({ spec: SPEC, dir }).state).toBe('ready');
     expect(leftovers()).toEqual([]);
   }, 60000);
+});
+
+describe('fetchModelForSync', () => {
+  it('writes no retry marker when EPISODIC_MEMORY_MODEL_OFFLINE turns the download off', async () => {
+    const saved = process.env.EPISODIC_MEMORY_MODEL_DIR;
+    process.env.EPISODIC_MEMORY_MODEL_DIR = dir;
+    process.env.EPISODIC_MEMORY_MODEL_OFFLINE = '1';
+    try {
+      await fetchModelForSync();
+      // Without a marker, the first sync after the variable is cleared downloads at once.
+      expect(existsSync(join(dir, FETCH_FAILED_MARKER))).toBe(false);
+    } finally { process.env.EPISODIC_MEMORY_MODEL_DIR = saved; }
+  });
 });

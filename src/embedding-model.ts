@@ -127,15 +127,21 @@ function sha256Of(path: string): string {
 
 /** True when the file exists with the pinned size and sha256. The hash runs once per path, size, mtime and sha256. */
 function fileMatches(path: string, file: ModelFile): boolean {
-  if (!existsSync(path)) return false;
-  const stat = statSync(path);
-  if (stat.size !== file.size) return false;
-  const key = `${path}|${stat.size}|${stat.mtimeMs}|${file.sha256}`;
-  const cached = verifiedCache.get(key);
-  if (cached !== undefined) return cached;
-  const matches = sha256Of(path) === file.sha256;
-  verifiedCache.set(key, matches);
-  return matches;
+  // Another process can remove, replace or lock the file between the stat and the read.
+  // A file that cannot be read is a bad file, so the caller downloads it again.
+  try {
+    if (!existsSync(path)) return false;
+    const stat = statSync(path);
+    if (!stat.isFile() || stat.size !== file.size) return false;
+    const key = `${path}|${stat.size}|${stat.mtimeMs}|${file.sha256}`;
+    const cached = verifiedCache.get(key);
+    if (cached !== undefined) return cached;
+    const matches = sha256Of(path) === file.sha256;
+    verifiedCache.set(key, matches);
+    return matches;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -306,6 +312,9 @@ export async function ensureModel(options: EnsureModelOptions): Promise<void> {
 export async function fetchModelForSync(): Promise<void> {
   const dir = modelDir();
   if (modelState({ dir }).state === 'ready') return;
+  // An offline sync is not a failed fetch. A marker would delay the first fetch after the
+  // variable is cleared by 24 hours.
+  if (process.env.EPISODIC_MEMORY_MODEL_OFFLINE === '1') return;
   const marker = join(dir, FETCH_FAILED_MARKER);
   if (existsSync(marker) && Date.now() - statSync(marker).mtimeMs < FETCH_RETRY_MS) return;
   try {

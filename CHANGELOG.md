@@ -6,6 +6,7 @@
 - The stack stamp names `onnxruntime-node`, `onnxruntime-common`, `@huggingface/tokenizers` and the model revision (`embeddingStamp`). The stamp changes, so the first sync after the upgrade embeds every row again once.
 
 ### Fixed
+- A sync with `EPISODIC_MEMORY_MODEL_OFFLINE=1` no longer writes the 24-hour retry marker, so the first sync after the variable is cleared fetches the model at once. A model file that another process removes or locks during the hash check now counts as a bad file and does not throw.
 
 - A text that the sync embeds in a batch now gets the vector that it gets alone. The q8 model gives a padded text a different vector (max difference 0.0168 on the fixture, cosine 0.965 to 0.997), and the search embeds each query alone. The embedder now runs the model once per text. One text per run is also faster: 64 texts take 786 ms, against 1216 ms in one batch.
 - The model no longer lives in `node_modules/@huggingface/transformers/.cache`, where each plugin version downloaded it again. `src/embedding-model.ts` pins `Xenova/bge-small-en-v1.5` at revision `ea104dacec62c0de699686887e3f920caeb4f3e3` with the size and sha256 of its three files. The files live in `<config dir>/models/<repo>/<revision>`, or in `EPISODIC_MEMORY_MODEL_DIR`.

@@ -598,7 +598,7 @@ describe('lifecycle: the other index commands and flags', () => {
   // `index --verify` exits 1 and names that summary as missing (verify.ts:94), and `index --repair` prints
   // "Skipped (no exchanges)" (verify.ts:198), so the summary never comes back. Before the rebuild, verify exits 0.
   // Two paths disagree on the same transcript: sync writes the file, the indexer does not.
-  it.skip('D7 pending: index --rebuild --yes then index --verify -> exit 1, the exchange-less transcript summary missing (expected exit 0)', async () => {
+  it('index --verify exits 0 after index --rebuild --yes: the rebuild records the transcript with no exchange (D7; before the fix, exit 1)', async () => {
     const result = await cli(['index', '--verify']);
     expect(result.code, result.stdout).toBe(0);
     expect(result.stdout).toContain('Index is healthy');

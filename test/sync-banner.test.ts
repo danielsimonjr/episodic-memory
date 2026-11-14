@@ -31,4 +31,9 @@ describe('syncHeadline', () => {
       syncHeadline({ pendingSummaries: 4, summarized: 1, summariesDeferred: 'fleet GPU reserved by Starship' })
     ).toEqual(['\n✅ Sync complete!']);
   });
+
+  it('prints no success line for a run whose index write failed', () => {
+    const lines = syncHeadline({ pendingSummaries: 0, summarized: 0, summariesDeferred: '', errorCount: 2 });
+    expect(lines).toEqual(['\n⚠️  Sync finished; 2 file(s) not indexed. The error lines are on stderr.']);
+  });
 });

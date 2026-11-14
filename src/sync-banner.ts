@@ -8,6 +8,8 @@ export interface SyncHeadlineTotals {
   summarized: number;
   /** The reservation message when another agent held the shared GPU. Empty when it did not. */
   summariesDeferred: string;
+  /** The number of files whose index write failed. A run with such a failure does not print the success line. */
+  errorCount?: number;
 }
 
 /**
@@ -17,6 +19,9 @@ export interface SyncHeadlineTotals {
  * deliberate wait is not a fault.
  */
 export function syncHeadline(totals: SyncHeadlineTotals): string[] {
+  if ((totals.errorCount ?? 0) > 0) {
+    return [`\n⚠️  Sync finished; ${totals.errorCount} file(s) not indexed. The error lines are on stderr.`];
+  }
   const stalled = totals.pendingSummaries > 0 && totals.summarized === 0;
   if (stalled && totals.summariesDeferred) {
     return [

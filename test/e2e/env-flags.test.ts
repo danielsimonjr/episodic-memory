@@ -589,7 +589,7 @@ describe('env: database busy timeout', () => {
     }
   }, CASE_MS);
 
-  it.skip('D13 pending: sync with a write lock held by another connection -> exit 0, no stderr line, the new transcript not indexed (measured with busy timeout 100 and 8000); expected a stderr line that names the failed write', async () => {
+  it('sync under a write lock held by another connection exits 1 with a locked line on stderr, and the next sync indexes the file (D13; before the fix, exit 0 and the file never indexed)', async () => {
     const sb = makeSandbox();
     try {
       seedTranscript(sb, 'e2e-env-busy-base', FIXTURE);
@@ -602,9 +602,19 @@ describe('env: database busy timeout', () => {
         const fast = await cli(sb, ['sync'], { EPISODIC_MEMORY_SKIP_SUMMARIES: '1', EPISODIC_MEMORY_DB_BUSY_TIMEOUT_MS: '100' });
         expect(fast.code, fast.stderr).not.toBe(0);
         expect(fast.stderr).toMatch(/locked|busy/i);
+        expect(fast.stdout).not.toMatch(/Sync complete/);
       } finally {
         writer.exec('ROLLBACK');
         writer.close();
+      }
+      const again = await cli(sb, ['sync'], { EPISODIC_MEMORY_SKIP_SUMMARIES: '1' });
+      expect(again.code, again.stderr).toBe(0);
+      const db = openIndexDb(sb);
+      try {
+        const row = db.prepare("SELECT COUNT(*) AS c FROM exchanges WHERE archive_path LIKE '%e2e-env-busy-fast%'").get() as { c: number };
+        expect(row.c).toBeGreaterThan(0);
+      } finally {
+        db.close();
       }
     } finally {
       removeSandbox(sb);

@@ -119,8 +119,6 @@ export const MCP_TOOLS: readonly string[] = ['search', 'read', 'digest', 'skills
 /** Items the suite does not cover, each with its reason. Defects carry `Dn pending`. */
 export const UNCOVERED: readonly UncoveredEntry[] = [
   // Defects of PLAN.md. Each moves into FLAGS, ENV_VARS or a case in its fix commit.
-  { kind: 'path', name: 'index --verify fails after a rebuild: the exchange-less transcript summary is deleted', reason: 'D7 pending' },
-  { kind: 'path', name: 'sync exits 0 and indexes nothing when another connection holds the write lock', reason: 'D13 pending' },
   // Plan exclusions: each needs a real Claude login, binary or TTY.
   { kind: 'env', name: 'EPISODIC_MEMORY_CLAUDE_BIN', reason: 'the probe of a real Claude Code binary needs a Claude login' },
   { kind: 'env', name: 'CLAUDE_CODE_MAX_OUTPUT_TOKENS', reason: 'SDK pass-through to the Claude Code binary' },

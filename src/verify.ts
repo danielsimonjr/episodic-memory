@@ -4,6 +4,7 @@ import { parseConversation } from './parser.js';
 import { initDatabase, getAllExchanges, getFileLastIndexed } from './db.js';
 import { getArchiveDir, getExcludedProjects, findJsonlFiles, statIfExists } from './paths.js';
 import { scanExclusionMarkers, shouldSkipConversation } from './exclusion-marker.js';
+import { writeNoExchangeSummary } from './summary-sentinel.js';
 
 /**
  * The problems that `verifyIndex` found, grouped by kind.
@@ -195,6 +196,8 @@ export async function repairIndex(issues: VerificationResult): Promise<void> {
       const exchanges = await parseConversation(conversationPath, project, conversationPath);
 
       if (exchanges.length === 0) {
+        // A repair writes the record that sync writes, so the summary of the transcript stops being missing.
+        writeNoExchangeSummary(conversationPath);
         console.log(`  Skipped (no exchanges)`);
         continue;
       }

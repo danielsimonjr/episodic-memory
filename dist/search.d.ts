@@ -56,6 +56,15 @@ export interface SearchOptions {
     useSharedReader?: boolean;
 }
 /**
+ * Merges the vector rows and the text rows of a `both` search into at most `limit` rows.
+ *
+ * Each step returns up to `limit` rows, and the vector step always fills its limit on a large index.
+ * The merge therefore alternates the two lists by rank, so a text-only match keeps a place.
+ * A row that both steps find appears once, at its first place, with its vector distance.
+ * For example, at limit 3 the vector rows [a, b, c] and the text rows [d, a] merge to [a, d, b].
+ */
+export declare function interleaveByRank(vectorRows: any[], textRows: any[], limit: number): any[];
+/**
  * Convert an L2 (Euclidean) distance between two unit-normalized vectors into a cosine similarity in [-1, 1].
  *
  * For unit vectors u, v:  ||u - v||^2 = 2 - 2 * cos(u, v).

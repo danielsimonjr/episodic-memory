@@ -48,7 +48,7 @@ import { latestRunId, buildReport, formatReport } from './report.js';
 import { isValidSlug, type KnowledgeEntry, type KnowledgeKind } from './types.js';
 import { BudgetExhausted, CallBudget, solveMany, type SolveOptions } from './solver.js';
 import { runLearn } from './learner.js';
-import { LEARN_USAGE } from './usage.js';
+import { LEARN_USAGE, learnOptionRefusal } from './usage.js';
 import type { LearnDbs } from './types.js';
 import { compareByProject } from './entry-order.js';
 
@@ -110,7 +110,6 @@ function optionNumber(argv: string[], name: string): number | undefined {
 function hasFlag(argv: string[], name: string): boolean {
   return argv.includes(`--${name}`);
 }
-
 /** Open the three handles a command needs. Closed, store first, in `finally`. */
 async function openDbs(): Promise<LearnDbs> {
   const { openKnowledgeStore } = await import('./knowledge-store.js');
@@ -852,6 +851,12 @@ export async function runLearnCli(argv: string[], deps: LearnCliDeps): Promise<n
 
   if (!IMPLEMENTED.has(command)) {
     deps.stderr(`episodic-memory learn: unknown command '${command}'\n\n${LEARN_USAGE}\n`);
+    return 2;
+  }
+
+  const refusal = learnOptionRefusal(command, argv.slice(1));
+  if (refusal !== undefined) {
+    deps.stderr(`${refusal}\n`);
     return 2;
   }
 

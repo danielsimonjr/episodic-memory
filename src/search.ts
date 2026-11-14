@@ -129,6 +129,29 @@ function buildSearchFilters(options: SearchOptions): { sql: string; params: unkn
 }
 
 /**
+ * Merges the vector rows and the text rows of a `both` search into at most `limit` rows.
+ *
+ * Each step returns up to `limit` rows, and the vector step always fills its limit on a large index.
+ * The merge therefore alternates the two lists by rank, so a text-only match keeps a place.
+ * A row that both steps find appears once, at its first place, with its vector distance.
+ * For example, at limit 3 the vector rows [a, b, c] and the text rows [d, a] merge to [a, d, b].
+ */
+export function interleaveByRank(vectorRows: any[], textRows: any[], limit: number): any[] {
+  const merged: any[] = [];
+  const seen = new Set<string>();
+  const vectorById = new Map(vectorRows.map(row => [row.id, row]));
+  for (let i = 0; merged.length < limit && (i < vectorRows.length || i < textRows.length); i++) {
+    for (const row of [vectorRows[i], textRows[i]]) {
+      if (row === undefined || seen.has(row.id) || merged.length >= limit) continue;
+      seen.add(row.id);
+      // A text row that the vector step also found keeps its vector distance.
+      merged.push(vectorById.get(row.id) ?? row);
+    }
+  }
+  return merged;
+}
+
+/**
  * Find the nearest exchanges with an exact scan of the rows that pass the filters.
  *
  * The scan computes `vec_distance_l2` for each row that passes the filters, then sorts the rows by distance.
@@ -377,13 +400,7 @@ export async function searchConversations(
       }
 
       if (mode === 'both') {
-        // Merge and deduplicate by ID
-        const seenIds = new Set(results.map(r => r.id));
-        for (const textResult of textResults) {
-          if (!seenIds.has((textResult as any).id)) {
-            results.push(textResult);
-          }
-        }
+        results = interleaveByRank(results, textResults, limit);
       } else {
         results = textResults;
       }

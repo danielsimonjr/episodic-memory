@@ -5,6 +5,7 @@
 // invocation — exits without paying the multi-second module load. (#87)
 import { getArchiveDir, getConversationSourceDirs, getIndexDir } from './paths.js';
 import { shouldSkipReentrantSync } from './reentrancy.js';
+import { envPositiveInt } from './constants.js';
 import { syncHeadline } from './sync-banner.js';
 import { acquireRefreshedLock, releaseLock } from './lockfile.js';
 import { BACKGROUND_WORKER_ENV, lowerPriorityIfBackgroundWorker } from './priority.js';
@@ -159,7 +160,7 @@ console.log(`Sources: ${sourceDirs.join(', ')}`);
 console.log(`Destination: ${destDir}\n`);
 
 async function syncAll() {
-  const totals = { copied: 0, skipped: 0, indexed: 0, summarized: 0, errors: [] as Array<{file: string; error: string}>, pendingSummaries: 0, emptySummaries: 0, unexplainedEmptySummaries: 0, summariesDeferred: '' };
+  const totals = { copied: 0, skipped: 0, indexed: 0, summarized: 0, errors: [] as Array<{file: string; error: string}>, indexFailures: 0, pendingSummaries: 0, emptySummaries: 0, unexplainedEmptySummaries: 0, summariesDeferred: '' };
 
   // Global per-sync summary budget shared across ALL source dirs (F2). Previously
   // the 10-summary cap applied per source dir, so the real cap was 10 × dirs and
@@ -183,6 +184,7 @@ async function syncAll() {
     totals.emptySummaries += result.emptySummaries;
     totals.unexplainedEmptySummaries += result.unexplainedEmptySummaries;
     totals.errors.push(...result.errors);
+    totals.indexFailures += result.indexFailures;
     summaryBudget -= result.summaryAttempts;
   }
 
@@ -190,7 +192,7 @@ async function syncAll() {
   // 87-of-140 runs that summarised nothing while a backlog waited. A success banner over a stalled
   // queue is the exact failure this tool exists to prevent: it reads as health from outside, so the
   // real alarm (archive lag) only arrives days later and downstream of the cause.
-  for (const line of syncHeadline(totals)) console.log(line);
+  for (const line of syncHeadline({ ...totals, errorCount: totals.indexFailures })) console.log(line);
   console.log(`  Copied: ${totals.copied}`);
   console.log(`  Skipped: ${totals.skipped}`);
   console.log(`  Indexed: ${totals.indexed}`);
@@ -216,8 +218,12 @@ async function syncAll() {
   }
 
   if (totals.errors.length > 0) {
-    console.log(`\n⚠️  Errors: ${totals.errors.length}`);
-    totals.errors.forEach(err => console.log(`  ${err.file}: ${err.error}`));
+    // The error lines go to stderr. A failed index write also sets exit code 1. Before, a "database is locked"
+    // index failure printed on stdout under the success line, and the command exited 0. A summary failure
+    // keeps exit 0, because it writes a failure record and retries within its attempt limit.
+    if (totals.indexFailures > 0) process.exitCode = 1;
+    console.error(`\n⚠️  Errors: ${totals.errors.length}`);
+    totals.errors.forEach(err => console.error(`  ${err.file}: ${err.error}`));
 
     // Help diagnose silent summarization failures (#70)
     const summaryErrors = totals.errors.filter(e => e.error.startsWith('Summary generation failed'));
@@ -239,7 +245,9 @@ async function syncAll() {
   await runTopicPhase();
 }
 
-const MIGRATION_BATCH_SIZE = parseInt(process.env.EPISODIC_MEMORY_MIGRATION_BATCH || '500', 10);
+// A negative value reached SQL as LIMIT -1, which SQLite reads as no limit, and a non-number gave NaN.
+// envPositiveInt gives the default of 500 for both.
+const MIGRATION_BATCH_SIZE = envPositiveInt('EPISODIC_MEMORY_MIGRATION_BATCH', 500);
 
 async function runEmbeddingMigrationPhase(): Promise<void> {
   const db = initDatabase();

@@ -48,15 +48,27 @@ export declare function statIfExists(target: string): fs.Stats | null;
  */
 export declare function getSuperpowersDir(): string;
 /**
- * Get conversation archive directory.
+ * Returns the path that `getSuperpowersDir` uses, and creates nothing.
+ *
+ * A caller that only reads (doctor, the hooks, the read-only MCP tools) uses the `...Path` functions.
+ * A read must leave a fresh config folder unchanged.
+ */
+export declare function superpowersDirPath(): string;
+/**
+ * Get conversation archive directory. Creates the directory when it is missing.
  */
 export declare function getArchiveDir(): string;
+/** Returns the path that `getArchiveDir` uses, and creates nothing. */
+export declare function archiveDirPath(): string;
 /**
- * Get conversation index directory.
+ * Get conversation index directory. Creates the directory when it is missing.
  */
 export declare function getIndexDir(): string;
+/** Returns the path that `getIndexDir` uses, and creates nothing. */
+export declare function indexDirPath(): string;
 /**
- * Get database path.
+ * Get database path. Creates nothing: `openDatabase` creates the folder of the file when it opens a writer.
+ * A reader checks that the file exists first, so a read leaves a fresh config folder unchanged.
  */
 export declare function getDbPath(): string;
 /**

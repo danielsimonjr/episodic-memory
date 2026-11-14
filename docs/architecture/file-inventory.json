@@ -1,25 +1,25 @@
 {
-  "totalFiles": 297,
+  "totalFiles": 320,
   "byDisposition": {
-    "reachable": 48,
+    "reachable": 50,
     "build-entry": 4,
-    "test-only": 45,
+    "test-only": 46,
     "orphan": 15,
-    "test": 181,
+    "test": 200,
     "tool": 3,
-    "config": 1,
+    "config": 2,
     "bench": 0,
     "example": 0
   },
   "byArea": {
-    "src": 112,
+    "src": 115,
     "tools": 3,
-    "tests": 181,
-    "config": 1
+    "tests": 200,
+    "config": 2
   },
   "byPackage": {
-    "(root)": 194,
-    "episodic-memory": 103
+    "(root)": 214,
+    "episodic-memory": 106
   },
   "files": [
     {
@@ -41,21 +41,21 @@
       "package": "(root)",
       "area": "src",
       "disposition": "orphan",
-      "loc": 120
+      "loc": 122
     },
     {
       "file": "cli/forward-child.js",
       "package": "(root)",
       "area": "src",
       "disposition": "orphan",
-      "loc": 57
+      "loc": 60
     },
     {
       "file": "cli/index-conversations.js",
       "package": "(root)",
       "area": "src",
       "disposition": "orphan",
-      "loc": 149
+      "loc": 165
     },
     {
       "file": "cli/mcp-server-wrapper.js",
@@ -118,7 +118,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "orphan",
-      "loc": 107
+      "loc": 105
     },
     {
       "file": "src/backfill.ts",
@@ -135,11 +135,18 @@
       "loc": 233
     },
     {
+      "file": "src/cli-usage.ts",
+      "package": "episodic-memory",
+      "area": "src",
+      "disposition": "test-only",
+      "loc": 28
+    },
+    {
       "file": "src/codex-hook-trust.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 163
+      "loc": 167
     },
     {
       "file": "src/codex-support.ts",
@@ -237,7 +244,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 59
+      "loc": 68
     },
     {
       "file": "src/digest-validate.ts",
@@ -251,7 +258,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "orphan",
-      "loc": 84
+      "loc": 88
     },
     {
       "file": "src/doctor-learn.ts",
@@ -265,7 +272,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 470
+      "loc": 472
     },
     {
       "file": "src/embedding-migration.ts",
@@ -328,14 +335,14 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 468
+      "loc": 471
     },
     {
       "file": "src/learn-cli.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "orphan",
-      "loc": 94
+      "loc": 102
     },
     {
       "file": "src/learn/agent-runner.ts",
@@ -363,7 +370,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 884
+      "loc": 889
     },
     {
       "file": "src/learn/entry-order.ts",
@@ -552,7 +559,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 60
+      "loc": 99
     },
     {
       "file": "src/learn/validate.ts",
@@ -573,7 +580,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 91
+      "loc": 106
     },
     {
       "file": "src/markdown-html.ts",
@@ -643,7 +650,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 214
+      "loc": 232
     },
     {
       "file": "src/priority.ts",
@@ -678,21 +685,21 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "orphan",
-      "loc": 122
+      "loc": 137
     },
     {
       "file": "src/search.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 623
+      "loc": 640
     },
     {
       "file": "src/show-cli.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "orphan",
-      "loc": 59
+      "loc": 67
     },
     {
       "file": "src/show.ts",
@@ -713,7 +720,7 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "orphan",
-      "loc": 32
+      "loc": 36
     },
     {
       "file": "src/stats.ts",
@@ -727,28 +734,35 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 870
+      "loc": 877
+    },
+    {
+      "file": "src/summary-sentinel.ts",
+      "package": "episodic-memory",
+      "area": "src",
+      "disposition": "reachable",
+      "loc": 32
     },
     {
       "file": "src/sync-banner.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 33
+      "loc": 38
     },
     {
       "file": "src/sync-cli.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "orphan",
-      "loc": 268
+      "loc": 276
     },
     {
       "file": "src/sync.ts",
       "package": "episodic-memory",
       "area": "src",
       "disposition": "test-only",
-      "loc": 586
+      "loc": 590
     },
     {
       "file": "src/topic-db.ts",
@@ -818,7 +832,14 @@
       "package": "episodic-memory",
       "area": "src",
       "disposition": "reachable",
-      "loc": 244
+      "loc": 247
+    },
+    {
+      "file": "src/win-command.ts",
+      "package": "episodic-memory",
+      "area": "src",
+      "disposition": "reachable",
+      "loc": 99
     },
     {
       "file": "test/agent-sdk-floor.test.ts",
@@ -910,6 +931,13 @@
       "area": "tests",
       "disposition": "test",
       "loc": 174
+    },
+    {
+      "file": "test/cli-usage.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 34
     },
     {
       "file": "test/codex-doctor.test.ts",
@@ -1106,6 +1134,97 @@
       "area": "tests",
       "disposition": "test",
       "loc": 368
+    },
+    {
+      "file": "test/e2e/cases.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 142
+    },
+    {
+      "file": "test/e2e/cli-flags.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 296
+    },
+    {
+      "file": "test/e2e/coverage.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 525
+    },
+    {
+      "file": "test/e2e/env-flags.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 750
+    },
+    {
+      "file": "test/e2e/env-learn-topics.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 426
+    },
+    {
+      "file": "test/e2e/fake-proc-lister.mjs",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 62
+    },
+    {
+      "file": "test/e2e/harness.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 1083
+    },
+    {
+      "file": "test/e2e/hooks.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 398
+    },
+    {
+      "file": "test/e2e/isolation.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 86
+    },
+    {
+      "file": "test/e2e/learn.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 496
+    },
+    {
+      "file": "test/e2e/lifecycle.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 607
+    },
+    {
+      "file": "test/e2e/mcp.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 761
+    },
+    {
+      "file": "test/e2e/smoke.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 412
     },
     {
       "file": "test/embedding-migration-helpers.test.ts",
@@ -1351,6 +1470,13 @@
       "area": "tests",
       "disposition": "test",
       "loc": 165
+    },
+    {
+      "file": "test/learn/learn-option-refusal.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 26
     },
     {
       "file": "test/learn/learned-block.test.ts",
@@ -1640,6 +1766,13 @@
       "loc": 141
     },
     {
+      "file": "test/paths-no-create.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 42
+    },
+    {
       "file": "test/paths.test.ts",
       "package": "(root)",
       "area": "tests",
@@ -1717,6 +1850,13 @@
       "loc": 124
     },
     {
+      "file": "test/search-interleave.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 29
+    },
+    {
       "file": "test/search-metadata-filters.test.ts",
       "package": "(root)",
       "area": "tests",
@@ -1728,7 +1868,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 111
+      "loc": 114
     },
     {
       "file": "test/search-with-summary.test.ts",
@@ -1829,11 +1969,18 @@
       "loc": 44
     },
     {
+      "file": "test/summary-sentinel.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 21
+    },
+    {
       "file": "test/sync-banner.test.ts",
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 34
+      "loc": 39
     },
     {
       "file": "test/sync-cli-args.test.ts",
@@ -2088,6 +2235,13 @@
       "loc": 30
     },
     {
+      "file": "test/win-command.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 60
+    },
+    {
       "file": "vendor/onnxruntime-web-stub/index.js",
       "package": "(root)",
       "area": "src",
@@ -2099,7 +2253,14 @@
       "package": "(root)",
       "area": "config",
       "disposition": "config",
-      "loc": 26
+      "loc": 28
+    },
+    {
+      "file": "vitest.e2e.config.ts",
+      "package": "(root)",
+      "area": "config",
+      "disposition": "config",
+      "loc": 22
     }
   ],
   "skippedLinks": [],

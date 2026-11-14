@@ -4,6 +4,7 @@ import { VERSION } from './version.js';
 import { SUMMARIZER_GUARD_ENV, shouldSkipReentrantSync } from './reentrancy.js';
 import { spawn } from 'child_process';
 import { createInterface } from 'readline';
+import { commandInvocation } from './win-command.js';
 import { codexVersionRequirementMessage, parseCodexCliVersion, versionMeetsMinimum, } from './codex-support.js';
 import { validateApiBaseUrl } from './api-endpoint.js';
 import { summarizerBackend, callOllama, GpuReservedError, ollamaMaxPromptChars } from './ollama-backend.js';
@@ -374,9 +375,12 @@ function appServerTimeoutMs() {
 }
 function readCommandOutput(command, args) {
     return new Promise((resolve, reject) => {
-        const child = spawn(command, args, {
-            env: getApiEnv(),
-            stdio: ['ignore', 'pipe', 'pipe']
+        const env = getApiEnv();
+        const run = commandInvocation(command, args, env);
+        const child = spawn(run.file, run.args, {
+            env,
+            stdio: ['ignore', 'pipe', 'pipe'],
+            windowsVerbatimArguments: run.windowsVerbatimArguments,
         });
         let output = '';
         let settled = false;
@@ -462,9 +466,12 @@ function requireTurnId(result, method) {
 export async function runCodexCommand(command) {
     await assertSupportedCodexVersion(command);
     return new Promise((resolve, reject) => {
-        const child = spawn(command.command, command.args, {
-            env: getApiEnv(),
-            stdio: ['pipe', 'pipe', 'pipe']
+        const env = getApiEnv();
+        const run = commandInvocation(command.command, command.args, env);
+        const child = spawn(run.file, run.args, {
+            env,
+            stdio: ['pipe', 'pipe', 'pipe'],
+            windowsVerbatimArguments: run.windowsVerbatimArguments,
         });
         let stderr = '';
         let answer = '';

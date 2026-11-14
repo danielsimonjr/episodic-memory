@@ -1,4 +1,6 @@
+import fs from 'fs';
 import { initDatabase } from './db.js';
+import { getDbPath } from './paths.js';
 import { insertDigestEntry, searchDigest } from './digest-db.js';
 import { buildDigestText, digestMaxChars, projectKeyFromCwd } from './digest-inject.js';
 import { redactEntryText } from './digest-validate.js';
@@ -10,9 +12,18 @@ export function normalizeHandoff(note) {
 }
 /** Behavior of the `digest` MCP tool. Exactly one of expand, handoff, query, or the default view runs. */
 export function digestToolText(params) {
+    const project = params.project ?? projectKeyFromCwd(process.cwd());
+    // Only a handoff writes. A read of a missing index answers without opening it: `initDatabase` creates the file,
+    // so a read on a fresh config folder left a new database behind.
+    if (!params.handoff && !fs.existsSync(getDbPath())) {
+        if (params.expand)
+            throw new Error(`No exchange with id ${params.expand}`);
+        if (params.query)
+            return `No digest entries match "${params.query}".`;
+        return `No digest entries for ${project}.`;
+    }
     const db = initDatabase();
     try {
-        const project = params.project ?? projectKeyFromCwd(process.cwd());
         if (params.expand) {
             const row = db
                 .prepare('SELECT archive_path, line_start, line_end, project, timestamp FROM exchanges WHERE id = ?')

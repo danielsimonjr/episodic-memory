@@ -1,4 +1,5 @@
 import fs from 'fs';
+import { writeNoExchangeSummary } from './summary-sentinel.js';
 import type { ConversationExchange } from './types.js';
 import path from 'path';
 import { scanExclusionMarkers, shouldSkipConversation } from './exclusion-marker.js';
@@ -44,6 +45,11 @@ export interface SyncResult {
   emptySummaries: number;
   unexplainedEmptySummaries: number;
   errors: Array<{ file: string; error: string }>;
+  /**
+   * The files whose index write failed, for example on "database is locked". Each one is queued again.
+   * A summary failure is not counted here: it writes a failure record and retries within its attempt limit.
+   */
+  indexFailures: number;
 }
 
 /**
@@ -220,7 +226,8 @@ export async function syncConversations(
     pendingSummaries: 0,
     emptySummaries: 0,
     unexplainedEmptySummaries: 0,
-    errors: []
+    errors: [],
+    indexFailures: 0,
   };
 
   // Ensure source directory exists
@@ -405,6 +412,10 @@ export async function syncConversations(
               file,
               error: error instanceof Error ? error.message : String(error)
             });
+            // The copy is already in the archive, so without a re-queue the next sync skips it and the file
+            // stays out of the index. A "database is locked" failure lost a transcript this way.
+            requeueForIndex([file]);
+            result.indexFailures++;
           }
         }
       } finally {
@@ -521,16 +532,9 @@ export async function summarizeOneFile(
     const exchanges = await parseConversation(filePath, project, filePath);
 
     if (exchanges.length === 0) {
-      // Skip empty conversations — write an empty -summary.txt sentinel so they aren't re-queued
-      // forever, AND record why. Every empty summary must carry a reason; an empty file with no
-      // marker now means "nobody knows", which is a reportable condition rather than a silence.
-      const summaryPath = filePath.replace('.jsonl', '-summary.txt');
-      fs.writeFileSync(summaryPath, '', 'utf-8');
-      try {
-        fs.writeFileSync(summaryFailPath(filePath), JSON.stringify({
-          reason: 'no-exchanges', recordedAt: new Date().toISOString()
-        }), 'utf-8');
-      } catch {}
+      // Skip empty conversations: the sentinel stops the re-queue and records the reason.
+      // Every empty summary must carry a reason; an empty file with no marker means "nobody knows".
+      writeNoExchangeSummary(filePath);
       return;
     }
 

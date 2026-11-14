@@ -2,9 +2,9 @@ metadata:
   name: episodic-memory
   schemaVersion: 2.0.0
   language: typescript
-  totalFiles: 297
+  totalFiles: 320
   totalModules: 4
-  totalExports: 631
+  totalExports: 732
 modules:
   src:
     cli/digest-hook.js:
@@ -144,6 +144,11 @@ modules:
             - acquireRefreshedLock
             - releaseLock
           typeOnly: false
+        - file: src/cli-usage.ts
+          imports:
+            - positiveIntegerOption
+            - refuseUsage
+          typeOnly: false
         - file: src/backfill.ts
           imports:
             - '*'
@@ -203,12 +208,23 @@ modules:
         - bundledBinaryPresent
         - probeClaudeBin
         - claudeExecutableOption
+    src/cli-usage.ts:
+      externalDependencies: []
+      nodeDependencies: []
+      internalDependencies: []
+      exports:
+        - refuseUsage
+        - positiveIntegerOption
     src/codex-hook-trust.ts:
       externalDependencies: []
       nodeDependencies:
         - child_process
         - readline
-      internalDependencies: []
+      internalDependencies:
+        - file: src/win-command.ts
+          imports:
+            - commandInvocation
+          typeOnly: false
       exports:
         - CodexHookTrustState
         - trustStateFromHooksList
@@ -535,11 +551,16 @@ modules:
         - buildCompressPrompt
     src/digest-tool.ts:
       externalDependencies: []
-      nodeDependencies: []
+      nodeDependencies:
+        - fs
       internalDependencies:
         - file: src/db.ts
           imports:
             - initDatabase
+          typeOnly: false
+        - file: src/paths.ts
+          imports:
+            - getDbPath
           typeOnly: false
         - file: src/digest-db.ts
           imports:
@@ -595,7 +616,11 @@ modules:
           typeOnly: false
         - file: src/logging.ts
           imports:
-            - getSyncLogPath
+            - syncLogPath
+          typeOnly: false
+        - file: src/win-command.ts
+          imports:
+            - commandInvocation
           typeOnly: false
         - file: src/codex-hook-trust.ts
           imports:
@@ -614,7 +639,7 @@ modules:
           typeOnly: true
         - file: src/paths.ts
           imports:
-            - getSuperpowersDir
+            - superpowersDirPath
             - '*'
           typeOnly: false
         - file: src/learn/knowledge-store.ts
@@ -667,15 +692,15 @@ modules:
           typeOnly: false
         - file: src/paths.ts
           imports:
-            - getArchiveDir
+            - archiveDirPath
             - getDbPath
-            - getIndexDir
-            - getSuperpowersDir
+            - indexDirPath
+            - superpowersDirPath
           typeOnly: false
         - file: src/logging.ts
           imports:
-            - getSyncErrorsLogPath
-            - getSyncLogPath
+            - syncErrorsLogPath
+            - syncLogPath
           typeOnly: false
         - file: src/deps-health.ts
           imports:
@@ -924,6 +949,7 @@ modules:
             - formatResults
             - formatSummaryForDisplay
             - includeSearchSummaries
+            - interleaveByRank
             - l2DistanceToCosineSimilarity
             - maxSummaryDisplayChars
             - searchConversations
@@ -950,6 +976,7 @@ modules:
           typeOnly: false
         - file: src/paths.ts
           imports:
+            - archiveDirPath
             - findJsonlFiles
             - getArchiveDir
             - getClaudeDir
@@ -963,7 +990,9 @@ modules:
             - getLearnedDir
             - getLearningDbPath
             - getSuperpowersDir
+            - indexDirPath
             - statIfExists
+            - superpowersDirPath
             - tryChmod
           typeOnly: false
       exports: []
@@ -1019,6 +1048,10 @@ modules:
         - file: src/exclusion-marker.ts
           imports:
             - scanExclusionMarkers
+          typeOnly: false
+        - file: src/summary-sentinel.ts
+          imports:
+            - writeNoExchangeSummary
           typeOnly: false
       exports:
         - indexConversations
@@ -1279,6 +1312,7 @@ modules:
         - file: src/learn/usage.ts
           imports:
             - LEARN_USAGE
+            - learnOptionRefusal
           typeOnly: false
         - file: src/learn/types.ts
           imports:
@@ -2269,6 +2303,8 @@ modules:
       internalDependencies: []
       exports:
         - LEARN_USAGE
+        - LEARN_OPTIONS_BY_COMMAND
+        - learnOptionRefusal
     src/learn/validate.ts:
       externalDependencies: []
       nodeDependencies: []
@@ -2336,6 +2372,7 @@ modules:
         - file: src/learn/usage.ts
           imports:
             - LEARN_USAGE
+            - learnOptionRefusal
           typeOnly: false
         - file: src/gpu-reservation.ts
           imports:
@@ -2380,10 +2417,13 @@ modules:
           imports:
             - getSuperpowersDir
             - getIndexDir
+            - superpowersDirPath
           typeOnly: false
       exports:
         - LogLevel
         - getLogDir
+        - syncLogPath
+        - syncErrorsLogPath
         - getSyncLogPath
         - getSyncErrorsLogPath
         - getLearnLogPath
@@ -2586,8 +2626,11 @@ modules:
         - findJsonlFiles
         - statIfExists
         - getSuperpowersDir
+        - superpowersDirPath
         - getArchiveDir
+        - archiveDirPath
         - getIndexDir
+        - indexDirPath
         - getDbPath
         - getLearnedDir
         - getKnowledgeDbPath
@@ -2646,6 +2689,11 @@ modules:
             - formatMultiConceptResults
             - SearchOptions
           typeOnly: false
+        - file: src/cli-usage.ts
+          imports:
+            - positiveIntegerOption
+            - refuseUsage
+          typeOnly: false
       exports: []
     src/search.ts:
       externalDependencies: []
@@ -2690,6 +2738,7 @@ modules:
         - maxSummaryDisplayChars
         - formatSummaryForDisplay
         - SearchOptions
+        - interleaveByRank
         - l2DistanceToCosineSimilarity
         - buildFtsMatchQuery
         - searchConversations
@@ -2705,6 +2754,10 @@ modules:
           imports:
             - formatConversationAsMarkdown
             - formatConversationAsHTML
+          typeOnly: false
+        - file: src/cli-usage.ts
+          imports:
+            - refuseUsage
           typeOnly: false
       exports: []
     src/show.ts:
@@ -2756,6 +2809,10 @@ modules:
             - getIndexStats
             - formatStats
           typeOnly: false
+        - file: src/cli-usage.ts
+          imports:
+            - refuseUsage
+          typeOnly: false
       exports: []
     src/stats.ts:
       externalDependencies: []
@@ -2793,6 +2850,10 @@ modules:
           imports:
             - SUMMARIZER_GUARD_ENV
             - shouldSkipReentrantSync
+          typeOnly: false
+        - file: src/win-command.ts
+          imports:
+            - commandInvocation
           typeOnly: false
         - file: src/codex-support.ts
           imports:
@@ -2844,6 +2905,15 @@ modules:
         - runCodexCommand
         - getCodexModel
         - summarizeConversation
+    src/summary-sentinel.ts:
+      externalDependencies: []
+      nodeDependencies:
+        - fs
+      internalDependencies: []
+      exports:
+        - summaryPathFor
+        - summaryFailPathFor
+        - writeNoExchangeSummary
     src/sync-banner.ts:
       externalDependencies: []
       nodeDependencies: []
@@ -2866,6 +2936,10 @@ modules:
         - file: src/reentrancy.ts
           imports:
             - shouldSkipReentrantSync
+          typeOnly: false
+        - file: src/constants.ts
+          imports:
+            - envPositiveInt
           typeOnly: false
         - file: src/sync-banner.ts
           imports:
@@ -2919,6 +2993,10 @@ modules:
         - fs
         - path
       internalDependencies:
+        - file: src/summary-sentinel.ts
+          imports:
+            - writeNoExchangeSummary
+          typeOnly: false
         - file: src/types.ts
           imports:
             - ConversationExchange
@@ -3297,6 +3375,10 @@ modules:
             - scanExclusionMarkers
             - shouldSkipConversation
           typeOnly: false
+        - file: src/summary-sentinel.ts
+          imports:
+            - writeNoExchangeSummary
+          typeOnly: false
         - file: src/embeddings.ts
           imports:
             - '*'
@@ -3313,6 +3395,16 @@ modules:
         - VerificationResult
         - verifyIndex
         - repairIndex
+    src/win-command.ts:
+      externalDependencies: []
+      nodeDependencies:
+        - fs
+        - path
+      internalDependencies: []
+      exports:
+        - CommandInvocation
+        - findWindowsCommand
+        - commandInvocation
     vendor/onnxruntime-web-stub/index.js:
       externalDependencies: []
       nodeDependencies: []
@@ -3581,6 +3673,17 @@ modules:
         - file: test/test-utils.ts
           imports:
             - safeRmSync
+          typeOnly: false
+      exports: []
+    test/cli-usage.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies: []
+      internalDependencies:
+        - file: src/cli-usage.ts
+          imports:
+            - positiveIntegerOption
+            - refuseUsage
           typeOnly: false
       exports: []
     test/codex-doctor.test.ts:
@@ -4253,6 +4356,488 @@ modules:
         - file: src/db.ts
           imports:
             - '*'
+          typeOnly: false
+      exports: []
+    test/e2e/cases.ts:
+      externalDependencies: []
+      nodeDependencies: []
+      internalDependencies: []
+      exports:
+        - FlagEntry
+        - UncoveredEntry
+        - FLAGS
+        - ENV_VARS
+        - HARNESS_ONLY_ENV
+        - GuardOnlyEnv
+        - GUARD_ONLY_ENV
+        - MCP_TOOLS
+        - UNCOVERED
+    test/e2e/cli-flags.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - node:fs
+        - node:path
+      internalDependencies:
+        - file: test/e2e/harness.ts
+          imports:
+            - EXIT_FAIL
+            - EXIT_USAGE
+            - assertRepoPreconditions
+            - cliBin
+            - listTree
+            - makeSandbox
+            - oneLine
+            - removeSandbox
+            - runCli
+            - seedTranscript
+            - syncWorkerPids
+            - waitForBackgroundSync
+            - Sandbox
+          typeOnly: false
+        - file: test/e2e/isolation.ts
+          imports:
+            - useIsolation
+          typeOnly: false
+      exports: []
+    test/e2e/coverage.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - node:fs
+        - node:path
+      internalDependencies:
+        - file: test/e2e/cases.ts
+          imports:
+            - ENV_VARS
+            - FLAGS
+            - GUARD_ONLY_ENV
+            - HARNESS_ONLY_ENV
+            - MCP_TOOLS
+            - UNCOVERED
+          typeOnly: false
+        - file: test/e2e/harness.ts
+          imports:
+            - McpClient
+            - REPO_ROOT
+            - assertRepoPreconditions
+            - cliBin
+            - makeSandbox
+            - removeSandbox
+            - runCli
+            - Sandbox
+          typeOnly: false
+        - file: test/e2e/isolation.ts
+          imports:
+            - useIsolation
+          typeOnly: false
+      exports:
+        - helpFlags
+        - literalFlags
+        - activeCaseText
+        - stripComments
+        - stripSkipped
+        - quotesWord
+        - setsEnvKey
+        - EnvScan
+        - scanEnvVars
+    test/e2e/env-flags.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - node:crypto
+        - node:fs
+        - node:path
+        - node:sqlite
+      internalDependencies:
+        - file: test/e2e/harness.ts
+          imports:
+            - McpClient
+            - buildEnv
+            - cliBin
+            - fakeOllama
+            - makeSandbox
+            - openIndexDb
+            - removeSandbox
+            - runCli
+            - runHook
+            - seedDigestableSession
+            - seedTranscript
+            - textOf
+            - CliResult
+            - FakeOllama
+            - FakeRequest
+            - Sandbox
+          typeOnly: false
+        - file: test/e2e/isolation.ts
+          imports:
+            - useIsolation
+          typeOnly: false
+      exports: []
+    test/e2e/env-learn-topics.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - node:crypto
+      internalDependencies:
+        - file: src/learn/knowledge-db.ts
+          imports:
+            - insertKnowledgeEntry
+          typeOnly: false
+        - file: src/learn/knowledge-store.ts
+          imports:
+            - openKnowledgeStore
+          typeOnly: false
+        - file: src/learn/learn-config.ts
+          imports:
+            - learnConfig
+            - LearnConfig
+          typeOnly: false
+        - file: test/e2e/harness.ts
+          imports:
+            - cliBin
+            - fakeOllama
+            - makeSandbox
+            - openIndexDb
+            - removeSandbox
+            - runCli
+            - seedDigestableSession
+            - seedTranscript
+            - withSandboxEnv
+            - CliResult
+            - FakeOllama
+            - FakeRequest
+            - Sandbox
+          typeOnly: false
+        - file: test/e2e/isolation.ts
+          imports:
+            - useIsolation
+          typeOnly: false
+      exports: []
+    test/e2e/fake-proc-lister.mjs:
+      externalDependencies: []
+      nodeDependencies:
+        - node:child_process
+        - node:fs
+      internalDependencies: []
+      exports:
+        - realCommandLine
+        - listClaudeProcs
+    test/e2e/harness.ts:
+      externalDependencies: []
+      nodeDependencies:
+        - node:child_process
+        - node:crypto
+        - node:fs
+        - node:http
+        - node:net
+        - node:os
+        - node:path
+        - node:sqlite
+        - node:url
+      internalDependencies:
+        - file: src/deps-health.ts
+          imports:
+            - repairPlan
+          typeOnly: false
+        - file: cli/ensure-deps.js
+          imports:
+            - pruneOptionalWeight
+          typeOnly: false
+        - file: test/test-utils.ts
+          imports:
+            - safeRmSync
+          typeOnly: false
+        - file: test/e2e/cases.ts
+          imports:
+            - ENV_VARS
+          typeOnly: false
+      exports:
+        - REPO_ROOT
+        - CLI_DIR
+        - DIST_DIR
+        - FIXTURE_DIR
+        - LISTER_PATH
+        - cliBin
+        - Sandbox
+        - makeSandbox
+        - removeSandbox
+        - isUnderRoot
+        - envViolations
+        - argvViolations
+        - killTree
+        - assertSpawnable
+        - EnvOptions
+        - buildEnv
+        - assertRepoPreconditions
+        - staleDistPairs
+        - listTree
+        - hashTree
+        - diffListings
+        - isLiveFile
+        - REPO_CANARY_ROOTS
+        - startRepoCanary
+        - CliResult
+        - RunOptions
+        - runCli
+        - FakeKind
+        - PROMPT_HEADERS
+        - classifyPrompt
+        - kindOf
+        - FakeMode
+        - FakeRequest
+        - FakeOllama
+        - fakeOllama
+        - MCP_SERVER_JS
+        - McpContent
+        - McpCallResult
+        - McpClient
+        - textOf
+        - fixturePath
+        - SeedOptions
+        - seedTranscript
+        - SEEDED_FILE_NAMES
+        - syncLockPath
+        - waitUntil
+        - syncWorkerPids
+        - isRepoWorker
+        - newSyncWorkers
+        - EXIT_FAIL
+        - EXIT_USAGE
+        - EXIT_LOCKED
+        - oneLine
+        - openIndexDb
+        - readSyncLog
+        - readHookLog
+        - withSandboxEnv
+        - DigestableOptions
+        - seedDigestableSession
+        - HookName
+        - runHook
+        - waitForBackgroundSync
+    test/e2e/hooks.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - node:child_process
+        - node:crypto
+        - node:fs
+        - node:path
+      internalDependencies:
+        - file: test/e2e/harness.ts
+          imports:
+            - CLI_DIR
+            - REPO_ROOT
+            - cliBin
+            - fakeOllama
+            - makeSandbox
+            - newSyncWorkers
+            - openIndexDb
+            - readHookLog
+            - removeSandbox
+            - runCli
+            - runHook
+            - seedDigestableSession
+            - seedTranscript
+            - syncLockPath
+            - syncWorkerPids
+            - waitForBackgroundSync
+            - FakeOllama
+            - Sandbox
+          typeOnly: false
+        - file: test/e2e/isolation.ts
+          imports:
+            - useIsolation
+          typeOnly: false
+      exports: []
+    test/e2e/isolation.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - node:os
+        - node:path
+      internalDependencies:
+        - file: test/e2e/harness.ts
+          imports:
+            - SEEDED_FILE_NAMES
+            - listTree
+            - newSyncWorkers
+            - startRepoCanary
+            - syncWorkerPids
+          typeOnly: false
+      exports:
+        - realDataRoots
+        - leakedSeedFiles
+        - useIsolation
+    test/e2e/learn.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - node:fs
+        - node:path
+        - node:sqlite
+      internalDependencies:
+        - file: src/learn/knowledge-db.ts
+          imports:
+            - insertKnowledgeEntry
+          typeOnly: false
+        - file: src/learn/knowledge-store.ts
+          imports:
+            - openKnowledgeStore
+          typeOnly: false
+        - file: test/e2e/harness.ts
+          imports:
+            - EXIT_FAIL
+            - EXIT_USAGE
+            - cliBin
+            - fakeOllama
+            - makeSandbox
+            - removeSandbox
+            - runCli
+            - seedTranscript
+            - withSandboxEnv
+            - CliResult
+            - FakeOllama
+            - Sandbox
+          typeOnly: false
+        - file: test/e2e/isolation.ts
+          imports:
+            - useIsolation
+          typeOnly: false
+      exports: []
+    test/e2e/lifecycle.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - node:fs
+        - node:path
+      internalDependencies:
+        - file: test/e2e/harness.ts
+          imports:
+            - DIST_DIR
+            - EXIT_FAIL
+            - EXIT_LOCKED
+            - EXIT_USAGE
+            - McpClient
+            - cliBin
+            - fakeOllama
+            - fixturePath
+            - makeSandbox
+            - oneLine
+            - openIndexDb
+            - removeSandbox
+            - runCli
+            - seedTranscript
+            - syncLockPath
+            - textOf
+            - CliResult
+            - FakeOllama
+            - Sandbox
+          typeOnly: false
+        - file: test/e2e/isolation.ts
+          imports:
+            - useIsolation
+          typeOnly: false
+      exports: []
+    test/e2e/mcp.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - node:child_process
+        - node:fs
+        - node:path
+      internalDependencies:
+        - file: src/learn/knowledge-db.ts
+          imports:
+            - insertKnowledgeEntry
+          typeOnly: false
+        - file: src/learn/knowledge-store.ts
+          imports:
+            - openKnowledgeStore
+          typeOnly: false
+        - file: test/e2e/cases.ts
+          imports:
+            - MCP_TOOLS
+          typeOnly: false
+        - file: test/e2e/harness.ts
+          imports:
+            - MCP_SERVER_JS
+            - McpClient
+            - REPO_ROOT
+            - assertRepoPreconditions
+            - cliBin
+            - diffListings
+            - fakeOllama
+            - listTree
+            - makeSandbox
+            - openIndexDb
+            - removeSandbox
+            - runCli
+            - seedDigestableSession
+            - seedTranscript
+            - textOf
+            - withSandboxEnv
+            - CliResult
+            - FakeOllama
+            - McpCallResult
+            - Sandbox
+          typeOnly: false
+        - file: test/e2e/isolation.ts
+          imports:
+            - useIsolation
+          typeOnly: false
+      exports: []
+    test/e2e/smoke.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - node:child_process
+        - node:fs
+        - node:os
+        - node:path
+      internalDependencies:
+        - file: test/e2e/cases.ts
+          imports:
+            - MCP_TOOLS
+          typeOnly: false
+        - file: test/e2e/harness.ts
+          imports:
+            - LISTER_PATH
+            - PROMPT_HEADERS
+            - REPO_ROOT
+            - assertRepoPreconditions
+            - buildEnv
+            - classifyPrompt
+            - cliBin
+            - envViolations
+            - fakeOllama
+            - makeSandbox
+            - McpClient
+            - newSyncWorkers
+            - openIndexDb
+            - readHookLog
+            - readSyncLog
+            - removeSandbox
+            - runCli
+            - runHook
+            - seedDigestableSession
+            - seedTranscript
+            - CLI_DIR
+            - DIST_DIR
+            - argvViolations
+            - isRepoWorker
+            - syncLockPath
+            - syncWorkerPids
+            - textOf
+            - waitForBackgroundSync
+            - waitUntil
+            - FakeOllama
+            - Sandbox
+          typeOnly: false
+        - file: test/e2e/isolation.ts
+          imports:
+            - leakedSeedFiles
+            - useIsolation
           typeOnly: false
       exports: []
     test/embedding-migration-helpers.test.ts:
@@ -5231,6 +5816,17 @@ modules:
         - file: test/test-utils.ts
           imports:
             - safeRmSync
+          typeOnly: false
+      exports: []
+    test/learn/learn-option-refusal.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies: []
+      internalDependencies:
+        - file: src/learn/usage.ts
+          imports:
+            - LEARN_OPTIONS_BY_COMMAND
+            - learnOptionRefusal
           typeOnly: false
       exports: []
     test/learn/learned-block.test.ts:
@@ -6271,6 +6867,32 @@ modules:
             - countLines
           typeOnly: false
       exports: []
+    test/paths-no-create.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - fs
+        - os
+        - path
+      internalDependencies:
+        - file: src/paths.ts
+          imports:
+            - archiveDirPath
+            - getDbPath
+            - getIndexDir
+            - indexDirPath
+            - superpowersDirPath
+          typeOnly: false
+        - file: src/logging.ts
+          imports:
+            - syncErrorsLogPath
+            - syncLogPath
+          typeOnly: false
+        - file: test/test-utils.ts
+          imports:
+            - safeRmSync
+          typeOnly: false
+      exports: []
     test/paths.test.ts:
       externalDependencies:
         - vitest
@@ -6457,6 +7079,16 @@ modules:
         - file: src/mcp-tools.ts
           imports:
             - '*'
+          typeOnly: false
+      exports: []
+    test/search-interleave.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies: []
+      internalDependencies:
+        - file: src/search.ts
+          imports:
+            - interleaveByRank
           typeOnly: false
       exports: []
     test/search-metadata-filters.test.ts:
@@ -6755,6 +7387,23 @@ modules:
           imports:
             - ConversationExchange
           typeOnly: true
+      exports: []
+    test/summary-sentinel.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - fs
+        - os
+        - path
+      internalDependencies:
+        - file: src/summary-sentinel.ts
+          imports:
+            - writeNoExchangeSummary
+          typeOnly: false
+        - file: test/test-utils.ts
+          imports:
+            - safeRmSync
+          typeOnly: false
       exports: []
     test/sync-banner.test.ts:
       externalDependencies:
@@ -7560,6 +8209,24 @@ modules:
         - url
       internalDependencies: []
       exports: []
+    test/win-command.test.ts:
+      externalDependencies:
+        - vitest
+      nodeDependencies:
+        - fs
+        - os
+        - path
+      internalDependencies:
+        - file: src/win-command.ts
+          imports:
+            - commandInvocation
+            - findWindowsCommand
+          typeOnly: false
+        - file: test/test-utils.ts
+          imports:
+            - safeRmSync
+          typeOnly: false
+      exports: []
   config:
     vitest.config.ts:
       externalDependencies:
@@ -7571,33 +8238,43 @@ modules:
             - TEST_ENV
           typeOnly: false
       exports: []
+    vitest.e2e.config.ts:
+      externalDependencies:
+        - vitest/config
+      nodeDependencies: []
+      internalDependencies:
+        - file: test/test-env.ts
+          imports:
+            - TEST_ENV
+          typeOnly: false
+      exports: []
 statistics:
-  totalTypeScriptFiles: 297
-  totalSourceFiles: 297
+  totalTypeScriptFiles: 320
+  totalSourceFiles: 320
   totalModules: 4
-  totalLinesOfCode: 60589
-  totalExports: 631
+  totalLinesOfCode: 67233
+  totalExports: 732
   entryRoots: 6
-  reachableFiles: 52
-  dormantFiles: 60
+  reachableFiles: 54
+  dormantFiles: 61
   orphanedFiles: 15
-  testOnlyFiles: 45
+  testOnlyFiles: 46
   runtimeCircularDeps: 0
   typeOnlyCircularDeps: 1
   totalTypeOnlyImports: 114
   noImporterFileCount: 14
-  unusedExportsCount: 114
+  unusedExportsCount: 117
   circularDepsTruncated: false
   runtimeCyclicComponents: 0
   typeOnlyCyclicComponents: 1
   runtimeFilesInCycles: 0
   typeOnlyFilesInCycles: 2
-  totalClasses: 11
-  totalInterfaces: 145
-  totalFunctions: 358
-  totalTypeGuards: 11
+  totalClasses: 12
+  totalInterfaces: 160
+  totalFunctions: 420
+  totalTypeGuards: 14
   totalEnums: 0
-  totalConstants: 70
+  totalConstants: 90
   totalReExports: 9
 reachability:
   roots:
@@ -7607,8 +8284,8 @@ reachability:
     - src/mcp-server.ts
     - test/setup-env.ts
     - test/global-setup.ts
-  reachableCount: 52
-  dormantCount: 60
+  reachableCount: 54
+  dormantCount: 61
   orphaned:
     - cli/digest-hook.js
     - cli/episodic-memory.js
@@ -7628,6 +8305,7 @@ reachability:
   testOnly:
     - cli/ensure-deps.js
     - src/backfill.ts
+    - src/cli-usage.ts
     - src/codex-hook-trust.ts
     - src/deps-health.ts
     - src/digest-compress.ts

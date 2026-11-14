@@ -269,7 +269,7 @@ function tryChmod(targetPath, mode) {
   } catch {
   }
 }
-function getSuperpowersDir() {
+function superpowersDirPath() {
   let dir;
   if (process.env.EPISODIC_MEMORY_CONFIG_DIR) {
     dir = process.env.EPISODIC_MEMORY_CONFIG_DIR;
@@ -283,22 +283,23 @@ function getSuperpowersDir() {
       dir = path.join(os.homedir(), ".config", "superpowers");
     }
   }
-  return ensureDir(dir);
+  return dir;
 }
 function getArchiveDir() {
-  if (process.env.TEST_ARCHIVE_DIR) {
-    return ensureDir(process.env.TEST_ARCHIVE_DIR);
-  }
-  return ensureDir(path.join(getSuperpowersDir(), "conversation-archive"));
+  return ensureDir(archiveDirPath());
 }
-function getIndexDir() {
-  return ensureDir(path.join(getSuperpowersDir(), "conversation-index"));
+function archiveDirPath() {
+  if (process.env.TEST_ARCHIVE_DIR) return process.env.TEST_ARCHIVE_DIR;
+  return path.join(superpowersDirPath(), "conversation-archive");
+}
+function indexDirPath() {
+  return path.join(superpowersDirPath(), "conversation-index");
 }
 function getDbPath() {
   if (process.env.EPISODIC_MEMORY_DB_PATH || process.env.TEST_DB_PATH) {
     return process.env.EPISODIC_MEMORY_DB_PATH || process.env.TEST_DB_PATH;
   }
-  return path.join(getIndexDir(), "db.sqlite");
+  return path.join(indexDirPath(), "db.sqlite");
 }
 var init_paths = __esm({
   "src/paths.ts"() {
@@ -1102,6 +1103,7 @@ __export(search_exports, {
   formatResults: () => formatResults,
   formatSummaryForDisplay: () => formatSummaryForDisplay,
   includeSearchSummaries: () => includeSearchSummaries,
+  interleaveByRank: () => interleaveByRank,
   l2DistanceToCosineSimilarity: () => l2DistanceToCosineSimilarity,
   maxSummaryDisplayChars: () => maxSummaryDisplayChars,
   searchConversations: () => searchConversations,
@@ -1161,6 +1163,19 @@ function buildSearchFilters(options) {
     sql: parts.length ? `AND ${parts.join(" AND ")}` : "",
     params
   };
+}
+function interleaveByRank(vectorRows, textRows, limit) {
+  const merged = [];
+  const seen = /* @__PURE__ */ new Set();
+  const vectorById = new Map(vectorRows.map((row) => [row.id, row]));
+  for (let i = 0; merged.length < limit && (i < vectorRows.length || i < textRows.length); i++) {
+    for (const row of [vectorRows[i], textRows[i]]) {
+      if (row === void 0 || seen.has(row.id) || merged.length >= limit) continue;
+      seen.add(row.id);
+      merged.push(vectorById.get(row.id) ?? row);
+    }
+  }
+  return merged;
 }
 function exactVectorSearch(db, embedding, filterClause, filterParams, limit) {
   return db.prepare(
@@ -1306,12 +1321,7 @@ async function searchConversations(query, options = {}) {
         textResults = textStmt.all(...like.params, ...filterParams, limit);
       }
       if (mode === "both") {
-        const seenIds = new Set(results.map((r) => r.id));
-        for (const textResult of textResults) {
-          if (!seenIds.has(textResult.id)) {
-            results.push(textResult);
-          }
-        }
+        results = interleaveByRank(results, textResults, limit);
       } else {
         results = textResults;
       }
@@ -3379,14 +3389,20 @@ __export(digest_tool_exports, {
   digestToolText: () => digestToolText,
   normalizeHandoff: () => normalizeHandoff
 });
+import fs5 from "fs";
 function normalizeHandoff(note) {
   const oneLine = redactEntryText(note).replace(/\s+/g, " ").trim();
   return oneLine.length > HANDOFF_MAX_CHARS ? `${oneLine.slice(0, HANDOFF_MAX_CHARS - 3)}...` : oneLine;
 }
 function digestToolText(params) {
+  const project = params.project ?? projectKeyFromCwd(process.cwd());
+  if (!params.handoff && !fs5.existsSync(getDbPath())) {
+    if (params.expand) throw new Error(`No exchange with id ${params.expand}`);
+    if (params.query) return `No digest entries match "${params.query}".`;
+    return `No digest entries for ${project}.`;
+  }
   const db = initDatabase();
   try {
-    const project = params.project ?? projectKeyFromCwd(process.cwd());
     if (params.expand) {
       const row = db.prepare("SELECT archive_path, line_start, line_end, project, timestamp FROM exchanges WHERE id = ?").get(params.expand);
       if (!row) throw new Error(`No exchange with id ${params.expand}`);
@@ -3429,6 +3445,7 @@ var init_digest_tool = __esm({
   "src/digest-tool.ts"() {
     "use strict";
     init_db();
+    init_paths();
     init_digest_db();
     init_digest_inject();
     init_digest_validate();

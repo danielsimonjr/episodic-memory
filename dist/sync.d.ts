@@ -34,6 +34,11 @@ export interface SyncResult {
         file: string;
         error: string;
     }>;
+    /**
+     * The files whose index write failed, for example on "database is locked". Each one is queued again.
+     * A summary failure is not counted here: it writes a failure record and retries within its attempt limit.
+     */
+    indexFailures: number;
 }
 /**
  * The options of `syncConversations`.

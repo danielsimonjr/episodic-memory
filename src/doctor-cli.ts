@@ -4,13 +4,17 @@ import fs from 'fs';
 import path from 'path';
 import { buildCodexDoctorReport, buildDoctorReport, collectDoctorSnapshot } from './doctor.js';
 import { getCodexDir, getDbPath } from './paths.js';
-import { getSyncLogPath } from './logging.js';
+import { syncLogPath } from './logging.js';
+import { commandInvocation } from './win-command.js';
 import { detectCodexHookTrustState } from './codex-hook-trust.js';
 
 function capture(command: string, args: string[]): string {
-  const result = spawnSync(command, args, {
+  // commandInvocation finds a Windows shim such as codex.cmd, which a plain spawnSync('codex') does not.
+  const run = commandInvocation(command, args);
+  const result = spawnSync(run.file, run.args, {
     encoding: 'utf-8',
     timeout: 10000,
+    windowsVerbatimArguments: run.windowsVerbatimArguments,
   });
   return `${result.stdout || ''}${result.stderr || ''}`.trim();
 }
@@ -42,7 +46,7 @@ async function main(): Promise<void> {
       mcpListOutput: capture('codex', ['mcp', 'list']),
       codexHome,
       sessionsDirExists: fs.existsSync(path.join(codexHome, 'sessions')),
-      logPath: getSyncLogPath(),
+      logPath: syncLogPath(),
       dbPath: getDbPath(),
       hookTrustState,
     });

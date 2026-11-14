@@ -9,12 +9,12 @@ import type { CodexHookTrustState } from './codex-hook-trust.js';
 import { EMBEDDING_VERSION, countStale } from './embedding-migration.js';
 import { initDatabase } from './db.js';
 import {
-  getArchiveDir,
+  archiveDirPath,
   getDbPath,
-  getIndexDir,
-  getSuperpowersDir,
+  indexDirPath,
+  superpowersDirPath,
 } from './paths.js';
-import { getSyncErrorsLogPath, getSyncLogPath } from './logging.js';
+import { syncErrorsLogPath as errorsLogPath, syncLogPath } from './logging.js';
 import { nodeModulesIsHealthy } from './deps-health.js';
 import { assertNodeFloor } from './node-floor.js';
 import { type LearnDoctorSection, collectLearnDoctorSection } from './doctor-learn.js';
@@ -212,9 +212,11 @@ export function readRecentLogErrors(logPath: string, limit = 5): string[] {
  * The plugin root is `CLAUDE_PLUGIN_ROOT`. When that variable is empty or unset, the function uses `PLUGIN_ROOT`.
  */
 export async function collectDoctorSnapshot(): Promise<DoctorInputs> {
-  const configDir = getSuperpowersDir();
-  const archiveDir = getArchiveDir();
-  const indexDir = getIndexDir();
+  // doctor reads and creates nothing. A getter that creates its folder made `archiveExists` always true
+  // and left new folders in a fresh config folder.
+  const configDir = superpowersDirPath();
+  const archiveDir = archiveDirPath();
+  const indexDir = indexDirPath();
   const dbPath = getDbPath();
   const dbExists = fs.existsSync(dbPath);
 
@@ -247,7 +249,7 @@ export async function collectDoctorSnapshot(): Promise<DoctorInputs> {
     nodeModulesHealthy = nodeModulesIsHealthy(path.join(pluginRoot, 'node_modules'));
   }
 
-  const syncErrorsLogPath = getSyncErrorsLogPath();
+  const syncErrorsLogPath = errorsLogPath();
 
   return {
     configDir,
@@ -261,7 +263,7 @@ export async function collectDoctorSnapshot(): Promise<DoctorInputs> {
     conversationCount,
     currentEmbeddingVersion: EMBEDDING_VERSION,
     staleEmbeddingCount,
-    syncLogPath: getSyncLogPath(),
+    syncLogPath: syncLogPath(),
     syncErrorsLogPath,
     recentSyncErrors: readRecentLogErrors(syncErrorsLogPath, 5),
     nodeModulesHealthy,

@@ -3,6 +3,7 @@ import { getArchiveDir } from './paths.js';
 import { getSyncLockPath } from './logging.js';
 import { shouldSkipReentrantSync } from './reentrancy.js';
 import { acquireRefreshedLock, releaseLock } from './lockfile.js';
+import { positiveIntegerOption, refuseUsage } from './cli-usage.js';
 
 const args = process.argv.slice(2);
 
@@ -33,20 +34,17 @@ For bulk runs use a local model, not billed API calls:
   process.exit(0);
 }
 
-function numArg(name: string): number | undefined {
-  const i = args.indexOf(name);
-  if (i < 0) return undefined;
-  const n = Number(args[i + 1]);
-  if (!Number.isInteger(n) || n <= 0) {
-    console.error(`${name} needs a positive integer`);
-    process.exit(1);
-  }
-  return n;
+// Refuse an unknown option before any work. Without the check, a misspelled flag runs a full backfill.
+let limit: number | undefined;
+let batch = 25;
+let dryRun = false;
+for (let i = 0; i < args.length; i++) {
+  const arg = args[i];
+  if (arg === '--limit') limit = positiveIntegerOption('backfill', arg, args[++i]);
+  else if (arg === '--batch') batch = positiveIntegerOption('backfill', arg, args[++i]);
+  else if (arg === '--dry-run') dryRun = true;
+  else refuseUsage('backfill', `unknown ${arg.startsWith('-') ? 'option' : 'argument'} ${arg}`);
 }
-
-const limit = numArg('--limit');
-const batch = numArg('--batch') ?? 25;
-const dryRun = args.includes('--dry-run');
 const archiveDir = getArchiveDir();
 
 const { backfillArchive, batchVerdict } = await import('./backfill.js');

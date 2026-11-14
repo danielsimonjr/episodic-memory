@@ -7,12 +7,12 @@
 ## Summary
 
 - **Files with no in-repo importer**: 14
-- **Dormant files**: 60
+- **Dormant files**: 61
   - **Orphaned (reachable from nothing)**: 15
-  - **Test-only (only a test reaches them)**: 45
-- **Potentially unused exports**: 114
+  - **Test-only (only a test reaches them)**: 46
+- **Potentially unused exports**: 117
   - **Unreferenced anywhere**: 4
-  - **Referenced in their own module**: 110
+  - **Referenced in their own module**: 113
   - **Not classified**: 0
 
 ## Caveats
@@ -49,6 +49,7 @@ Source files that only a test reaches. They ship nothing, but a test uses them.
 
 - `cli/ensure-deps.js`
 - `src/backfill.ts`
+- `src/cli-usage.ts`
 - `src/codex-hook-trust.ts`
 - `src/deps-health.ts`
 - `src/digest-compress.ts`
@@ -165,10 +166,12 @@ No other file imports these names, but their own module uses them.
 - `src/mcp-schemas.ts`: `ResponseFormatEnum`, `SearchModeEnum`, `TopicsActionEnum`
 - `src/prune.ts`: `PruneOptions`, `PruneResult`
 - `src/stats.ts`: `IndexStats`
+- `src/summary-sentinel.ts`: `summaryFailPathFor`, `summaryPathFor`
 - `src/sync-banner.ts`: `SyncHeadlineTotals`
 - `src/topic-db.ts`: `TopicEdit`, `TopicEvent`, `TopicRange`, `TopicSession`, `TopicSessionStatus`, `TopicUnitHit`
 - `src/topic-format.ts`: `TopicFootnote`, `TopicLink`, `TopicOutlineItem`, `TopicUnit`
 - `src/topic-validate.ts`: `SLUG_PATTERN`
+- `src/win-command.ts`: `CommandInvocation`
 
 ## Exports not classified
 

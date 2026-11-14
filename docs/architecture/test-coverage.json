@@ -1,19 +1,19 @@
 {
   "metadata": {
-    "totalSourceFiles": 112,
-    "totalTestFiles": 174,
-    "testedCount": 89,
-    "untestedCount": 23,
-    "coveragePercent": "79.5",
+    "totalSourceFiles": 115,
+    "totalTestFiles": 189,
+    "testedCount": 93,
+    "untestedCount": 22,
+    "coveragePercent": "80.9",
     "effectiveCoverage": {
       "policyLoaded": false,
-      "activeFiles": 112,
-      "testedActive": 89,
-      "activeUntested": 23,
+      "activeFiles": 115,
+      "testedActive": 93,
+      "activeUntested": 22,
       "excludedTotal": 0,
-      "percent": "79.5",
+      "percent": "80.9",
       "breakdown": {
-        "active_untested": 23
+        "active_untested": 22
       }
     }
   },
@@ -32,7 +32,6 @@
     "src/index.ts",
     "src/learn-cli.ts",
     "src/learn/pii-redactor.ts",
-    "src/learn/usage.ts",
     "src/mcp-server.ts",
     "src/search-cli.ts",
     "src/show-cli.ts",
@@ -48,6 +47,7 @@
     "src/archive-path.ts",
     "src/backfill.ts",
     "src/claude-bin.ts",
+    "src/cli-usage.ts",
     "src/codex-hook-trust.ts",
     "src/codex-support.ts",
     "src/constants.ts",
@@ -101,6 +101,7 @@
     "src/learn/solver.ts",
     "src/learn/tasks.ts",
     "src/learn/types.ts",
+    "src/learn/usage.ts",
     "src/learn/validate.ts",
     "src/lockfile.ts",
     "src/logging.ts",
@@ -122,6 +123,7 @@
     "src/sqlite.ts",
     "src/stats.ts",
     "src/summarizer.ts",
+    "src/summary-sentinel.ts",
     "src/sync-banner.ts",
     "src/sync.ts",
     "src/topic-db.ts",
@@ -131,7 +133,8 @@
     "src/topic-prompts.ts",
     "src/topic-validate.ts",
     "src/types.ts",
-    "src/verify.ts"
+    "src/verify.ts",
+    "src/win-command.ts"
   ],
   "coverageMap": {
     "cli/digest-hook.js": [],
@@ -165,6 +168,9 @@
       "test/learn/agent-runner.test.ts",
       "test/learn/learn-cli.test.ts",
       "test/topic-job.test.ts"
+    ],
+    "src/cli-usage.ts": [
+      "test/cli-usage.test.ts"
     ],
     "src/codex-hook-trust.ts": [
       "test/app-server-stdin-error.test.ts",
@@ -265,6 +271,7 @@
     "src/digest-prompts.ts": [
       "test/digest-prompt-budget.test.ts",
       "test/digest-prompts.test.ts",
+      "test/e2e/smoke.test.ts",
       "test/topic-prompts.test.ts"
     ],
     "src/digest-tool.ts": [
@@ -352,6 +359,9 @@
     ],
     "src/learn/knowledge-db.ts": [
       "test/doctor.test.ts",
+      "test/e2e/env-learn-topics.test.ts",
+      "test/e2e/learn.test.ts",
+      "test/e2e/mcp.test.ts",
       "test/learn/export.test.ts",
       "test/learn/knowledge-db.test.ts",
       "test/learn/knowledge-store.test.ts",
@@ -372,6 +382,9 @@
     ],
     "src/learn/knowledge-store.ts": [
       "test/doctor.test.ts",
+      "test/e2e/env-learn-topics.test.ts",
+      "test/e2e/learn.test.ts",
+      "test/e2e/mcp.test.ts",
       "test/learn/bootstrap.test.ts",
       "test/learn/export.test.ts",
       "test/learn/knowledge-db.test.ts",
@@ -395,6 +408,7 @@
       "test/learn/relay-task8-challenger.test.ts"
     ],
     "src/learn/learn-config.ts": [
+      "test/e2e/env-learn-topics.test.ts",
       "test/learn/knowledge-gate.test.ts",
       "test/learn/learn-config.test.ts",
       "test/learn/learn-handlers.test.ts"
@@ -522,7 +536,9 @@
       "test/learn/solver.test.ts",
       "test/learn/validate.test.ts"
     ],
-    "src/learn/usage.ts": [],
+    "src/learn/usage.ts": [
+      "test/learn/learn-option-refusal.test.ts"
+    ],
     "src/learn/validate.ts": [
       "test/learn/validate.test.ts"
     ],
@@ -536,6 +552,7 @@
       "test/doctor.test.ts",
       "test/logging-append.test.ts",
       "test/logging.test.ts",
+      "test/paths-no-create.test.ts",
       "test/sync-cli-disable-auto-sync.test.ts",
       "test/sync-cli-lock.test.ts",
       "test/sync-hook-logging.test.ts"
@@ -594,6 +611,7 @@
       "test/learn/learn-lock.test.ts",
       "test/learn/learning-store.test.ts",
       "test/learn/skills-tool.test.ts",
+      "test/paths-no-create.test.ts",
       "test/paths.test.ts",
       "test/vanished-transcript.test.ts"
     ],
@@ -627,6 +645,7 @@
       "test/integration.test.ts",
       "test/multi-concept.test.ts",
       "test/search-embeddings-unavailable.test.ts",
+      "test/search-interleave.test.ts",
       "test/search-metadata-filters.test.ts",
       "test/search-text-row-similarity.test.ts",
       "test/search-with-summary.test.ts",
@@ -716,6 +735,9 @@
       "test/topic-job.test.ts",
       "test/verify.test.ts"
     ],
+    "src/summary-sentinel.ts": [
+      "test/summary-sentinel.test.ts"
+    ],
     "src/sync-banner.ts": [
       "test/sync-banner.test.ts"
     ],
@@ -792,6 +814,9 @@
       "test/index-honours-marker.test.ts",
       "test/verify.test.ts"
     ],
+    "src/win-command.ts": [
+      "test/win-command.test.ts"
+    ],
     "vendor/onnxruntime-web-stub/index.js": []
   },
   "testToSourceMap": {
@@ -836,6 +861,9 @@
     ],
     "test/claude-e2e-script.test.ts": [],
     "test/cli-forward.test.ts": [],
+    "test/cli-usage.test.ts": [
+      "src/cli-usage.ts"
+    ],
     "test/codex-doctor.test.ts": [
       "src/codex-hook-trust.ts",
       "src/doctor.ts"
@@ -971,6 +999,27 @@
       "src/learn/learning-db.ts",
       "src/learn/types.ts",
       "src/db.ts"
+    ],
+    "test/e2e/cli-flags.test.ts": [],
+    "test/e2e/coverage.test.ts": [],
+    "test/e2e/env-flags.test.ts": [],
+    "test/e2e/env-learn-topics.test.ts": [
+      "src/learn/knowledge-db.ts",
+      "src/learn/knowledge-store.ts",
+      "src/learn/learn-config.ts"
+    ],
+    "test/e2e/hooks.test.ts": [],
+    "test/e2e/learn.test.ts": [
+      "src/learn/knowledge-db.ts",
+      "src/learn/knowledge-store.ts"
+    ],
+    "test/e2e/lifecycle.test.ts": [],
+    "test/e2e/mcp.test.ts": [
+      "src/learn/knowledge-db.ts",
+      "src/learn/knowledge-store.ts"
+    ],
+    "test/e2e/smoke.test.ts": [
+      "src/digest-prompts.ts"
     ],
     "test/embedding-migration-helpers.test.ts": [
       "src/embedding-migration.ts",
@@ -1146,6 +1195,9 @@
     "test/learn/learn-lock.test.ts": [
       "src/learn/learn-lock.ts",
       "src/paths.ts"
+    ],
+    "test/learn/learn-option-refusal.test.ts": [
+      "src/learn/usage.ts"
     ],
     "test/learn/learned-block.test.ts": [
       "src/learn/knowledge-store.ts",
@@ -1345,6 +1397,10 @@
     "test/parser.test.ts": [
       "src/parser.ts"
     ],
+    "test/paths-no-create.test.ts": [
+      "src/paths.ts",
+      "src/logging.ts"
+    ],
     "test/paths.test.ts": [
       "src/paths.ts"
     ],
@@ -1380,6 +1436,9 @@
       "src/db.ts",
       "src/search.ts",
       "src/mcp-tools.ts"
+    ],
+    "test/search-interleave.test.ts": [
+      "src/search.ts"
     ],
     "test/search-metadata-filters.test.ts": [
       "src/sqlite.ts",
@@ -1442,6 +1501,9 @@
     "test/summarizer-text.test.ts": [
       "src/summarizer.ts",
       "src/types.ts"
+    ],
+    "test/summary-sentinel.test.ts": [
+      "src/summary-sentinel.ts"
     ],
     "test/sync-banner.test.ts": [
       "src/sync-banner.ts"
@@ -1580,7 +1642,10 @@
       "src/types.ts",
       "src/summarizer.ts"
     ],
-    "test/version-consistency.test.ts": []
+    "test/version-consistency.test.ts": [],
+    "test/win-command.test.ts": [
+      "src/win-command.ts"
+    ]
   },
   "classifiedUntested": [
     {
@@ -1637,10 +1702,6 @@
     },
     {
       "file": "src/learn/pii-redactor.ts",
-      "category": null
-    },
-    {
-      "file": "src/learn/usage.ts",
       "category": null
     },
     {

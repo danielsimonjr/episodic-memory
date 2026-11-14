@@ -1,5 +1,6 @@
 import { spawn } from 'child_process';
 import readline from 'readline';
+import { commandInvocation } from './win-command.js';
 
 /**
  * The trust state that Codex reports for the episodic-memory hooks.
@@ -82,9 +83,12 @@ export async function detectCodexHookTrustState(
   cwd: string,
   timeoutMs = 10000
 ): Promise<CodexHookTrustState> {
-  const child = spawn('codex', ['app-server'], {
-    env: { ...process.env, CODEX_HOME: codexHome },
+  const env = { ...process.env, CODEX_HOME: codexHome };
+  const run = commandInvocation('codex', ['app-server'], env);
+  const child = spawn(run.file, run.args, {
+    env,
     stdio: ['pipe', 'pipe', 'ignore'],
+    windowsVerbatimArguments: run.windowsVerbatimArguments,
   });
   const rl = readline.createInterface({ input: child.stdout });
   const pending = new Map<number, {

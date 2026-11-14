@@ -4,7 +4,7 @@
 
 # episodic-memory - Dependency Graph
 
-**Version**: 1.11.0
+**Version**: 1.12.0
 
 This document provides a comprehensive dependency graph of all files, components, imports, functions, and variables in the codebase.
 
@@ -32,7 +32,7 @@ This document provides a comprehensive dependency graph of all files, components
 The codebase is organized into the following modules:
 
 - **cli**: 8 files
-- **root**: 70 files
+- **root**: 73 files
 - **entry**: 1 file
 - **learn**: 32 files
 - **vendor/onnxruntime-web-stub**: 1 file
@@ -96,7 +96,7 @@ The codebase is organized into the following modules:
 
 ---
 
-### `cli/index-conversations.js` - index-conversations.js module
+### `cli/index-conversations.js` - Ask a yes/no question on stdin. Resolves true for "yes", false for any other answer,
 
 **Node.js Built-in Dependencies:**
 | Module | Import |
@@ -204,6 +204,7 @@ The codebase is organized into the following modules:
 | `./logging.js` | `getSyncLockPath` | Import |
 | `./reentrancy.js` | `shouldSkipReentrantSync` | Import |
 | `./lockfile.js` | `acquireRefreshedLock, releaseLock` | Import |
+| `./cli-usage.js` | `positiveIntegerOption, refuseUsage` | Import |
 | `./backfill.js` | `*` | Import |
 
 ---
@@ -249,6 +250,13 @@ The codebase is organized into the following modules:
 
 ---
 
+### `src/cli-usage.ts` - Prints one usage error line for a CLI command and exits with code 2.
+
+**Exports:**
+- Functions: `refuseUsage`, `positiveIntegerOption`
+
+---
+
 ### `src/codex-hook-trust.ts` - The trust state that Codex reports for the episodic-memory hooks.
 
 **Node.js Built-in Dependencies:**
@@ -256,6 +264,11 @@ The codebase is organized into the following modules:
 |--------|--------|
 | `child_process` | `spawn` |
 | `readline` | `default` |
+
+**Internal Dependencies:**
+| File | Imports | Type |
+|------|---------|------|
+| `./win-command.js` | `commandInvocation` | Import |
 
 **Exports:**
 - Types: `CodexHookTrustState`
@@ -465,10 +478,16 @@ The codebase is organized into the following modules:
 
 ### `src/digest-tool.ts` - digest-tool module
 
+**Node.js Built-in Dependencies:**
+| Module | Import |
+|--------|--------|
+| `fs` | `default` |
+
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
 | `./db.js` | `initDatabase` | Import |
+| `./paths.js` | `getDbPath` | Import |
 | `./digest-db.js` | `insertDigestEntry, searchDigest` | Import |
 | `./digest-inject.js` | `buildDigestText, digestMaxChars, projectKeyFromCwd` | Import |
 | `./digest-validate.js` | `redactEntryText` | Import |
@@ -506,7 +525,8 @@ The codebase is organized into the following modules:
 |------|---------|------|
 | `./doctor.js` | `buildCodexDoctorReport, buildDoctorReport, collectDoctorSnapshot` | Import |
 | `./paths.js` | `getCodexDir, getDbPath` | Import |
-| `./logging.js` | `getSyncLogPath` | Import |
+| `./logging.js` | `syncLogPath` | Import |
+| `./win-command.js` | `commandInvocation` | Import |
 | `./codex-hook-trust.js` | `detectCodexHookTrustState` | Import |
 
 ---
@@ -523,7 +543,7 @@ The codebase is organized into the following modules:
 | File | Imports | Type |
 |------|---------|------|
 | `./sqlite.js` | `Database` | Import (type-only) |
-| `./paths.js` | `getSuperpowersDir, *` | Import |
+| `./paths.js` | `superpowersDirPath, *` | Import |
 | `./learn/knowledge-store.js` | `KnowledgeStore` | Import (type-only) |
 | `./learn/types.js` | `KnowledgeKind, KnowledgeStatus` | Import (type-only) |
 | `./sqlite.js` | `*` | Import |
@@ -550,8 +570,8 @@ The codebase is organized into the following modules:
 | `./codex-hook-trust.js` | `CodexHookTrustState` | Import (type-only) |
 | `./embedding-migration.js` | `EMBEDDING_VERSION, countStale` | Import |
 | `./db.js` | `initDatabase` | Import |
-| `./paths.js` | `getArchiveDir, getDbPath, getIndexDir, getSuperpowersDir` | Import |
-| `./logging.js` | `getSyncErrorsLogPath, getSyncLogPath` | Import |
+| `./paths.js` | `archiveDirPath, getDbPath, indexDirPath, superpowersDirPath` | Import |
+| `./logging.js` | `syncErrorsLogPath, syncLogPath` | Import |
 | `./deps-health.js` | `nodeModulesIsHealthy` | Import |
 | `./node-floor.js` | `assertNodeFloor` | Import |
 | `./doctor-learn.js` | `LearnDoctorSection, collectLearnDoctorSection` | Import |
@@ -698,6 +718,7 @@ The codebase is organized into the following modules:
 | `./types.js` | `ConversationExchange` | Import |
 | `./paths.js` | `getArchiveDir, getExcludedProjects, getConversationSourceDirs, findJsonlFiles, statIfExists` | Import |
 | `./exclusion-marker.js` | `scanExclusionMarkers` | Import |
+| `./summary-sentinel.js` | `writeNoExchangeSummary` | Import |
 
 **Exports:**
 - Functions: `indexConversations`, `indexSession`, `indexUnprocessed`
@@ -716,7 +737,7 @@ The codebase is organized into the following modules:
 |------|---------|------|
 | `./reentrancy.js` | `shouldSkipReentrantSync` | Import |
 | `./learn/learn-config.js` | `learnEnabled, LEARN_OFF_MESSAGE` | Import |
-| `./learn/usage.js` | `LEARN_USAGE` | Import |
+| `./learn/usage.js` | `LEARN_USAGE, learnOptionRefusal` | Import |
 | `./gpu-reservation.js` | `gpuReservationBlock` | Import |
 | `./priority.js` | `BACKGROUND_WORKER_ENV, lowerPriorityIfBackgroundWorker` | Import |
 | `./logging.js` | `formatLogLine, getLearnLogPath` | Import |
@@ -749,11 +770,17 @@ The codebase is organized into the following modules:
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
-| `./paths.js` | `getSuperpowersDir, getIndexDir` | Import |
+| `./paths.js` | `getSuperpowersDir, getIndexDir, superpowersDirPath` | Import |
 
 **Exports:**
 - Types: `LogLevel`
-- Functions: `getLogDir`, `getSyncLogPath`, `getSyncErrorsLogPath`, `getLearnLogPath`, `getSyncLockPath`, `rotateSyncLogIfNeeded`, `formatLogLine`, `appendLogLine`
+- Functions:
+
+  ```text
+  getLogDir, syncLogPath, syncErrorsLogPath, getSyncLogPath, getSyncErrorsLogPath, getLearnLogPath,
+  getSyncLockPath, rotateSyncLogIfNeeded, formatLogLine, appendLogLine
+  ```
+
 
 ---
 
@@ -901,8 +928,9 @@ The codebase is organized into the following modules:
 
   ```text
   tryChmod, getClaudeDir, getCodexDir, getConversationSourceDirs, findJsonlFiles, statIfExists,
-  getSuperpowersDir, getArchiveDir, getIndexDir, getDbPath, getLearnedDir, getKnowledgeDbPath,
-  getLearningDbPath, getExcludeConfigPath, getExcludedProjects
+  getSuperpowersDir, superpowersDirPath, getArchiveDir, archiveDirPath, getIndexDir, indexDirPath,
+  getDbPath, getLearnedDir, getKnowledgeDbPath, getLearningDbPath, getExcludeConfigPath,
+  getExcludedProjects
   ```
 
 
@@ -956,6 +984,7 @@ The codebase is organized into the following modules:
 | File | Imports | Type |
 |------|---------|------|
 | `./search.js` | `searchConversations, formatResults, searchMultipleConcepts, formatMultiConceptResults, SearchOptions` | Import |
+| `./cli-usage.js` | `positiveIntegerOption, refuseUsage` | Import |
 
 ---
 
@@ -982,7 +1011,7 @@ The codebase is organized into the following modules:
 - Functions:
 
   ```text
-  includeSearchSummaries, maxSummaryDisplayChars, formatSummaryForDisplay,
+  includeSearchSummaries, maxSummaryDisplayChars, formatSummaryForDisplay, interleaveByRank,
   l2DistanceToCosineSimilarity, buildFtsMatchQuery, searchConversations, formatResults,
   searchMultipleConcepts, formatMultiConceptResults
   ```
@@ -1001,6 +1030,7 @@ The codebase is organized into the following modules:
 | File | Imports | Type |
 |------|---------|------|
 | `./show.js` | `formatConversationAsMarkdown, formatConversationAsHTML` | Import |
+| `./cli-usage.js` | `refuseUsage` | Import |
 
 ---
 
@@ -1038,12 +1068,13 @@ The codebase is organized into the following modules:
 
 ---
 
-### `src/stats-cli.ts` - stats-cli module
+### `src/stats-cli.ts` - stats takes no argument. Without the check, a misspelled flag prints the full statistics and says nothing.
 
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
 | `./stats.js` | `getIndexStats, formatStats` | Import |
+| `./cli-usage.js` | `refuseUsage` | Import |
 
 ---
 
@@ -1080,6 +1111,7 @@ The codebase is organized into the following modules:
 | `./types.js` | `ConversationExchange` | Import |
 | `./constants.js` | `CLAUDE_MAX_PROMPT_CHARS, SUMMARIZER_CONTEXT_MARKER` | Import |
 | `./reentrancy.js` | `SUMMARIZER_GUARD_ENV, shouldSkipReentrantSync` | Import |
+| `./win-command.js` | `commandInvocation` | Import |
 | `./codex-support.js` | `codexVersionRequirementMessage, parseCodexCliVersion, versionMeetsMinimum` | Import |
 | `./api-endpoint.js` | `validateApiBaseUrl` | Import |
 | `./ollama-backend.js` | `summarizerBackend, callOllama, GpuReservedError, ollamaMaxPromptChars, OllamaCallOptions` | Import |
@@ -1097,6 +1129,18 @@ The codebase is organized into the following modules:
   resolveLearnModels, callLearnModel, runCodexCommand, getCodexModel, summarizeConversation
   ```
 
+
+---
+
+### `src/summary-sentinel.ts` - Writes the record of a transcript that has no exchange: an empty summary file and a failure record
+
+**Node.js Built-in Dependencies:**
+| Module | Import |
+|--------|--------|
+| `fs` | `default` |
+
+**Exports:**
+- Functions: `summaryPathFor`, `summaryFailPathFor`, `writeNoExchangeSummary`
 
 ---
 
@@ -1121,6 +1165,7 @@ The codebase is organized into the following modules:
 |------|---------|------|
 | `./paths.js` | `getArchiveDir, getConversationSourceDirs, getIndexDir` | Import |
 | `./reentrancy.js` | `shouldSkipReentrantSync` | Import |
+| `./constants.js` | `envPositiveInt` | Import |
 | `./sync-banner.js` | `syncHeadline` | Import |
 | `./lockfile.js` | `acquireRefreshedLock, releaseLock` | Import |
 | `./priority.js` | `BACKGROUND_WORKER_ENV, lowerPriorityIfBackgroundWorker` | Import |
@@ -1145,6 +1190,7 @@ The codebase is organized into the following modules:
 **Internal Dependencies:**
 | File | Imports | Type |
 |------|---------|------|
+| `./summary-sentinel.js` | `writeNoExchangeSummary` | Import |
 | `./types.js` | `ConversationExchange` | Import (type-only) |
 | `./exclusion-marker.js` | `scanExclusionMarkers, shouldSkipConversation` | Import |
 | `./paths.js` | `getExcludedProjects, findJsonlFiles, statIfExists` | Import |
@@ -1337,6 +1383,7 @@ The codebase is organized into the following modules:
 | `./db.js` | `initDatabase, getAllExchanges, getFileLastIndexed, *` | Import |
 | `./paths.js` | `getArchiveDir, getExcludedProjects, findJsonlFiles, statIfExists` | Import |
 | `./exclusion-marker.js` | `scanExclusionMarkers, shouldSkipConversation` | Import |
+| `./summary-sentinel.js` | `writeNoExchangeSummary` | Import |
 | `./embeddings.js` | `*` | Import |
 | `./summarizer.js` | `*` | Import |
 | `./derived-text.js` | `*` | Import |
@@ -1344,6 +1391,20 @@ The codebase is organized into the following modules:
 **Exports:**
 - Interfaces: `VerificationResult`
 - Functions: `verifyIndex`, `repairIndex`
+
+---
+
+### `src/win-command.ts` - Finds the file that Windows runs for `command`, or undefined.
+
+**Node.js Built-in Dependencies:**
+| Module | Import |
+|--------|--------|
+| `fs` | `default` |
+| `path` | `default` |
+
+**Exports:**
+- Interfaces: `CommandInvocation`
+- Functions: `findWindowsCommand`, `commandInvocation`
 
 ---
 
@@ -1478,7 +1539,7 @@ The codebase is organized into the following modules:
 | `./types.js` | `isValidSlug, KnowledgeEntry, KnowledgeKind` | Import |
 | `./solver.js` | `BudgetExhausted, CallBudget, solveMany, SolveOptions` | Import |
 | `./learner.js` | `runLearn` | Import |
-| `./usage.js` | `LEARN_USAGE` | Import |
+| `./usage.js` | `LEARN_USAGE, learnOptionRefusal` | Import |
 | `./types.js` | `LearnDbs` | Import (type-only) |
 | `./entry-order.js` | `compareByProject` | Import |
 | `./knowledge-store.js` | `*` | Import |
@@ -2024,7 +2085,8 @@ The codebase is organized into the following modules:
 ### `src/learn/usage.ts` - Help text for `episodic-memory learn`.
 
 **Exports:**
-- Constants: `LEARN_USAGE`
+- Functions: `learnOptionRefusal`
+- Constants: `LEARN_USAGE`, `LEARN_OPTIONS_BY_COMMAND`
 
 ---
 
@@ -2066,26 +2128,27 @@ The codebase is organized into the following modules:
 |------|--------------|------------|
 | `src/sqlite` | 1 file | 28 files |
 | `src/learn/types` | 2 files | 22 files |
+| `src/paths` | 0 files | 23 files |
+| `src/summarizer` | 10 files | 13 files |
 | `src/db` | 7 files | 15 files |
 | `src/learn/cli-main` | 21 files | 1 file |
-| `src/paths` | 0 files | 22 files |
-| `src/summarizer` | 9 files | 13 files |
 | `src/learn/bootstrap` | 15 files | 3 files |
 | `src/learn/learner` | 15 files | 1 file |
 | `src/redact` | 0 files | 16 files |
 | `src/learn/leaf-learner` | 14 files | 1 file |
+| `src/sync` | 13 files | 2 files |
 | `src/learn/solver` | 9 files | 5 files |
-| `src/sync` | 12 files | 2 files |
 | `src/topic-job` | 13 files | 1 file |
 | `src/digest-job` | 11 files | 2 files |
+| `src/sync-cli` | 13 files | 0 files |
+| `src/indexer` | 10 files | 2 files |
 | `src/learn/learning-db` | 3 files | 9 files |
 | `src/mcp-tools` | 10 files | 2 files |
-| `src/sync-cli` | 12 files | 0 files |
 | `src/types` | 0 files | 12 files |
-| `src/indexer` | 9 files | 2 files |
 | `src/learn/knowledge-db` | 4 files | 7 files |
 | `src/learn/learn-config` | 0 files | 11 files |
 | `src/search` | 7 files | 4 files |
+| `src/constants` | 0 files | 10 files |
 | `src/digest-db` | 2 files | 8 files |
 | `src/doctor` | 9 files | 1 file |
 | `src/learn/agent-runner` | 5 files | 5 files |
@@ -2095,13 +2158,12 @@ The codebase is organized into the following modules:
 | `src/learn/tasks` | 8 files | 2 files |
 | `src/learn/validate` | 8 files | 2 files |
 | `src/ollama-backend` | 3 files | 7 files |
-| `src/constants` | 0 files | 9 files |
 | `src/embeddings` | 2 files | 7 files |
 | `src/index` | 9 files | 0 files |
+| `src/verify` | 8 files | 1 file |
 | `src/learn/export` | 7 files | 1 file |
 | `src/learn/knowledge-gate` | 5 files | 3 files |
 | `src/learn/learn-handlers` | 7 files | 1 file |
-| `src/verify` | 7 files | 1 file |
 | `src/deferral` | 2 files | 5 files |
 | `src/digest-compress` | 6 files | 1 file |
 
@@ -2146,12 +2208,12 @@ graph TD
         N10[backfill-cli]
         N11[backfill]
         N12[claude-bin]
-        N13[codex-hook-trust]
-        N14[codex-support]
-        N15[constants]
-        N16[content-text]
-        N17[db]
-        N18[...60 more]
+        N13[cli-usage]
+        N14[codex-hook-trust]
+        N15[codex-support]
+        N16[constants]
+        N17[content-text]
+        N18[...63 more]
     end
 
     subgraph Entry
@@ -2181,9 +2243,8 @@ graph TD
     N5 --> N1
     N6 --> N3
     N7 --> N1
+    N10 --> N13
     N10 --> N11
-    N17 --> N15
-    N19 --> N17
     N20 --> N12
     N21 --> N27
     N21 --> N28
@@ -2194,7 +2255,6 @@ graph TD
     N23 --> N25
     N23 --> N24
     N23 --> N29
-    N23 --> N17
     N23 --> N21
     N25 --> N24
     N27 --> N29
@@ -2209,15 +2269,15 @@ graph TD
 
 | Category | Count |
 |----------|-------|
-| Total Source Files | 297 |
+| Total Source Files | 320 |
 | Subsystems | 5 |
-| Total Lines of Code | 60589 |
-| Total Exports | 631 |
+| Total Lines of Code | 67233 |
+| Total Exports | 732 |
 | Total Re-exports | 9 |
-| Total Classes | 11 |
-| Total Interfaces | 145 |
-| Total Functions | 358 |
-| Total Type Guards | 11 |
+| Total Classes | 12 |
+| Total Interfaces | 160 |
+| Total Functions | 420 |
+| Total Type Guards | 14 |
 | Total Enums | 0 |
 | Type-only Imports | 114 |
 | Runtime Cyclic Components | 0 |
@@ -2227,4 +2287,4 @@ graph TD
 
 ---
 
-*Version*: 1.11.0
+*Version*: 1.12.0

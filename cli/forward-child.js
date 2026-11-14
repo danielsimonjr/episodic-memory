@@ -32,7 +32,8 @@ export function forward(scriptPath, args = process.argv.slice(2), command = proc
  * The promise resolves when the child exits 0. Otherwise the promise rejects with an error. The `exitCode` of the
  * error is the code of the child, or 1 when a signal stops the child. A child that cannot start rejects with an error, and the
  * error then has no `exitCode`. The caller gives the exit code to the user. Exit code 2 means a refused argument.
- * Exit code 1 means a failed command or a stop by a signal.
+ * Exit code 1 means a failed command or a stop by a signal. `childReported` is true when the child exited with a code,
+ * because the child then printed its own error.
  *
  * @param scriptPath - the script that the child runs
  * @param args - the arguments of the child
@@ -48,6 +49,8 @@ export function runChild(scriptPath, args, command = process.execPath) {
       }
       const error = new Error(code === null ? `Command ended by signal ${signal}` : `Command failed with exit code ${code}`);
       error.exitCode = exitCodeFor(code);
+      // A child that exits with a code has printed its own error on the shared stderr. The caller then prints nothing.
+      error.childReported = code !== null;
       reject(error);
     });
     child.on('error', err => {

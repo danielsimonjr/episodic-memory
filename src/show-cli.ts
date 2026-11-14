@@ -1,5 +1,6 @@
 import { readFileSync } from 'fs';
 import { formatConversationAsMarkdown, formatConversationAsHTML } from './show.js';
+import { refuseUsage } from './cli-usage.js';
 
 const args = process.argv.slice(2);
 
@@ -11,7 +12,9 @@ for (let i = 0; i < args.length; i++) {
   const arg = args[i];
 
   if (arg === '--format' || arg === '-f') {
-    format = args[++i] as 'markdown' | 'html';
+    const value = args[++i];
+    if (value !== 'markdown' && value !== 'html') refuseUsage('show', `option ${arg} needs markdown or html`);
+    format = value;
   } else if (arg === '--help' || arg === '-h') {
     console.log(`
 Usage: episodic-memory show [OPTIONS] <file>
@@ -33,8 +36,13 @@ EXAMPLES:
   episodic-memory show conversation.jsonl | less
 `);
     process.exit(0);
+  } else if (arg.startsWith('-')) {
+    // A flag that show does not know was read as the file name, and the command failed with ENOENT.
+    refuseUsage('show', `unknown option ${arg}`);
   } else if (!filePath) {
     filePath = arg;
+  } else {
+    refuseUsage('show', `unknown argument ${arg}`);
   }
 }
 

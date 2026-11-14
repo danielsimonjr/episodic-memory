@@ -11,7 +11,7 @@
 import fs from 'fs';
 import path from 'path';
 import type { Database } from './sqlite.js';
-import { getSuperpowersDir } from './paths.js';
+import { superpowersDirPath } from './paths.js';
 import type { KnowledgeStore } from './learn/knowledge-store.js';
 import type { KnowledgeKind, KnowledgeStatus } from './learn/types.js';
 
@@ -177,7 +177,7 @@ export async function collectLearnDoctorSection(): Promise<LearnDoctorSection> {
   // A plain join, not `getLearnedDir()`: that helper creates the directory, and
   // doctor is a read-only probe — running it must not bring `learned/` into
   // being (spec §7 rule 1: the databases appear on a flag-on write only).
-  const learnedDir = path.join(getSuperpowersDir(), LEARNED_DIR_NAME);
+  const learnedDir = path.join(superpowersDirPath(), LEARNED_DIR_NAME);
   const section = emptyLearnSection(learnedDir);
 
   const knowledgeDb = path.join(learnedDir, 'knowledge.db');
@@ -186,7 +186,7 @@ export async function collectLearnDoctorSection(): Promise<LearnDoctorSection> {
   section.learningDbSizeBytes = sizeOf(learningDb);
   section.present = section.knowledgeDbSizeBytes !== null || section.learningDbSizeBytes !== null;
 
-  section.exportTree = treeSize(path.join(getSuperpowersDir(), LEARNED_SKILLS_DIR));
+  section.exportTree = treeSize(path.join(superpowersDirPath(), LEARNED_SKILLS_DIR));
 
   section.sqliteVersion = await readSqliteVersion();
 

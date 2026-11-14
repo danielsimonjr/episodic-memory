@@ -18,6 +18,7 @@
     "pretest": "bun run generate-version",
     "typecheck": "bun run generate-version && tsc --noEmit",
     "test": "vitest run",
+    "test:e2e": "vitest run -c vitest.e2e.config.ts",
     "test:claude-e2e": "node scripts/claude-e2e.js",
     "test:codex-e2e": "node scripts/codex-e2e.js",
     "test:watch": "vitest"

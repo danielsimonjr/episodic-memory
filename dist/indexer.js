@@ -7,6 +7,7 @@ import { initEmbeddings, generateExchangeEmbedding, generateExchangeEmbeddings }
 import { summarizeConversation } from './summarizer.js';
 import { getArchiveDir, getExcludedProjects, getConversationSourceDirs, findJsonlFiles, statIfExists } from './paths.js';
 import { scanExclusionMarkers } from './exclusion-marker.js';
+import { writeNoExchangeSummary } from './summary-sentinel.js';
 // Set max output tokens for Claude SDK (used by summarizer)
 process.env.CLAUDE_CODE_MAX_OUTPUT_TOKENS = '20000';
 // Increase max listeners for concurrent API calls
@@ -129,6 +130,8 @@ export async function indexConversations(limitToProject, maxConversations, concu
                     if (excludedByMarker(db, file, sourcePath, archivePath))
                         continue;
                     if (exchanges.length === 0) {
+                        // The same record that sync writes, so verify finds a summary after a rebuild.
+                        writeNoExchangeSummary(archivePath);
                         console.log(`  Skipped ${file} (no exchanges)`);
                         continue;
                     }

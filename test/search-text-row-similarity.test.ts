@@ -34,6 +34,7 @@ describe('the similarity of a text row', () => {
     mkdirSync(join(testDir, 'archive'), { recursive: true });
     const rows: Array<{ id: string; distance: number; user: string }> = [
       { id: 'near', distance: 0.1, user: 'How do I tune the cache size?' },
+      { id: 'mid', distance: 0.5, user: 'Which port does the server listen on?' },
       { id: 'far', distance: 1.5, user: 'Where does the deploy script rotate the keys?' },
     ];
     const db = initDatabase();
@@ -65,8 +66,9 @@ describe('the similarity of a text row', () => {
   });
 
   it('a both search gives a text-only row no similarity, and a vector row its own', async () => {
-    // limit 1: the vector step finds only the near row. The words of the query match only the far row.
-    const results = await searchConversations('deploy keys', { mode: 'both', limit: 1 });
+    // limit 2: the vector step finds the near and mid rows. The words of the query match only the far row.
+    // The merge alternates the two lists, so the text-only far row takes the second place.
+    const results = await searchConversations('deploy keys', { mode: 'both', limit: 2 });
     const byId = new Map(results.map(r => [r.exchange.id, r]));
 
     expect(results.map(r => r.exchange.id)).toEqual(['near', 'far']);
@@ -80,7 +82,8 @@ describe('the similarity of a text row', () => {
   });
 
   it('a both search keeps the vector similarity of a row that both steps find', async () => {
-    const results = await searchConversations('deploy keys', { mode: 'both', limit: 2 });
+    // limit 3: the vector step finds all three rows, and the text step finds the far row too.
+    const results = await searchConversations('deploy keys', { mode: 'both', limit: 3 });
     const far = results.find(r => r.exchange.id === 'far')!;
     expect(results.filter(r => r.exchange.id === 'far')).toHaveLength(1);
     expect(far.similarity).toBeCloseTo(1 - (1.5 * 1.5) / 2, 6);
@@ -92,7 +95,7 @@ describe('the similarity of a text row', () => {
     const db = initDatabase();
     try {
       db.exec('DROP TABLE exchanges_fts');
-      const both = await searchConversations('deploy keys', { mode: 'both', limit: 1, db });
+      const both = await searchConversations('deploy keys', { mode: 'both', limit: 2, db });
       expect(both.map(r => r.exchange.id)).toEqual(['near', 'far']);
       expect(both.find(r => r.exchange.id === 'far')!.similarity).toBeUndefined();
       const text = await searchConversations('deploy keys', { mode: 'text', db });

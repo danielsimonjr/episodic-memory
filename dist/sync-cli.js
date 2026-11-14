@@ -5,6 +5,7 @@
 // invocation — exits without paying the multi-second module load. (#87)
 import { getArchiveDir, getConversationSourceDirs, getIndexDir } from './paths.js';
 import { shouldSkipReentrantSync } from './reentrancy.js';
+import { envPositiveInt } from './constants.js';
 import { syncHeadline } from './sync-banner.js';
 import { acquireRefreshedLock, releaseLock } from './lockfile.js';
 import { BACKGROUND_WORKER_ENV, lowerPriorityIfBackgroundWorker } from './priority.js';
@@ -217,7 +218,9 @@ async function syncAll() {
     // Topic memory, after the digest (off unless EPISODIC_MEMORY_TOPICS=1). Never throws.
     await runTopicPhase();
 }
-const MIGRATION_BATCH_SIZE = parseInt(process.env.EPISODIC_MEMORY_MIGRATION_BATCH || '500', 10);
+// A negative value reached SQL as LIMIT -1, which SQLite reads as no limit, and a non-number gave NaN.
+// envPositiveInt gives the default of 500 for both.
+const MIGRATION_BATCH_SIZE = envPositiveInt('EPISODIC_MEMORY_MIGRATION_BATCH', 500);
 async function runEmbeddingMigrationPhase() {
     const db = initDatabase();
     try {

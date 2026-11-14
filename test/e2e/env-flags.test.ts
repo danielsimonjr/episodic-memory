@@ -539,19 +539,21 @@ describe('env: embedding migration batch', () => {
     }
   }, CASE_MS);
 
-  it.skip('D12 pending: MIGRATION_BATCH=-1 -> "migrating up to -1 this run" (LIMIT -1 is unlimited); MIGRATION_BATCH=abc -> "migrating up to NaN this run"; expected 500 for both', async () => {
-    const sb = makeSandbox();
-    try {
-      await staleIndex(sb);
-      for (const value of ['-1', 'abc']) {
+  // D12: before the fix, -1 reached SQL as LIMIT -1 (no limit) and abc gave NaN. Each value gets its own stale
+  // index, because a batch of 500 migrates every stale row of the fixture.
+  it('MIGRATION_BATCH=-1 and MIGRATION_BATCH=abc both use the default batch of 500 (D12)', async () => {
+    for (const value of ['-1', 'abc']) {
+      const sb = makeSandbox();
+      try {
+        await staleIndex(sb);
         const run = await cli(sb, ['sync'], { EPISODIC_MEMORY_SKIP_SUMMARIES: '1', EPISODIC_MEMORY_MIGRATION_BATCH: value });
         expect(run.code, run.stderr).toBe(0);
         expect(run.stderr, `MIGRATION_BATCH=${value}`).toContain('migrating up to 500 this run');
+      } finally {
+        removeSandbox(sb);
       }
-    } finally {
-      removeSandbox(sb);
     }
-  }, CASE_MS);
+  }, CASE_MS * 2);
 });
 
 describe('env: database busy timeout', () => {

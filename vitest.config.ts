@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 import { TEST_ENV } from './test/test-env.js';
 
 export default defineConfig({
@@ -17,6 +17,8 @@ export default defineConfig({
     // workers of a fresh checkout do not download the model at the same time.
     globalSetup: ['test/global-setup.ts'],
     include: ['test/**/*.test.ts'],
+    // test/e2e runs the shipped CLI and MCP server in child processes. It has its own config.
+    exclude: ['test/e2e/**', ...configDefaults.exclude],
     testTimeout: 30000, // 30 seconds for embedding/indexing tests
     // Some beforeEach hooks index multi-exchange fixtures, which is CPU-bound
     // transformer embedding (100+ calls). The 10s default is too tight when

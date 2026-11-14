@@ -32,6 +32,9 @@ jobs:
       - run: bun run --if-present typecheck
       - run: bun run --if-present lint
       - run: bun run --if-present test
+      # The end-to-end suite runs the committed dist/ (the build step comes after it), in a sandbox
+      # with a fake Ollama: no model, no network and no real user data (test/e2e/harness.ts).
+      - run: bun run test:e2e
       - run: bun run --if-present build
       # dist/ is committed and the plugin runs dist/, so dist/ must match a build of this commit.
       # A dependency bump merged without a rebuild ships a bundle that the lockfile does not
@@ -93,6 +96,7 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: node -p process.version
       - run: bun run --if-present test
+      - run: bun run test:e2e
       # Node 22 prints an ExperimentalWarning when node:sqlite loads. The adapter drops that one
       # warning, so the shipped dist must load the module with an empty stderr.
       - name: node:sqlite loads without a warning

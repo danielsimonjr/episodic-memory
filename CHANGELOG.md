@@ -1,6 +1,7 @@
 ## [Unreleased]
 
 ### Changed
+- `test/embedding-parity.test.ts` prints the CPU model and its AVX-512/VNNI flags, and the batch check compares a batch with the single path in the same process. The q8 integer kernels differ by CPU class, so the fixture check of the two long cases differs by 0.0119 on some CI runners.
 - Pooling stays mean. bge-small-en-v1.5 trains with CLS pooling, so CLS was measured on 120 archive-graded `learn` tasks against a 12,730-exchange index: MRR 0.132 for mean and 0.113 for CLS, and recall@1 12 against 8.
 - The new embedding stamp makes the first sync after the upgrade embed every row again. Measured on a copy of a 12,730-row index: 355 s for all rows in batches of 500, 0 rows stale after. The default sync embeds 500 rows per run, so a large index finishes over several syncs.
 

@@ -94,7 +94,12 @@ async function loadRuntime(): Promise<EmbeddingRuntime> {
   }
 
   try {
-    const session = await ort.InferenceSession.create(join(dir, ...MODEL_ONNX_FILE.split('/')));
+    // On an x86-64 CPU without VNNI, the default u8s8 integer kernel can saturate, and the long
+    // texts then get vectors up to 0.012 away from the vectors of a VNNI CPU. This option makes the
+    // runtime use the u8u8 kernel on those CPUs only. On other CPUs the option does nothing.
+    const session = await ort.InferenceSession.create(join(dir, ...MODEL_ONNX_FILE.split('/')), {
+      extra: { session: { x64quantprecision: '1' } },
+    });
     const tokenizer = new tokenizers.Tokenizer(
       JSON.parse(readFileSync(join(dir, TOKENIZER_FILE), 'utf-8')),
       JSON.parse(readFileSync(join(dir, TOKENIZER_CONFIG_FILE), 'utf-8'))

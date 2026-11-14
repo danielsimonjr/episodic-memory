@@ -1331,7 +1331,9 @@ async function loadRuntime() {
     );
   }
   try {
-    const session = await ort.InferenceSession.create(join2(dir, ...MODEL_ONNX_FILE.split("/")));
+    const session = await ort.InferenceSession.create(join2(dir, ...MODEL_ONNX_FILE.split("/")), {
+      extra: { session: { x64quantprecision: "1" } }
+    });
     const tokenizer = new tokenizers.Tokenizer(
       JSON.parse(readFileSync2(join2(dir, TOKENIZER_FILE), "utf-8")),
       JSON.parse(readFileSync2(join2(dir, TOKENIZER_CONFIG_FILE), "utf-8"))

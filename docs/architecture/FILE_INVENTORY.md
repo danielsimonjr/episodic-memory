@@ -84,7 +84,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/embedding-migration.ts` | episodic-memory | src | reachable | 198 |
 | `src/embedding-model.ts` | episodic-memory | src | reachable | 333 |
 | `src/embedding-stack.ts` | episodic-memory | src | reachable | 127 |
-| `src/embeddings.ts` | episodic-memory | src | reachable | 261 |
+| `src/embeddings.ts` | episodic-memory | src | reachable | 266 |
 | `src/exclusion-marker.ts` | episodic-memory | src | reachable | 120 |
 | `src/fs-retry.ts` | episodic-memory | src | reachable | 46 |
 | `src/fts-query.ts` | episodic-memory | src | reachable | 14 |

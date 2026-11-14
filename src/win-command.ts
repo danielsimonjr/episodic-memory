@@ -30,17 +30,42 @@ function envValue(env: NodeJS.ProcessEnv, name: string): string | undefined {
 export function findWindowsCommand(command: string, env: NodeJS.ProcessEnv): string | undefined {
   const exts = (envValue(env, 'PATHEXT') || DEFAULT_PATHEXT).split(';').filter(Boolean);
   const names = path.extname(command) ? [command, ...exts.map(e => command + e)] : exts.map(e => command + e);
-  const isFile = (p: string) => {
-    try {
-      return fs.statSync(p).isFile();
-    } catch {
-      return false;
-    }
-  };
-  if (command.includes('/') || command.includes('\\')) return names.find(isFile);
+  if (command.includes('/') || command.includes('\\')) return firstFile(names);
   for (const dir of (envValue(env, 'PATH') || '').split(path.delimiter).filter(Boolean)) {
-    const hit = names.map(n => path.join(dir, n)).find(isFile);
+    const hit = firstFile(names.map(n => path.join(dir, n)));
     if (hit) return hit;
+  }
+  return undefined;
+}
+
+/**
+ * Returns the first candidate that names a file, in the spelling of its directory entry, or undefined.
+ *
+ * Windows matches a file name without regard to case, so `codex.CMD` finds `codex.cmd`. The match reads the
+ * directory listing, so the lookup gives the same answer on a file system that is case-sensitive.
+ */
+function firstFile(candidates: readonly string[]): string | undefined {
+  const listings = new Map<string, string[]>();
+  for (const candidate of candidates) {
+    const dir = path.dirname(candidate);
+    let entries = listings.get(dir);
+    if (!entries) {
+      try {
+        entries = fs.readdirSync(dir);
+      } catch {
+        entries = [];
+      }
+      listings.set(dir, entries);
+    }
+    const wanted = path.basename(candidate).toLowerCase();
+    const entry = entries.find(e => e.toLowerCase() === wanted);
+    if (entry === undefined) continue;
+    const real = path.join(dir, entry);
+    try {
+      if (fs.statSync(real).isFile()) return real;
+    } catch {
+      // The entry went away or cannot be read. The next candidate is tried.
+    }
   }
   return undefined;
 }

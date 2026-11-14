@@ -66,7 +66,7 @@ The following 22 source files are not directly imported by any test file:
 | `src/codex-support.ts` | `codex-support-extra.test.ts`, `codex-support.test.ts` |
 | `src/constants.ts` | `constants.test.ts`, `digest-prompts.test.ts`, `embeddings-format.test.ts`, `oversized-message-guard.test.ts`, `sync-helpers.test.ts`, `topic-prompts.test.ts` |
 | `src/content-text.ts` | `content-text.test.ts` |
-| `src/db.ts` | `codex-transcripts.test.ts`, `cross-harness-recall.test.ts`, `db-helpers.test.ts`, `db.test.ts`, `digest-db.test.ts`, `digest-gpu-reservation.test.ts`, `digest-hook.test.ts`, `digest-job.test.ts`, `digest-mcp.test.ts`, `digest-prompt-budget.test.ts`, `doctor.test.ts`, `embedding-migration-helpers.test.ts`, `exchange-vectors.test.ts`, `index-honours-marker.test.ts`, `indexer-db-close.test.ts`, `integration.test.ts`, `learn-handlers.test.ts`, `mcp-tools.test.ts`, `oversized-message-guard.test.ts`, `prune.test.ts`, `search-embeddings-unavailable.test.ts`, `search-text-row-similarity.test.ts`, `sync-incremental-and-db.test.ts`, `sync-marker-scan.test.ts`, `text-search-multiword.test.ts`, `tool-calls-cascade.test.ts`, `topic-job.test.ts`, `topic-phase.test.ts`, `topic-tool.test.ts`, `vector-search-filters.test.ts`, `verify.test.ts` |
+| `src/db.ts` | `codex-transcripts.test.ts`, `cross-harness-recall.test.ts`, `db-helpers.test.ts`, `db.test.ts`, `digest-db.test.ts`, `digest-gpu-reservation.test.ts`, `digest-hook.test.ts`, `digest-job.test.ts`, `digest-mcp.test.ts`, `digest-prompt-budget.test.ts`, `doctor.test.ts`, `embedding-migration-helpers.test.ts`, `embedding-stack.test.ts`, `exchange-vectors.test.ts`, `index-honours-marker.test.ts`, `indexer-db-close.test.ts`, `integration.test.ts`, `learn-handlers.test.ts`, `mcp-tools.test.ts`, `oversized-message-guard.test.ts`, `prune.test.ts`, `search-embeddings-unavailable.test.ts`, `search-text-row-similarity.test.ts`, `sync-incremental-and-db.test.ts`, `sync-marker-scan.test.ts`, `text-search-multiword.test.ts`, `tool-calls-cascade.test.ts`, `topic-job.test.ts`, `topic-phase.test.ts`, `topic-tool.test.ts`, `vector-search-filters.test.ts`, `verify.test.ts` |
 | `src/deferral.ts` | `claude-auth-deferral.test.ts`, `claude-bin-deferral.test.ts` |
 | `src/deps-health.ts` | `deps-health.test.ts`, `ensure-deps-repair.test.ts` |
 | `src/derived-text.ts` | `derived-text.test.ts` |
@@ -211,7 +211,7 @@ The following 22 source files are not directly imported by any test file:
 | `e2e/smoke.test.ts` | 1 files |
 | `test/embedding-migration-helpers.test.ts` | 3 files |
 | `test/embedding-migration.test.ts` | 3 files |
-| `test/embedding-stack.test.ts` | 2 files |
+| `test/embedding-stack.test.ts` | 3 files |
 | `test/embeddings-format.test.ts` | 2 files |
 | `test/embeddings-unavailable.test.ts` | 1 files |
 | `test/ensure-deps-prune.test.ts` | 1 files |

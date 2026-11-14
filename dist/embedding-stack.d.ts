@@ -30,3 +30,14 @@ export declare function readEmbeddingStack(root?: string): string;
  * @returns true when the function marked the rows stale
  */
 export declare function reconcileEmbeddingStack(db: Database, stack: string): boolean;
+/**
+ * Store `stack` as the stamp of an index that has no exchange rows and no stamp.
+ *
+ * A new or rebuilt index has nothing to embed again, so its rows get the stamp of the stack that embeds them.
+ * Without this stamp, the migration phase after the first sync would embed every new row a second time.
+ * The function changes nothing in an index that has rows or a stamp. The function does not throw.
+ *
+ * @param db the open index database. The `exchanges` table must exist.
+ * @param stack the installed stack, from readEmbeddingStack
+ */
+export declare function stampEmptyIndex(db: Database, stack: string): void;

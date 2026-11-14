@@ -42,8 +42,8 @@ All figures below come from `repo-tools map` and cover the whole repository. The
 | Metric | Value | Scope |
 |---|---|---|
 | Source files | 323 | whole repository |
-| Lines of code | 67440 | whole repository |
-| Exports | 737 | whole repository |
+| Lines of code | 67496 | whole repository |
+| Exports | 738 | whole repository |
 | Modules (areas) | 4 | `src`, `tools`, `tests`, `config` |
 | Entry roots | 6 | `src/index.ts`, `src/node-floor.ts`, `src/index-cli.ts`, `src/mcp-server.ts`, `test/setup-env.ts`, `test/global-setup.ts` (vitest loads the two test files by their paths in `vitest.config.ts`) |
 | Runtime circular dependencies | 0 | whole repository |
@@ -60,7 +60,7 @@ The graph parser follows static imports. The parser does not follow four links t
 3. `package.json` names four `bin` entries. Two of them (`./cli/search-conversations`, `./cli/mcp-server`) have no file extension, and `repo-tools map` cannot resolve them to a file. The parser therefore sees no importer of `cli/forward-child.js` except `cli/search-conversations.js`, which is an orphan too.
 4. The `onnxruntime-web` override of `package.json` points the installer at `vendor/onnxruntime-web-stub`. No source file imports the stub. Only `test/onnxruntime-web-stub.test.ts` loads the stub.
 
-The result is 15 files that the map reports as orphaned and 62 as dormant. Most of them are live. The map is correct about the static graph. The map cannot see the process boundaries. Do not delete a file only because the map lists it. Read `unused-analysis.md` and confirm with a search first.
+The result is 15 files that the map reports as orphaned and 61 as dormant. Most of them are live. The map is correct about the static graph. The map cannot see the process boundaries. Do not delete a file only because the map lists it. Read `unused-analysis.md` and confirm with a search first.
 
 ## Where to read next
 
@@ -79,11 +79,11 @@ Regenerate: `repo-tools map . --out=<dir>` · Check: `repo-tools check . --docs=
 | Claim | Value | Source |
 |---|---|---|
 | totalSourceFiles | 323 | repo-tools map |
-| totalLinesOfCode | 67440 | repo-tools map |
-| totalExports | 737 | repo-tools map |
+| totalLinesOfCode | 67496 | repo-tools map |
+| totalExports | 738 | repo-tools map |
 | totalModules | 4 | repo-tools map |
 | entryRoots | 6 | repo-tools map |
 | orphanedFiles | 15 | repo-tools map |
-| dormantFiles | 62 | repo-tools map |
+| dormantFiles | 61 | repo-tools map |
 | runtimeCircularDeps | 0 | repo-tools map |
 | typeOnlyCircularDeps | 1 | repo-tools map |

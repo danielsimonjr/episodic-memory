@@ -206,6 +206,7 @@
       "test/digest-prompt-budget.test.ts",
       "test/doctor.test.ts",
       "test/embedding-migration-helpers.test.ts",
+      "test/embedding-stack.test.ts",
       "test/exchange-vectors.test.ts",
       "test/index-honours-marker.test.ts",
       "test/indexer-db-close.test.ts",
@@ -1042,7 +1043,8 @@
     ],
     "test/embedding-stack.test.ts": [
       "src/sqlite.ts",
-      "src/embedding-stack.ts"
+      "src/embedding-stack.ts",
+      "src/db.ts"
     ],
     "test/embeddings-format.test.ts": [
       "src/embeddings.ts",

@@ -128,10 +128,10 @@ var init_sqlite = __esm({
        * Open the database file at `path`. Use the readonly option to refuse writes.
        * The first construction loads node:sqlite.
        */
-      constructor(path4, options = {}) {
+      constructor(path5, options = {}) {
         const { DatabaseSync: Native } = loadSqlite();
-        this.name = path4;
-        this.db = new Native(path4, {
+        this.name = path5;
+        this.db = new Native(path5, {
           readOnly: !!options.readonly,
           enableForeignKeyConstraints: true
         });
@@ -322,6 +322,60 @@ var init_embedding_migration = __esm({
   "src/embedding-migration.ts"() {
     "use strict";
     init_lockfile();
+  }
+});
+
+// src/embedding-stack.ts
+import { existsSync, readFileSync } from "fs";
+import path2 from "path";
+import { fileURLToPath } from "url";
+function defaultRoot() {
+  return path2.resolve(path2.dirname(fileURLToPath(import.meta.url)), "..");
+}
+function resolvePackageDir(name, fromDir, root) {
+  let dir = fromDir;
+  for (; ; ) {
+    const candidate = path2.join(dir, "node_modules", name);
+    if (existsSync(path2.join(candidate, "package.json"))) return candidate;
+    if (path2.resolve(dir) === path2.resolve(root)) return null;
+    const parent = path2.dirname(dir);
+    if (parent === dir) return null;
+    dir = parent;
+  }
+}
+function readEmbeddingStack(root = defaultRoot()) {
+  const parts = [];
+  let from = root;
+  for (const name of EMBEDDING_STACK_PACKAGES) {
+    const dir = resolvePackageDir(name, from, root);
+    let version2 = "missing";
+    if (dir) {
+      try {
+        version2 = String(JSON.parse(readFileSync(path2.join(dir, "package.json"), "utf-8")).version ?? "missing");
+      } catch {
+        version2 = "missing";
+      }
+      from = dir;
+    }
+    parts.push(`${name}@${version2}`);
+  }
+  return parts.join(" ");
+}
+function stampEmptyIndex(db, stack) {
+  try {
+    db.exec("CREATE TABLE IF NOT EXISTS index_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)");
+    if (db.prepare("SELECT 1 FROM exchanges LIMIT 1").get()) return;
+    db.prepare("INSERT OR IGNORE INTO index_meta (key, value) VALUES (?, ?)").run(STACK_KEY, stack);
+  } catch (err) {
+    console.error("episodic-memory: could not stamp the embedding stack:", err instanceof Error ? err.message : err);
+  }
+}
+var EMBEDDING_STACK_PACKAGES, STACK_KEY;
+var init_embedding_stack = __esm({
+  "src/embedding-stack.ts"() {
+    "use strict";
+    EMBEDDING_STACK_PACKAGES = ["@huggingface/transformers", "onnxruntime-node", "onnxruntime-common"];
+    STACK_KEY = "embedding_stack";
   }
 });
 
@@ -527,7 +581,7 @@ var init_digest_db = __esm({
 });
 
 // src/db.ts
-import path2 from "path";
+import path3 from "path";
 import fs2 from "fs";
 function migrateSchema(db) {
   const columns = db.prepare(`SELECT name FROM pragma_table_info('exchanges')`).all();
@@ -733,7 +787,7 @@ function applySecureDbFileMode(dbPath) {
 function openDatabase(options = {}) {
   const migrate = options.migrate !== false;
   const dbPath = getDbPath();
-  const dbDir = path2.dirname(dbPath);
+  const dbDir = path3.dirname(dbPath);
   if (!fs2.existsSync(dbDir)) {
     fs2.mkdirSync(dbDir, { recursive: true, mode: 448 });
   } else {
@@ -829,7 +883,9 @@ function openDatabase(options = {}) {
   return db;
 }
 function initDatabase() {
-  return openDatabase({ migrate: true });
+  const db = openDatabase({ migrate: true });
+  stampEmptyIndex(db, readEmbeddingStack());
+  return db;
 }
 function getSharedReaderDatabase() {
   if (sharedReader) {
@@ -859,6 +915,7 @@ var init_db = __esm({
     init_sqlite();
     init_paths();
     init_embedding_migration();
+    init_embedding_stack();
     init_constants();
     init_redact();
     init_digest_db();
@@ -870,7 +927,7 @@ var init_db = __esm({
 
 // src/archive-path.ts
 import fs3 from "fs";
-import path3 from "path";
+import path4 from "path";
 import readline from "readline";
 function maxReadBytes() {
   const raw = process.env.EPISODIC_MEMORY_MAX_READ_BYTES;
@@ -879,7 +936,7 @@ function maxReadBytes() {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_MAX_READ_BYTES;
 }
 function normalizeForCompare(p) {
-  const resolved = path3.resolve(p);
+  const resolved = path4.resolve(p);
   return process.platform === "win32" ? resolved.toLowerCase() : resolved;
 }
 function resolveArchiveJsonlPath(candidatePath) {
@@ -893,10 +950,10 @@ function resolveArchiveJsonlPath(candidatePath) {
   } catch {
     throw new Error(`Archive directory is not accessible: ${archiveRoot}`);
   }
-  const lexical = path3.resolve(candidatePath);
+  const lexical = path4.resolve(candidatePath);
   const archiveNorm = normalizeForCompare(archiveReal);
   const lexicalNorm = normalizeForCompare(lexical);
-  const lexicalInside = lexicalNorm === archiveNorm || lexicalNorm.startsWith(archiveNorm + path3.sep);
+  const lexicalInside = lexicalNorm === archiveNorm || lexicalNorm.startsWith(archiveNorm + path4.sep);
   if (!lexicalInside) {
     throw new Error(`Path is outside the conversation archive: ${candidatePath}`);
   }
@@ -917,7 +974,7 @@ function resolveArchiveJsonlPath(candidatePath) {
     );
   }
   const realNorm = normalizeForCompare(realPath);
-  const realInside = realNorm === archiveNorm || realNorm.startsWith(archiveNorm + path3.sep);
+  const realInside = realNorm === archiveNorm || realNorm.startsWith(archiveNorm + path4.sep);
   if (!realInside) {
     throw new Error(
       `Path resolves outside the conversation archive (symlink escape rejected): ${candidatePath}`
@@ -944,21 +1001,21 @@ function safeArchiveSummaryPath(candidateJsonlPath) {
   } catch {
     return null;
   }
-  const lexical = path3.resolve(candidateJsonlPath);
+  const lexical = path4.resolve(candidateJsonlPath);
   const archiveNorm = normalizeForCompare(archiveReal);
   const lexicalNorm = normalizeForCompare(lexical);
-  const inside = lexicalNorm === archiveNorm || lexicalNorm.startsWith(archiveNorm + path3.sep);
+  const inside = lexicalNorm === archiveNorm || lexicalNorm.startsWith(archiveNorm + path4.sep);
   if (!inside) return null;
   if (!lexical.toLowerCase().endsWith(".jsonl")) return null;
   const summaryLexical = lexical.replace(/\.jsonl$/i, "-summary.txt");
   const summaryNorm = normalizeForCompare(summaryLexical);
-  const summaryInside = summaryNorm === archiveNorm || summaryNorm.startsWith(archiveNorm + path3.sep);
+  const summaryInside = summaryNorm === archiveNorm || summaryNorm.startsWith(archiveNorm + path4.sep);
   if (!summaryInside) return null;
   if (!fs3.existsSync(summaryLexical)) return null;
   try {
     const realSummary = fs3.realpathSync(summaryLexical);
     const realNorm = normalizeForCompare(realSummary);
-    if (!(realNorm === archiveNorm || realNorm.startsWith(archiveNorm + path3.sep))) {
+    if (!(realNorm === archiveNorm || realNorm.startsWith(archiveNorm + path4.sep))) {
       return null;
     }
     return realSummary;
@@ -4316,10 +4373,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path4) {
-  if (!path4)
+function getElementAtPath(obj, path5) {
+  if (!path5)
     return obj;
-  return path4.reduce((acc, key) => acc?.[key], obj);
+  return path5.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -4659,11 +4716,11 @@ function explicitlyAborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path4, issues) {
+function prefixIssues(path5, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path4);
+    iss.path.unshift(path5);
     return iss;
   });
 }
@@ -5125,16 +5182,16 @@ function flattenError(error62, mapper = (issue2) => issue2.message) {
 }
 function formatError(error62, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error63, path4 = []) => {
+  const processError = (error63, path5 = []) => {
     for (const issue2 of error63.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path4, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path5, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path4, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path4, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
       } else {
-        const fullpath = [...path4, ...issue2.path];
+        const fullpath = [...path5, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -5173,17 +5230,17 @@ function formatError(error62, mapper = (issue2) => issue2.message) {
 }
 function treeifyError(error62, mapper = (issue2) => issue2.message) {
   const result = { errors: [] };
-  const processError = (error63, path4 = []) => {
+  const processError = (error63, path5 = []) => {
     var _a3;
     for (const issue2 of error63.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path4, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path5, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path4, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path4, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
       } else {
-        const fullpath = [...path4, ...issue2.path];
+        const fullpath = [...path5, ...issue2.path];
         if (fullpath.length === 0) {
           result.errors.push(mapper(issue2));
           continue;
@@ -5222,8 +5279,8 @@ function treeifyError(error62, mapper = (issue2) => issue2.message) {
 }
 function toDotPath(_path) {
   const segs = [];
-  const path4 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
-  for (const seg of path4) {
+  const path5 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
+  for (const seg of path5) {
     if (typeof seg === "number")
       segs.push(`[${seg}]`);
     else if (typeof seg === "symbol")
@@ -22361,13 +22418,13 @@ function resolveRef(ref, ctx) {
   if (!ref.startsWith("#")) {
     throw new Error("External $ref is not supported, only local refs (#/...) are allowed");
   }
-  const path4 = ref.slice(1).split("/").filter(Boolean);
-  if (path4.length === 0) {
+  const path5 = ref.slice(1).split("/").filter(Boolean);
+  if (path5.length === 0) {
     return ctx.rootSchema;
   }
   const defsKey = ctx.version === "draft-2020-12" ? "$defs" : "definitions";
-  if (path4[0] === defsKey) {
-    const key = path4[1] === void 0 ? void 0 : decodeJSONPointerSegment(path4[1]);
+  if (path5[0] === defsKey) {
+    const key = path5[1] === void 0 ? void 0 : decodeJSONPointerSegment(path5[1]);
     if (!key || !ctx.defs[key]) {
       throw new Error(`Reference not found: ${ref}`);
     }

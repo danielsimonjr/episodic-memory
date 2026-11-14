@@ -87,3 +87,23 @@ export function reconcileEmbeddingStack(db: Database, stack: string): boolean {
   })();
   return true;
 }
+
+/**
+ * Store `stack` as the stamp of an index that has no exchange rows and no stamp.
+ *
+ * A new or rebuilt index has nothing to embed again, so its rows get the stamp of the stack that embeds them.
+ * Without this stamp, the migration phase after the first sync would embed every new row a second time.
+ * The function changes nothing in an index that has rows or a stamp. The function does not throw.
+ *
+ * @param db the open index database. The `exchanges` table must exist.
+ * @param stack the installed stack, from readEmbeddingStack
+ */
+export function stampEmptyIndex(db: Database, stack: string): void {
+  try {
+    db.exec('CREATE TABLE IF NOT EXISTS index_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
+    if (db.prepare('SELECT 1 FROM exchanges LIMIT 1').get()) return;
+    db.prepare('INSERT OR IGNORE INTO index_meta (key, value) VALUES (?, ?)').run(STACK_KEY, stack);
+  } catch (err) {
+    console.error('episodic-memory: could not stamp the embedding stack:', err instanceof Error ? err.message : err);
+  }
+}

@@ -2,6 +2,7 @@
 
 ### Fixed
 
+- A new or rebuilt index no longer embeds every row twice. The stack check ran in the migration phase, after the index step. An index with no stamp therefore got its rows, then lost them to the stale mark, and the migration embedded them again. `initDatabase` now stamps an index that has no rows and no stamp (`stampEmptyIndex`). An index from an earlier version still has rows and no stamp, so it still re-embeds once.
 - A plugin install now gets the embedding stack that CI tests. `package.json` asked for `@huggingface/transformers` `^4.2.0`, and `bun.lock` held 4.2.0. The plugin install runs `npm install --omit=dev`, which reads no `bun.lock`, so it took 4.3.2. That version brings `onnxruntime-node` 1.30.0, beside the hoisted `onnxruntime-common` 1.24.3. `package.json` now pins transformers to `4.2.0` and pins `onnxruntime-node` and `onnxruntime-common` to `1.24.3` with npm `overrides`. bun records the overrides in `bun.lock`, so `--frozen-lockfile` in CI checks that the two files agree. A fresh `npm install --omit=dev` resolves one copy of each package. An install of 1.13.0 moves to the same stack on its next install. The repo still ships no npm lockfile, as `.gitignore` requires.
 
 ### Added

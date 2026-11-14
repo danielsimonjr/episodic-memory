@@ -314,6 +314,7 @@ The codebase is organized into the following modules:
 | `./types.js` | `ConversationExchange` | Import |
 | `./paths.js` | `getDbPath, tryChmod` | Import |
 | `./embedding-migration.js` | `EMBEDDING_VERSION` | Import |
+| `./embedding-stack.js` | `readEmbeddingStack, stampEmptyIndex` | Import |
 | `./constants.js` | `truncateForIndex` | Import |
 | `./redact.js` | `maybeRedactSecrets` | Import |
 | `./digest-db.js` | `ensureDigestSchema` | Import |
@@ -619,7 +620,7 @@ The codebase is organized into the following modules:
 | `./sqlite.js` | `Database` | Import (type-only) |
 
 **Exports:**
-- Functions: `readEmbeddingStack`, `reconcileEmbeddingStack`
+- Functions: `readEmbeddingStack`, `reconcileEmbeddingStack`, `stampEmptyIndex`
 - Constants: `EMBEDDING_STACK_PACKAGES`
 
 ---
@@ -2149,9 +2150,9 @@ The codebase is organized into the following modules:
 |------|--------------|------------|
 | `src/sqlite` | 1 file | 29 files |
 | `src/learn/types` | 2 files | 22 files |
+| `src/db` | 8 files | 15 files |
 | `src/paths` | 0 files | 23 files |
 | `src/summarizer` | 10 files | 13 files |
-| `src/db` | 7 files | 15 files |
 | `src/learn/cli-main` | 21 files | 1 file |
 | `src/learn/bootstrap` | 15 files | 3 files |
 | `src/learn/learner` | 15 files | 1 file |
@@ -2292,12 +2293,12 @@ graph TD
 |----------|-------|
 | Total Source Files | 323 |
 | Subsystems | 5 |
-| Total Lines of Code | 67440 |
-| Total Exports | 737 |
+| Total Lines of Code | 67496 |
+| Total Exports | 738 |
 | Total Re-exports | 9 |
 | Total Classes | 12 |
 | Total Interfaces | 160 |
-| Total Functions | 422 |
+| Total Functions | 423 |
 | Total Type Guards | 14 |
 | Total Enums | 0 |
 | Type-only Imports | 115 |

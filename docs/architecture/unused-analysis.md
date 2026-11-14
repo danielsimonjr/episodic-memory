@@ -7,9 +7,9 @@
 ## Summary
 
 - **Files with no in-repo importer**: 14
-- **Dormant files**: 62
+- **Dormant files**: 61
   - **Orphaned (reachable from nothing)**: 15
-  - **Test-only (only a test reaches them)**: 47
+  - **Test-only (only a test reaches them)**: 46
 - **Potentially unused exports**: 117
   - **Unreferenced anywhere**: 4
   - **Referenced in their own module**: 113
@@ -58,7 +58,6 @@ Source files that only a test reaches. They ship nothing, but a test uses them.
 - `src/digest-prompts.ts`
 - `src/doctor-learn.ts`
 - `src/doctor.ts`
-- `src/embedding-stack.ts`
 - `src/fs-retry.ts`
 - `src/learn/agent-runner.ts`
 - `src/learn/bootstrap.ts`

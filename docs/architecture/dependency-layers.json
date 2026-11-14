@@ -704,6 +704,13 @@
             ]
           },
           {
+            "file": "./embedding-stack.js",
+            "imports": [
+              "readEmbeddingStack",
+              "stampEmptyIndex"
+            ]
+          },
+          {
             "file": "./constants.js",
             "imports": [
               "truncateForIndex"
@@ -1629,11 +1636,13 @@
         "exports": [
           "EMBEDDING_STACK_PACKAGES",
           "readEmbeddingStack",
-          "reconcileEmbeddingStack"
+          "reconcileEmbeddingStack",
+          "stampEmptyIndex"
         ],
         "functions": [
           "readEmbeddingStack",
-          "reconcileEmbeddingStack"
+          "reconcileEmbeddingStack",
+          "stampEmptyIndex"
         ],
         "constants": [
           "EMBEDDING_STACK_PACKAGES"

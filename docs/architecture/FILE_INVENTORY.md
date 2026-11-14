@@ -14,9 +14,9 @@ This report lists each source file that the map census finds, with a disposition
 
 | Disposition | Count | Meaning |
 | --- | --: | --- |
-| `reachable` | 50 | A `src`-area file that an entry root reaches. |
+| `reachable` | 51 | A `src`-area file that an entry root reaches. |
 | `build-entry` | 4 | A `src`-area file that is an entry root. |
-| `test-only` | 47 | A `src`-area file that only a test reaches. |
+| `test-only` | 46 | A `src`-area file that only a test reaches. |
 | `orphan` | 15 | A `src`-area file that nothing reaches. Delete it, or wire it to a root. |
 | `test` | 202 | A file in a `test/` or `tests/` folder, or a `*.test.ts` or `*.spec.ts` file. |
 | `tool` | 3 | A file in a `tools/` or `scripts/` folder outside `src/`. |
@@ -66,7 +66,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/codex-support.ts` | episodic-memory | src | reachable | 66 |
 | `src/constants.ts` | episodic-memory | src | reachable | 93 |
 | `src/content-text.ts` | episodic-memory | src | reachable | 33 |
-| `src/db.ts` | episodic-memory | src | reachable | 731 |
+| `src/db.ts` | episodic-memory | src | reachable | 735 |
 | `src/deferral.ts` | episodic-memory | src | reachable | 60 |
 | `src/deps-health.ts` | episodic-memory | src | test-only | 109 |
 | `src/derived-text.ts` | episodic-memory | src | reachable | 100 |
@@ -82,7 +82,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/doctor-learn.ts` | episodic-memory | src | test-only | 306 |
 | `src/doctor.ts` | episodic-memory | src | test-only | 472 |
 | `src/embedding-migration.ts` | episodic-memory | src | reachable | 198 |
-| `src/embedding-stack.ts` | episodic-memory | src | test-only | 89 |
+| `src/embedding-stack.ts` | episodic-memory | src | reachable | 109 |
 | `src/embeddings.ts` | episodic-memory | src | reachable | 205 |
 | `src/exclusion-marker.ts` | episodic-memory | src | reachable | 120 |
 | `src/fs-retry.ts` | episodic-memory | src | test-only | 46 |
@@ -221,7 +221,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/e2e/smoke.test.ts` | (root) | tests | test | 412 |
 | `test/embedding-migration-helpers.test.ts` | (root) | tests | test | 57 |
 | `test/embedding-migration.test.ts` | (root) | tests | test | 222 |
-| `test/embedding-stack.test.ts` | (root) | tests | test | 78 |
+| `test/embedding-stack.test.ts` | (root) | tests | test | 110 |
 | `test/embeddings-format.test.ts` | (root) | tests | test | 35 |
 | `test/embeddings-unavailable.test.ts` | (root) | tests | test | 40 |
 | `test/ensure-deps-prune.test.ts` | (root) | tests | test | 273 |

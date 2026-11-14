@@ -31,6 +31,13 @@ jobs:
       - run: bun audit --audit-level=critical
       - run: bun run --if-present typecheck
       - run: bun run --if-present lint
+      # TEMPORARY: write the parity reference vectors of this runner's CPU class. Remove before merge.
+      - run: node scripts/parity-vectors.mjs "$RUNNER_TEMP/parity-vectors" || true
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: parity-vectors-${{ github.run_attempt }}
+          path: test/fixtures/embedding-parity/vectors.*.json
+          if-no-files-found: ignore
       - run: bun run --if-present test
       # The end-to-end suite runs the committed dist/ (the build step comes after it), in a sandbox
       # with a fake Ollama: no model, no network and no real user data (test/e2e/harness.ts).

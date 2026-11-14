@@ -51,7 +51,7 @@ dependency, no `MEMORY_*` environment handling and no per-handle cache. Each ope
 - **TypeScript source** in `src/`, compiled to `dist/` by `tsc && esbuild`. **Both are committed.**
 - **CLI entry points** in `cli/` (Node.js wrappers — no bash).
 - **MCP server** is `dist/mcp-server.js`, launched by `cli/mcp-server-wrapper.js` from the plugin manifest.
-- **Tests** in `test/` with vitest (183 files, 1851 tests). The end-to-end suite in `test/e2e/` (`vitest.e2e.config.ts`) runs the built CLI, MCP server and hooks.
+- **Tests** in `test/` with vitest (183 files, 1855 tests). The end-to-end suite in `test/e2e/` (`vitest.e2e.config.ts`) runs the built CLI, MCP server and hooks.
 - **Generated files** in `dist/` AND `src/version.ts`. The latter is gitignored; never edit it.
 - **`bun.lock` is committed** — CI uses `bun install --frozen-lockfile` + `bun audit --audit-level=critical`. Do not commit `package-lock.json` (gitignored).
 
@@ -117,10 +117,12 @@ scripts/
   bump-version.sh        # version bumper with drift audit
   generate-version.js    # writes src/version.ts from package.json
   scrub-fixtures.sh      # PII-scrubs test fixtures (BSD/macOS sed only)
+  cpu-class.mjs          # CPU flags and the fixture class of the embedding parity test
+  parity-vectors.mjs     # writes the parity reference vectors of this CPU class with transformers 4.2.0
 
 test/
   test-utils.ts          # createTestDb, safeRmSync (fork-added), suppressConsole, fixtures
-  *.test.ts              # 183 test files, 1851 tests
+  *.test.ts              # 183 test files, 1855 tests
   learn/                 # the Recursa suite; fakes for every model call
   fixtures/              # JSONL conversation fixtures
 
@@ -178,7 +180,7 @@ scheduled task. To roll back, remove the variable first. Then run `npm install -
 
 ### Current test state
 
-- **Full suite: 1851 tests in 183 files pass** in about 17 s of wall clock on Linux. Windows runs are slower.
+- **Full suite: 1855 tests in 183 files pass** in about 17 s of wall clock on Linux. Windows runs are slower.
   The suite no longer has the former `integration.test.ts` / `verify.test.ts` cold-embedding timeout flakes.
   `beforeAll` pre-warms the embedder once per worker. `vitest.config.ts` sets `hookTimeout: 30000`.
   The repair re-index test gets 60s. If you see a fresh timeout flake, suspect a new embedding-heavy hook

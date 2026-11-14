@@ -1,24 +1,24 @@
 {
-  "totalFiles": 326,
+  "totalFiles": 328,
   "byDisposition": {
     "reachable": 53,
     "build-entry": 4,
     "test-only": 45,
     "orphan": 15,
     "test": 204,
-    "tool": 3,
+    "tool": 5,
     "config": 2,
     "bench": 0,
     "example": 0
   },
   "byArea": {
     "src": 117,
-    "tools": 3,
+    "tools": 5,
     "tests": 204,
     "config": 2
   },
   "byPackage": {
-    "(root)": 217,
+    "(root)": 219,
     "episodic-memory": 109
   },
   "files": [
@@ -93,11 +93,25 @@
       "loc": 367
     },
     {
+      "file": "scripts/cpu-class.mjs",
+      "package": "(root)",
+      "area": "tools",
+      "disposition": "tool",
+      "loc": 54
+    },
+    {
       "file": "scripts/generate-version.js",
       "package": "(root)",
       "area": "tools",
       "disposition": "tool",
       "loc": 16
+    },
+    {
+      "file": "scripts/parity-vectors.mjs",
+      "package": "(root)",
+      "area": "tools",
+      "disposition": "tool",
+      "loc": 64
     },
     {
       "file": "src/api-endpoint.ts",
@@ -1038,6 +1052,13 @@
       "loc": 30
     },
     {
+      "file": "test/cpu-class.test.ts",
+      "package": "(root)",
+      "area": "tests",
+      "disposition": "test",
+      "loc": 27
+    },
+    {
       "file": "test/cross-harness-recall.test.ts",
       "package": "(root)",
       "area": "tests",
@@ -1280,7 +1301,7 @@
       "package": "(root)",
       "area": "tests",
       "disposition": "test",
-      "loc": 70
+      "loc": 88
     },
     {
       "file": "test/embedding-stack.test.ts",
@@ -2282,13 +2303,6 @@
       "area": "tests",
       "disposition": "test",
       "loc": 60
-    },
-    {
-      "file": "test/zz-avx2-transformers-probe.test.ts",
-      "package": "(root)",
-      "area": "tests",
-      "disposition": "test",
-      "loc": 33
     },
     {
       "file": "vitest.config.ts",

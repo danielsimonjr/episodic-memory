@@ -3,9 +3,9 @@
     "name": "episodic-memory",
     "schemaVersion": "2.0.0",
     "language": "typescript",
-    "totalFiles": 326,
+    "totalFiles": 328,
     "totalModules": 4,
-    "totalExports": 755
+    "totalExports": 759
   },
   "modules": {
     "src": {
@@ -5164,6 +5164,20 @@
         "internalDependencies": [],
         "exports": []
       },
+      "scripts/cpu-class.mjs": {
+        "externalDependencies": [],
+        "nodeDependencies": [
+          "node:child_process",
+          "node:fs"
+        ],
+        "internalDependencies": [],
+        "exports": [
+          "CLASS_FLAGS",
+          "cpuFlags",
+          "parityClass",
+          "GENERATOR_COMMAND"
+        ]
+      },
       "scripts/generate-version.js": {
         "externalDependencies": [],
         "nodeDependencies": [
@@ -5172,6 +5186,29 @@
           "url"
         ],
         "internalDependencies": [],
+        "exports": []
+      },
+      "scripts/parity-vectors.mjs": {
+        "externalDependencies": [],
+        "nodeDependencies": [
+          "node:child_process",
+          "node:fs",
+          "node:module",
+          "node:os",
+          "node:path",
+          "node:url"
+        ],
+        "internalDependencies": [
+          {
+            "file": "scripts/cpu-class.mjs",
+            "imports": [
+              "cpuFlags",
+              "GENERATOR_COMMAND",
+              "parityClass"
+            ],
+            "typeOnly": false
+          }
+        ],
         "exports": []
       }
     },
@@ -5763,6 +5800,23 @@
             "file": "src/search.ts",
             "imports": [
               "l2DistanceToCosineSimilarity"
+            ],
+            "typeOnly": false
+          }
+        ],
+        "exports": []
+      },
+      "test/cpu-class.test.ts": {
+        "externalDependencies": [
+          "vitest"
+        ],
+        "nodeDependencies": [],
+        "internalDependencies": [
+          {
+            "file": "scripts/cpu-class.mjs",
+            "imports": [
+              "cpuFlags",
+              "parityClass"
             ],
             "typeOnly": false
           }
@@ -7422,6 +7476,15 @@
           "node:path"
         ],
         "internalDependencies": [
+          {
+            "file": "scripts/cpu-class.mjs",
+            "imports": [
+              "cpuFlags",
+              "GENERATOR_COMMAND",
+              "parityClass"
+            ],
+            "typeOnly": false
+          },
           {
             "file": "src/embeddings.ts",
             "imports": [
@@ -12639,19 +12702,6 @@
           }
         ],
         "exports": []
-      },
-      "test/zz-avx2-transformers-probe.test.ts": {
-        "externalDependencies": [
-          "vitest"
-        ],
-        "nodeDependencies": [
-          "node:child_process",
-          "node:fs",
-          "node:os",
-          "node:path"
-        ],
-        "internalDependencies": [],
-        "exports": []
       }
     },
     "config": {
@@ -12690,11 +12740,11 @@
     }
   },
   "statistics": {
-    "totalTypeScriptFiles": 326,
-    "totalSourceFiles": 326,
+    "totalTypeScriptFiles": 328,
+    "totalSourceFiles": 328,
     "totalModules": 4,
-    "totalLinesOfCode": 68406,
-    "totalExports": 755,
+    "totalLinesOfCode": 68536,
+    "totalExports": 759,
     "entryRoots": 6,
     "reachableFiles": 57,
     "dormantFiles": 60,
@@ -12712,10 +12762,10 @@
     "typeOnlyFilesInCycles": 2,
     "totalClasses": 12,
     "totalInterfaces": 165,
-    "totalFunctions": 429,
+    "totalFunctions": 431,
     "totalTypeGuards": 14,
     "totalEnums": 0,
-    "totalConstants": 97,
+    "totalConstants": 99,
     "totalReExports": 9
   },
   "reachability": {

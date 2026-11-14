@@ -180,6 +180,7 @@ The following 22 source files are not directly imported by any test file:
 | `test/constants.test.ts` | 1 files |
 | `test/content-text.test.ts` | 1 files |
 | `test/cosine-similarity.test.ts` | 1 files |
+| `test/cpu-class.test.ts` | 0 files |
 | `test/cross-harness-recall.test.ts` | 3 files |
 | `test/dangling-project-link.test.ts` | 5 files |
 | `test/db-helpers.test.ts` | 2 files |
@@ -347,4 +348,3 @@ The following 22 source files are not directly imported by any test file:
 | `test/verify.test.ts` | 5 files |
 | `test/version-consistency.test.ts` | 0 files |
 | `test/win-command.test.ts` | 1 files |
-| `test/zz-avx2-transformers-probe.test.ts` | 0 files |

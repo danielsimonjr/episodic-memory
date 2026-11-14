@@ -88,7 +88,7 @@ Two places download. Neither one is on the MCP start path or the SessionStart ho
 
 ### Tests
 
-Tests 1 and 2 exist in `test/embedding-parity.test.ts` with the fixture `test/fixtures/embedding-parity/vectors.json` (7 cases: short, unicode, over-512-tokens, over-2000-chars, query, empty, exchange). The other tests are written before the code and are RED where the behavior is new.
+Tests 1 and 2 exist in `test/embedding-parity.test.ts` with the fixtures `test/fixtures/embedding-parity/cases.json` and `vectors.<class>.json` (one file per CPU class, from `scripts/parity-vectors.mjs`) (7 cases: short, unicode, over-512-tokens, over-2000-chars, query, empty, exchange). The other tests are written before the code and are RED where the behavior is new.
 
 1. **Parity fixture.** Vectors from the transformers code, one text per call. The test requires max |difference| < 1e-4 and cosine > 0.9999, because the q8 kernels vary between CPUs. GREEN with the current code; must stay GREEN.
 2. **Batch equals single.** `generateEmbeddings(texts)[i]` equals the fixture vector of `texts[i]`. RED with the current code (cosine 0.965 to 0.997 against a floor of 0.9999).

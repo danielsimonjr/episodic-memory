@@ -2,15 +2,34 @@ import { existsSync, readFileSync } from 'node:fs';
 import { cpus } from 'node:os';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { cpuFlags, GENERATOR_COMMAND, parityClass } from '../scripts/cpu-class.mjs';
 import { generateEmbedding, generateEmbeddings, initEmbeddings } from '../src/embeddings.js';
 
-// The fixture holds the vectors that @huggingface/transformers 4.2.0 produced, one text per call.
-// Any embedding backend must reproduce those vectors, or the index holds vectors of two pipelines.
-// The q8 kernels differ a little between CPUs, so the check uses a tolerance and not an exact match.
+// Each fixture file holds the vectors that @huggingface/transformers 4.2.0 produced, one text per
+// call, on one CPU class. Any embedding backend must reproduce the vectors of its class, or the
+// index holds vectors of two pipelines. The q8 model gives long texts different vectors on an
+// x86-64 CPU without VNNI, with the old backend too, so each class has its own file.
+// scripts/cpu-class.mjs reads the class from the CPU flags; an unknown class fails.
 interface ParityCase { name: string; text: string; vector: number[] }
-const fixture = JSON.parse(
-  readFileSync(join(__dirname, 'fixtures', 'embedding-parity', 'vectors.json'), 'utf-8')
-) as { cases: ParityCase[] };
+const dir = join(__dirname, 'fixtures', 'embedding-parity');
+const texts = (JSON.parse(readFileSync(join(dir, 'cases.json'), 'utf-8')) as { cases: { name: string; text: string }[] }).cases;
+const flags = cpuFlags();
+const cls = parityClass(flags);
+const vectorFile = cls ? join(dir, `vectors.${cls}.json`) : '';
+const classError = !cls
+  ? `no parity fixture class for CPU flags ${JSON.stringify(flags)}; a new class needs its own reference vectors from "${GENERATOR_COMMAND}"`
+  : !existsSync(vectorFile)
+    ? `missing ${vectorFile}; run "${GENERATOR_COMMAND}" on a CPU of class ${cls}`
+    : '';
+const fixture: { cases: ParityCase[] } = {
+  cases: classError
+    ? []
+    : (JSON.parse(readFileSync(vectorFile, 'utf-8')) as { cases: { name: string; vector: number[] }[] }).cases.map(v => {
+        const t = texts.find(x => x.name === v.name);
+        if (!t) throw new Error(`${vectorFile} names case ${v.name}, which cases.json does not hold`);
+        return { name: v.name, text: t.text, vector: v.vector };
+      }),
+};
 
 const MAX_ABS_DIFF = 1e-4;
 const MIN_COSINE = 0.9999;
@@ -28,13 +47,7 @@ function compare(actual: number[], expected: number[]): { maxDiff: number; cosin
 // The q8 model uses integer matrix kernels that the runtime selects by CPU feature. Different
 // kernels can give different vectors for the same text, so every run prints the CPU it used.
 function cpuSummary(): string {
-  const model = cpus()[0]?.model ?? 'unknown';
-  let flags = '';
-  if (existsSync('/proc/cpuinfo')) {
-    const line = readFileSync('/proc/cpuinfo', 'utf-8').split('\n').find(l => l.startsWith('flags')) ?? '';
-    flags = ['avx2', 'avx512f', 'avx512_vnni', 'avx_vnni', 'amx_int8'].filter(f => new RegExp(`\\b${f}\\b`).test(line)).join(',');
-  }
-  return `${model}${flags ? ` [${flags}]` : ''}`;
+  return `${cpus()[0]?.model?.trim() ?? 'unknown'} [${(flags ?? ['flags unreadable']).join(',')}] class ${cls ?? 'unknown'}`;
 }
 
 describe('embedding parity with the reference vectors', () => {
@@ -43,6 +56,11 @@ describe('embedding parity with the reference vectors', () => {
     process.stderr.write(`embedding-parity: CPU ${cpuSummary()}`+String.fromCharCode(10));
     await initEmbeddings();
   }, 120000);
+
+  it('has reference vectors for the CPU class of this machine', () => {
+    expect(classError, classError).toBe('');
+    expect(fixture.cases.map(c => c.name)).toEqual(texts.map(t => t.name));
+  });
 
   for (const c of fixture.cases) {
     it(`reproduces the reference vector of the ${c.name} case`, async () => {
@@ -58,13 +76,13 @@ describe('embedding parity with the reference vectors', () => {
   // search embeds each query alone. A padded batch changes the vectors of the q8 model.
   // The check compares the two paths on this CPU, so the result does not depend on the CPU.
   it('gives each text of a batch the vector of the same text alone', async () => {
-    const texts = fixture.cases.map(c => c.text);
-    const batch = await generateEmbeddings(texts);
-    expect(batch).toHaveLength(texts.length);
-    for (let i = 0; i < texts.length; i++) {
-      const alone = await generateEmbedding(texts[i]);
+    const batchTexts = texts.map(t => t.text);
+    const batch = await generateEmbeddings(batchTexts);
+    expect(batch).toHaveLength(batchTexts.length);
+    for (let i = 0; i < batchTexts.length; i++) {
+      const alone = await generateEmbedding(batchTexts[i]);
       const { maxDiff } = compare(batch[i], alone);
-      expect(maxDiff, `max |difference| of batch item ${fixture.cases[i].name}`).toBeLessThan(1e-6);
+      expect(maxDiff, `max |difference| of batch item ${texts[i].name}`).toBeLessThan(1e-6);
     }
   });
 });

@@ -910,6 +910,7 @@
     "test/cosine-similarity.test.ts": [
       "src/search.ts"
     ],
+    "test/cpu-class.test.ts": [],
     "test/cross-harness-recall.test.ts": [
       "src/db.ts",
       "src/search.ts",
@@ -1675,8 +1676,7 @@
     "test/version-consistency.test.ts": [],
     "test/win-command.test.ts": [
       "src/win-command.ts"
-    ],
-    "test/zz-avx2-transformers-probe.test.ts": []
+    ]
   },
   "classifiedUntested": [
     {

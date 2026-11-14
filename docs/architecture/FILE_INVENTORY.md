@@ -8,7 +8,7 @@ This report lists each source file that the map census finds, with a disposition
 
 **Language**: typescript
 
-**Total files**: 326
+**Total files**: 328
 
 ## Disposition counts
 
@@ -19,11 +19,11 @@ This report lists each source file that the map census finds, with a disposition
 | `test-only` | 45 | A `src`-area file that only a test reaches. |
 | `orphan` | 15 | A `src`-area file that nothing reaches. Delete it, or wire it to a root. |
 | `test` | 204 | A file in a `test/` or `tests/` folder, or a `*.test.ts` or `*.spec.ts` file. |
-| `tool` | 3 | A file in a `tools/` or `scripts/` folder outside `src/`. |
+| `tool` | 5 | A file in a `tools/` or `scripts/` folder outside `src/`. |
 | `config` | 2 | A `*.config.*` file of TypeScript or JavaScript. |
 | `example` | 0 | A file in `examples/` or `docs/`. |
 | `bench` | 0 | A file in `bench/` or `benchmarks/`, or a `*.bench.*` file. |
-| **Total** | **326** | |
+| **Total** | **328** | |
 
 ## Per-area counts
 
@@ -32,13 +32,13 @@ This report lists each source file that the map census finds, with a disposition
 | `config` | 2 |
 | `src` | 117 |
 | `tests` | 204 |
-| `tools` | 3 |
+| `tools` | 5 |
 
 ## Per-package counts
 
 | Package | Files |
 | --- | --: |
-| `(root)` | 217 |
+| `(root)` | 219 |
 | `episodic-memory` | 109 |
 
 ## All files
@@ -55,7 +55,9 @@ This report lists each source file that the map census finds, with a disposition
 | `cli/sync-hook.js` | (root) | src | orphan | 196 |
 | `scripts/claude-e2e.js` | (root) | tools | tool | 253 |
 | `scripts/codex-e2e.js` | (root) | tools | tool | 367 |
+| `scripts/cpu-class.mjs` | (root) | tools | tool | 54 |
 | `scripts/generate-version.js` | (root) | tools | tool | 16 |
+| `scripts/parity-vectors.mjs` | (root) | tools | tool | 64 |
 | `src/api-endpoint.ts` | episodic-memory | src | reachable | 60 |
 | `src/archive-path.ts` | episodic-memory | src | reachable | 212 |
 | `src/backfill-cli.ts` | episodic-memory | src | orphan | 105 |
@@ -190,6 +192,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/constants.test.ts` | (root) | tests | test | 27 |
 | `test/content-text.test.ts` | (root) | tests | test | 47 |
 | `test/cosine-similarity.test.ts` | (root) | tests | test | 30 |
+| `test/cpu-class.test.ts` | (root) | tests | test | 27 |
 | `test/cross-harness-recall.test.ts` | (root) | tests | test | 86 |
 | `test/dangling-project-link.test.ts` | (root) | tests | test | 145 |
 | `test/db-helpers.test.ts` | (root) | tests | test | 102 |
@@ -224,7 +227,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/embedding-migration-helpers.test.ts` | (root) | tests | test | 57 |
 | `test/embedding-migration.test.ts` | (root) | tests | test | 222 |
 | `test/embedding-model.test.ts` | (root) | tests | test | 208 |
-| `test/embedding-parity.test.ts` | (root) | tests | test | 70 |
+| `test/embedding-parity.test.ts` | (root) | tests | test | 88 |
 | `test/embedding-stack.test.ts` | (root) | tests | test | 117 |
 | `test/embeddings-format.test.ts` | (root) | tests | test | 35 |
 | `test/embeddings-unavailable.test.ts` | (root) | tests | test | 41 |
@@ -368,7 +371,6 @@ This report lists each source file that the map census finds, with a disposition
 | `test/verify.test.ts` | (root) | tests | test | 328 |
 | `test/version-consistency.test.ts` | (root) | tests | test | 30 |
 | `test/win-command.test.ts` | (root) | tests | test | 60 |
-| `test/zz-avx2-transformers-probe.test.ts` | (root) | tests | test | 33 |
 | `vitest.config.ts` | (root) | config | config | 28 |
 | `vitest.e2e.config.ts` | (root) | config | config | 22 |
 

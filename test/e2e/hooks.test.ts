@@ -13,7 +13,7 @@ import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
-  CLI_DIR, REPO_ROOT, cliBin, fakeOllama, makeSandbox, newSyncWorkers, openIndexDb, readHookLog,
+  CLI_DIR, PLUGIN_ROOT, cliBin, fakeOllama, makeSandbox, newSyncWorkers, openIndexDb, readHookLog,
   removeSandbox, runCli, runHook, seedDigestableSession, seedTranscript, syncLockPath, syncWorkerPids,
   waitForBackgroundSync, type FakeOllama, type Sandbox,
 } from './harness.js';
@@ -22,7 +22,7 @@ import { useIsolation } from './isolation.js';
 useIsolation();
 
 /** The hook registry of the plugin. The test reads it; it never edits it. */
-const HOOKS_JSON = path.join(REPO_ROOT, 'hooks', 'hooks.json');
+const HOOKS_JSON = path.join(PLUGIN_ROOT, 'hooks', 'hooks.json');
 /** The hooks that the registry names today. A new hook in the file fails the registry case until it is listed here. */
 const KNOWN_HOOKS = ['digest-hook', 'sync-hook'];
 /** The budget of one hook process, and of one foreground child (the case timeout is 120 s). */

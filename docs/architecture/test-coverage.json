@@ -1,17 +1,17 @@
 {
   "metadata": {
-    "totalSourceFiles": 115,
-    "totalTestFiles": 189,
-    "testedCount": 93,
+    "totalSourceFiles": 116,
+    "totalTestFiles": 191,
+    "testedCount": 94,
     "untestedCount": 22,
-    "coveragePercent": "80.9",
+    "coveragePercent": "81.0",
     "effectiveCoverage": {
       "policyLoaded": false,
-      "activeFiles": 115,
-      "testedActive": 93,
+      "activeFiles": 116,
+      "testedActive": 94,
       "activeUntested": 22,
       "excludedTotal": 0,
-      "percent": "80.9",
+      "percent": "81.0",
       "breakdown": {
         "active_untested": 22
       }
@@ -67,6 +67,7 @@
     "src/doctor-learn.ts",
     "src/doctor.ts",
     "src/embedding-migration.ts",
+    "src/embedding-stack.ts",
     "src/embeddings.ts",
     "src/exclusion-marker.ts",
     "src/fs-retry.ts",
@@ -292,6 +293,10 @@
       "test/embedding-migration-helpers.test.ts",
       "test/embedding-migration.test.ts",
       "test/exchange-vectors.test.ts"
+    ],
+    "src/embedding-stack.ts": [
+      "test/e2e/install-versions.test.ts",
+      "test/embedding-stack.test.ts"
     ],
     "src/embeddings.ts": [
       "test/embedding-migration.test.ts",
@@ -673,6 +678,7 @@
       "test/digest-prompt-budget.test.ts",
       "test/doctor.test.ts",
       "test/embedding-migration.test.ts",
+      "test/embedding-stack.test.ts",
       "test/exchange-vectors.test.ts",
       "test/exclude-nested.test.ts",
       "test/incremental-indexing.test.ts",
@@ -1009,6 +1015,9 @@
       "src/learn/learn-config.ts"
     ],
     "test/e2e/hooks.test.ts": [],
+    "test/e2e/install-versions.test.ts": [
+      "src/embedding-stack.ts"
+    ],
     "test/e2e/learn.test.ts": [
       "src/learn/knowledge-db.ts",
       "src/learn/knowledge-store.ts"
@@ -1030,6 +1039,10 @@
       "src/sqlite.ts",
       "src/embedding-migration.ts",
       "src/embeddings.ts"
+    ],
+    "test/embedding-stack.test.ts": [
+      "src/sqlite.ts",
+      "src/embedding-stack.ts"
     ],
     "test/embeddings-format.test.ts": [
       "src/embeddings.ts",

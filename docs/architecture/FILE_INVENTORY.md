@@ -8,7 +8,7 @@ This report lists each source file that the map census finds, with a disposition
 
 **Language**: typescript
 
-**Total files**: 320
+**Total files**: 323
 
 ## Disposition counts
 
@@ -16,30 +16,30 @@ This report lists each source file that the map census finds, with a disposition
 | --- | --: | --- |
 | `reachable` | 50 | A `src`-area file that an entry root reaches. |
 | `build-entry` | 4 | A `src`-area file that is an entry root. |
-| `test-only` | 46 | A `src`-area file that only a test reaches. |
+| `test-only` | 47 | A `src`-area file that only a test reaches. |
 | `orphan` | 15 | A `src`-area file that nothing reaches. Delete it, or wire it to a root. |
-| `test` | 200 | A file in a `test/` or `tests/` folder, or a `*.test.ts` or `*.spec.ts` file. |
+| `test` | 202 | A file in a `test/` or `tests/` folder, or a `*.test.ts` or `*.spec.ts` file. |
 | `tool` | 3 | A file in a `tools/` or `scripts/` folder outside `src/`. |
 | `config` | 2 | A `*.config.*` file of TypeScript or JavaScript. |
 | `example` | 0 | A file in `examples/` or `docs/`. |
 | `bench` | 0 | A file in `bench/` or `benchmarks/`, or a `*.bench.*` file. |
-| **Total** | **320** | |
+| **Total** | **323** | |
 
 ## Per-area counts
 
 | Area | Files |
 | --- | --: |
 | `config` | 2 |
-| `src` | 115 |
-| `tests` | 200 |
+| `src` | 116 |
+| `tests` | 202 |
 | `tools` | 3 |
 
 ## Per-package counts
 
 | Package | Files |
 | --- | --: |
-| `(root)` | 214 |
-| `episodic-memory` | 106 |
+| `(root)` | 216 |
+| `episodic-memory` | 107 |
 
 ## All files
 
@@ -82,6 +82,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/doctor-learn.ts` | episodic-memory | src | test-only | 306 |
 | `src/doctor.ts` | episodic-memory | src | test-only | 472 |
 | `src/embedding-migration.ts` | episodic-memory | src | reachable | 198 |
+| `src/embedding-stack.ts` | episodic-memory | src | test-only | 89 |
 | `src/embeddings.ts` | episodic-memory | src | reachable | 205 |
 | `src/exclusion-marker.ts` | episodic-memory | src | reachable | 120 |
 | `src/fs-retry.ts` | episodic-memory | src | test-only | 46 |
@@ -149,7 +150,7 @@ This report lists each source file that the map census finds, with a disposition
 | `src/summarizer.ts` | episodic-memory | src | reachable | 877 |
 | `src/summary-sentinel.ts` | episodic-memory | src | reachable | 32 |
 | `src/sync-banner.ts` | episodic-memory | src | test-only | 38 |
-| `src/sync-cli.ts` | episodic-memory | src | orphan | 276 |
+| `src/sync-cli.ts` | episodic-memory | src | orphan | 282 |
 | `src/sync.ts` | episodic-memory | src | test-only | 590 |
 | `src/topic-db.ts` | episodic-memory | src | reachable | 521 |
 | `src/topic-format.ts` | episodic-memory | src | reachable | 462 |
@@ -210,8 +211,9 @@ This report lists each source file that the map census finds, with a disposition
 | `test/e2e/env-flags.test.ts` | (root) | tests | test | 750 |
 | `test/e2e/env-learn-topics.test.ts` | (root) | tests | test | 426 |
 | `test/e2e/fake-proc-lister.mjs` | (root) | tests | test | 62 |
-| `test/e2e/harness.ts` | (root) | tests | test | 1083 |
+| `test/e2e/harness.ts` | (root) | tests | test | 1094 |
 | `test/e2e/hooks.test.ts` | (root) | tests | test | 398 |
+| `test/e2e/install-versions.test.ts` | (root) | tests | test | 23 |
 | `test/e2e/isolation.ts` | (root) | tests | test | 86 |
 | `test/e2e/learn.test.ts` | (root) | tests | test | 496 |
 | `test/e2e/lifecycle.test.ts` | (root) | tests | test | 607 |
@@ -219,6 +221,7 @@ This report lists each source file that the map census finds, with a disposition
 | `test/e2e/smoke.test.ts` | (root) | tests | test | 412 |
 | `test/embedding-migration-helpers.test.ts` | (root) | tests | test | 57 |
 | `test/embedding-migration.test.ts` | (root) | tests | test | 222 |
+| `test/embedding-stack.test.ts` | (root) | tests | test | 78 |
 | `test/embeddings-format.test.ts` | (root) | tests | test | 35 |
 | `test/embeddings-unavailable.test.ts` | (root) | tests | test | 40 |
 | `test/ensure-deps-prune.test.ts` | (root) | tests | test | 273 |

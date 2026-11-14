@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [1.14.0] - 2026-11-14
+
 ### Fixed
 
 - A new or rebuilt index no longer embeds every row twice. The stack check ran in the migration phase, after the index step. An index with no stamp therefore got its rows, then lost them to the stale mark, and the migration embedded them again. `initDatabase` now stamps an index that has no rows and no stamp (`stampEmptyIndex`). An index from an earlier version still has rows and no stamp, so it still re-embeds once.

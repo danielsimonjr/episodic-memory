@@ -39,6 +39,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
   for (const k of KEYS) {
     if (saved[k] === undefined) delete process.env[k];
     else process.env[k] = saved[k];
@@ -166,7 +167,9 @@ describe('a failed Claude Code login', () => {
   // back the whole queue behind one transcript that Ollama cannot summarize.
   it('rejects a failed Ollama call with the Ollama error, not a deferral, when the Claude fallback login fails', async () => {
     process.env.EPISODIC_MEMORY_SUMMARIZER_BACKEND = 'ollama';
-    process.env.EPISODIC_MEMORY_OLLAMA_URL = 'http://127.0.0.1:9';
+    process.env.EPISODIC_MEMORY_OLLAMA_URL = 'http://127.0.0.1:11434';
+    // Ollama answers HTTP 500: a counted failure, not an outage. No test reaches a real server.
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 500 })));
     process.env.EPISODIC_MEMORY_OLLAMA_MODEL = 'qwen3.8:27b';
     process.env.EPISODIC_MEMORY_OLLAMA_FALLBACK_MODEL = 'haiku';
     queryMock.mockImplementation(() => sdkError(401, AUTH_TEXT));

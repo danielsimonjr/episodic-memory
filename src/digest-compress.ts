@@ -1,5 +1,5 @@
 import type { Database } from './sqlite.js';
-import { callDigestModel } from './summarizer.js';
+import { callDigestModel, digestModelLabel } from './summarizer.js';
 import { deferralDetail } from './deferral.js';
 import { buildCompressPrompt } from './digest-prompts.js';
 import { parseCitedLines, redactEntryText } from './digest-validate.js';
@@ -94,7 +94,7 @@ async function mergeGroup(
     periodEnd: group.reduce((max, e) => (e.periodEnd > max ? e.periodEnd : max), group[0].periodEnd),
     text: redactEntryText(parsed.lines.join('\n')),
     sources: parsed.sources,
-    model: process.env.EPISODIC_MEMORY_API_MODEL || 'haiku',
+    model: digestModelLabel(),
     handoff: false,
   });
   if (id === null) return; // key already taken: leave the originals active

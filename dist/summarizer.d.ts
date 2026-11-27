@@ -102,6 +102,14 @@ export interface CallClaudeOptions {
 /** Digest entry point: same backend, model and fallback choice as session summaries. */
 export declare function callDigestModel(prompt: string): Promise<string>;
 /**
+ * The model name that a digest entry records: the Ollama model on the ollama backend, else the Claude model.
+ *
+ * The label names the configured model. When the Ollama call falls back to a Claude model, the label still names the Ollama model.
+ * The Ollama backend has no default model, so with the variable unset the label names the fallback model.
+ * With no fallback model either, no digest is written; the label is then `ollama`, never an empty string.
+ */
+export declare function digestModelLabel(): string;
+/**
  * The prompt character budget of the configured backend.
  *
  * On the Ollama backend the budget is EPISODIC_MEMORY_OLLAMA_MAX_PROMPT_CHARS. The value is parsed the way
@@ -168,7 +176,7 @@ export declare function getCodexModel(): string | undefined;
  *
  * The transcript path makes one model call for up to 15 exchanges. Any model error rejects the promise in this case.
  *
- * For more than 15 exchanges, the function summarizes each chunk of exchanges. The function then synthesizes the chunk summaries into one summary. The chunk size is 8 exchanges. A larger chunk size keeps the chunk count at 20 or less. The function logs a failed chunk and skips it. A failed synthesis returns the chunk summaries joined with a space. When no chunk succeeds, the function returns `Error: Unable to summarize conversation.` as the result.
+ * For more than 15 exchanges, the function summarizes each chunk of exchanges. The function then synthesizes the chunk summaries into one summary. The chunk size is 8 exchanges. A larger chunk size keeps the chunk count at 20 or less. The function logs a failed chunk and skips it. When fewer than `MIN_CHUNK_SUCCESS_FRACTION` of the chunks succeed, the function rejects with the counts and the last chunk error, so that a summary of a few chunks is not stored as final. A failed synthesis returns the chunk summaries joined with a space.
  *
  * A deferral from a model call rejects the promise. `src/deferral.ts` lists the causes.
  *

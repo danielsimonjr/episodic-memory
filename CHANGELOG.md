@@ -1,5 +1,15 @@
 ## [Unreleased]
 
+### Fixed
+- An unreachable Ollama endpoint is an outage. `callOllama` throws `OllamaUnavailableError`, and the sync, backfill, digest and topic loops defer it: no attempt is counted and no failure record is written. A timeout, an HTTP error and an empty reply still count as failed attempts.
+- The hierarchical summary path no longer returns `Error: Unable to summarize conversation.`. The sync stored that text as the summary.
+- A digest entry names the Ollama model on the Ollama backend. It named the Claude default (`haiku`) before, for the digest and the digest compression.
+- An Ollama outage is a connection error code only: `ECONNREFUSED`, `ENOTFOUND`, `EAI_AGAIN`, `EHOSTUNREACH`, `ENETUNREACH` or `UND_ERR_CONNECT_TIMEOUT`, also inside the AggregateError of a dual-stack `localhost`. Every other fetch rejection, for example a socket or TLS error, keeps its error and counts as a failed attempt. An outage also defers when the Claude fallback is set but cannot run.
+- A sync whose summaries an outage deferred writes one warn line to `sync-errors.log`. The line names the endpoint and the number of queued conversations. The exit code does not change.
+- The hierarchical summary path rejects when fewer than half of the chunks succeed. The error names the counts and the last chunk error. One surviving chunk of twenty is no longer stored as the final summary.
+- `index-session` indexes the exchanges when the summary call fails, as the repair does.
+- With `EPISODIC_MEMORY_OLLAMA_MODEL` unset, a digest entry names the fallback model, never an empty string.
+
 ## [1.15.0] - 2026-11-14
 
 ### Changed

@@ -6,12 +6,12 @@
 import { getArchiveDir, getConversationSourceDirs, getIndexDir } from './paths.js';
 import { shouldSkipReentrantSync } from './reentrancy.js';
 import { envPositiveInt } from './constants.js';
-import { syncHeadline } from './sync-banner.js';
+import { outageWarningLine, syncHeadline } from './sync-banner.js';
 import { acquireRefreshedLock, releaseLock } from './lockfile.js';
 import { BACKGROUND_WORKER_ENV, lowerPriorityIfBackgroundWorker } from './priority.js';
 import { spawn } from 'child_process';
 import fs from 'fs';
-import { formatLogLine, getSyncLogPath, getSyncLockPath, rotateSyncLogIfNeeded } from './logging.js';
+import { formatLogLine, getSyncErrorsLogPath, getSyncLogPath, getSyncLockPath, rotateSyncLogIfNeeded } from './logging.js';
 const args = process.argv.slice(2);
 // Reentrancy guard (#87): if this sync was triggered by a SessionStart hook
 // inside a Claude subprocess that the summarizer just spawned, exit silently.
@@ -180,6 +180,18 @@ async function syncAll() {
     // real alarm (archive lag) only arrives days later and downstream of the cause.
     for (const line of syncHeadline({ ...totals, errorCount: totals.indexFailures }))
         console.log(line);
+    // The SessionStart hook starts this worker detached, so its stdout goes to sync.log, not to the hook.
+    // An outage deferral therefore writes its own line to sync-errors.log, where a person looks.
+    if (totals.summariesDeferred) {
+        const { ollamaOutageHost } = await import('./ollama-backend.js');
+        const warn = outageWarningLine(ollamaOutageHost(totals.summariesDeferred), totals.pendingSummaries);
+        if (warn) {
+            try {
+                fs.appendFileSync(getSyncErrorsLogPath(), formatLogLine('warn', warn), 'utf-8');
+            }
+            catch { /* a log write must not fail the sync */ }
+        }
+    }
     console.log(`  Copied: ${totals.copied}`);
     console.log(`  Skipped: ${totals.skipped}`);
     console.log(`  Indexed: ${totals.indexed}`);

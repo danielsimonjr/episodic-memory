@@ -85,8 +85,8 @@ for (;;) {
   lastRemaining = r.candidates - r.processed;
   if (verdict === 'done') break;
   if (verdict === 'deferred') {
-    // A deliberate wait, not a fault: exit code stays 0. The cause is a GPU reservation or an unusable
-    // Claude Code executable, and the deferral detail names it.
+    // A deliberate wait, not a fault: exit code stays 0. `src/deferral.ts` lists the causes, and the deferral
+    // detail names the cause.
     console.log(`Backfill paused: ${r.deferred}. No attempt was counted. Run it again when the cause ends.`);
     break;
   }

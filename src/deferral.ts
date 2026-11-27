@@ -2,13 +2,14 @@
  * The errors that defer model work instead of failing it.
  *
  * A deferral stops the summary, digest and topic loops. No attempt is counted against a conversation or a
- * session, so the queue is the same at the next run. Three conditions defer: another agent holds the shared GPU
- * (`GpuReservedError`), no usable Claude Code executable exists (`ClaudeBinError`), and the Claude Code login
- * fails (`ClaudeAuthError`). Every later call would fail the same way, so each loop stops at the first one.
+ * session, so the queue is the same at the next run. Four conditions defer: another agent holds the shared GPU
+ * (`GpuReservedError`), no usable Claude Code executable exists (`ClaudeBinError`), the Claude Code login
+ * fails (`ClaudeAuthError`), and the Ollama endpoint cannot be reached (`OllamaUnavailableError`).
+ * Every later call would fail the same way, so each loop stops at the first one.
  */
 
 import { ClaudeBinError } from './claude-bin.js';
-import { GpuReservedError } from './ollama-backend.js';
+import { GpuReservedError, OllamaUnavailableError } from './ollama-backend.js';
 
 /**
  * The Claude Code login failed: an expired OAuth token, a revoked key, or another HTTP 401.
@@ -53,7 +54,12 @@ export function isClaudeAuthFailure(status: number | null | undefined, text: str
  * @param error - Any thrown value.
  */
 export function deferralDetail(error: unknown): string | null {
-  if (error instanceof GpuReservedError || error instanceof ClaudeBinError || error instanceof ClaudeAuthError) {
+  if (
+    error instanceof GpuReservedError ||
+    error instanceof ClaudeBinError ||
+    error instanceof ClaudeAuthError ||
+    error instanceof OllamaUnavailableError
+  ) {
     return error.detail;
   }
   return null;

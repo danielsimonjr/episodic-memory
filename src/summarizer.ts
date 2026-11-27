@@ -12,7 +12,7 @@ import {
   versionMeetsMinimum,
 } from './codex-support.js';
 import { validateApiBaseUrl } from './api-endpoint.js';
-import { summarizerBackend, callOllama, GpuReservedError, ollamaMaxPromptChars, type OllamaCallOptions } from './ollama-backend.js';
+import { summarizerBackend, callOllama, GpuReservedError, ollamaModelName, ollamaMaxPromptChars, type OllamaCallOptions } from './ollama-backend.js';
 import { ClaudeBinError, claudeExecutableOption } from './claude-bin.js';
 import { ClaudeAuthError, deferralDetail, isClaudeAuthFailure } from './deferral.js';
 import { redactSecrets } from './redact.js';
@@ -271,6 +271,9 @@ export interface CallClaudeOptions {
 /** The longest part of an SDK error text that an error message keeps. */
 const SDK_ERROR_TEXT_CHARS = 300;
 
+/** The smallest fraction of the chunks of a long conversation that must succeed before the chunk summaries are synthesized. */
+const MIN_CHUNK_SUCCESS_FRACTION = 0.5;
+
 /**
  * Make the SDK error text safe for a log line or a failure record: redact secrets, join the lines and cut the length.
  */
@@ -360,7 +363,10 @@ async function callClaude(prompt: string, opts: CallClaudeOptions = {}): Promise
  * EPISODIC_MEMORY_OLLAMA_FALLBACK_MODEL names the retry model (for example `haiku`). When the variable is unset or blank, the Ollama error propagates.
  * A `GpuReservedError` always propagates, because a reservation must defer the work and not move it.
  * When no usable Claude Code executable exists or the Claude Code login fails, the host has no fallback, and the
- * Ollama error propagates. A deferral there would hold back the whole queue behind one prompt that Ollama cannot answer.
+ * Ollama error propagates. A plain Ollama error then counts as a failed attempt: a deferral there would hold back the
+ * whole queue behind one prompt that Ollama cannot answer.
+ * An unreachable Ollama endpoint propagates `OllamaUnavailableError`, which defers the work. This holds with no
+ * fallback model and with an unusable fallback.
  */
 async function callOllamaWithFallback(prompt: string, opts: OllamaCallOptions = {}): Promise<string> {
   try {
@@ -372,6 +378,9 @@ async function callOllamaWithFallback(prompt: string, opts: OllamaCallOptions = 
     try {
       return await callClaude(prompt, { model: fallback, fallbackModel: fallback });
     } catch (fallbackError) {
+      // An unusable fallback counts as no fallback, so the Ollama error propagates unchanged.
+      // A plain Ollama error counts as a failed attempt: a deferral would hold the queue behind one prompt.
+      // An outage stays an `OllamaUnavailableError` and defers, because every later call fails the same way.
       if (fallbackError instanceof ClaudeBinError || fallbackError instanceof ClaudeAuthError) throw err;
       throw fallbackError;
     }
@@ -396,6 +405,21 @@ function callModel(prompt: string, requireSummaryBlock = true): Promise<string> 
 export function callDigestModel(prompt: string): Promise<string> {
   // The digest prompt asks for cited lines, not a <summary> block. parseCitedLines checks the reply.
   return callModel(prompt, false);
+}
+
+/**
+ * The model name that a digest entry records: the Ollama model on the ollama backend, else the Claude model.
+ *
+ * The label names the configured model. When the Ollama call falls back to a Claude model, the label still names the Ollama model.
+ * The Ollama backend has no default model, so with the variable unset the label names the fallback model.
+ * With no fallback model either, no digest is written; the label is then `ollama`, never an empty string.
+ */
+export function digestModelLabel(): string {
+  if (summarizerBackend() === 'ollama') {
+    // callOllama has no default model: it throws when the variable is unset. A digest written then comes from the fallback.
+    return ollamaModelName() || (process.env.EPISODIC_MEMORY_OLLAMA_FALLBACK_MODEL || '').trim() || 'ollama';
+  }
+  return process.env.EPISODIC_MEMORY_API_MODEL || 'haiku';
 }
 
 /**
@@ -772,7 +796,7 @@ export function getCodexModel(): string | undefined {
  *
  * The transcript path makes one model call for up to 15 exchanges. Any model error rejects the promise in this case.
  *
- * For more than 15 exchanges, the function summarizes each chunk of exchanges. The function then synthesizes the chunk summaries into one summary. The chunk size is 8 exchanges. A larger chunk size keeps the chunk count at 20 or less. The function logs a failed chunk and skips it. A failed synthesis returns the chunk summaries joined with a space. When no chunk succeeds, the function returns `Error: Unable to summarize conversation.` as the result.
+ * For more than 15 exchanges, the function summarizes each chunk of exchanges. The function then synthesizes the chunk summaries into one summary. The chunk size is 8 exchanges. A larger chunk size keeps the chunk count at 20 or less. The function logs a failed chunk and skips it. When fewer than `MIN_CHUNK_SUCCESS_FRACTION` of the chunks succeed, the function rejects with the counts and the last chunk error, so that a summary of a few chunks is not stored as final. A failed synthesis returns the chunk summaries joined with a space.
  *
  * A deferral from a model call rejects the promise. `src/deferral.ts` lists the causes.
  *
@@ -823,6 +847,7 @@ export async function summarizeConversation(exchanges: ConversationExchange[], s
 
   // Summarize each chunk
   const chunkSummaries: string[] = [];
+  let lastChunkError = '';
   for (let i = 0; i < chunks.length; i++) {
     const chunkText = formatConversationText(chunks[i]);
     const prompt = `${SUMMARIZER_CONTEXT_MARKER}.
@@ -841,12 +866,16 @@ Example: <summary>Implemented HID keyboard functionality for ESP32. Hit Bluetoot
     } catch (error) {
       // A deferral stops the whole summary: skipping the chunk would store a partial summary.
       if (deferralDetail(error) !== null) throw error;
+      lastChunkError = error instanceof Error ? error.message : String(error);
       console.log(`  Chunk ${i + 1} failed, skipping`);
     }
   }
 
-  if (chunkSummaries.length === 0) {
-    return 'Error: Unable to summarize conversation.';
+  if (chunkSummaries.length < chunks.length * MIN_CHUNK_SUCCESS_FRACTION) {
+    throw new Error(
+      `only ${chunkSummaries.length} of ${chunks.length} chunks of the conversation could be summarized` +
+        (lastChunkError ? `; last error: ${lastChunkError}` : ''),
+    );
   }
 
   // Synthesize chunks into final summary

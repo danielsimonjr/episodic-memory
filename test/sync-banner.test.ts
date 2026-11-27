@@ -37,3 +37,21 @@ describe('syncHeadline', () => {
     expect(lines).toEqual(['\n⚠️  Sync finished; 2 file(s) not indexed. The error lines are on stderr.']);
   });
 });
+
+describe('outageWarningLine', () => {
+  it('names the host and the count for an Ollama outage deferral', async () => {
+    const { ollamaOutageHost } = await import('../src/ollama-backend.js');
+    const { outageWarningLine } = await import('../src/sync-banner.js');
+    const detail = 'Ollama endpoint http://127.0.0.1:11434 is unreachable: connect ECONNREFUSED 127.0.0.1:11434';
+    const line = outageWarningLine(ollamaOutageHost(detail), 7);
+    expect(line).toContain('http://127.0.0.1:11434');
+    expect(line).toContain('7 conversation(s)');
+  });
+
+  it('gives no line for a deferral that is not an outage', async () => {
+    const { ollamaOutageHost } = await import('../src/ollama-backend.js');
+    const { outageWarningLine } = await import('../src/sync-banner.js');
+    expect(outageWarningLine(ollamaOutageHost('fleet GPU reserved by Starship'), 3)).toBeNull();
+    expect(outageWarningLine(ollamaOutageHost(''), 3)).toBeNull();
+  });
+});

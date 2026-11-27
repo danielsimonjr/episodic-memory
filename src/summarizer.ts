@@ -12,7 +12,7 @@ import {
   versionMeetsMinimum,
 } from './codex-support.js';
 import { validateApiBaseUrl } from './api-endpoint.js';
-import { summarizerBackend, callOllama, GpuReservedError, ollamaMaxPromptChars, type OllamaCallOptions } from './ollama-backend.js';
+import { summarizerBackend, callOllama, GpuReservedError, OllamaUnavailableError, ollamaMaxPromptChars, type OllamaCallOptions } from './ollama-backend.js';
 import { ClaudeBinError, claudeExecutableOption } from './claude-bin.js';
 import { ClaudeAuthError, deferralDetail, isClaudeAuthFailure } from './deferral.js';
 import { redactSecrets } from './redact.js';
@@ -361,6 +361,7 @@ async function callClaude(prompt: string, opts: CallClaudeOptions = {}): Promise
  * A `GpuReservedError` always propagates, because a reservation must defer the work and not move it.
  * When no usable Claude Code executable exists or the Claude Code login fails, the host has no fallback, and the
  * Ollama error propagates. A deferral there would hold back the whole queue behind one prompt that Ollama cannot answer.
+ * An unreachable Ollama endpoint with no fallback model propagates `OllamaUnavailableError`, which defers the work.
  */
 async function callOllamaWithFallback(prompt: string, opts: OllamaCallOptions = {}): Promise<string> {
   try {
@@ -372,7 +373,11 @@ async function callOllamaWithFallback(prompt: string, opts: OllamaCallOptions = 
     try {
       return await callClaude(prompt, { model: fallback, fallbackModel: fallback });
     } catch (fallbackError) {
-      if (fallbackError instanceof ClaudeBinError || fallbackError instanceof ClaudeAuthError) throw err;
+      // An unusable fallback counts as no fallback. The Ollama error then counts as a failed attempt, not a deferral:
+      // a deferral here would hold the queue behind one prompt (claude-auth-deferral and claude-bin-deferral tests).
+      if (fallbackError instanceof ClaudeBinError || fallbackError instanceof ClaudeAuthError) {
+        throw err instanceof OllamaUnavailableError ? new Error(err.message) : err;
+      }
       throw fallbackError;
     }
   }
@@ -396,6 +401,16 @@ function callModel(prompt: string, requireSummaryBlock = true): Promise<string> 
 export function callDigestModel(prompt: string): Promise<string> {
   // The digest prompt asks for cited lines, not a <summary> block. parseCitedLines checks the reply.
   return callModel(prompt, false);
+}
+
+/**
+ * The model name that a digest entry records: the Ollama model on the ollama backend, else the Claude model.
+ *
+ * The label names the configured model. When the Ollama call falls back to a Claude model, the label still names the Ollama model.
+ */
+export function digestModelLabel(): string {
+  if (summarizerBackend() === 'ollama') return (process.env.EPISODIC_MEMORY_OLLAMA_MODEL || '').trim();
+  return process.env.EPISODIC_MEMORY_API_MODEL || 'haiku';
 }
 
 /**
@@ -772,7 +787,7 @@ export function getCodexModel(): string | undefined {
  *
  * The transcript path makes one model call for up to 15 exchanges. Any model error rejects the promise in this case.
  *
- * For more than 15 exchanges, the function summarizes each chunk of exchanges. The function then synthesizes the chunk summaries into one summary. The chunk size is 8 exchanges. A larger chunk size keeps the chunk count at 20 or less. The function logs a failed chunk and skips it. A failed synthesis returns the chunk summaries joined with a space. When no chunk succeeds, the function returns `Error: Unable to summarize conversation.` as the result.
+ * For more than 15 exchanges, the function summarizes each chunk of exchanges. The function then synthesizes the chunk summaries into one summary. The chunk size is 8 exchanges. A larger chunk size keeps the chunk count at 20 or less. The function logs a failed chunk and skips it. A failed synthesis returns the chunk summaries joined with a space. When no chunk succeeds, the function rejects, so that no caller stores an error text as a summary.
  *
  * A deferral from a model call rejects the promise. `src/deferral.ts` lists the causes.
  *
@@ -846,7 +861,7 @@ Example: <summary>Implemented HID keyboard functionality for ESP32. Hit Bluetoot
   }
 
   if (chunkSummaries.length === 0) {
-    return 'Error: Unable to summarize conversation.';
+    throw new Error('no chunk of the conversation could be summarized');
   }
 
   // Synthesize chunks into final summary

@@ -25,6 +25,16 @@ export declare class GpuReservedError extends Error {
     constructor(detail: string);
 }
 /**
+ * The Ollama endpoint refuses the connection, or the network fails before a reply.
+ * The endpoint is down for every call, so callers defer the work and count no attempt.
+ * A timeout, an HTTP error and an empty reply are not this error: they count as failed attempts.
+ */
+export declare class OllamaUnavailableError extends Error {
+    /** The one-line reason for the logs and the sync report. */
+    readonly detail: string;
+    constructor(detail: string);
+}
+/**
  * Returns `ollama` when `EPISODIC_MEMORY_SUMMARIZER_BACKEND` is `ollama`, ignoring letter case and surrounding spaces.
  *
  * Returns `claude` for every other value, including an unset variable.
@@ -60,6 +70,7 @@ export declare function ollamaMaxPromptChars(): number;
  * The call throws when the reply is empty.
  * The call also throws when the reply has no `<summary>` block, unless `requireSummaryBlock` is false.
  * The call throws when the request runs longer than `timeoutMs`.
+ * The call throws `OllamaUnavailableError` when the connection fails before a reply.
  *
  * The function cuts the prompt to the character budget before the function sends the request.
  *

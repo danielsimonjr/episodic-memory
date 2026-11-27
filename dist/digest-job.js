@@ -2,7 +2,7 @@ import { shouldSkipReentrantSync } from './reentrancy.js';
 import { gpuReservationBlock } from './gpu-reservation.js';
 import { summarizerBackend } from './ollama-backend.js';
 import { deferralDetail } from './deferral.js';
-import { callDigestModel, promptBudgetChars } from './summarizer.js';
+import { callDigestModel, digestModelLabel, promptBudgetChars } from './summarizer.js';
 import { buildSessionPrompt } from './digest-prompts.js';
 import { parseCitedLines, redactEntryText } from './digest-validate.js';
 import { insertDigestEntry } from './digest-db.js';
@@ -111,7 +111,7 @@ async function writeSessionEntries(db, model, now, result) {
             periodEnd: s.end,
             text: redactEntryText(parsed.lines.join('\n')),
             sources: parsed.sources,
-            model: process.env.EPISODIC_MEMORY_API_MODEL || 'haiku',
+            model: digestModelLabel(),
             handoff: false,
         });
         if (id !== null)

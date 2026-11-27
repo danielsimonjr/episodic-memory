@@ -36,6 +36,22 @@ export class GpuReservedError extends Error {
 }
 
 /**
+ * The Ollama endpoint refuses the connection, or the network fails before a reply.
+ * The endpoint is down for every call, so callers defer the work and count no attempt.
+ * A timeout, an HTTP error and an empty reply are not this error: they count as failed attempts.
+ */
+export class OllamaUnavailableError extends Error {
+  /** The one-line reason for the logs and the sync report. */
+  readonly detail: string;
+
+  constructor(detail: string) {
+    super(detail);
+    this.name = 'OllamaUnavailableError';
+    this.detail = detail;
+  }
+}
+
+/**
  * Returns `ollama` when `EPISODIC_MEMORY_SUMMARIZER_BACKEND` is `ollama`, ignoring letter case and surrounding spaces.
  *
  * Returns `claude` for every other value, including an unset variable.
@@ -83,6 +99,7 @@ export function ollamaMaxPromptChars(): number {
  * The call throws when the reply is empty.
  * The call also throws when the reply has no `<summary>` block, unless `requireSummaryBlock` is false.
  * The call throws when the request runs longer than `timeoutMs`.
+ * The call throws `OllamaUnavailableError` when the connection fails before a reply.
  *
  * The function cuts the prompt to the character budget before the function sends the request.
  *
@@ -108,18 +125,27 @@ export async function callOllama(prompt: string, opts: OllamaCallOptions = {}): 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await doFetch(`${check.url.replace(/\/+$/, '')}/api/generate`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        prompt: prompt.slice(0, maxChars),
-        stream: false,
-        think: false,
-        options: { temperature: 0 },
-      }),
-      signal: controller.signal,
-    });
+    const base = check.url.replace(/\/+$/, '');
+    let res: Response;
+    try {
+      res = await doFetch(`${base}/api/generate`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          model,
+          prompt: prompt.slice(0, maxChars),
+          stream: false,
+          think: false,
+          options: { temperature: 0 },
+        }),
+        signal: controller.signal,
+      });
+    } catch (err) {
+      // A timeout keeps its plain error (the outer catch). Any other failure of the request is a network failure.
+      if (controller.signal.aborted) throw err;
+      const cause = (err as { cause?: { message?: string } })?.cause?.message ?? (err as Error)?.message ?? String(err);
+      throw new OllamaUnavailableError(`Ollama endpoint ${base} is unreachable: ${cause}`);
+    }
     if (!res.ok) {
       let detail = '';
       try { detail = JSON.stringify(await res.json()); } catch { /* body is not JSON */ }

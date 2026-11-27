@@ -1,5 +1,10 @@
 ## [Unreleased]
 
+### Fixed
+- A refused connection to the Ollama endpoint is an outage. `callOllama` throws `OllamaUnavailableError`, and the sync, backfill, digest and topic loops defer it: no attempt is counted and no failure record is written. A timeout, an HTTP error and an empty reply still count as failed attempts.
+- The hierarchical summary path rejects when no chunk succeeds. It returned `Error: Unable to summarize conversation.`, and the sync stored that text as the summary.
+- A digest entry names the Ollama model on the Ollama backend. It named the Claude default (`haiku`) before, for the digest and the digest compression.
+
 ## [1.15.0] - 2026-11-14
 
 ### Changed

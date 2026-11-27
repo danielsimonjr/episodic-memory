@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [1.15.1] - 2026-11-27
+
 ### Fixed
 - An unreachable Ollama endpoint is an outage. `callOllama` throws `OllamaUnavailableError`, and the sync, backfill, digest and topic loops defer it: no attempt is counted and no failure record is written. A timeout, an HTTP error and an empty reply still count as failed attempts.
 - The hierarchical summary path no longer returns `Error: Unable to summarize conversation.`. The sync stored that text as the summary.

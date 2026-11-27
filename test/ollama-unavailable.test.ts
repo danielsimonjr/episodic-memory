@@ -65,6 +65,57 @@ describe('callOllama: a refused connection is a backend outage', () => {
   });
 });
 
+// A fetch that rejects the way Node's fetch does, with the given cause.
+const rejectWith = (cause: unknown, message = 'fetch failed') =>
+  (async () => { throw Object.assign(new TypeError(message), { cause }); }) as any;
+
+describe('callOllama: only a connection error code is an outage', () => {
+  for (const code of ['ECONNREFUSED', 'ENOTFOUND', 'EAI_AGAIN', 'EHOSTUNREACH', 'ENETUNREACH', 'UND_ERR_CONNECT_TIMEOUT']) {
+    it(`${code} is an outage`, async () => {
+      const err = await callOllama('x', { fetchImpl: rejectWith(Object.assign(new Error(`e ${code}`), { code })) }).catch((e) => e);
+      expect(err).toBeInstanceOf(OllamaUnavailableError);
+    });
+  }
+
+  it('reads the code from the error itself when it has no cause', async () => {
+    const fetchImpl = (async () => { throw Object.assign(new Error('getaddrinfo ENOTFOUND x'), { code: 'ENOTFOUND' }); }) as any;
+    expect(await callOllama('x', { fetchImpl }).catch((e) => e)).toBeInstanceOf(OllamaUnavailableError);
+  });
+
+  it('an AggregateError of a dual-stack localhost is an outage, and the reason names the code', async () => {
+    const cause = new AggregateError([
+      Object.assign(new Error('connect ECONNREFUSED ::1:11434'), { code: 'ECONNREFUSED' }),
+      Object.assign(new Error('connect ECONNREFUSED 127.0.0.1:11434'), { code: 'ECONNREFUSED' }),
+    ], '');
+    const err = await callOllama('x', { fetchImpl: rejectWith(cause) }).catch((e) => e);
+    expect(err).toBeInstanceOf(OllamaUnavailableError);
+    expect((err as Error).message).toMatch(/unreachable: \S/);
+    expect((err as Error).message).toContain('ECONNREFUSED');
+  });
+
+  for (const code of ['UND_ERR_SOCKET', 'UND_ERR_HEADERS_TIMEOUT', 'ERR_TLS_CERT_ALTNAME_INVALID']) {
+    it(`${code} stays a counted failure and rethrows the original error`, async () => {
+      const original = Object.assign(new TypeError('fetch failed'), { cause: Object.assign(new Error('other'), { code }) });
+      const err = await callOllama('x', { fetchImpl: (async () => { throw original; }) as any }).catch((e) => e);
+      expect(err).toBe(original);
+      expect(deferralDetail(err)).toBeNull();
+    });
+  }
+
+  it('a rejection with no code stays a counted failure', async () => {
+    const err = await callOllama('x', { fetchImpl: rejectWith(new Error('no code')) }).catch((e) => e);
+    expect(err).not.toBeInstanceOf(OllamaUnavailableError);
+  });
+
+  it('decides abort by the signal, not by the error name', async () => {
+    // An AbortError name without an aborted signal, with a connection code: an outage.
+    const fetchImpl = (async () => {
+      throw Object.assign(new Error('x'), { name: 'AbortError', cause: Object.assign(new Error('c'), { code: 'ECONNREFUSED' }) });
+    }) as any;
+    expect(await callOllama('x', { fetchImpl }).catch((e) => e)).toBeInstanceOf(OllamaUnavailableError);
+  });
+});
+
 describe('callOllama: the other failures stay counted failures', () => {
   it('a timeout is a plain error, not an outage', async () => {
     const err = await callOllama('x', { fetchImpl: hangingFetch, timeoutMs: 5 }).catch((e) => e);

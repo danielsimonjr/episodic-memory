@@ -34,6 +34,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
   for (const k of KEYS) {
     if (saved[k] === undefined) delete process.env[k];
     else process.env[k] = saved[k];
@@ -101,7 +102,9 @@ describe('the summarizer with an unusable Claude Code executable', () => {
   // behind one transcript that Ollama cannot summarize, while Ollama summarizes every other one.
   it('rejects a failed Ollama call with the Ollama error, not a deferral, when the Claude fallback is unusable', async () => {
     process.env.EPISODIC_MEMORY_SUMMARIZER_BACKEND = 'ollama';
-    process.env.EPISODIC_MEMORY_OLLAMA_URL = 'http://127.0.0.1:9';
+    process.env.EPISODIC_MEMORY_OLLAMA_URL = 'http://127.0.0.1:11434';
+    // Ollama answers HTTP 500: a counted failure, not an outage. No test reaches a real server.
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 500 })));
     process.env.EPISODIC_MEMORY_OLLAMA_MODEL = 'qwen3.8:27b';
     process.env.EPISODIC_MEMORY_OLLAMA_FALLBACK_MODEL = 'haiku';
     const error = await summarizeConversation(exchanges(3)).then(
@@ -111,6 +114,21 @@ describe('the summarizer with an unusable Claude Code executable', () => {
     expect(error).toBeInstanceOf(Error);
     expect(error).not.toBeInstanceOf(ClaudeBinError);
     expect(deferralDetail(error)).toBeNull();
+    expect(queryMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('an Ollama outage with an unusable Claude fallback', () => {
+  it('defers: the outage stays an outage when the fallback cannot run', async () => {
+    process.env[CLAUDE_BIN_ENV] = join(dir, 'missing', 'claude.exe');
+    process.env.EPISODIC_MEMORY_SUMMARIZER_BACKEND = 'ollama';
+    process.env.EPISODIC_MEMORY_OLLAMA_URL = 'http://127.0.0.1:11434';
+    process.env.EPISODIC_MEMORY_OLLAMA_MODEL = 'qwen3.8:27b';
+    process.env.EPISODIC_MEMORY_OLLAMA_FALLBACK_MODEL = 'haiku';
+    const cause = Object.assign(new Error('connect ECONNREFUSED 127.0.0.1:11434'), { code: 'ECONNREFUSED' });
+    vi.stubGlobal('fetch', vi.fn(async () => { throw Object.assign(new TypeError('fetch failed'), { cause }); }));
+    const error = await summarizeConversation(exchanges(3)).then(() => null, (e: unknown) => e);
+    expect(deferralDetail(error)).toContain('127.0.0.1:11434');
     expect(queryMock).not.toHaveBeenCalled();
   });
 });

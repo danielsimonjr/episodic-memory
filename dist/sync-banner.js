@@ -23,3 +23,16 @@ export function syncHeadline(totals) {
     }
     return [`\n✅ Sync complete!`];
 }
+/**
+ * The warn line that a sync writes to `sync-errors.log` when an Ollama outage deferred its summaries.
+ * The line names the endpoint and the number of conversations that stay queued.
+ * Returns null when the deferral was not an outage (`host` is null). The line does not change the exit code.
+ *
+ * @param host - The endpoint from `ollamaOutageHost`, or null.
+ * @param pending - The number of conversations that still need a summary.
+ */
+export function outageWarningLine(host, pending) {
+    if (!host)
+        return null;
+    return `sync deferred summaries: Ollama endpoint ${host} is unreachable; ${pending} conversation(s) stay queued`;
+}

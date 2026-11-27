@@ -210,7 +210,7 @@ export function extractSessionIdFromPath(filePath: string): string | null {
  *
  * Use `skipIndex` and `skipSummaries` to turn off the two later steps. The function skips the excluded projects. The function records an error for each file that fails and continues with the next file.
  *
- * When the Ollama summarizer is in use and another agent holds the shared GPU, the function writes no summary. When no usable Claude Code executable exists or the Claude Code login fails, the summaries stop at the first call. In both cases the reason is reported in `summariesDeferred`, and no attempt is counted. The function returns an empty result when `sourceDir` does not exist.
+ * When the Ollama summarizer is in use and another agent holds the shared GPU, the function writes no summary. When no usable Claude Code executable exists, the Claude Code login fails or the Ollama endpoint cannot be reached, the summaries stop at the first call. In every case the reason is reported in `summariesDeferred`, and no attempt is counted. The function returns an empty result when `sourceDir` does not exist.
  */
 export async function syncConversations(
   sourceDir: string,

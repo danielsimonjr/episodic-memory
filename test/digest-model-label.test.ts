@@ -12,7 +12,7 @@ suppressConsole();
 
 // The digest entry records the model that wrote it. The label must name the model of the configured backend.
 const NOW = new Date('2026-10-08T18:00:00.000Z');
-const KEYS = ['EPISODIC_MEMORY_SUMMARIZER_BACKEND', 'EPISODIC_MEMORY_OLLAMA_MODEL', 'EPISODIC_MEMORY_API_MODEL'];
+const KEYS = ['EPISODIC_MEMORY_SUMMARIZER_BACKEND', 'EPISODIC_MEMORY_OLLAMA_MODEL', 'EPISODIC_MEMORY_OLLAMA_FALLBACK_MODEL', 'EPISODIC_MEMORY_API_MODEL'];
 const saved: Record<string, string | undefined> = {};
 for (const k of KEYS) saved[k] = process.env[k];
 
@@ -61,5 +61,25 @@ describe('digest entry model label', () => {
     const r = await runDigest(db, { model: fake, now: NOW });
     expect(r.written).toBe(1);
     expect(listActiveEntries(db, 'proj-a')[0].model).toBe('sonnet');
+  });
+});
+
+describe('digestModelLabel with no Ollama model set', () => {
+  it('is never empty: it names the fallback model that wrote the digest', async () => {
+    const { digestModelLabel } = await import('../src/summarizer.js');
+    const before = { ...process.env };
+    try {
+      process.env.EPISODIC_MEMORY_SUMMARIZER_BACKEND = 'ollama';
+      delete process.env.EPISODIC_MEMORY_OLLAMA_MODEL;
+      process.env.EPISODIC_MEMORY_OLLAMA_FALLBACK_MODEL = 'haiku';
+      expect(digestModelLabel()).toBe('haiku');
+      delete process.env.EPISODIC_MEMORY_OLLAMA_FALLBACK_MODEL;
+      expect(digestModelLabel()).not.toBe('');
+    } finally {
+      for (const k of KEYS) {
+        if (before[k] === undefined) delete process.env[k];
+        else process.env[k] = before[k];
+      }
+    }
   });
 });

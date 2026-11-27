@@ -6,7 +6,7 @@
 export interface SyncHeadlineTotals {
   pendingSummaries: number;
   summarized: number;
-  /** The reservation message when another agent held the shared GPU. Empty when it did not. */
+  /** The deferral detail when the run deferred its summaries (`src/deferral.ts` lists the causes). Empty when it did not. */
   summariesDeferred: string;
   /** The number of files whose index write failed. A run with such a failure does not print the success line. */
   errorCount?: number;
@@ -35,4 +35,17 @@ export function syncHeadline(totals: SyncHeadlineTotals): string[] {
     ];
   }
   return [`\n✅ Sync complete!`];
+}
+
+/**
+ * The warn line that a sync writes to `sync-errors.log` when an Ollama outage deferred its summaries.
+ * The line names the endpoint and the number of conversations that stay queued.
+ * Returns null when the deferral was not an outage (`host` is null). The line does not change the exit code.
+ *
+ * @param host - The endpoint from `ollamaOutageHost`, or null.
+ * @param pending - The number of conversations that still need a summary.
+ */
+export function outageWarningLine(host: string | null, pending: number): string | null {
+  if (!host) return null;
+  return `sync deferred summaries: Ollama endpoint ${host} is unreachable; ${pending} conversation(s) stay queued`;
 }

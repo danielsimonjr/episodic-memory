@@ -24,10 +24,20 @@ export declare class GpuReservedError extends Error {
     readonly detail: string;
     constructor(detail: string);
 }
+/** The start of every `OllamaUnavailableError` message. `ollamaOutageHost` reads the host after it. */
+export declare const OLLAMA_UNAVAILABLE_PREFIX = "Ollama endpoint ";
 /**
- * The Ollama endpoint refuses the connection, or the network fails before a reply.
+ * Returns the endpoint of an outage deferral detail, or null when the detail is not an outage.
+ *
+ * @param detail - A deferral detail, for example `summariesDeferred` of a sync result.
+ */
+export declare function ollamaOutageHost(detail: string | null | undefined): string | null;
+/** Returns the configured Ollama model name, or an empty string when the variable is unset. */
+export declare function ollamaModelName(): string;
+/**
+ * The Ollama endpoint cannot be reached: the fetch rejects with a code in `OUTAGE_CODES`.
  * The endpoint is down for every call, so callers defer the work and count no attempt.
- * A timeout, an HTTP error and an empty reply are not this error: they count as failed attempts.
+ * A timeout, an HTTP error, an empty reply and any other fetch rejection are not this error: they count as failed attempts.
  */
 export declare class OllamaUnavailableError extends Error {
     /** The one-line reason for the logs and the sync report. */
@@ -70,7 +80,7 @@ export declare function ollamaMaxPromptChars(): number;
  * The call throws when the reply is empty.
  * The call also throws when the reply has no `<summary>` block, unless `requireSummaryBlock` is false.
  * The call throws when the request runs longer than `timeoutMs`.
- * The call throws `OllamaUnavailableError` when the connection fails before a reply.
+ * The call throws `OllamaUnavailableError` when the fetch rejects with a connection error code (`OUTAGE_CODES`).
  *
  * The function cuts the prompt to the character budget before the function sends the request.
  *

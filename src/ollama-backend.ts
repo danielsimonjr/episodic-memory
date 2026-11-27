@@ -35,10 +35,45 @@ export class GpuReservedError extends Error {
   }
 }
 
+/** The error codes that mean the endpoint cannot be reached. Every other fetch rejection counts as a failed attempt. */
+const OUTAGE_CODES = new Set(['ECONNREFUSED', 'ENOTFOUND', 'EAI_AGAIN', 'EHOSTUNREACH', 'ENETUNREACH', 'UND_ERR_CONNECT_TIMEOUT']);
+
+/** The start of every `OllamaUnavailableError` message. `ollamaOutageHost` reads the host after it. */
+export const OLLAMA_UNAVAILABLE_PREFIX = 'Ollama endpoint ';
+
 /**
- * The Ollama endpoint refuses the connection, or the network fails before a reply.
+ * Returns the outage code of a fetch rejection, or null.
+ * The function reads `err.code`, `err.cause.code` and the code of each entry of `err.cause.errors`.
+ * Node gives an AggregateError there when `localhost` resolves to two addresses.
+ */
+function outageCode(err: unknown): string | null {
+  const e = err as { code?: unknown; cause?: { code?: unknown; errors?: unknown } } | null;
+  const codes: unknown[] = [e?.code, e?.cause?.code];
+  if (Array.isArray(e?.cause?.errors)) for (const x of e.cause.errors) codes.push((x as { code?: unknown })?.code);
+  for (const c of codes) if (typeof c === 'string' && OUTAGE_CODES.has(c)) return c;
+  return null;
+}
+
+/**
+ * Returns the endpoint of an outage deferral detail, or null when the detail is not an outage.
+ *
+ * @param detail - A deferral detail, for example `summariesDeferred` of a sync result.
+ */
+export function ollamaOutageHost(detail: string | null | undefined): string | null {
+  if (!detail || !detail.startsWith(OLLAMA_UNAVAILABLE_PREFIX)) return null;
+  const host = detail.slice(OLLAMA_UNAVAILABLE_PREFIX.length).split(' ')[0];
+  return host || null;
+}
+
+/** Returns the configured Ollama model name, or an empty string when the variable is unset. */
+export function ollamaModelName(): string {
+  return (process.env.EPISODIC_MEMORY_OLLAMA_MODEL || '').trim();
+}
+
+/**
+ * The Ollama endpoint cannot be reached: the fetch rejects with a code in `OUTAGE_CODES`.
  * The endpoint is down for every call, so callers defer the work and count no attempt.
- * A timeout, an HTTP error and an empty reply are not this error: they count as failed attempts.
+ * A timeout, an HTTP error, an empty reply and any other fetch rejection are not this error: they count as failed attempts.
  */
 export class OllamaUnavailableError extends Error {
   /** The one-line reason for the logs and the sync report. */
@@ -99,7 +134,7 @@ export function ollamaMaxPromptChars(): number {
  * The call throws when the reply is empty.
  * The call also throws when the reply has no `<summary>` block, unless `requireSummaryBlock` is false.
  * The call throws when the request runs longer than `timeoutMs`.
- * The call throws `OllamaUnavailableError` when the connection fails before a reply.
+ * The call throws `OllamaUnavailableError` when the fetch rejects with a connection error code (`OUTAGE_CODES`).
  *
  * The function cuts the prompt to the character budget before the function sends the request.
  *
@@ -109,7 +144,7 @@ export function ollamaMaxPromptChars(): number {
 export async function callOllama(prompt: string, opts: OllamaCallOptions = {}): Promise<string> {
   const reserved = gpuReservationBlock();
   if (reserved) throw new GpuReservedError(reserved);
-  const model = (process.env.EPISODIC_MEMORY_OLLAMA_MODEL || '').trim();
+  const model = ollamaModelName();
   if (!model) {
     throw new Error('EPISODIC_MEMORY_OLLAMA_MODEL is required for the ollama summarizer backend');
   }
@@ -141,10 +176,14 @@ export async function callOllama(prompt: string, opts: OllamaCallOptions = {}): 
         signal: controller.signal,
       });
     } catch (err) {
-      // A timeout keeps its plain error (the outer catch). Any other failure of the request is a network failure.
+      // A timeout keeps its plain error (the outer catch). Only a connection error code is an outage.
+      // Every other rejection keeps its original error and counts as a failed attempt.
       if (controller.signal.aborted) throw err;
-      const cause = (err as { cause?: { message?: string } })?.cause?.message ?? (err as Error)?.message ?? String(err);
-      throw new OllamaUnavailableError(`Ollama endpoint ${base} is unreachable: ${cause}`);
+      const code = outageCode(err);
+      if (!code) throw err;
+      const cause = (err as { cause?: { message?: string } })?.cause;
+      const reason = cause?.message || (err as Error)?.message || code;
+      throw new OllamaUnavailableError(`${OLLAMA_UNAVAILABLE_PREFIX}${base} is unreachable: ${reason.includes(code) ? reason : `${reason} (${code})`}`);
     }
     if (!res.ok) {
       let detail = '';

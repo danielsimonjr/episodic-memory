@@ -44,6 +44,31 @@ describe('summarizeConversation, hierarchical path', () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 400 })));
     const result = await summarizeConversation(exchanges(20)).then((s) => s, (e: unknown) => e);
     expect(result).toBeInstanceOf(Error);
-    expect((result as Error).message).toMatch(/no chunk/);
+    expect((result as Error).message).toMatch(/0 of 3 chunks/);
+    expect((result as Error).message).toContain('HTTP 400');
+  });
+
+  // 20 exchanges give 3 chunks (8, 8 and 4 exchanges). `ok` names the calls that succeed, counted from 1.
+  function stubCalls(ok: number[]) {
+    let n = 0;
+    vi.stubGlobal('fetch', vi.fn(async () => {
+      n++;
+      return ok.includes(n)
+        ? new Response(JSON.stringify({ response: `<summary>part ${n}</summary>` }), { status: 200 })
+        : new Response('{"error":"bad chunk"}', { status: 400 });
+    }));
+  }
+
+  it('rejects when fewer than half of the chunks succeed, with the last chunk error in the message', async () => {
+    stubCalls([1]);
+    const result = await summarizeConversation(exchanges(20)).then((s) => s, (e: unknown) => e);
+    expect(result).toBeInstanceOf(Error);
+    expect((result as Error).message).toMatch(/1 of 3 chunks/);
+    expect((result as Error).message).toContain('bad chunk');
+  });
+
+  it('returns a summary when at least half of the chunks succeed', async () => {
+    stubCalls([1, 2, 4]); // two chunks and the synthesis
+    await expect(summarizeConversation(exchanges(20))).resolves.toBe('part 4');
   });
 });

@@ -303,9 +303,16 @@ export async function indexSession(sessionId: string, concurrency: number = 1, n
           const summaryPath = archivePath.replace('.jsonl', '-summary.txt');
           if (!noSummaries && !fs.existsSync(summaryPath)) {
             fs.mkdirSync(path.dirname(summaryPath), { recursive: true });
-            const summary = await summarizeConversation(exchanges, sessionIdForSummary(exchanges));
-            fs.writeFileSync(summaryPath, summary, 'utf-8');
-            console.log(`Summary: ${summary.split(/\s+/).length} words`);
+            // The summary is best-effort, as in `repairIndex`: a failed summary call must not stop the index step.
+            try {
+              const summary = await summarizeConversation(exchanges, sessionIdForSummary(exchanges));
+              fs.writeFileSync(summaryPath, summary, 'utf-8');
+              console.log(`Summary: ${summary.split(/\s+/).length} words`);
+            } catch (summaryError) {
+              console.error(
+                `Summary generation failed (indexing continues): ${summaryError instanceof Error ? summaryError.message : summaryError}`
+              );
+            }
           }
 
           // Index

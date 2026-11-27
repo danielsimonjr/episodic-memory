@@ -69,7 +69,7 @@ src/
   fs-retry.ts            # rename that retries a Windows sharing violation (EPERM, EBUSY); imports only fs
   summarizer.ts          # Claude Agent SDK calls; persistSession: false guard
   claude-bin.ts          # EPISODIC_MEMORY_CLAUDE_BIN: the Claude Code executable, probed against the SDK floor; Node built-ins only
-  deferral.ts            # deferralDetail: a GPU reservation, an unusable executable or a failed login defers the model work
+  deferral.ts            # deferralDetail: a GPU reservation, an unusable executable, a failed login or an Ollama outage defers the model work
   db.ts                  # schema + migrations (cascade + embedding_version)
   paths.ts               # config/index/archive directory resolution
   parser.ts              # JSONL transcript → exchanges (cross-platform path-aware as of fork)

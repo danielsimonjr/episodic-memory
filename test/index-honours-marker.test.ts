@@ -335,4 +335,13 @@ describe('the index and verify commands honour the DO NOT INDEX marker', () => {
     }
     expect(indexedSessions()).toEqual([CLEAN]);
   }, 60000);
+
+  // The summary is auxiliary. A failed summary call must not stop the exchanges from being indexed.
+  it('indexSession indexes the exchanges when the summary call throws', async () => {
+    writeSources();
+    vi.mocked(summarizeConversation).mockRejectedValueOnce(new Error('summary failed'));
+    await indexSession(CLEAN, 1, false);
+    expect(indexedSessions()).toEqual([CLEAN]);
+    expect(fs.existsSync(path.join(archiveProject, `${CLEAN}-summary.txt`))).toBe(false);
+  }, 60000);
 });
